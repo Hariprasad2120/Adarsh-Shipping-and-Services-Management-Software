@@ -30,6 +30,10 @@ model Organisation {
   appraisalSelfTemplate  AppraisalSelfTemplate?
   appraisalSettings      OrgAppraisalSettings?
   leaveTypes             LeaveType[]
+  leaveLedgerEntries     LeaveLedgerEntry[]
+  compOffCredits         CompOffCredit[]
+  leaveGrants            LeaveGrant[]
+  leaveSchedulerRuns     LeaveSchedulerRun[]
   holidays               Holiday[]
   notifications          Notification[]
   notificationActivities NotificationActivity[]
@@ -372,6 +376,10 @@ model User {
   leaveBalances           LeaveBalance[]
   leaveRequests           LeaveRequest[]             @relation("LeaveRequester")
   leaveApprovals          LeaveRequest[]             @relation("LeaveApprover")
+  leaveLedgerEntries       LeaveLedgerEntry[]
+  leaveOverrides           EmployeeLeaveOverride[]
+  compOffCredits           CompOffCredit[]
+  leaveGrants              LeaveGrant[]
   otEntries               OTEntry[]                  @relation("OTEmployee")
   otApprovals             OTEntry[]                  @relation("OTApprover")
   otRecords               OtRecord[]                 @relation("EmployeeOtRecords")
@@ -831,33 +839,44 @@ model AttendancePunchEvent {
 }
 
 model LeaveType {
-  id             String  @id @default(cuid())
-  orgId          String
-  name           String
-  paid           Boolean @default(true)
-  defaultBalance Float   @default(0)
-  accrualRule    Json? // { frequency: "monthly", amount: 1.5, ... }
+  id              String  @id @default(cuid())
+  orgId           String
+  name            String
+  paid            Boolean @default(true)
+  defaultBalance  Float   @default(0)
+  accrualRule     Json? // legacy, unused by new engine — kept for backward read compatibility
+  code            String? // NEW — stable short code, e.g. "AL", "SL"; unique per org
+  activeVersionId String? // NEW — points at the currently published LeavePolicyVersion
+  isCompOffType   Boolean @default(false) // NEW — marks the org's comp-off-consumption leave type
 
-  org      Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org      Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
   balances LeaveBalance[]
   requests LeaveRequest[]
+  versions LeavePolicyVersion[]
+  ledgerEntries LeaveLedgerEntry[]
+  grants   LeaveGrant[]
 
   @@unique([orgId, name])
+  @@unique([orgId, code])
   @@index([orgId])
 }
 
 model LeaveBalance {
-  id          String @id @default(cuid())
-  userId      String
-  leaveTypeId String
-  year        Int
-  balance     Float
+  id            String    @id @default(cuid())
+  userId        String
+  leaveTypeId   String
+  year          Int
+  balance       Float
+  version       Int       @default(0) // NEW — optimistic lock for concurrent ledger writes
+  updatedAt     DateTime  @default(now()) @updatedAt // NEW — default(now()) needed so ADD COLUMN NOT NULL is safe on existing rows
+  nextResetDate DateTime? @db.Date // NEW — precomputed leave-year boundary for this balance row (calendar/financial/anniversary), so the daily reset cron does an indexed lookup instead of scanning + recomputing every employee's anniversary each run
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   leaveType LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, leaveTypeId, year])
   @@index([userId])
+  @@index([nextResetDate])
 }
 
 model LeaveRequest {
@@ -867,18 +886,243 @@ model LeaveRequest {
   fromDate    DateTime @db.Date
   toDate      DateTime @db.Date
   halfDay     Boolean  @default(false)
-  status      String   @default("pending") // pending | approved | rejected | cancelled
+  status      String   @default("pending") // pending | approved | rejected | cancelled |
+                                            // draft | submitted | pending_approval | cancel_pending |
+                                            // extension_pending | withdrawn | expired
   approverId  String?
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // NEW fields — additive, all nullable/defaulted so existing rows remain valid
+  policyVersionId        String?
+  computedDurationUnits   Float?
+  paidUnits               Float?
+  lopUnits                Float?
+  currentApprovalStepId   String?
+  cancelledAt             DateTime?
+  cancelReason             String?
+  extendedFromRequestId    String?
+
   user      User      @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
   approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id])
   leaveType LeaveType @relation(fields: [leaveTypeId], references: [id])
+  policyVersion    LeavePolicyVersion? @relation(fields: [policyVersionId], references: [id])
+  extendedFrom     LeaveRequest?       @relation("LeaveExtension", fields: [extendedFromRequestId], references: [id])
+  extensions       LeaveRequest[]      @relation("LeaveExtension")
+
+  ledgerEntries   LeaveLedgerEntry[]
+  approvalSteps   LeaveApprovalStep[]
+  attachments     LeaveRequestAttachment[]
 
   @@index([userId])
   @@index([approverId])
+  @@index([policyVersionId])
+}
+
+// ─── Leave Management: policy versioning, ledger, approval routing, comp-off ──
+
+model LeavePolicyVersion {
+  id                String    @id @default(cuid())
+  leaveTypeId       String
+  version           Int
+  status            String    @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  classification    String    @default("PAID") // PAID | UNPAID | ON_DUTY | RESTRICTED_HOLIDAY | PARTIALLY_PAID
+  entitlementModel  String    @default("FIXED") // FIXED | EXPERIENCE_BASED | GRANT_BASED | ATTENDANCE_BASED
+  unit              String    @default("DAY") // DAY | HOUR
+  roundingMode      String    @default("NONE") // NONE | NEAREST | UP | DOWN
+  roundingIncrement Float?
+  effectiveFrom     DateTime  @db.Date
+  effectiveUntil    DateTime? @db.Date
+  configuration     Json // Zod-validated structured config — see src/modules/leave/policy-config.schema.ts
+  publishedAt       DateTime?
+  publishedById     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  leaveType          LeaveType                @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  applicabilityRules LeaveApplicabilityRule[]
+  requests           LeaveRequest[]
+
+  @@unique([leaveTypeId, version])
+  @@index([leaveTypeId, status])
+}
+
+model LeaveApplicabilityRule {
+  id              String   @id @default(cuid())
+  policyVersionId String
+  mode            String // INCLUDE | EXCLUDE
+  dimension       String // BRANCH | DEPARTMENT | DIVISION | DESIGNATION | EMPLOYMENT_TYPE | EMPLOYEE
+  value           String // matching id or literal value
+  createdAt       DateTime @default(now())
+
+  policyVersion LeavePolicyVersion @relation(fields: [policyVersionId], references: [id], onDelete: Cascade)
+
+  @@index([policyVersionId])
+}
+
+model EmployeeLeaveOverride {
+  id             String    @id @default(cuid())
+  userId         String
+  leaveTypeId    String
+  field          String // MAX_BALANCE | EXTRA_ENTITLEMENT | RESTRICTION_EXEMPT | OPENING_BALANCE_CORRECTION
+  value          Json
+  reason         String
+  effectiveFrom  DateTime  @db.Date
+  effectiveUntil DateTime?
+  actorId        String
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, leaveTypeId])
+}
+
+model LeaveLedgerEntry {
+  id              String   @id @default(cuid())
+  orgId           String
+  userId          String
+  leaveTypeId     String
+  policyVersionId String?
+  type            String // OPENING_BALANCE | ACCRUAL | MANUAL_CREDIT | MANUAL_DEBIT | LEAVE_RESERVED |
+                          // LEAVE_CONSUMED | LEAVE_RELEASED | CARRY_FORWARD | CARRY_FORWARD_EXPIRY |
+                          // ENCASHMENT | RESET | COMP_OFF_CREDIT | COMP_OFF_EXPIRY | ADJUSTMENT |
+                          // CANCELLATION_REVERSAL | POLICY_MIGRATION | IMPORT | LOP_CONVERSION
+  quantity        Float // signed: positive = credit, negative = debit
+  unit            String @default("DAY") // DAY | HOUR
+  effectiveDate   DateTime @db.Date
+  balanceBefore   Float
+  balanceAfter    Float
+  requestId       String?
+  source          String // SYSTEM | SCHEDULER | ADMIN | EMPLOYEE | IMPORT
+  actorId         String?
+  reason          String?
+  metadata        Json?
+  idempotencyKey  String   @unique
+  createdAt       DateTime @default(now())
+
+  org       Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveType LeaveType     @relation(fields: [leaveTypeId], references: [id])
+  request   LeaveRequest? @relation(fields: [requestId], references: [id])
+
+  @@index([orgId, userId, leaveTypeId])
+  @@index([userId, leaveTypeId, effectiveDate])
+}
+
+model LeaveApprovalStep {
+  id             String    @id @default(cuid())
+  requestId      String
+  sequence       Int
+  approverType   String // MANAGER | MANAGERS_MANAGER | DEPARTMENT_HEAD | ROLE | NAMED_USER | HR
+  approverUserId String?
+  status         String    @default("PENDING") // PENDING | APPROVED | REJECTED | SKIPPED | DELEGATED
+  decidedById    String?
+  decidedAt      DateTime?
+  comment        String?
+  slaDueAt       DateTime?
+  createdAt      DateTime  @default(now())
+
+  request LeaveRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, sequence])
+}
+
+model CompOffCredit {
+  id               String    @id @default(cuid())
+  orgId            String
+  userId           String
+  earnedDate       DateTime  @db.Date
+  sourceType       String // WEEKEND_WORK | HOLIDAY_WORK | OVERTIME | MANUAL_GRANT
+  sourceOtRecordId String?
+  units            Float
+  unit             String    @default("DAY") // DAY | HOUR
+  status           String    @default("PENDING_APPROVAL") // PENDING_APPROVAL | APPROVED | REJECTED | CONSUMED | EXPIRED
+  expiresAt        DateTime?
+  approvedById     String?
+  ledgerEntryId    String? // set once the approved credit is posted to the ledger
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, userId, status])
+}
+
+model LeaveGrant {
+  id          String    @id @default(cuid())
+  orgId       String
+  userId      String
+  leaveTypeId String
+  amount      Float
+  effectiveDate DateTime @db.Date
+  expiryDate  DateTime?
+  reason      String
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED | POSTED
+  grantedById String
+  approvedById String?
+  ledgerEntryId String?
+  createdAt   DateTime  @default(now())
+
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveType LeaveType    @relation(fields: [leaveTypeId], references: [id])
+
+  @@index([orgId, userId])
+}
+
+model LeaveRequestAttachment {
+  id           String   @id @default(cuid())
+  requestId    String
+  driveFileId  String
+  fileName     String
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  request LeaveRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model LeaveSchedulerRun {
+  id           String    @id @default(cuid())
+  orgId        String
+  jobType      String // ACCRUAL | CARRY_FORWARD_EXPIRY | RESET | COMP_OFF_EXPIRY
+  runKey       String    @unique // idempotency key for the whole run, e.g. "accrual:2026-08-01"
+  status       String    @default("RUNNING") // RUNNING | COMPLETED | FAILED
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  processedCount Int     @default(0)
+  errorCount     Int     @default(0)
+  errorDetails   Json?
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, jobType])
+}
+
+model LeaveComplianceTemplate {
+  id                   String    @id @default(cuid())
+  jurisdictionCountry  String
+  jurisdictionState    String?
+  jurisdictionLocality String?
+  establishmentType    String?
+  leaveCategory        String
+  statutoryName        String
+  effectiveFrom        DateTime  @db.Date
+  effectiveUntil       DateTime?
+  statutoryMinimum     Json // structured minimums: amount, unit, accrual/carry-forward/encashment requirements
+  eligibility          Json?
+  legalSource          String
+  sourceUrl            String?
+  verifiedDate         DateTime  @db.Date
+  version              Int       @default(1)
+  status                String   @default("DRAFT") // DRAFT | VERIFIED | PUBLISHED | SUPERSEDED
+  notes                String?
+  createdAt            DateTime  @default(now())
+
+  @@index([jurisdictionCountry, jurisdictionState, leaveCategory])
 }
 
 model Holiday {
@@ -2154,6 +2398,13 @@ model CrmInvoice {
   sourceQuotationVersion   Int?
   sourceQuotationNumber    String?
   sourceQuotationSnapshot  Json?
+
+  // PENDING MIGRATION (blocked on unrelated DB drift, see plan notes):
+  //   pdfTemplate               String?
+  //   shareToken                String?   @unique
+  //   shareExpiresAt            DateTime?
+  //   notifyOnApproval          Boolean   @default(true)
+  //   notifyOnCustomerDecision  Boolean   @default(true)
 
   createdById String
   updatedById String

@@ -1,4 +1,5 @@
 import {
+  PerformanceActionLink,
   PerformanceCard,
   PerformanceGrid,
   PerformanceSection,
@@ -12,6 +13,7 @@ import {
   DashboardMiniBarChart,
   DashboardSegmentList,
 } from "@/components/data-display/dashboard-insights";
+import { WorkspaceBadge } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";
@@ -25,7 +27,6 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 function monthBounds(year: number, month: number) {
@@ -243,25 +244,30 @@ export default async function AMSPage() {
           eyebrow="Workspace overview"
           title="Action lanes"
           description="All AMS tools remain available, but they now sit below the dashboard summary instead of replacing it."
+          actions={
+            <WorkspaceBadge variant="accent">
+              {quickLinks.length} role-visible lanes
+            </WorkspaceBadge>
+          }
         />
-        <PerformanceGrid className="p-5">
+        <PerformanceGrid className="px-5 pb-5">
           {quickLinks.map((item) => {
             const Icon = item.icon;
             return (
-              <Link key={item.href} href={item.href} className="mnx-row-link">
-                <PerformanceCard className="mnx-interactive-surface h-full">
-                  <span className="mnx-icon-badge">
-                    <Icon aria-hidden="true" />
-                  </span>
-                  <h2 className="mnx-title-3 mt-5">{item.label}</h2>
-                  <p className="mnx-text-muted mt-2 text-sm leading-6">
-                    {item.description}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-mono-accent">
+              <PerformanceCard key={item.href} className="h-full">
+                <span className="mnx-icon-badge">
+                  <Icon aria-hidden="true" />
+                </span>
+                <h2 className="mnx-title-3 mt-5">{item.label}</h2>
+                <p className="mnx-text-muted mt-2 text-sm leading-6">
+                  {item.description}
+                </p>
+                <div className="mt-5">
+                  <PerformanceActionLink href={item.href}>
                     Open workspace <ArrowRight size={15} aria-hidden="true" />
-                  </span>
-                </PerformanceCard>
-              </Link>
+                  </PerformanceActionLink>
+                </div>
+              </PerformanceCard>
             );
           })}
         </PerformanceGrid>

@@ -1,6 +1,8 @@
 import {
   PerformanceControlButton,
   PerformanceControlInput,
+  PerformanceSection,
+  PerformanceSectionHeader,
   PerformanceTable,
   PerformanceTableBody,
   PerformanceTableCell,
@@ -8,12 +10,7 @@ import {
   PerformanceTableHeader,
   PerformanceTableRow,
 } from "@/modules/performance/components/performance-workspace";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { WorkspaceBadge } from "@/components/layout/workspace";
 import { SlabForm } from "./slab-form";
 import { deleteSlabAction, seedSlabsAction } from "./actions";
 import { GRADE_BANDS } from "@/modules/ams/criteria-config";
@@ -21,8 +18,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Layers, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 const gradeColors: Record<string, string> = {
   "A+": "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] dark:bg-[var(--mnx-success-bg)] dark:text-[var(--mnx-success)]",
@@ -50,79 +46,77 @@ export default async function SlabsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
-            Configure recommended appraisal hike percentages based on employee
-            performance grades and rating bands.
-          </p>
-        </div>
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Performance compensation"
+          title="Increment slabs"
+          description="Configure recommended appraisal hike percentages by performance grade and rating band."
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <WorkspaceBadge variant="accent">
+                {slabs.length} configured
+              </WorkspaceBadge>
+              <form action={seedSlabsAction}>
+                <PerformanceControlButton type="submit">
+                  Seed defaults
+                </PerformanceControlButton>
+              </form>
+            </div>
+          }
+        />
 
-        <form action={seedSlabsAction}>
-          <Button
-            type="submit"
-            variant="outline"
-            className="h-10 text-xs font-semibold rounded-xl border-mono-border/60 hover:bg-mono-soft text-mono-text"
-          >
-            Seed Defaults
-          </Button>
-        </form>
-      </div>
-
-      {/* Grade reference bar */}
-      <div className="flex flex-wrap gap-2 text-[11px] font-semibold">
-        {GRADE_BANDS.map((b) => (
-          <div
-            key={b.grade}
-            className="flex items-center gap-1.5 bg-mono-soft dark:bg-mono-card border border-mono-border/30 rounded-xl px-3 py-1.5 shadow-sm"
-          >
-            <span
-              className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${gradeColors[b.grade] ?? "bg-mono-soft text-mono-muted"}`}
+        <div className="flex flex-wrap gap-2 px-5 pb-5 text-[11px] font-semibold">
+          {GRADE_BANDS.map((band) => (
+            <div
+              key={band.grade}
+              className="flex items-center gap-1.5 rounded-xl border border-mono-border/30 bg-mono-soft px-3 py-1.5"
             >
-              {b.grade}
-            </span>
-            <span className="text-mono-muted dark:text-mono-muted">
-              {b.label}
-            </span>
-            <span className="text-mono-muted dark:text-mono-muted">
-              {b.minNormalized}–{b.maxNormalized}
-            </span>
-          </div>
-        ))}
-      </div>
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${gradeColors[band.grade] ?? "bg-mono-soft text-mono-muted"}`}
+              >
+                {band.grade}
+              </span>
+              <span className="text-mono-muted">{band.label}</span>
+              <span className="text-mono-muted">
+                {band.minNormalized}-{band.maxNormalized}
+              </span>
+            </div>
+          ))}
+        </div>
+      </PerformanceSection>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        {/* Slabs list */}
-        <Card className="border-0 shadow-sm overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-mono-text dark:text-mono-text">
-              Active Hike Slabs
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <PerformanceSection>
+          <PerformanceSectionHeader
+            eyebrow="Active configuration"
+            title="Hike slabs"
+            description="Review current mappings between rating ranges and recommended hike percentages."
+          />
+
+          <div className="px-5 pb-5">
             {slabs.length === 0 ? (
-              <div className="text-center text-mono-muted py-16 text-sm font-medium">
+              <div className="mnx-empty-state">
                 No increment slabs configured. Click &quot;Seed Defaults&quot;
                 to populate standard parameters.
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <PerformanceTable className="w-full text-sm text-left">
+                <PerformanceTable className="w-full text-left text-sm">
                   <PerformanceTableHeader>
-                    <PerformanceTableRow className="border-b border-mono-border bg-mono-soft dark:bg-mono-card text-xs font-bold text-mono-muted dark:text-mono-muted">
-                      <PerformanceTableHead className="py-3 px-5 font-semibold">
+                    <PerformanceTableRow className="border-b border-mono-border bg-mono-soft text-xs font-bold text-mono-muted dark:bg-mono-card dark:text-mono-muted">
+                      <PerformanceTableHead className="px-5 py-3 font-semibold">
                         Grade
                       </PerformanceTableHead>
                       <PerformanceTableHead className="px-5 py-3 font-semibold">
                         Label
                       </PerformanceTableHead>
                       <PerformanceTableHead className="px-5 py-3 font-semibold">
-                        Rating Band
+                        Rating band
                       </PerformanceTableHead>
                       <PerformanceTableHead className="px-5 py-3 font-semibold">
-                        Hike Percentage
+                        Hike percentage
                       </PerformanceTableHead>
-                      <PerformanceTableHead className="px-5 py-3 font-semibold text-right">
+                      <PerformanceTableHead className="px-5 py-3 text-right font-semibold">
                         Actions
                       </PerformanceTableHead>
                     </PerformanceTableRow>
@@ -131,11 +125,11 @@ export default async function SlabsPage() {
                     {slabs.map((slab) => (
                       <PerformanceTableRow
                         key={slab.id}
-                        className="hover:bg-mono-soft/30 dark:hover:bg-mono-card transition duration-150"
+                        className="transition duration-150 hover:bg-mono-soft/30 dark:hover:bg-mono-card"
                       >
-                        <PerformanceTableCell className="py-3 px-5">
+                        <PerformanceTableCell className="px-5 py-3">
                           <span
-                            className={`font-bold px-2.5 py-0.5 rounded text-[10px] ${gradeColors[slab.grade] ?? "bg-mono-soft text-mono-muted"}`}
+                            className={`rounded px-2.5 py-0.5 text-[10px] font-bold ${gradeColors[slab.grade] ?? "bg-mono-soft text-mono-muted"}`}
                           >
                             {slab.grade}
                           </span>
@@ -143,23 +137,18 @@ export default async function SlabsPage() {
                         <PerformanceTableCell className="px-5 py-3 text-mono-muted dark:text-mono-muted">
                           {slab.label}
                         </PerformanceTableCell>
-                        <PerformanceTableCell className="px-5 py-3 text-mono-muted font-semibold">
-                          {slab.minRating}–{slab.maxRating}
+                        <PerformanceTableCell className="px-5 py-3 font-semibold text-mono-muted">
+                          {slab.minRating}-{slab.maxRating}
                         </PerformanceTableCell>
                         <PerformanceTableCell className="px-5 py-3">
                           <span
                             className={`font-bold ${slab.hikePercent > 0 ? "text-[var(--mnx-success)] dark:text-[var(--mnx-success)]" : "text-[var(--mnx-danger)]"}`}
                           >
-                            {slab.hikePercent > 0
-                              ? `${slab.hikePercent}%`
-                              : "Nil"}
+                            {slab.hikePercent > 0 ? `${slab.hikePercent}%` : "Nil"}
                           </span>
                         </PerformanceTableCell>
                         <PerformanceTableCell className="px-5 py-3 text-right">
-                          <form
-                            action={deleteSlabAction}
-                            className="inline-block"
-                          >
+                          <form action={deleteSlabAction} className="inline-block">
                             <PerformanceControlInput
                               type="hidden"
                               name="id"
@@ -167,8 +156,8 @@ export default async function SlabsPage() {
                             />
                             <PerformanceControlButton
                               type="submit"
-                              className="text-[var(--mnx-danger)] hover:text-[var(--mnx-danger)] p-1.5 rounded-lg hover:bg-[var(--mnx-danger-bg)] transition duration-150"
-                              title="Delete Slab"
+                              className="rounded-lg p-1.5 text-[var(--mnx-danger)] transition duration-150 hover:bg-[var(--mnx-danger-bg)] hover:text-[var(--mnx-danger)]"
+                              title="Delete slab"
                             >
                               <Trash2 className="size-4" />
                             </PerformanceControlButton>
@@ -180,22 +169,23 @@ export default async function SlabsPage() {
                 </PerformanceTable>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </PerformanceSection>
 
-        {/* Add slab form */}
-        <div className="space-y-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2 font-semibold text-mono-text dark:text-mono-text">
-                <Plus className="size-4 text-mono-accent" /> Add Custom Slab
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <PerformanceSection>
+          <PerformanceSectionHeader
+            eyebrow="Custom configuration"
+            title="Add slab"
+            description="Create a new grade band recommendation when the default slabs do not match policy."
+            actions={<Plus className="size-4 text-mono-accent" aria-hidden="true" />}
+          />
+
+          <div className="px-5 pb-5">
+            <div className="rounded-[var(--mn-radius-panel)] border border-mono-border/35 bg-mono-card p-4">
               <SlabForm />
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </PerformanceSection>
       </div>
     </div>
   );

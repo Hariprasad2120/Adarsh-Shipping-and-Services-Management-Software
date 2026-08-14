@@ -1,4 +1,18 @@
+import NextLink from "next/link";
+import { notFound, redirect } from "next/navigation";
 import {
+  ArrowLeft,
+  Calendar,
+  Settings,
+  ShieldAlert,
+} from "lucide-react";
+import { getSession } from "@/lib/auth";
+import { getAsset } from "@/modules/accounting/service";
+import {
+  PerformanceActionLink,
+  PerformanceGrid,
+  PerformanceSection,
+  PerformanceSectionHeader,
   PerformanceTable,
   PerformanceTableBody,
   PerformanceTableCell,
@@ -6,20 +20,10 @@ import {
   PerformanceTableHeader,
   PerformanceTableRow,
 } from "@/modules/performance/components/performance-workspace";
-import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect, notFound } from "next/navigation";
-import Link from "next/navigation";
-import NextLink from "next/link";
-import { getAsset } from "@/modules/accounting/service";
 import {
-  ShieldAlert,
-  ArrowLeft,
-  Calendar,
-  FileText,
-  Settings,
-  ShieldCheck,
-} from "lucide-react";
+  WorkspaceBadge,
+  WorkspaceState,
+} from "@/components/layout/workspace";
 
 interface AssetDetailPageProps {
   params: Promise<{ id: string }>;
@@ -34,11 +38,13 @@ export default async function AssetDetailPage({
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="p-8 text-center text-[var(--mnx-danger)]">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
+      <WorkspaceState
+        variant="danger"
+        eyebrow="Asset operations"
+        title="Configuration error"
+        description="Missing organisation context."
+        icon={<ShieldAlert aria-hidden="true" />}
+      />
     );
   }
 
@@ -52,168 +58,162 @@ export default async function AssetDetailPage({
   const bookValue = Number(asset.bookValue);
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
-      {/* ─── HEADER ────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 border-b border-mono-border/20 pb-5">
-        <NextLink
-          href="/ams/assets"
-          className="p-1.5 text-mono-muted hover:text-mono-text hover:bg-mono-card rounded-xl transition-all cursor-pointer border border-mono-border"
-          title="Back to Register"
-        >
-          <ArrowLeft className="size-5" />
-        </NextLink>
-        <div>
-          <h2 className="text-xl font-bold text-mono-text uppercase tracking-wider">
-            {asset.assetName}
-          </h2>
-          <span className="text-[10px] font-mono text-mono-muted block tracking-wider mt-0.5">
-            Asset Code: {asset.assetCode}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Asset profile card */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="p-6 rounded-xl bg-mono-card border border-mono-border space-y-4 mnx-performance-surface mnx-accent-edge">
-            <div className="flex items-center gap-3 border-b border-mono-border pb-3 mb-2">
-              <Settings className="size-4.5 text-mono-accent" />
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
-                Asset Profile
-              </h3>
+    <div className="space-y-6">
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Asset record"
+          title={asset.assetName}
+          description={`Asset code ${asset.assetCode} with assignment, value, and depreciation history.`}
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <WorkspaceBadge
+                variant={asset.status === "ACTIVE" ? "success" : "warning"}
+              >
+                {asset.status.replace("_", " ")}
+              </WorkspaceBadge>
+              <PerformanceActionLink href="/ams/assets">
+                <ArrowLeft size={14} aria-hidden="true" />
+                Back to register
+              </PerformanceActionLink>
             </div>
+          }
+        />
 
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between border-b border-mono-border pb-1.5">
-                <span className="text-mono-muted">Acquisition Date:</span>
-                <span className="text-mono-text font-medium">
-                  {asset.purchaseDate.toLocaleDateString("en-IN")}
+        <div className="px-5 pb-5">
+          <PerformanceGrid className="grid-cols-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+            <article className="mnx-performance-card">
+              <div className="flex items-center gap-3 border-b border-[var(--mnx-border)] pb-3">
+                <span className="mnx-icon-badge">
+                  <Settings aria-hidden="true" />
                 </span>
+                <div>
+                  <h2 className="mnx-title-3">Asset profile</h2>
+                  <p className="mnx-text-muted text-sm">
+                    Key ownership, acquisition, and value details.
+                  </p>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-mono-border pb-1.5">
-                <span className="text-mono-muted">Original Cost:</span>
-                <span className="text-mono-text font-bold font-mono">
-                  ₹
-                  {purchaseValue.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-mono-border pb-1.5">
-                <span className="text-mono-muted">Depr. Rate (S/L):</span>
-                <span className="text-mono-text font-medium">
-                  {asset.depreciationRate}% p.a.
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-mono-border pb-1.5">
-                <span className="text-mono-muted">Total Accrued Depr:</span>
-                <span className="text-mono-text font-semibold font-mono">
-                  ₹
-                  {accumulatedDepreciation.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-mono-border pb-1.5 font-bold">
-                <span className="text-mono-accent">Net Book Value:</span>
-                <span className="text-mono-accent font-mono">
-                  ₹
-                  {bookValue.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between pt-2">
-                <span className="text-mono-muted">Status:</span>
-                <span
-                  className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${
-                    asset.status === "ACTIVE"
-                      ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
-                      : "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
-                  }`}
-                >
-                  {asset.status.replace("_", " ")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Right Column: Historical Depreciation Ledger */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="p-6 rounded-xl bg-mono-card border border-mono-border space-y-4">
-            <div className="flex items-center gap-3 border-b border-mono-border pb-3">
-              <Calendar className="size-4.5 text-mono-accent" />
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
-                Depreciation Journal Listings
-              </h3>
-            </div>
-
-            {asset.depreciationEntries.length === 0 ? (
-              <div className="text-center py-12 text-mono-muted text-sm">
-                No depreciation postings registered yet. Apply monthly runs from
-                the Asset Register.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <PerformanceTable className="mnx-workspace-table">
-                  <PerformanceTableHeader>
-                    <PerformanceTableRow>
-                      <PerformanceTableHead>
-                        Depreciation Date
-                      </PerformanceTableHead>
-                      <PerformanceTableHead>
-                        Applied Amount
-                      </PerformanceTableHead>
-                      <PerformanceTableHead>
-                        Linked Journal entry
-                      </PerformanceTableHead>
-                    </PerformanceTableRow>
-                  </PerformanceTableHeader>
-                  <PerformanceTableBody>
-                    {asset.depreciationEntries.map((entry) => {
-                      const depDate = new Date(entry.depreciationDate);
-                      const monthStr = depDate.toLocaleString("en-IN", {
-                        month: "long",
-                        year: "numeric",
-                      });
-                      return (
-                        <PerformanceTableRow
-                          key={entry.id}
-                          className="hover:bg-mono-card transition-all"
-                        >
-                          <PerformanceTableCell className="font-semibold text-mono-text">
-                            {monthStr}
-                          </PerformanceTableCell>
-                          <PerformanceTableCell className="mnx-numeric font-bold text-mono-accent">
-                            ₹
-                            {Number(entry.depreciationAmount).toLocaleString(
-                              "en-IN",
-                              { minimumFractionDigits: 2 },
-                            )}
-                          </PerformanceTableCell>
-                          <PerformanceTableCell>
-                            {entry.journalEntry ? (
-                              <NextLink
-                                href={`/accounting/journal-entries/${entry.journalEntry.id}`}
-                                className="text-mono-accent hover:underline font-mono text-xs font-bold"
-                              >
-                                {entry.journalEntry.voucherNo}
-                              </NextLink>
-                            ) : (
-                              <span className="text-mono-muted">—</span>
-                            )}
-                          </PerformanceTableCell>
-                        </PerformanceTableRow>
-                      );
+              <dl className="mt-5 space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-4 border-b border-[var(--mnx-border)] pb-3">
+                  <dt className="mnx-text-muted">Acquisition date</dt>
+                  <dd className="font-medium">
+                    {asset.purchaseDate.toLocaleDateString("en-IN")}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-[var(--mnx-border)] pb-3">
+                  <dt className="mnx-text-muted">Original cost</dt>
+                  <dd className="mnx-numeric font-semibold">
+                    Rs.{" "}
+                    {purchaseValue.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
                     })}
-                  </PerformanceTableBody>
-                </PerformanceTable>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-[var(--mnx-border)] pb-3">
+                  <dt className="mnx-text-muted">Depreciation rate</dt>
+                  <dd className="font-medium">{asset.depreciationRate}% p.a.</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-[var(--mnx-border)] pb-3">
+                  <dt className="mnx-text-muted">Accumulated depreciation</dt>
+                  <dd className="mnx-numeric font-semibold">
+                    Rs.{" "}
+                    {accumulatedDepreciation.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="font-semibold text-[var(--mnx-accent-text)]">
+                    Net book value
+                  </dt>
+                  <dd className="mnx-numeric font-semibold text-[var(--mnx-accent-text)]">
+                    Rs.{" "}
+                    {bookValue.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="mnx-performance-card">
+              <div className="flex items-center gap-3 border-b border-[var(--mnx-border)] pb-3">
+                <span className="mnx-icon-badge">
+                  <Calendar aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="mnx-title-3">Depreciation journal history</h2>
+                  <p className="mnx-text-muted text-sm">
+                    Monthly straight-line depreciation postings linked to this asset.
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
+
+              {asset.depreciationEntries.length === 0 ? (
+                <div className="mnx-empty-state mt-5">
+                  No depreciation postings are registered yet. Apply monthly runs
+                  from the asset register.
+                </div>
+              ) : (
+                <div className="mt-5">
+                  <PerformanceTable>
+                    <PerformanceTableHeader>
+                      <PerformanceTableRow>
+                        <PerformanceTableHead>
+                          Depreciation date
+                        </PerformanceTableHead>
+                        <PerformanceTableHead>
+                          Applied amount
+                        </PerformanceTableHead>
+                        <PerformanceTableHead>
+                          Linked journal entry
+                        </PerformanceTableHead>
+                      </PerformanceTableRow>
+                    </PerformanceTableHeader>
+                    <PerformanceTableBody>
+                      {asset.depreciationEntries.map((entry) => {
+                        const depDate = new Date(entry.depreciationDate);
+                        const monthStr = depDate.toLocaleString("en-IN", {
+                          month: "long",
+                          year: "numeric",
+                        });
+
+                        return (
+                          <PerformanceTableRow key={entry.id}>
+                            <PerformanceTableCell className="font-medium">
+                              {monthStr}
+                            </PerformanceTableCell>
+                            <PerformanceTableCell className="mnx-numeric font-semibold">
+                              Rs.{" "}
+                              {Number(entry.depreciationAmount).toLocaleString(
+                                "en-IN",
+                                { minimumFractionDigits: 2 },
+                              )}
+                            </PerformanceTableCell>
+                            <PerformanceTableCell>
+                              {entry.journalEntry ? (
+                                <NextLink
+                                  href={`/accounting/journal-entries/${entry.journalEntry.id}`}
+                                  className="mnx-performance-record-link"
+                                >
+                                  {entry.journalEntry.voucherNo}
+                                </NextLink>
+                              ) : (
+                                <span className="mnx-text-muted">Not linked</span>
+                              )}
+                            </PerformanceTableCell>
+                          </PerformanceTableRow>
+                        );
+                      })}
+                    </PerformanceTableBody>
+                  </PerformanceTable>
+                </div>
+              )}
+            </article>
+          </PerformanceGrid>
         </div>
-      </div>
+      </PerformanceSection>
     </div>
   );
 }

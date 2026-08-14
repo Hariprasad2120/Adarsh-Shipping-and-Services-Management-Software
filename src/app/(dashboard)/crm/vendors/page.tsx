@@ -62,27 +62,27 @@ export default async function CrmVendorsPage({
       <div className="grid grid-cols-1 gap-8 items-start">
         <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+            <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">
               Registered Vendors
             </h3>
-            <span className="text-xs text-mono-muted font-bold">
+            <span className="text-xs text-[var(--mnx-muted)] font-bold">
               {vendors.length} supplier nodes
             </span>
           </div>
 
           <form method="GET" className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+            <Search className="absolute left-3 top-2.5 size-4 text-[var(--mnx-muted)]" />
             <CrmInput
               type="text"
               name="search"
               defaultValue={search}
               placeholder="Search vendors by name or service..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
+              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
             />
           </form>
 
           {vendors.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted text-xs italic">
+            <div className="p-8 text-center text-[var(--mnx-muted)] text-xs italic">
               No vendors found.
             </div>
           ) : (
@@ -93,14 +93,14 @@ export default async function CrmVendorsPage({
                   className="py-4 flex items-center justify-between gap-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-bold text-mono-text text-sm block truncate">
+                    <span className="font-bold text-[var(--mnx-text-strong)] text-sm block truncate">
                       {vendor.name}
                     </span>
-                    <span className="text-xs text-mono-muted block mt-0.5">
+                    <span className="text-xs text-[var(--mnx-muted)] block mt-0.5">
                       Contact: {vendor.contactName || "None"} • Services:{" "}
                       {vendor.services || "General logistics"}
                     </span>
-                    <div className="flex gap-4 text-[10px] text-mono-muted mt-1.5">
+                    <div className="flex gap-4 text-[10px] text-[var(--mnx-muted)] mt-1.5">
                       {vendor.email && (
                         <span className="flex items-center gap-1">
                           <Mail className="size-3" /> {vendor.email}
@@ -117,7 +117,7 @@ export default async function CrmVendorsPage({
                     recordId={vendor.id}
                     deleteAction={deleteVendorAction}
                     confirmMessage="Are you sure you want to delete this vendor?"
-                    className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer shrink-0"
+                    className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer shrink-0"
                   />
                 </div>
               ))}

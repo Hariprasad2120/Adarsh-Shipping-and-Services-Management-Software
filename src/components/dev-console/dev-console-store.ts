@@ -82,6 +82,22 @@ export type DevConsoleHiddenEntry = {
   timestamp: number;
 };
 
+export type DevConsoleRouteTimingEntry = {
+  id: string;
+  route: string;
+  loadMs: number;
+  timestamp: number;
+};
+
+export type DevConsoleComponentTimingEntry = {
+  id: string;
+  name: string;
+  phase: "mount" | "update";
+  durationMs: number;
+  route: string;
+  timestamp: number;
+};
+
 type Listener = () => void;
 
 function makeId() {
@@ -100,6 +116,8 @@ class DevConsoleStore {
   private violations: DevConsoleViolationEntry[] = [];
   private a11yIssues: DevConsoleA11yEntry[] = [];
   private hiddenElements: DevConsoleHiddenEntry[] = [];
+  private routeTimings: DevConsoleRouteTimingEntry[] = [];
+  private componentTimings: DevConsoleComponentTimingEntry[] = [];
   private listeners = new Set<Listener>();
 
   subscribe(listener: Listener): () => void {
@@ -135,6 +153,14 @@ class DevConsoleStore {
 
   getHiddenElements(): DevConsoleHiddenEntry[] {
     return this.hiddenElements;
+  }
+
+  getRouteTimings(): DevConsoleRouteTimingEntry[] {
+    return this.routeTimings;
+  }
+
+  getComponentTimings(): DevConsoleComponentTimingEntry[] {
+    return this.componentTimings;
   }
 
   recordError(input: {
@@ -228,6 +254,44 @@ class DevConsoleStore {
 
   clearHiddenElements() {
     this.hiddenElements = [];
+    this.notify();
+  }
+
+  recordRouteTiming(input: { route: string; loadMs: number }) {
+    const entry: DevConsoleRouteTimingEntry = {
+      id: makeId(),
+      route: input.route,
+      loadMs: input.loadMs,
+      timestamp: Date.now(),
+    };
+    this.routeTimings = [entry, ...this.routeTimings].slice(0, MAX_ENTRIES);
+    this.notify();
+  }
+
+  recordComponentTiming(input: {
+    name: string;
+    phase: "mount" | "update";
+    durationMs: number;
+  }) {
+    const entry: DevConsoleComponentTimingEntry = {
+      id: makeId(),
+      name: input.name,
+      phase: input.phase,
+      durationMs: input.durationMs,
+      route: typeof window === "undefined" ? "" : window.location.pathname,
+      timestamp: Date.now(),
+    };
+    this.componentTimings = [entry, ...this.componentTimings].slice(0, MAX_ENTRIES);
+    this.notify();
+  }
+
+  clearRouteTimings() {
+    this.routeTimings = [];
+    this.notify();
+  }
+
+  clearComponentTimings() {
+    this.componentTimings = [];
     this.notify();
   }
 

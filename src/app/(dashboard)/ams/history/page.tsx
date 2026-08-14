@@ -1,4 +1,6 @@
 import {
+  PerformanceSection,
+  PerformanceSectionHeader,
   PerformanceTable,
   PerformanceTableBody,
   PerformanceTableCell,
@@ -6,18 +8,13 @@ import {
   PerformanceTableHeader,
   PerformanceTableRow,
 } from "@/modules/performance/components/performance-workspace";
+import { WorkspaceBadge, WorkspaceState } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import Link from "next/link";
-import { HistoryFilters } from "./history-filters";
 import { redirect } from "next/navigation";
-import { History } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
+import { HistoryFilters } from "./history-filters";
 
 const STAGE_COLORS: Record<string, string> = {
   DUE_NOTIFIED:
@@ -48,21 +45,27 @@ function toTitleCase(str?: string | null): string {
   );
 }
 
-function getAverageReviewerRating(reviewerRatings: any[]) {
+function getAverageReviewerRating(reviewerRatings: unknown[]) {
   if (!reviewerRatings || reviewerRatings.length === 0) return null;
+
   let totalScore = 0;
   let count = 0;
-  for (const rr of reviewerRatings) {
-    const ratingsObj = rr.ratings as any;
-    const categoryPoints = ratingsObj?.categoryPoints || {};
+
+  for (const reviewerRating of reviewerRatings) {
+    const ratingsObj = reviewerRating as {
+      ratings?: { categoryPoints?: Record<string, unknown> };
+    };
+    const categoryPoints = ratingsObj.ratings?.categoryPoints ?? {};
     const values = Object.values(categoryPoints)
       .map(Number)
-      .filter((v) => !isNaN(v));
+      .filter((value) => !Number.isNaN(value));
+
     if (values.length > 0) {
-      totalScore += values.reduce((a, b) => a + b, 0) / values.length;
+      totalScore += values.reduce((sum, value) => sum + value, 0) / values.length;
       count++;
     }
   }
+
   return count > 0 ? totalScore / count : null;
 }
 
@@ -93,21 +96,25 @@ export default async function HistoryPage({
   const orgId = currentUser.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Organisation configuration missing.
-      </div>
+      <WorkspaceState
+        variant="danger"
+        eyebrow="Performance reporting"
+        title="Configuration error"
+        description="Organisation configuration is missing."
+        icon={<ShieldAlert aria-hidden="true" />}
+      />
     );
   }
 
-  const userRoleNames = currentUser.roles.map((r) => r.role.name);
+  const userRoleNames = currentUser.roles.map((role) => role.role.name);
   const isAdmin = userRoleNames.includes("Admin");
   const isManagement =
     userRoleNames.includes("Management") || userRoleNames.includes("Director");
-  const isReviewer = userRoleNames.some((r) =>
-    ["HR", "TL", "Manager"].includes(r),
+  const isReviewer = userRoleNames.some((role) =>
+    ["HR", "TL", "Manager"].includes(role),
   );
 
-  const where: any = {};
+  const where: Record<string, unknown> = {};
 
   if (isAdmin || isManagement) {
     where.cycle = { orgId };
@@ -135,14 +142,15 @@ export default async function HistoryPage({
   }
 
   if (sp.year) {
-    where.cycle = { ...where.cycle, year: Number(sp.year) };
+    where.cycle = { ...(where.cycle as object), year: Number(sp.year) };
   }
 
   if (sp.month && sp.year) {
-    const yearVal = Number(sp.year);
-    const monthVal = Number(sp.month);
-    const startDate = new Date(Date.UTC(yearVal, monthVal - 1, 1));
-    const endDate = new Date(Date.UTC(yearVal, monthVal, 0, 23, 59, 59));
+    const yearValue = Number(sp.year);
+    const monthValue = Number(sp.month);
+    const startDate = new Date(Date.UTC(yearValue, monthValue - 1, 1));
+    const endDate = new Date(Date.UTC(yearValue, monthValue, 0, 23, 59, 59));
+
     where.dueDate = {
       gte: startDate,
       lte: endDate,
@@ -182,39 +190,38 @@ export default async function HistoryPage({
   });
 
   const canViewEmployeeDetail = isAdmin || isManagement;
-  const canViewCycleDetail = true; // All roles can click to view details of their respective appraisals
+  const canViewCycleDetail = true;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
-            Review history and status logs of employee appraisal cycles.
-          </p>
-        </div>
-      </div>
-
-      <div className="border-b border-mono-border pb-4">
-        <HistoryFilters
-          defaultQ={sp.q}
-          defaultMonth={sp.month}
-          defaultYear={sp.year}
-          defaultStage={sp.stage}
-          showSearch={isAdmin || isManagement || isReviewer}
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Performance reporting"
+          title="Appraisal history"
+          description="Review history and status logs of employee appraisal cycles."
+          actions={
+            <WorkspaceBadge variant="accent">
+              {appraisals.length} record{appraisals.length !== 1 ? "s" : ""}
+            </WorkspaceBadge>
+          }
         />
-      </div>
 
-      <p className="text-xs font-semibold text-mono-muted">
-        {appraisals.length} record{appraisals.length !== 1 ? "s" : ""} found
-      </p>
+        <div className="px-5 pb-5">
+          <HistoryFilters
+            defaultQ={sp.q}
+            defaultMonth={sp.month}
+            defaultYear={sp.year}
+            defaultStage={sp.stage}
+            showSearch={isAdmin || isManagement || isReviewer}
+          />
+        </div>
 
-      <Card className="border-0 shadow-sm overflow-hidden bg-mono-card">
-        <CardContent className="p-0">
+        <div className="px-5 pb-5">
           <div className="overflow-x-auto">
-            <PerformanceTable className="w-full text-sm text-left min-w-[800px]">
+            <PerformanceTable className="min-w-[800px] w-full text-left text-sm">
               <PerformanceTableHeader>
-                <PerformanceTableRow className="border-b border-mono-border bg-mono-soft dark:bg-mono-card text-xs font-bold text-mono-muted dark:text-mono-muted">
-                  <PerformanceTableHead className="py-3.5 px-5 font-semibold">
+                <PerformanceTableRow className="border-b border-mono-border bg-mono-soft text-xs font-bold text-mono-muted dark:bg-mono-card dark:text-mono-muted">
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
                     Employee
                   </PerformanceTableHead>
                   {(isAdmin || isManagement) && (
@@ -223,16 +230,16 @@ export default async function HistoryPage({
                     </PerformanceTableHead>
                   )}
                   <PerformanceTableHead className="px-5 py-3.5 font-semibold">
-                    Appraisal Cycle
+                    Appraisal cycle
                   </PerformanceTableHead>
                   <PerformanceTableHead className="px-5 py-3.5 font-semibold">
-                    Due Date
+                    Due date
                   </PerformanceTableHead>
                   <PerformanceTableHead className="px-5 py-3.5 font-semibold">
                     Stage
                   </PerformanceTableHead>
                   <PerformanceTableHead className="px-5 py-3.5 font-semibold">
-                    Avg Rating
+                    Avg rating
                   </PerformanceTableHead>
                   <PerformanceTableHead className="px-5 py-3.5 font-semibold">
                     Grade
@@ -241,10 +248,10 @@ export default async function HistoryPage({
                     Slab
                   </PerformanceTableHead>
                   <PerformanceTableHead className="px-5 py-3.5 font-semibold">
-                    Final Hike
+                    Final hike
                   </PerformanceTableHead>
                   {canViewCycleDetail && (
-                    <PerformanceTableHead className="px-5 py-3.5 font-semibold text-right">
+                    <PerformanceTableHead className="px-5 py-3.5 text-right font-semibold">
                       Actions
                     </PerformanceTableHead>
                   )}
@@ -255,56 +262,59 @@ export default async function HistoryPage({
                   <PerformanceTableRow>
                     <PerformanceTableCell
                       colSpan={10}
-                      className="py-16 text-center text-mono-muted text-sm font-medium"
+                      className="py-16 text-center text-sm font-medium text-mono-muted"
                     >
                       No appraisal records found.
                     </PerformanceTableCell>
                   </PerformanceTableRow>
                 )}
-                {appraisals.map((c) => {
-                  const avg = getAverageReviewerRating(c.reviewerRatings);
-                  const decision = c.hikeDecision;
-                  const hikeFinal = c.hikeFinal as any;
+
+                {appraisals.map((appraisal) => {
+                  const avg = getAverageReviewerRating(appraisal.reviewerRatings);
+                  const decision = appraisal.hikeDecision;
+                  const hikeFinal = appraisal.hikeFinal as
+                    | { percent?: number; amount?: number }
+                    | null;
                   const hikePercent = decision?.percent ?? hikeFinal?.percent;
                   const hikeAmount = decision?.amount ?? hikeFinal?.amount;
 
                   return (
                     <PerformanceTableRow
-                      key={c.id}
-                      className="hover:bg-mono-soft/30 dark:hover:bg-mono-card transition duration-150"
+                      key={appraisal.id}
+                      className="transition duration-150 hover:bg-mono-soft/30 dark:hover:bg-mono-card"
                     >
-                      <PerformanceTableCell className="py-3.5 px-5 font-bold text-mono-text dark:text-mono-text">
+                      <PerformanceTableCell className="px-5 py-3.5 font-bold text-mono-text dark:text-mono-text">
                         {canViewEmployeeDetail ? (
                           <Link
-                            href={`/hrms/employees/${c.employee.id}`}
+                            href={`/hrms/employees/${appraisal.employee.id}`}
                             className="text-mono-accent hover:underline"
                           >
-                            {toTitleCase(c.employee.name)}
+                            {toTitleCase(appraisal.employee.name)}
                           </Link>
                         ) : (
-                          toTitleCase(c.employee.name)
+                          toTitleCase(appraisal.employee.name)
                         )}
                       </PerformanceTableCell>
                       {(isAdmin || isManagement) && (
-                        <PerformanceTableCell className="px-5 py-3.5 text-mono-muted font-semibold">
-                          {c.employee.employeeNumber ?? "—"}
+                        <PerformanceTableCell className="px-5 py-3.5 font-semibold text-mono-muted">
+                          {appraisal.employee.employeeNumber ?? "-"}
                         </PerformanceTableCell>
                       )}
                       <PerformanceTableCell className="px-5 py-3.5 text-mono-muted dark:text-mono-muted">
-                        {c.cycle.name} ({c.cycle.year})
+                        {appraisal.cycle.name} ({appraisal.cycle.year})
                       </PerformanceTableCell>
-                      <PerformanceTableCell className="px-5 py-3.5 text-mono-muted font-semibold">
-                        {new Date(c.dueDate).toLocaleDateString("en-IN")}
+                      <PerformanceTableCell className="px-5 py-3.5 font-semibold text-mono-muted">
+                        {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
                       </PerformanceTableCell>
                       <PerformanceTableCell className="px-5 py-3.5">
                         <span
-                          className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${STAGE_COLORS[c.stage] ?? "bg-mono-soft text-mono-muted"}`}
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${STAGE_COLORS[appraisal.stage] ?? "bg-mono-soft text-mono-muted"}`}
                         >
-                          {c.stage.replace(/_/g, " ")}
+                          {appraisal.stage.replace(/_/g, " ")}
                         </span>
                       </PerformanceTableCell>
                       <PerformanceTableCell className="px-5 py-3.5 font-bold text-mono-text dark:text-mono-text">
-                        {avg !== null ? avg.toFixed(2) : "—"}
+                        {avg !== null ? avg.toFixed(2) : "-"}
                       </PerformanceTableCell>
                       <PerformanceTableCell className="px-5 py-3.5">
                         {decision?.slab?.grade ? (
@@ -312,30 +322,30 @@ export default async function HistoryPage({
                             {decision.slab.grade}
                           </span>
                         ) : (
-                          "—"
+                          "-"
                         )}
                       </PerformanceTableCell>
-                      <PerformanceTableCell className="px-5 py-3.5 text-mono-muted dark:text-mono-muted max-w-xs truncate">
-                        {decision?.slab?.label ?? "—"}
+                      <PerformanceTableCell className="max-w-xs truncate px-5 py-3.5 text-mono-muted dark:text-mono-muted">
+                        {decision?.slab?.label ?? "-"}
                       </PerformanceTableCell>
                       <PerformanceTableCell className="px-5 py-3.5">
                         {hikeAmount !== undefined &&
                         hikePercent !== undefined ? (
-                          <span className="font-bold text-[var(--mnx-success)] dark:text-[var(--mnx-success)] whitespace-nowrap">
-                            +₹{Number(hikeAmount).toLocaleString("en-IN")} (
+                          <span className="whitespace-nowrap font-bold text-[var(--mnx-success)] dark:text-[var(--mnx-success)]">
+                            +Rs. {Number(hikeAmount).toLocaleString("en-IN")} (
                             {hikePercent}%)
                           </span>
                         ) : (
-                          "—"
+                          "-"
                         )}
                       </PerformanceTableCell>
                       {canViewCycleDetail && (
                         <PerformanceTableCell className="px-5 py-3.5 text-right">
                           <Link
-                            href={`/ams/appraisals/${c.id}`}
-                            className="text-xs text-mono-accent hover:underline font-bold"
+                            href={`/ams/appraisals/${appraisal.id}`}
+                            className="text-xs font-bold text-mono-accent hover:underline"
                           >
-                            View details →
+                            {"View details ->"}
                           </Link>
                         </PerformanceTableCell>
                       )}
@@ -345,8 +355,8 @@ export default async function HistoryPage({
               </PerformanceTableBody>
             </PerformanceTable>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </PerformanceSection>
     </div>
   );
 }

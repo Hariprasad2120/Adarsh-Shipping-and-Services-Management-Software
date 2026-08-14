@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   ChevronDown,
-  Command,
+  ChevronLeft,
+  ChevronRight,
   LogOut,
   Menu,
   Moon,
@@ -29,12 +30,17 @@ import type { Caps } from "@/lib/rbac";
 import { performLogout } from "@/lib/logout";
 import {
   getActiveItemHref,
+  getSearchCommandEntries,
   getVisibleSections,
   matchesPath,
+  rankSearchCommandEntries,
 } from "@/lib/navigation";
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
+import { MonolithSearchCommand } from "@/components/navigation/monolith-search-command";
 import { MonaProvider, useMonaChat } from "@/modules/mona/components";
 import { DevConsoleErrorBoundary } from "@/components/dev-console/dev-console-error-boundary";
+import { DevConsoleProfiler } from "@/components/dev-console/dev-console-profiler";
+import { markRouteChangeStart, recordRouteLoadPing } from "@/components/dev-console/dev-console-perf-tracker";
 
 const MonaChat = dynamic(
   () => import("@/modules/mona/components").then((module) => module.MonaChat),
@@ -402,37 +408,32 @@ function MonolithAppShellBody({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsedLoaded, setSidebarCollapsedLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
-  const searchRef = useRef<HTMLInputElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds, enabledFeatureIds),
     [caps, enabledFeatureIds, enabledModuleIds],
   );
+  const searchEntries = useMemo(
+    () => getSearchCommandEntries(caps, enabledModuleIds, enabledFeatureIds),
+    [caps, enabledFeatureIds, enabledModuleIds],
+  );
 
-  const filteredSections = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return visibleSections.slice(0, 6);
-    return visibleSections
-      .filter(
-        (section) =>
-          section.label.toLowerCase().includes(normalizedQuery) ||
-          section.items.some((item) =>
-            item.label.toLowerCase().includes(normalizedQuery),
-          ),
-      )
-      .slice(0, 8);
-  }, [query, visibleSections]);
+  const filteredSearchEntries = useMemo(
+    () => rankSearchCommandEntries(searchEntries, query),
+    [query, searchEntries],
+  );
 
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearchOpen(true);
-        window.requestAnimationFrame(() => searchRef.current?.focus());
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "m") {
         event.preventDefault();
@@ -450,6 +451,19 @@ function MonolithAppShellBody({
   }, [toggleChat]);
 
   useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setSidebarCollapsed(window.localStorage.getItem("sidebarCollapsed") === "true");
+      setSidebarCollapsedLoaded(true);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
+  useEffect(() => {
+    if (!sidebarCollapsedLoaded) return;
+    window.localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed, sidebarCollapsedLoaded]);
+
+  useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       if (
         profileRef.current &&
@@ -462,6 +476,12 @@ function MonolithAppShellBody({
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
+
+  useEffect(() => {
+    markRouteChangeStart();
+    if (caps["system.dev_console.access"]) recordRouteLoadPing(pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only fire on pathname change
+  }, [pathname]);
 
   useEffect(() => {
     const activeSection = visibleSections.find(
@@ -483,7 +503,11 @@ function MonolithAppShellBody({
   }, [pathname, visibleSections]);
 
   return (
-    <div className="mnx-dashboard-shell" data-theme={theme}>
+    <div
+      className="mnx-dashboard-shell"
+      data-theme={theme}
+      data-sidebar-collapsed={sidebarCollapsed}
+    >
       <aside
         className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`}
         aria-label="Primary navigation"
@@ -499,6 +523,15 @@ function MonolithAppShellBody({
               <small>Adarsh Shipping & Services</small>
             </span>
           </Link>
+          <button
+            type="button"
+            className="mnx-sidebar-collapse-toggle"
+            onClick={() => setSidebarCollapsed((current) => !current)}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
           <button
             type="button"
             className="mnx-sidebar-close"
@@ -689,10 +722,7 @@ function MonolithAppShellBody({
             <button
               type="button"
               className="mnx-global-search"
-              onClick={() => {
-                setSearchOpen(true);
-                window.requestAnimationFrame(() => searchRef.current?.focus());
-              }}
+              onClick={() => setSearchOpen(true)}
             >
               <Search size={15} />
               <span>Search workspaces…</span>
@@ -716,7 +746,9 @@ function MonolithAppShellBody({
 
         <main className="mnx-dashboard-main">
           {caps["system.dev_console.access"] ? (
-            <DevConsoleErrorBoundary>{children}</DevConsoleErrorBoundary>
+            <DevConsoleErrorBoundary>
+              <DevConsoleProfiler id={contextLabel}>{children}</DevConsoleProfiler>
+            </DevConsoleErrorBoundary>
           ) : (
             children
           )}
@@ -724,58 +756,14 @@ function MonolithAppShellBody({
       </div>
 
       {searchOpen ? (
-        <div
-          className="mnx-command-layer"
-          role="presentation"
-          onMouseDown={() => setSearchOpen(false)}
-        >
-          <section
-            className="mnx-command-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Search workspaces"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <label>
-              <Search size={18} />
-              <input
-                ref={searchRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search workspaces and modules"
-              />
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                aria-label="Close search"
-              >
-                <X size={16} />
-              </button>
-            </label>
-            <p>QUICK NAVIGATION</p>
-            <div>
-              {filteredSections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <Link
-                    href={section.href}
-                    key={section.id}
-                    onClick={() => setSearchOpen(false)}
-                  >
-                    <span>
-                      <Icon size={17} />
-                    </span>
-                    <span>
-                      <b>{section.label}</b>
-                      <small>{section.items.length} linked pages</small>
-                    </span>
-                    <Command size={14} />
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        </div>
+        <MonolithSearchCommand
+          entries={filteredSearchEntries}
+          open={searchOpen}
+          query={query}
+          onClose={() => setSearchOpen(false)}
+          onOpenChange={setSearchOpen}
+          onQueryChange={setQuery}
+        />
       ) : null}
     </div>
   );

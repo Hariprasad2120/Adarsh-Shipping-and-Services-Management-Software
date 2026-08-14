@@ -52,7 +52,7 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
   if (!account) notFound();
 
   return (
-    <Suspense fallback={<div className="p-8 text-center text-mono-muted text-xs animate-pulse">Loading Customer Profile...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[var(--mnx-muted)] text-xs animate-pulse">Loading Customer Profile...</div>}>
       <AccountDetailWrapper
         account={account}
         notes={notes}

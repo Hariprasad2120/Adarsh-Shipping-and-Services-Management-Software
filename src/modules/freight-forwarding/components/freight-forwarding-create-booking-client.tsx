@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Layers2 } from "lucide-react";
 import { toast } from "sonner";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import {
   WorkspaceAction,
   WorkspaceField,
@@ -69,6 +69,7 @@ export function FreightForwardingCreateBookingClient({
   const [mblDraft, setMblDraft] = useState(() => initialMblDraft ?? seedTransaction("MBL"));
   const [hblDraft, setHblDraft] = useState(() => initialHblDraft ?? seedTransaction("HBL"));
   const [isPending, startTransition] = useTransition();
+  const isProcessHandoff = Boolean(processQuoteId);
 
   const visibleModes = useMemo(
     () => ({
@@ -107,7 +108,7 @@ export function FreightForwardingCreateBookingClient({
 
       toast.success(
         processQuoteId
-          ? "Freight process completed successfully."
+          ? "Transaction mode saved. Continue in the transaction detail page."
           : "Booking created successfully.",
       );
 
@@ -115,7 +116,9 @@ export function FreightForwardingCreateBookingClient({
         const nextHref =
           mode === "MBL_ONLY"
             ? `/freight-forwarding/mbl/${result.mblTransactionId}`
-            : `/freight-forwarding/hbl/${result.hblTransactionId || result.mblTransactionId}`;
+            : mode === "HBL_ONLY"
+              ? `/freight-forwarding/hbl/${result.hblTransactionId || result.mblTransactionId}`
+              : `/freight-forwarding/mbl/${result.mblTransactionId || result.hblTransactionId}`;
         router.push(nextHref);
         return;
       }
@@ -198,10 +201,18 @@ export function FreightForwardingCreateBookingClient({
         <WorkspaceMetric
           label="Mode"
           value={mode ? mode.replace("_", " ") : "Select"}
-          detail="Choose the transaction structure first"
+          detail={isProcessHandoff ? "Choose the transaction structure and continue to the next page" : "Choose the transaction structure first"}
         />
-        <WorkspaceMetric label="MBL form" value={visibleModes.mbl ? "Ready" : "Hidden"} detail="Master bill details" />
-        <WorkspaceMetric label="HBL form" value={visibleModes.hbl ? "Ready" : "Hidden"} detail="House bill details" />
+        <WorkspaceMetric
+          label="MBL flow"
+          value={visibleModes.mbl ? (isProcessHandoff ? "Next step" : "Ready") : "Hidden"}
+          detail={isProcessHandoff ? "Master bill details open after mode selection" : "Master bill details"}
+        />
+        <WorkspaceMetric
+          label="HBL flow"
+          value={visibleModes.hbl ? (isProcessHandoff ? "Next step" : "Ready") : "Hidden"}
+          detail={isProcessHandoff ? "House bill details open after mode selection" : "House bill details"}
+        />
       </section>
 
       <WorkspaceSectionHeading
@@ -214,7 +225,11 @@ export function FreightForwardingCreateBookingClient({
         <WorkspacePanelHeader
           eyebrow="Booking setup"
           title="Mode and transaction scope"
-          description="Step 1 is choosing the transaction mode. Once selected, only the remaining matching detail sections are shown below."
+          description={
+            isProcessHandoff
+              ? "Choose the transaction mode here. After you continue, the quote will move into the matching MBL, HBL, or linked booking detail pages for the remaining data entry."
+              : "Step 1 is choosing the transaction mode. Once selected, only the remaining matching detail sections are shown below."
+          }
         />
         <div className="ff-create-booking-mode-panel">
           <div className="ff-create-booking-mode-field">
@@ -252,15 +267,19 @@ export function FreightForwardingCreateBookingClient({
                 {!mode
                   ? "No transaction details are shown until you choose the booking mode."
                   : mode === "BOTH"
-                  ? "Both transaction details stay on this page and create a linked booking group together."
-                  : `Only the ${mode === "MBL_ONLY" ? "MBL" : "HBL"} transaction details will be created from this page.`}
+                  ? isProcessHandoff
+                    ? "A linked MBL and HBL booking group will be created. You will land on the MBL page first and can switch to the HBL page there."
+                    : "Both transaction details stay on this page and create a linked booking group together."
+                  : isProcessHandoff
+                    ? `The ${mode === "MBL_ONLY" ? "MBL" : "HBL"} draft transaction will be created first, then you will be redirected to its detail page to complete the remaining fields.`
+                    : `Only the ${mode === "MBL_ONLY" ? "MBL" : "HBL"} transaction details will be created from this page.`}
               </p>
             </div>
           </div>
         </div>
       </WorkspacePanel>
 
-      {mode ? (
+      {mode && !isProcessHandoff ? (
         <section className="ff-create-booking-form-stack">
           <WorkspaceSectionHeading
             index="02"
@@ -293,34 +312,36 @@ export function FreightForwardingCreateBookingClient({
         </section>
       ) : null}
 
-      {showBothSwitcher ? (
+      {showBothSwitcher && !isProcessHandoff ? (
         <section className="ff-create-booking-form-stack">
           <div className="ff-create-booking-detail-switcher-wrap">
             <div className="mnx-segmented-control ff-create-booking-detail-switcher" role="tablist" aria-label="Transaction detail switcher">
-              <button
-                type="button"
+              <Button
+                size="sm"
+                variant={activeBothDetail === "MBL" ? "default" : "inverse"}
                 role="tab"
                 aria-selected={activeBothDetail === "MBL"}
                 className={activeBothDetail === "MBL" ? "is-active" : ""}
                 onClick={() => setActiveBothDetail("MBL")}
               >
                 <span>MBL Details</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                variant={activeBothDetail === "HBL" ? "default" : "inverse"}
                 role="tab"
                 aria-selected={activeBothDetail === "HBL"}
                 className={activeBothDetail === "HBL" ? "is-active" : ""}
                 onClick={() => setActiveBothDetail("HBL")}
               >
                 <span>HBL Details</span>
-              </button>
+              </Button>
             </div>
           </div>
         </section>
       ) : null}
 
-      {showMblDetails ? (
+      {showMblDetails && !isProcessHandoff ? (
         <section className="ff-create-booking-form-stack">
           <WorkspaceSectionHeading
             index={showBothSwitcher ? "04" : "03"}
@@ -346,7 +367,7 @@ export function FreightForwardingCreateBookingClient({
         </section>
       ) : null}
 
-      {showHblDetails ? (
+      {showHblDetails && !isProcessHandoff ? (
         <section className="ff-create-booking-form-stack">
           <WorkspaceSectionHeading
             index={showBothSwitcher ? "04" : visibleModes.mbl ? "04" : "03"}
@@ -382,7 +403,7 @@ export function FreightForwardingCreateBookingClient({
           disabled={!mode || isPending}
           onClick={handleCreateBooking}
         >
-          {isPending ? "Creating..." : submitLabel}
+          {isPending ? (isProcessHandoff ? "Continuing..." : "Creating...") : submitLabel}
         </WorkspaceAction>
       </section>
     </WorkspacePage>

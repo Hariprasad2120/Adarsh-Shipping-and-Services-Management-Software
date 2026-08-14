@@ -12,6 +12,7 @@ import {
 } from "@/lib/attendance-date";
 import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
 import { invalidateDashboardMetricSnapshots } from "@/modules/dashboard/cache";
+import { submitLeaveRequest } from "@/modules/leave/request";
 import type { Prisma } from "@/generated/prisma/client";
 
 // ─── Core & Dashboard ──────────────────────────────────────────────────────────
@@ -342,6 +343,11 @@ export async function getLeaveTrackerSummary(userId: string, _orgId: string) {
   };
 }
 
+// NOTE: applyLeave is now a thin compatibility wrapper around
+// src/modules/leave/request.ts's submitLeaveRequest — the consolidated
+// ledger-backed leave engine. Notification kind is unified to
+// LEAVE_REQUEST_SUBMITTED (was LEAVE_SUBMITTED) — see
+// docs/leave-management/ARCHITECTURE.md §1.
 export async function applyLeave(
   userId: string,
   orgId: string,
@@ -354,39 +360,15 @@ export async function applyLeave(
     toHalf: boolean;
   },
 ) {
-  const request = await db.leaveRequest.create({
-    data: {
-      userId,
-      leaveTypeId: data.leaveTypeId,
-      fromDate: data.fromDate,
-      toDate: data.toDate,
-      halfDay: data.fromHalf || data.toHalf,
-      status: "pending",
-      notes: data.reason,
-    },
-    include: {
-      user: { select: { name: true } },
-      leaveType: { select: { name: true } },
-    },
-  });
-
-  // Notify Approvers
-  const approverIds = await getUsersWithPermission(
+  const { request } = await submitLeaveRequest({
     orgId,
-    "attendance.leave.approve",
-  );
-  const recipients = approverIds.filter((id) => id !== userId);
-  if (recipients.length > 0) {
-    await notifyMany(recipients, {
-      orgId,
-      kind: "LEAVE_SUBMITTED",
-      title: `New Leave Request`,
-      body: `${request.user.name} applied for ${request.leaveType.name} from ${data.fromDate.toLocaleDateString()} to ${data.toDate.toLocaleDateString()}.`,
-      link: "/attendance/leaves",
-      payload: { requestId: request.id },
-    });
-  }
-
+    userId,
+    leaveTypeId: data.leaveTypeId,
+    fromDate: data.fromDate,
+    toDate: data.toDate,
+    halfDay: data.fromHalf || data.toHalf,
+    notes: data.reason,
+  });
   return request;
 }
 

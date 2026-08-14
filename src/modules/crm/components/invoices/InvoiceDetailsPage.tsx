@@ -56,7 +56,7 @@ interface InvoiceDetailsPageProps {
 }
 
 const statusTone: Record<string, string> = {
-  DRAFT: "bg-mono-soft text-mono-muted",
+  DRAFT: "bg-[var(--mnx-soft)] text-[var(--mnx-muted)]",
   PENDING_APPROVAL: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
   APPROVED: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
   REWORK: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
@@ -116,7 +116,7 @@ export function InvoiceDetailsPage({
     <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
       <div className="flex min-h-screen flex-col xl:flex-row">
         {/* Sidebar */}
-        <aside className="flex w-full shrink-0 flex-col border-b border-[var(--mnx-border)] bg-mono-card xl:w-[360px] xl:border-b-0 xl:border-r">
+        <aside className="flex w-full shrink-0 flex-col border-b border-[var(--mnx-border)] bg-[var(--mnx-surface)] xl:w-[360px] xl:border-b-0 xl:border-r">
           <div className="border-b border-[var(--mnx-border)] px-4 py-4">
             <div className="flex items-center justify-between gap-3">
               <span className="mnx-title-3 font-bold tracking-wide text-[var(--mnx-text-strong)]">
@@ -125,7 +125,7 @@ export function InvoiceDetailsPage({
               <div className="flex items-center gap-2">
                 <CrmButton
                   type="button"
-                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
                   aria-label="More actions"
                 >
                   <MoreHorizontal className="size-4" />
@@ -174,7 +174,7 @@ export function InvoiceDetailsPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search documents"
-                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/15"
+                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/15"
               />
             </div>
           </div>
@@ -212,7 +212,7 @@ export function InvoiceDetailsPage({
                         <span
                           className={cn(
                             "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide",
-                            statusTone[record.approvalStatus] ?? "bg-mono-soft text-mono-muted"
+                            statusTone[record.approvalStatus] ?? "bg-[var(--mnx-soft)] text-[var(--mnx-muted)]"
                           )}
                         >
                           {formatStatus(record.approvalStatus)}
@@ -245,13 +245,13 @@ export function InvoiceDetailsPage({
 
             {/* Entity Badge and Type Title */}
             <div className="flex items-center gap-3">
-              <span className="text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-lg bg-mono-card border border-[var(--mnx-border)] text-[var(--mnx-text-muted)]">
+              <span className="text-xs uppercase font-bold tracking-widest px-3 py-1 rounded-lg bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[var(--mnx-text-muted)]">
                 {invoice.type.replace("_", " ")}
               </span>
               <span
                 className={cn(
                   "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
-                  statusTone[invoice.approvalStatus] ?? "bg-mono-soft text-mono-muted"
+                  statusTone[invoice.approvalStatus] ?? "bg-[var(--mnx-soft)] text-[var(--mnx-muted)]"
                 )}
               >
                 {formatStatus(invoice.approvalStatus)}
@@ -260,7 +260,7 @@ export function InvoiceDetailsPage({
           </div>
 
           {/* Workflow Action Bar Card (Keep interactive outside gray-out) */}
-          <div className="mnx-crm-panel-surface  bg-mono-card rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="mnx-crm-panel-surface  bg-[var(--mnx-surface)] rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="mnx-label block mb-1">Workflow Status</span>
@@ -352,7 +352,7 @@ export function InvoiceDetailsPage({
                 {/* Left Columns - Client & General */}
                 <div className="md:col-span-2 space-y-6">
                   {/* General Details */}
-                  <div className="bg-mono-card p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
+                  <div className="bg-[var(--mnx-surface)] p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
                     <h3 className="mnx-title-3 font-semibold mb-4 text-[var(--mnx-text-strong)]">
                       General Information
                     </h3>
@@ -391,7 +391,7 @@ export function InvoiceDetailsPage({
                   </div>
 
                   {/* Customer Block */}
-                  <div className="bg-mono-card p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
+                  <div className="bg-[var(--mnx-surface)] p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
                     <h3 className="mnx-title-3 font-semibold mb-4 text-[var(--mnx-text-strong)]">
                       Customer Details
                     </h3>
@@ -421,7 +421,7 @@ export function InvoiceDetailsPage({
 
                   {/* Notes Block */}
                   {invoice.notes && (
-                    <div className="bg-mono-card p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
+                    <div className="bg-[var(--mnx-surface)] p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
                       <h3 className="mnx-title-3 font-semibold mb-2 text-[var(--mnx-text-strong)]">
                         Terms & Notes
                       </h3>
@@ -434,7 +434,7 @@ export function InvoiceDetailsPage({
 
                 {/* Right Column - Financial Summary */}
                 <div className="space-y-6">
-                  <div className="bg-mono-card p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm mnx-crm-panel-surface ">
+                  <div className="bg-[var(--mnx-surface)] p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm mnx-crm-panel-surface ">
                     <h3 className="mnx-title-3 font-semibold mb-4 text-[var(--mnx-text-strong)]">
                       Financial Summary
                     </h3>
@@ -471,7 +471,7 @@ export function InvoiceDetailsPage({
 
             {/* Tab content - Items */}
             {activeTab === "items" && (
-              <div className="bg-mono-card rounded-2xl border border-[var(--mnx-border)] shadow-sm overflow-hidden">
+              <div className="bg-[var(--mnx-surface)] rounded-2xl border border-[var(--mnx-border)] shadow-sm overflow-hidden">
                 <CrmTable className="mnx-crm-table w-full">
                   <thead>
                     <tr>
@@ -510,7 +510,7 @@ export function InvoiceDetailsPage({
 
             {/* Tab content - History */}
             {activeTab === "history" && (
-              <div className="bg-mono-card p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
+              <div className="bg-[var(--mnx-surface)] p-6 rounded-2xl border border-[var(--mnx-border)] shadow-sm">
                 <h3 className="mnx-title-3 font-semibold mb-4 text-[var(--mnx-text-strong)] flex items-center gap-2">
                   <History className="size-4 text-[var(--mnx-accent)]" />
                   <span>Workflow Audit History</span>

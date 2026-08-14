@@ -1,16 +1,22 @@
-import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionState } from "@/modules/crm/components/workspace/crm-workspace";
+import {
+  CrmButton,
+  CrmConfigurationState,
+  CrmField,
+  CrmInput,
+  CrmPanel,
+  CrmPermissionState,
+  CrmSection,
+  CrmTextarea,
+} from "@/modules/crm/components/workspace/crm-workspace";
 import { NativeSelect } from "@/components/ui/native-select";
-import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { listProducts } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
 import { Search, Package, Save } from "lucide-react";
-import {
-  createProductAction,
-  deleteProductAction,
-} from "@/modules/crm/actions";
+import { createProductAction, deleteProductAction } from "@/modules/crm/actions";
 import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
+import { EditProductButton } from "@/modules/crm/components/edit-product-button";
 
 interface SearchParams {
   search?: string;
@@ -47,32 +53,31 @@ export default async function CrmProductsPage({
   const products = await listProducts(orgId, { search });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column: Products List Table */}
-        <div className="lg:col-span-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
-              Product Catalog
-            </h3>
-            <span className="text-xs text-mono-muted font-bold">
-              {products.length} service items
-            </span>
-          </div>
-
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+      <CrmSection
+        className="lg:col-span-2"
+        title="Product catalog"
+        description="Reusable catalog items available for quotes and invoices."
+        actions={
+          <span className="text-xs font-semibold text-[var(--mnx-muted)]">
+            {products.length} items
+          </span>
+        }
+      >
+        <div className="space-y-4">
           <form method="GET" className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+            <Search className="absolute left-3 top-2.5 size-4 text-[var(--mnx-muted)]" />
             <CrmInput
               type="text"
               name="search"
               defaultValue={search}
               placeholder="Search catalog by name or SKU..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
+              className="w-full rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] py-1.5 pl-9 pr-3 text-sm text-[var(--mnx-text-strong)] placeholder:text-[var(--mnx-muted)] focus:border-[var(--mnx-accent)] focus:outline-none"
             />
           </form>
 
           {products.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted text-xs italic">
+            <div className="p-8 text-center text-xs italic text-[var(--mnx-muted)]">
               No items found in the service catalog.
             </div>
           ) : (
@@ -80,150 +85,140 @@ export default async function CrmProductsPage({
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="py-4 flex items-center justify-between gap-4"
+                  className="flex items-center justify-between gap-4 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-mono-text text-sm block truncate">
+                      <span className="block truncate text-sm font-bold text-[var(--mnx-text-strong)]">
                         {product.name}
                       </span>
-                      <span className="px-1.5 py-0.5 text-[8.5px] font-bold bg-mono-soft text-mono-muted rounded uppercase tracking-wider shrink-0">
+                      <span className="shrink-0 rounded bg-[var(--mnx-soft)] px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                         {product.sku}
                       </span>
                     </div>
-                    <span className="text-xs text-mono-muted block mt-0.5">
+                    <span className="mt-0.5 block text-xs text-[var(--mnx-muted)]">
                       Category: {product.category || "General"} • Tax:{" "}
                       {product.taxPercent}% GST
                     </span>
                     {product.description && (
-                      <p className="text-xs text-mono-muted mt-1 truncate">
+                      <p className="mt-1 truncate text-xs text-[var(--mnx-muted)]">
                         {product.description}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex shrink-0 items-center gap-4">
                     <div className="text-right">
-                      <span className="text-sm font-black text-[var(--mnx-accent)] block">
+                      <span className="block text-sm font-black text-[var(--mnx-accent)]">
                         ₹{product.price.toLocaleString("en-IN")}
                       </span>
                     </div>
-                    <DeleteRecordButton
-                      recordId={product.id}
-                      deleteAction={deleteProductAction}
-                      confirmMessage="Are you sure you want to delete this product?"
-                    />
+                    <div className="flex items-center gap-1">
+                      <EditProductButton product={product} />
+                      <DeleteRecordButton
+                        recordId={product.id}
+                        deleteAction={deleteProductAction}
+                        confirmMessage="Are you sure you want to delete this product?"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+      </CrmSection>
 
-        {/* Right Column: Inline Create Product Form */}
-        <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
-          <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
-            <Package className="size-4.5 text-[var(--mnx-accent)]" />
-            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">
-              Add New Service Item
-            </h3>
-          </div>
+      <CrmPanel className="p-6">
+        <div className="mb-4 flex items-center gap-2 border-b border-[var(--mnx-border)]/50 pb-3">
+          <Package className="size-4.5 text-[var(--mnx-accent)]" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--mnx-text-strong)]">
+            Add new service item
+          </h3>
+        </div>
 
-          <form
-            action={async (fd) => {
-              "use server";
-              await createProductAction(fd);
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Product Name *
-              </label>
+        <form
+          action={async (fd) => {
+            "use server";
+            await createProductAction(fd);
+          }}
+          className="space-y-4"
+        >
+          <CrmField label="Product Name" htmlFor="product-name" required>
+            <CrmInput
+              id="product-name"
+              type="text"
+              name="name"
+              placeholder="e.g. FCL 20ft Ocean Freight"
+              className="w-full rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-1.5 text-xs text-[var(--mnx-text-strong)] focus:border-[var(--mnx-accent)] focus:outline-none"
+              required
+            />
+          </CrmField>
+          <div className="grid grid-cols-2 gap-3">
+            <CrmField label="SKU / Code" htmlFor="product-sku" required>
               <CrmInput
+                id="product-sku"
                 type="text"
-                name="name"
-                placeholder="e.g. FCL 20ft Ocean Freight"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                name="sku"
+                placeholder="e.g. FRT-FCL-20"
+                className="w-full rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-1.5 text-xs text-[var(--mnx-text-strong)] focus:border-[var(--mnx-accent)] focus:outline-none"
                 required
               />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                  SKU / Code *
-                </label>
-                <CrmInput
-                  type="text"
-                  name="sku"
-                  placeholder="e.g. FRT-FCL-20"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                  Category
-                </label>
-                <CrmInput
-                  type="text"
-                  name="category"
-                  placeholder="e.g. Ocean Freight"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                  Base Price (INR) *
-                </label>
-                <CrmInput
-                  type="number"
-                  name="price"
-                  placeholder="e.g. 45000"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                  GST Rate (%)
-                </label>
-                <NativeSelect
-                  name="taxPercent"
-                  defaultValue="18"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
-                >
-                  <option value="0">0%</option>
-                  <option value="5">5%</option>
-                  <option value="12">12%</option>
-                  <option value="18">18% GST</option>
-                  <option value="28">28%</option>
-                </NativeSelect>
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Description
-              </label>
-              <CrmTextarea
-                name="description"
-                placeholder="Log service details..."
-                rows={3}
-                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+            </CrmField>
+            <CrmField label="Category" htmlFor="product-category">
+              <CrmInput
+                id="product-category"
+                type="text"
+                name="category"
+                placeholder="e.g. Ocean Freight"
+                className="w-full rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-1.5 text-xs text-[var(--mnx-muted)] focus:border-[var(--mnx-accent)] focus:outline-none"
               />
-            </div>
-            <CrmInput type="hidden" name="active" value="true" />
-            <CrmButton
-              type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all mnx-shadow-panel cursor-pointer"
-            >
-              <Save className="size-4" />
-              <span>Save Product Item</span>
-            </CrmButton>
-          </form>
-        </div>
-      </div>
+            </CrmField>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <CrmField label="Base Price (INR)" htmlFor="product-price" required>
+              <CrmInput
+                id="product-price"
+                type="number"
+                name="price"
+                placeholder="e.g. 45000"
+                className="w-full rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-1.5 text-xs text-[var(--mnx-text-strong)] focus:border-[var(--mnx-accent)] focus:outline-none"
+                required
+              />
+            </CrmField>
+            <CrmField label="GST Rate (%)" htmlFor="product-tax">
+              <NativeSelect
+                id="product-tax"
+                name="taxPercent"
+                defaultValue="18"
+                className="w-full rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-1.5 text-xs text-[var(--mnx-muted)] focus:border-[var(--mnx-accent)] focus:outline-none"
+              >
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18% GST</option>
+                <option value="28">28%</option>
+              </NativeSelect>
+            </CrmField>
+          </div>
+          <CrmField label="Description" htmlFor="product-description">
+            <CrmTextarea
+              id="product-description"
+              name="description"
+              placeholder="Log service details..."
+              rows={3}
+              className="w-full rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-2.5 text-xs text-[var(--mnx-text-strong)] focus:border-[var(--mnx-accent)] focus:outline-none"
+            />
+          </CrmField>
+          <CrmInput type="hidden" name="active" value="true" />
+          <CrmButton
+            type="submit"
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-[var(--mnx-accent)] py-2 text-xs font-bold text-[var(--mnx-text-strong)] mnx-shadow-panel transition-all hover:bg-[var(--mnx-accent)]"
+          >
+            <Save className="size-4" />
+            <span>Save Product Item</span>
+          </CrmButton>
+        </form>
+      </CrmPanel>
     </div>
   );
 }

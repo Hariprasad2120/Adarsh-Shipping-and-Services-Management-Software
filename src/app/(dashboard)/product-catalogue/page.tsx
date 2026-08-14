@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as LucideIcons from "lucide-react";
@@ -16,7 +17,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { WorkspaceAction, WorkspaceBadge, WorkspaceField, WorkspaceInput, WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspacePanelHeader, WorkspaceSelect } from "@/components/layout/workspace";
 import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import {
@@ -108,6 +109,15 @@ export default function ProductCataloguePage() {
     });
   }
 
+  function handleModuleCardKeyDown(
+    event: KeyboardEvent<HTMLElement>,
+    moduleId: string,
+  ) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    selectFilteredModule(moduleId);
+  }
+
   return (
     <WorkspacePage className="mnx-catalogue-page">
       <WorkspacePageHeader
@@ -170,11 +180,14 @@ export default function ProductCataloguePage() {
         ) : (
           <div className="mnx-catalogue-module-grid">
             {filteredModules.map((module) => (
-              <button
-                type="button"
+              <WorkspacePanel
+                interactive
                 key={module.id}
                 className="mnx-catalogue-module-card"
                 onClick={() => selectFilteredModule(module.id)}
+                onKeyDown={(event) => handleModuleCardKeyDown(event, module.id)}
+                role="button"
+                tabIndex={0}
               >
                 <span>
                   <DynamicIcon name={module.iconName} />
@@ -188,7 +201,7 @@ export default function ProductCataloguePage() {
                   <small>{module.keyFeatures.slice(0, 2).join(" · ")}</small>
                 </div>
                 <ArrowRight size={16} aria-hidden="true" />
-              </button>
+              </WorkspacePanel>
             ))}
           </div>
         )}
@@ -205,7 +218,8 @@ export default function ProductCataloguePage() {
           </blockquote>
           <div className="mnx-catalogue-intro-actions mnx-no-print">
             <ButtonLink href="#catalogue-workflow" variant="default">
-              Explore workflows <ArrowRight size={14} aria-hidden="true" />
+              Explore workflows
+              <ArrowRight size={14} aria-hidden="true" />
             </ButtonLink>
             <ButtonLink href="#catalogue-benefits" variant="outline">
               Review outcomes
@@ -279,38 +293,39 @@ export default function ProductCataloguePage() {
           title={activeModule.name}
           description={activeModule.shortDescription}
           actions={
-            <div className="mnx-segmented-control mnx-no-print">
-              <button
-                type="button"
-                className={view === "timeline" ? "is-active" : ""}
+            <div className="mnx-catalogue-view-actions mnx-no-print">
+              <Button
+                size="sm"
+                variant={view === "timeline" ? "default" : "inverse"}
                 onClick={() => setView("timeline")}
               >
                 Workflow
-              </button>
-              <button
-                type="button"
-                className={view === "blueprint" ? "is-active" : ""}
+              </Button>
+              <Button
+                size="sm"
+                variant={view === "blueprint" ? "default" : "inverse"}
                 onClick={() => setView("blueprint")}
               >
                 Blueprint
-              </button>
+              </Button>
             </div>
           }
         />
 
         <div className="mnx-catalogue-tabs mnx-no-print" role="tablist">
           {modules.map((module) => (
-            <button
-              type="button"
+            <Button
               key={module.id}
               role="tab"
               aria-selected={activeModule.id === module.id}
+              size="sm"
+              variant={activeModule.id === module.id ? "default" : "inverse"}
               className={activeModule.id === module.id ? "is-active" : ""}
               onClick={() => selectModule(module.id)}
             >
               <DynamicIcon name={module.iconName} size={15} />
               {module.name.replace(" MODULE", "").replace(" SYSTEM", "")}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -318,9 +333,9 @@ export default function ProductCataloguePage() {
           <div className="mnx-catalogue-workflow-grid">
             <nav aria-label={`${activeModule.name} workflow stages`}>
               {currentStages.map((stage, index) => (
-                <button
-                  type="button"
+                <Button
                   key={stage.stageId}
+                  variant={activeStage.stageId === stage.stageId ? "default" : "inverse"}
                   className={activeStage.stageId === stage.stageId ? "is-active" : ""}
                   onClick={() => setActiveStageId(stage.stageId)}
                 >
@@ -330,7 +345,7 @@ export default function ProductCataloguePage() {
                     <small>{stage.durationLabel}</small>
                   </span>
                   <DynamicIcon name={stage.iconName} size={15} />
-                </button>
+                </Button>
               ))}
             </nav>
 

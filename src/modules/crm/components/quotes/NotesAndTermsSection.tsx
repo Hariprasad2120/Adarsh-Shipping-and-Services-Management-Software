@@ -112,7 +112,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                   <CrmButton
                     type="button"
                     onClick={() => setTemplatePickerOpen((o) => !o)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-mono-card px-2.5 py-1 text-[11px] font-medium text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
                   >
                     <BookmarkPlus size={12} />
                     Templates
@@ -120,7 +120,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                   </CrmButton>
 
                   {templatePickerOpen && (
-                    <div className="absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border border-[var(--mnx-border)] bg-mono-card shadow-lg overflow-hidden">
+                    <div className="absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] shadow-lg overflow-hidden">
                       {templates.length === 0 ? (
                         <p className="px-4 py-6 text-center text-[11px] text-[var(--mnx-text-muted)]">
                           No saved templates yet.
@@ -158,7 +158,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                 <CrmButton
                   type="button"
                   onClick={() => setSaveDialogOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-mono-card px-2.5 py-1 text-[11px] font-medium text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
                   title="Save current note as template"
                 >
                   <Save size={12} />
@@ -170,7 +170,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <CrmTextarea
               rows={6}
               placeholder="Will be displayed on the quote"
-              className="w-full rounded-xl border bg-mono-card px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+              className="w-full rounded-xl border bg-[var(--mnx-surface)] px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("customerNotes")}
             />
 
@@ -187,20 +187,20 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                     if (e.key === "Escape") setSaveDialogOpen(false);
                   }}
                   placeholder="Template name…"
-                  className="flex-1 min-w-0 bg-mono-card rounded px-2 py-1 text-[12px] text-[var(--mnx-text-strong)] outline-none"
+                  className="flex-1 min-w-0 bg-[var(--mnx-surface)] rounded px-2 py-1 text-[12px] text-[var(--mnx-text-strong)] outline-none"
                 />
                 <CrmButton
                   type="button"
                   onClick={handleSaveTemplate}
                   disabled={!newTemplateName.trim()}
-                  className="px-3 py-1 rounded bg-[var(--mnx-accent)] text-mono-text text-[11px] font-medium hover:bg-[var(--mnx-accent)] disabled:opacity-40 transition-colors"
+                  className="px-3 py-1 rounded bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] text-[11px] font-medium hover:bg-[var(--mnx-accent)] disabled:opacity-40 transition-colors"
                 >
                   Save
                 </CrmButton>
                 <CrmButton
                   type="button"
                   onClick={() => setSaveDialogOpen(false)}
-                  className="p-1 rounded text-[var(--mnx-text-muted)] hover:text-[var(--mnx-text-strong)] hover:bg-mono-card transition-colors"
+                  className="p-1 rounded text-[var(--mnx-text-muted)] hover:text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
                   aria-label="Cancel"
                 >
                   <X size={14} />
@@ -230,7 +230,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             </label>
             <NativeSelect
               id="bankDetailsId"
-              className="w-full rounded-xl border bg-mono-card px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+              className="w-full rounded-xl border bg-[var(--mnx-surface)] px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("bankDetailsId")}
             >
               <option value="">— None (hide bank details) —</option>
@@ -273,7 +273,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <CrmTextarea
               rows={4}
               placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-              className="w-full rounded-xl border bg-mono-card px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+              className="w-full rounded-xl border bg-[var(--mnx-surface)] px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("terms")}
             />
           </div>

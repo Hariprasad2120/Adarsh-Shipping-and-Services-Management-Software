@@ -143,11 +143,7 @@ export function computeSalary(inputs: SalaryInputs): SalaryBreakup {
 }
 
 export function formatINR(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return `Rs ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(amount)}`;
 }
 
 export function cityLabel(city: City) {

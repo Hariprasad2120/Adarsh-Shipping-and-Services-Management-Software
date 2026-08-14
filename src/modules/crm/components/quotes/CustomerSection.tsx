@@ -74,7 +74,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         <FormRow label="Place of Supply" error={errors.placeOfSupply?.message}>
           <NativeSelect
             aria-label="Place of Supply"
-            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+            className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("placeOfSupply")}
           >
             <option value="">Select Place of Supply</option>
@@ -89,7 +89,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
           <NativeSelect
             aria-label="Location"
-            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+            className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("location")}
           >
             {locations.map((location) => (

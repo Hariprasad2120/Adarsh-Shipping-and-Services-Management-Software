@@ -251,21 +251,21 @@ export function InvoiceForm({
     >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <FileText className="size-4 text-[var(--mnx-accent)]" />
           <span>Basic Document Information</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Document Type *
             </label>
             <NativeSelect
               value={type}
               onChange={(e) => setType(e.target.value)}
               disabled={isEdit || invoiceTypes.length === 1}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {invoiceTypes.map((t) => (
                 <option key={t} value={t}>
@@ -275,7 +275,7 @@ export function InvoiceForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Document Number *
             </label>
             <CrmInput
@@ -285,30 +285,30 @@ export function InvoiceForm({
               onChange={(e) => setInvoiceNumber(e.target.value)}
               placeholder="e.g. QT-1001 or INV-2026-001"
               disabled={isEdit}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Issue Date *
             </label>
             <DateInput
               name="date"
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Bank Details
             </label>
             <NativeSelect
               name="bankDetails"
               defaultValue={initialData?.bankDetails || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               <option value="">Select Bank Account...</option>
               {bankAccounts.map((acc) => (
@@ -335,14 +335,14 @@ export function InvoiceForm({
             />
           ) : (
             <div>
-              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
                 Due Date
               </label>
               <DateInput
                 name="dueDate"
                 value={dueDateState}
                 onChange={(e) => setDueDateState(e.target.value)}
-                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           )}
@@ -351,21 +351,21 @@ export function InvoiceForm({
 
       {/* ─── SECTION: RELATED PARTIES ───────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <Building className="size-4 text-[var(--mnx-accent)]" />
           <span>Related Parties & Ownership</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Customer (Account)
             </label>
             <NativeSelect
               name="accountId"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               <option value="">Link Account</option>
               {accounts.map((acc) => (
@@ -376,13 +376,13 @@ export function InvoiceForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Contact Person
             </label>
             <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               <option value="">Link Contact</option>
               {contacts
@@ -396,13 +396,13 @@ export function InvoiceForm({
           </div>
           {type === "PURCHASE_ORDER" && (
             <div>
-              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
                 Vendor (Suppliers)
               </label>
               <NativeSelect
                 name="vendorId"
                 defaultValue={initialData?.vendorId || ""}
-                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               >
                 <option value="">Link Vendor</option>
                 {vendors.map((v) => (
@@ -419,13 +419,13 @@ export function InvoiceForm({
             value={initialData?.status || "DRAFT"}
           />
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Document Owner *
             </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Owner</option>
@@ -442,7 +442,7 @@ export function InvoiceForm({
       {/* ─── DYNAMIC LINE ITEM EDITOR ─── */}
       <div className="space-y-4">
         <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
-          <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider flex items-center gap-2">
             <span>Line Items (Freight, Local Handling, CHA services)</span>
           </h3>
           <CrmButton
@@ -456,9 +456,9 @@ export function InvoiceForm({
         </div>
 
         <div className="overflow-x-auto border border-[var(--mnx-border)]/60 rounded-lg">
-          <CrmTable className="w-full text-left text-xs text-mono-muted border-collapse whitespace-nowrap">
+          <CrmTable className="w-full text-left text-xs text-[var(--mnx-muted)] border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)] font-bold text-mono-muted">
+              <tr className="bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)] font-bold text-[var(--mnx-muted)]">
                 <th className="px-4 py-3 min-w-[200px] whitespace-nowrap">
                   Product / Service Name *
                 </th>
@@ -490,7 +490,7 @@ export function InvoiceForm({
                           handleItemChange(index, "productName", e.target.value)
                         }
                         placeholder="e.g. Customs CHA filing, Local transport..."
-                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                         required
                       />
                     </td>
@@ -500,7 +500,7 @@ export function InvoiceForm({
                         onChange={(e) =>
                           handleItemChange(index, "currency", e.target.value)
                         }
-                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                       >
                         <option value="INR">INR</option>
                         <option value="USD">USD</option>
@@ -522,7 +522,7 @@ export function InvoiceForm({
                             e.target.value,
                           )
                         }
-                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] disabled:opacity-50"
+                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] disabled:opacity-50"
                         required
                       />
                     </td>
@@ -535,7 +535,7 @@ export function InvoiceForm({
                         onChange={(e) =>
                           handleItemChange(index, "qty", e.target.value)
                         }
-                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                         required
                       />
                     </td>
@@ -548,7 +548,7 @@ export function InvoiceForm({
                         onChange={(e) =>
                           handleItemChange(index, "rate", e.target.value)
                         }
-                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                         required
                       />
                     </td>
@@ -558,7 +558,7 @@ export function InvoiceForm({
                         onChange={(e) =>
                           handleItemChange(index, "taxPercent", e.target.value)
                         }
-                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                       >
                         <option value="0">0% Exemption</option>
                         <option value="5">5% Service</option>
@@ -567,7 +567,7 @@ export function InvoiceForm({
                         <option value="28">28% High Slab</option>
                       </NativeSelect>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-right font-bold text-mono-text text-sm">
+                    <td className="px-4 py-2 whitespace-nowrap text-right font-bold text-[var(--mnx-text-strong)] text-sm">
                       ₹
                       {itemAmount.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
@@ -578,7 +578,7 @@ export function InvoiceForm({
                       <CrmButton
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="p-1 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-mono-soft cursor-pointer"
+                        className="p-1 text-[var(--mnx-muted)] hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-soft)] cursor-pointer"
                         title="Delete Row"
                       >
                         <Trash2 className="size-4" />
@@ -597,7 +597,7 @@ export function InvoiceForm({
         {/* Left side: Notes & Discount */}
         <div className="w-full md:w-1/2 space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide">
               Customer Notes
             </label>
             <CrmTextarea
@@ -607,16 +607,16 @@ export function InvoiceForm({
               }
               placeholder="Type any manual notes here..."
               rows={3}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
 
           <div className="w-64 space-y-1.5">
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide">
               Applied Flat Discount (INR)
             </label>
             <div className="relative">
-              <div className="absolute left-3 top-1.5 text-mono-muted font-bold text-sm">
+              <div className="absolute left-3 top-1.5 text-[var(--mnx-muted)] font-bold text-sm">
                 ₹
               </div>
               <CrmInput
@@ -627,14 +627,14 @@ export function InvoiceForm({
                   setDiscount(Math.max(0, parseFloat(e.target.value) || 0))
                 }
                 placeholder="e.g. 500"
-                className="w-full pl-8 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full pl-8 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
         </div>
 
         {/* Right side: Totals Summary */}
-        <div className="w-full md:w-80 bg-[var(--mnx-surface)] p-4 rounded-xl border border-[var(--mnx-border)]/80 space-y-2.5 text-mono-muted">
+        <div className="w-full md:w-80 bg-[var(--mnx-surface)] p-4 rounded-xl border border-[var(--mnx-border)]/80 space-y-2.5 text-[var(--mnx-muted)]">
           <div className="flex justify-between text-xs font-semibold">
             <span>Subtotal</span>
             <span>
@@ -644,21 +644,21 @@ export function InvoiceForm({
               })}
             </span>
           </div>
-          <div className="flex justify-between text-xs font-semibold text-mono-muted">
+          <div className="flex justify-between text-xs font-semibold text-[var(--mnx-muted)]">
             <span>Estimated GST Tax</span>
             <span>
               + ₹
               {totals.tax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <div className="flex justify-between text-xs font-semibold text-mono-muted border-b border-[var(--mnx-border)] pb-2">
+          <div className="flex justify-between text-xs font-semibold text-[var(--mnx-muted)] border-b border-[var(--mnx-border)] pb-2">
             <span>Discount</span>
             <span>
               - ₹
               {discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <div className="flex justify-between text-base font-black text-mono-text pt-1">
+          <div className="flex justify-between text-base font-black text-[var(--mnx-text-strong)] pt-1">
             <span>Grand Total</span>
             <span className="text-[var(--mnx-accent)]">
               ₹
@@ -675,14 +675,14 @@ export function InvoiceForm({
         <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-[var(--mnx-muted)] border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
         >
           Cancel
         </CrmButton>
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-[var(--mnx-text-strong)] rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>

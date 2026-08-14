@@ -12,13 +12,15 @@ import {
   type DevConsoleViolationEntry,
   type DevConsoleA11yEntry,
   type DevConsoleHiddenEntry,
+  type DevConsoleRouteTimingEntry,
+  type DevConsoleComponentTimingEntry,
 } from "./dev-console-store";
 import { scanForViolations } from "./dev-console-violation-scanner";
 import { scanForA11yIssues } from "./dev-console-a11y-scanner";
 import { scanForHiddenElements, type HiddenMatch } from "./dev-console-hidden-scanner";
 import { revealHiddenElements, restoreHiddenElements } from "./dev-console-hidden-reveal";
 
-type Tab = "overview" | "errors" | "network" | "logs" | "violations" | "a11y" | "hidden";
+type Tab = "overview" | "perf" | "errors" | "network" | "logs" | "violations" | "a11y" | "hidden";
 
 function useDevConsoleErrors(): DevConsoleErrorEntry[] {
   return useSyncExternalStore(
@@ -68,6 +70,22 @@ function useDevConsoleHiddenElements(): DevConsoleHiddenEntry[] {
   );
 }
 
+function useDevConsoleRouteTimings(): DevConsoleRouteTimingEntry[] {
+  return useSyncExternalStore(
+    (listener) => devConsoleStore.subscribe(listener),
+    () => devConsoleStore.getRouteTimings(),
+    () => [],
+  );
+}
+
+function useDevConsoleComponentTimings(): DevConsoleComponentTimingEntry[] {
+  return useSyncExternalStore(
+    (listener) => devConsoleStore.subscribe(listener),
+    () => devConsoleStore.getComponentTimings(),
+    () => [],
+  );
+}
+
 function formatTime(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString(undefined, {
     hour12: false,
@@ -77,13 +95,121 @@ function formatTime(timestamp: number) {
   });
 }
 
+const PING_GOOD_MS = 200;
+const PING_OK_MS = 500;
+
+function pingRating(ms: number): "good" | "ok" | "slow" {
+  if (ms <= PING_GOOD_MS) return "good";
+  if (ms <= PING_OK_MS) return "ok";
+  return "slow";
+}
+
+function PingMeter({ ms }: { ms: number }) {
+  const rating = pingRating(ms);
+  const pct = Math.min(100, Math.round((ms / 1500) * 100));
+  return (
+    <div className={`mnx-dev-ping-meter is-${rating}`}>
+      <div className="mnx-dev-ping-meter-track">
+        <div className="mnx-dev-ping-meter-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="mnx-dev-ping-value">{ms}ms</span>
+    </div>
+  );
+}
+
+function PerfTab() {
+  const routeTimings = useDevConsoleRouteTimings();
+  const componentTimings = useDevConsoleComponentTimings();
+  const pathname = usePathname();
+
+  const currentRouteTimings = routeTimings.filter((entry) => entry.route === pathname);
+  const latest = currentRouteTimings[0];
+  const average =
+    currentRouteTimings.length > 0
+      ? Math.round(
+          currentRouteTimings.reduce((sum, entry) => sum + entry.loadMs, 0) / currentRouteTimings.length,
+        )
+      : null;
+
+  const slowestComponents = [...componentTimings]
+    .sort((a, b) => b.durationMs - a.durationMs)
+    .slice(0, 20);
+
+  return (
+    <div className="mnx-dev-list">
+      <div className="mnx-dev-perf-summary">
+        <div>
+          <dt>Current route ping</dt>
+          <dd>{latest ? <PingMeter ms={latest.loadMs} /> : <span className="mnx-dev-empty-inline">Navigate to measure</span>}</dd>
+        </div>
+        <div>
+          <dt>Average ({currentRouteTimings.length} loads)</dt>
+          <dd>{average !== null ? <PingMeter ms={average} /> : <span className="mnx-dev-empty-inline">—</span>}</dd>
+        </div>
+      </div>
+
+      <div className="mnx-dev-list-actions">
+        <span className="mnx-dev-tag">Slow components (&gt;16ms render)</span>
+        <button
+          type="button"
+          onClick={() => {
+            devConsoleStore.clearComponentTimings();
+            devConsoleStore.clearRouteTimings();
+          }}
+        >
+          Clear
+        </button>
+      </div>
+
+      {slowestComponents.length === 0 ? (
+        <p className="mnx-dev-empty">No slow component renders recorded on this route yet.</p>
+      ) : (
+        slowestComponents.map((entry) => {
+          const isSlow = entry.durationMs > 50;
+          return (
+            <div key={entry.id} className={`mnx-dev-list-item${isSlow ? " is-slow" : ""}`}>
+              <div className="mnx-dev-list-item-head">
+                <span className="mnx-dev-tag">{entry.phase}</span>
+                <span>{formatTime(entry.timestamp)}</span>
+                <span>{entry.durationMs}ms</span>
+              </div>
+              <p>{entry.name}</p>
+              <p className="mnx-dev-url">{entry.route}</p>
+            </div>
+          );
+        })
+      )}
+
+      <div className="mnx-dev-list-actions">
+        <span className="mnx-dev-tag">Route load history</span>
+      </div>
+      {routeTimings.length === 0 ? (
+        <p className="mnx-dev-empty">No route loads recorded yet.</p>
+      ) : (
+        routeTimings.slice(0, 15).map((entry) => (
+          <div key={entry.id} className={`mnx-dev-list-item is-${pingRating(entry.loadMs)}`}>
+            <div className="mnx-dev-list-item-head">
+              <span>{formatTime(entry.timestamp)}</span>
+              <span>{entry.loadMs}ms</span>
+            </div>
+            <p className="mnx-dev-url">{entry.route}</p>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 function OverviewTab({ userEmail, userRole }: { userEmail?: string; userRole?: string }) {
   const pathname = usePathname();
   const errors = useDevConsoleErrors();
   const network = useDevConsoleNetwork();
+  const routeTimings = useDevConsoleRouteTimings();
+  const latestPing = routeTimings.find((entry) => entry.route === pathname);
 
   const rows: Array<[string, string]> = [
     ["Route", pathname || "-"],
+    ["Route ping", latestPing ? `${latestPing.loadMs}ms` : "—"],
     ["Environment", process.env.NODE_ENV],
     ["App version", process.env.NEXT_PUBLIC_APP_VERSION ?? "0.1.0"],
     ["User", userEmail ?? "-"],
@@ -489,7 +615,7 @@ export function DevPanel({
     <div className="mnx-dev-panel" role="dialog" aria-label="Developer console">
       <header className="mnx-dev-panel-header">
         <div className="mnx-dev-tabs" role="tablist">
-          {(["overview", "errors", "network", "logs", "violations", "a11y", "hidden"] as const).map((value) => (
+          {(["overview", "perf", "errors", "network", "logs", "violations", "a11y", "hidden"] as const).map((value) => (
             <button
               key={value}
               type="button"
@@ -508,6 +634,7 @@ export function DevPanel({
       </header>
       <div className="mnx-dev-panel-body">
         {tab === "overview" ? <OverviewTab userEmail={userEmail} userRole={userRole} /> : null}
+        {tab === "perf" ? <PerfTab /> : null}
         {tab === "errors" ? <ErrorsTab /> : null}
         {tab === "network" ? <NetworkTab /> : null}
         {tab === "logs" ? <LogsTab /> : null}

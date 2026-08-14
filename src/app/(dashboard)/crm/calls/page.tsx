@@ -160,12 +160,12 @@ export default async function CrmCallsPage() {
     .sort((a, b) => b.calls - a.calls);
 
   return (
-    <main className="w-full animate-in space-y-8 fade-in duration-200 text-mono-muted">
+    <main className="w-full animate-in space-y-8 fade-in duration-200 text-[var(--mnx-muted)]">
       {/* Page Heading */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="mnx-title-1 text-mono-text">Call Quality Center</h2>
-          <p className="text-xs text-mono-muted mt-1 uppercase tracking-wider">
+          <h2 className="mnx-title-1 text-[var(--mnx-text-strong)]">Call Quality Center</h2>
+          <p className="text-xs text-[var(--mnx-muted)] mt-1 uppercase tracking-wider">
             Monitor calling activity, listen to voice uploads, and review AI
             transcription audits
           </p>
@@ -175,27 +175,27 @@ export default async function CrmCallsPage() {
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="mnx-crm-panel-surface  rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2">
-          <div className="flex items-center justify-between text-mono-muted uppercase tracking-widest text-[9px] font-extrabold">
+          <div className="flex items-center justify-between text-[var(--mnx-muted)] uppercase tracking-widest text-[9px] font-extrabold">
             <span>Call Attempts</span>
             <Phone className="size-4 text-[var(--mnx-accent)]" />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">
+          <p className="mnx-numeric text-[var(--mnx-text-strong)] text-3xl font-black">
             {attemptsCount}
           </p>
-          <div className="text-[10px] text-mono-muted">
+          <div className="text-[10px] text-[var(--mnx-muted)]">
             Initiated via mobile client
           </div>
         </div>
 
         <div className="mnx-crm-panel-surface  rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2">
-          <div className="flex items-center justify-between text-mono-muted uppercase tracking-widest text-[9px] font-extrabold">
+          <div className="flex items-center justify-between text-[var(--mnx-muted)] uppercase tracking-widest text-[9px] font-extrabold">
             <span>Audio Synced</span>
             <Play className="size-4 text-[var(--mnx-accent)]" />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">
+          <p className="mnx-numeric text-[var(--mnx-text-strong)] text-3xl font-black">
             {recordingsCount}
           </p>
-          <div className="text-[10px] text-mono-muted">
+          <div className="text-[10px] text-[var(--mnx-muted)]">
             {attemptsCount > 0
               ? Math.round((recordingsCount / attemptsCount) * 100)
               : 0}
@@ -204,14 +204,14 @@ export default async function CrmCallsPage() {
         </div>
 
         <div className="mnx-crm-panel-surface  rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2">
-          <div className="flex items-center justify-between text-mono-muted uppercase tracking-widest text-[9px] font-extrabold">
+          <div className="flex items-center justify-between text-[var(--mnx-muted)] uppercase tracking-widest text-[9px] font-extrabold">
             <span>AI Quality Score</span>
             <Sparkles className="size-4 text-[var(--mnx-accent)]" />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">
+          <p className="mnx-numeric text-[var(--mnx-text-strong)] text-3xl font-black">
             {avgQuality}%
           </p>
-          <div className="text-[10px] text-mono-muted">
+          <div className="text-[10px] text-[var(--mnx-muted)]">
             Average based on Whisper audits
           </div>
         </div>
@@ -219,16 +219,16 @@ export default async function CrmCallsPage() {
         <div
           className={`mnx-crm-panel-surface ${pendingReviewsCount > 0 ? "mnx-tone-warning" : ""} rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2`}
         >
-          <div className="flex items-center justify-between text-mono-muted uppercase tracking-widest text-[9px] font-extrabold">
+          <div className="flex items-center justify-between text-[var(--mnx-muted)] uppercase tracking-widest text-[9px] font-extrabold">
             <span>Pending Audit</span>
             <AlertTriangle
-              className={`size-4 ${pendingReviewsCount > 0 ? "text-[var(--mnx-accent)]" : "text-mono-muted"}`}
+              className={`size-4 ${pendingReviewsCount > 0 ? "text-[var(--mnx-accent)]" : "text-[var(--mnx-muted)]"}`}
             />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">
+          <p className="mnx-numeric text-[var(--mnx-text-strong)] text-3xl font-black">
             {pendingReviewsCount}
           </p>
-          <div className="text-[10px] text-mono-muted">
+          <div className="text-[10px] text-[var(--mnx-muted)]">
             Recordings requiring manager review
           </div>
         </div>
@@ -237,7 +237,7 @@ export default async function CrmCallsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Salesperson Performance Table */}
         <div className="lg:col-span-2 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-6 space-y-4">
-          <h3 className="mnx-title-3 text-mono-text flex items-center gap-2">
+          <h3 className="mnx-title-3 text-[var(--mnx-text-strong)] flex items-center gap-2">
             <Activity className="size-4 text-[var(--mnx-accent)]" />
             Sales Representatives Standings
           </h3>
@@ -257,7 +257,7 @@ export default async function CrmCallsPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="text-center py-6 text-mono-muted italic"
+                      className="text-center py-6 text-[var(--mnx-muted)] italic"
                     >
                       No call records logged for active representatives.
                     </td>
@@ -265,7 +265,7 @@ export default async function CrmCallsPage() {
                 ) : (
                   salespersonRankings.map((sp) => (
                     <tr key={sp.id}>
-                      <td className="font-bold text-mono-text flex items-center gap-2">
+                      <td className="font-bold text-[var(--mnx-text-strong)] flex items-center gap-2">
                         <User className="size-3.5 text-[var(--mnx-accent)]" />
                         {sp.name}
                       </td>
@@ -273,16 +273,16 @@ export default async function CrmCallsPage() {
                       <td className="mnx-numeric font-medium">
                         {sp.completedCalls}
                       </td>
-                      <td className="mnx-numeric text-mono-muted">
+                      <td className="mnx-numeric text-[var(--mnx-muted)]">
                         {sp.avgReviewRating === "N/A" ? (
-                          <span className="text-mono-muted">-</span>
+                          <span className="text-[var(--mnx-muted)]">-</span>
                         ) : (
                           <span className="text-[var(--mnx-accent)] font-black">
                             {sp.avgReviewRating} / 5.0
                           </span>
                         )}
                       </td>
-                      <td className="mnx-numeric text-mono-text font-bold">
+                      <td className="mnx-numeric text-[var(--mnx-text-strong)] font-bold">
                         {sp.conversionRate}%
                       </td>
                     </tr>
@@ -301,7 +301,7 @@ export default async function CrmCallsPage() {
           </h3>
           <div className="space-y-3">
             {lowQualityList.length === 0 ? (
-              <div className="p-8 text-center text-mono-muted italic">
+              <div className="p-8 text-center text-[var(--mnx-muted)] italic">
                 No low quality alerts generated. Excellent!
               </div>
             ) : (
@@ -314,18 +314,18 @@ export default async function CrmCallsPage() {
                     className="p-3 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] rounded-lg space-y-2 transition-colors"
                   >
                     <div className="flex justify-between items-center text-[10px]">
-                      <span className="font-bold text-mono-muted uppercase">
+                      <span className="font-bold text-[var(--mnx-muted)] uppercase">
                         {rec.callAttempt.salesperson.name}
                       </span>
                       <span className="font-black text-[var(--mnx-danger)] uppercase tracking-widest font-mono">
                         Score {rec.transcript?.qualityScore || 0}%
                       </span>
                     </div>
-                    <p className="font-semibold text-mono-muted text-xs">
+                    <p className="font-semibold text-[var(--mnx-muted)] text-xs">
                       Call with: {leadName}
                     </p>
                     {rec.transcript?.summary && (
-                      <p className="text-[10px] text-mono-muted line-clamp-2 italic">
+                      <p className="text-[10px] text-[var(--mnx-muted)] line-clamp-2 italic">
                         "{rec.transcript.summary}"
                       </p>
                     )}
@@ -348,13 +348,13 @@ export default async function CrmCallsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Pending Quality Audits */}
         <div className="rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-6 space-y-4">
-          <h3 className="mnx-title-3 text-mono-text flex items-center gap-2">
+          <h3 className="mnx-title-3 text-[var(--mnx-text-strong)] flex items-center gap-2">
             <CheckSquare className="size-4 text-[var(--mnx-accent)]" />
             Pending Manager Review Registry
           </h3>
           <div className="space-y-3">
             {pendingReviewList.length === 0 ? (
-              <div className="p-6 text-center text-mono-muted italic">
+              <div className="p-6 text-center text-[var(--mnx-muted)] italic">
                 All uploaded call recordings have been audited.
               </div>
             ) : (
@@ -367,12 +367,12 @@ export default async function CrmCallsPage() {
                     className="p-3 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/40 rounded-lg flex items-center justify-between gap-4"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-bold text-mono-text text-xs truncate">
+                      <p className="font-bold text-[var(--mnx-text-strong)] text-xs truncate">
                         Call: {leadName}
                       </p>
-                      <div className="text-[10px] text-mono-muted">
+                      <div className="text-[10px] text-[var(--mnx-muted)]">
                         Agent:{" "}
-                        <span className="text-mono-muted font-semibold">
+                        <span className="text-[var(--mnx-muted)] font-semibold">
                           {rec.callAttempt.salesperson.name}
                         </span>{" "}
                         • Synced:{" "}
@@ -385,7 +385,7 @@ export default async function CrmCallsPage() {
                       </span>
                       <Link
                         href={`/crm/leads/${rec.leadId}`}
-                        className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]  px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                        className="bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-accent)]  px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       >
                         Audit
                       </Link>
@@ -399,13 +399,13 @@ export default async function CrmCallsPage() {
 
         {/* Calls Missing Audio Uploads */}
         <div className="rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-6 space-y-4">
-          <h3 className="mnx-title-3 text-mono-muted flex items-center gap-2">
-            <AlertTriangle className="size-4 text-mono-muted" />
+          <h3 className="mnx-title-3 text-[var(--mnx-muted)] flex items-center gap-2">
+            <AlertTriangle className="size-4 text-[var(--mnx-muted)]" />
             Calls Missing Audio Uploads
           </h3>
           <div className="space-y-3">
             {callsWithoutRecording.length === 0 ? (
-              <div className="p-6 text-center text-mono-muted italic">
+              <div className="p-6 text-center text-[var(--mnx-muted)] italic">
                 All logged call attempts have synced audio recordings.
               </div>
             ) : (
@@ -418,22 +418,22 @@ export default async function CrmCallsPage() {
                     className="p-3 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/40 rounded-lg flex items-center justify-between gap-4"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-bold text-mono-text text-xs truncate">
+                      <p className="font-bold text-[var(--mnx-text-strong)] text-xs truncate">
                         Call: {leadName}
                       </p>
-                      <div className="text-[10px] text-mono-muted">
+                      <div className="text-[10px] text-[var(--mnx-muted)]">
                         Agent:{" "}
-                        <span className="text-mono-muted font-semibold">
+                        <span className="text-[var(--mnx-muted)] font-semibold">
                           {call.salesperson.name}
                         </span>{" "}
                         • Number:{" "}
-                        <span className="font-mono text-mono-muted">
+                        <span className="font-mono text-[var(--mnx-muted)]">
                           {call.customerPhone}
                         </span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-mono-muted block">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--mnx-muted)] block">
                         Status
                       </span>
                       <span className="text-[10px] font-extrabold uppercase text-[var(--mnx-accent)]">

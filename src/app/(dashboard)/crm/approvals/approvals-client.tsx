@@ -290,7 +290,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                     <CrmButton
                       onClick={() => approve(item.id)}
                       disabled={isActing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-accent)] transition-colors disabled:opacity-50"
                     >
                       {isActing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                       Approve
@@ -301,7 +301,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                         setReworkNote("");
                       }}
                       disabled={isActing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-warning)] text-mono-text hover:bg-[var(--mnx-warning)] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-warning)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-warning)] transition-colors disabled:opacity-50"
                     >
                       <RotateCcw size={12} />
                       Rework
@@ -310,7 +310,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                       <CrmButton
                         onClick={() => decline(item.id)}
                         disabled={isActing}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-danger)] text-mono-text hover:bg-[var(--mnx-danger)] transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-danger)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-danger)] transition-colors disabled:opacity-50"
                       >
                         <XCircle size={12} />
                         Decline
@@ -335,7 +335,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                       <CrmButton
                         onClick={() => submitRework(item.id)}
                         disabled={isPending || !reworkNote.trim()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-warning)] text-mono-text disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-warning)] text-[var(--mnx-text-strong)] disabled:opacity-50"
                       >
                         {isPending ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                         Send Back

@@ -17,7 +17,7 @@ export function DeleteRecordButton({
   recordId,
   confirmMessage = "Are you sure you want to delete this record?",
   deleteAction,
-  className = "p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer transition-colors",
+  className = "p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer transition-colors",
 }: DeleteRecordButtonProps) {
   const [isPending, startTransition] = useTransition();
 

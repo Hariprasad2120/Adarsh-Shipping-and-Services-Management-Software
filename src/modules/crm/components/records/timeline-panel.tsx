@@ -21,7 +21,7 @@ function getEventIcon(type: string) {
   if (t.includes("CONVERTED") || t.includes("RESOLVED")) return <CheckCircle className="size-4 text-[var(--mnx-accent)]" />;
   if (t.includes("NOTE")) return <FileText className="size-4 text-[var(--mnx-warning)]" />;
   if (t.includes("UPDATED") || t.includes("STAGE")) return <RefreshCw className="size-4 text-[var(--mnx-accent-text)]" />;
-  return <Activity className="size-4 text-mono-muted" />;
+  return <Activity className="size-4 text-[var(--mnx-muted)]" />;
 }
 
 export function TimelinePanel({ events }: TimelinePanelProps) {
@@ -29,11 +29,11 @@ export function TimelinePanel({ events }: TimelinePanelProps) {
     <div className="space-y-5">
       <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-3">
         <Clock className="size-4.5 text-[var(--mnx-accent)]" />
-        <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Chronological Change Timeline</h3>
+        <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Chronological Change Timeline</h3>
       </div>
 
       {events.length === 0 ? (
-        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
+        <div className="p-6 text-center text-[var(--mnx-muted)] text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
           No audit history logged for this record.
         </div>
       ) : (
@@ -47,10 +47,10 @@ export function TimelinePanel({ events }: TimelinePanelProps) {
 
               {/* Event Content */}
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-mono-text leading-tight">{event.description}</p>
-                <div className="flex items-center gap-2 text-[10.5px] text-mono-muted">
-                  <User className="size-3 text-mono-muted" />
-                  <span className="font-medium text-mono-muted">{event.createdBy.name}</span>
+                <p className="text-sm font-semibold text-[var(--mnx-text-strong)] leading-tight">{event.description}</p>
+                <div className="flex items-center gap-2 text-[10.5px] text-[var(--mnx-muted)]">
+                  <User className="size-3 text-[var(--mnx-muted)]" />
+                  <span className="font-medium text-[var(--mnx-muted)]">{event.createdBy.name}</span>
                   <span>•</span>
                   <span>{new Date(event.createdAt).toLocaleString("en-IN")}</span>
                 </div>

@@ -120,7 +120,7 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
         <form id="lead-follow-up-form" onSubmit={handleSubmit}>
           <div className="space-y-5">
             {/* Info/Warning alert matching the design system */}
-            <div className="p-4 bg-[var(--mnx-accent)]/5 border border-[var(--mnx-accent)]/20 rounded-xl space-y-2 text-mono-muted">
+            <div className="p-4 bg-[var(--mnx-accent)]/5 border border-[var(--mnx-accent)]/20 rounded-xl space-y-2 text-[var(--mnx-muted)]">
               <div className="flex items-center gap-2 text-[var(--mnx-accent)] font-semibold text-xs uppercase tracking-wider">
                 <Clock className="size-4" />
                 <span>Follow-up Alert Workflow</span>
@@ -130,7 +130,7 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
               </p>
               {scheduledTime && (
                 <div className="pt-2 flex items-center gap-2 border-t border-[var(--mnx-accent)]/10 text-xs">
-                  <span className="text-mono-muted">Scheduled for:</span>
+                  <span className="text-[var(--mnx-muted)]">Scheduled for:</span>
                   <span className="font-bold text-[var(--mnx-accent)] bg-[var(--mnx-accent)]/10 px-2 py-0.5 rounded">
                     {formatScheduledTime(scheduledTime)}
                   </span>
@@ -139,7 +139,7 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-mono-muted uppercase tracking-wider mb-2">
+              <label className="block text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-2">
                 Call Remarks / Reason for Status (Required) *
               </label>
               <CrmTextarea
@@ -150,9 +150,9 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
                 placeholder="e.g. Number busy, switched off, customer asked to call back later..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted min-h-[60px]"
+                className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-[var(--mnx-muted)] min-h-[60px]"
               />
-              <p className="text-[10px] text-mono-muted mt-1.5 leading-relaxed">
+              <p className="text-[10px] text-[var(--mnx-muted)] mt-1.5 leading-relaxed">
                 These remarks will be attached to the scheduled follow-up activity task and audit logs.
               </p>
             </div>

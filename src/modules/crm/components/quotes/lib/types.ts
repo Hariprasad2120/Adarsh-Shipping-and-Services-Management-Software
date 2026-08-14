@@ -186,6 +186,7 @@ export type QuoteDetailRecord = QuoteRecord & {
   placeOfSupply: string;
   pdfTemplate: QuoteTemplateOption;
   customerInitial: string;
+  customerEmail?: string;
   billingAddress?: string;
   shippingAddress?: string;
   notes?: string;

@@ -9,6 +9,7 @@ import {
   CrmSelect,
   CrmStatus,
   CrmTable,
+  CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
 import Image from "next/image";
@@ -48,6 +49,11 @@ import { toast } from "sonner";
 import { deleteInvoiceAction } from "@/modules/crm/actions";
 import { actionSubmitForApproval } from "@/modules/crm/approval-actions";
 import { getStateCodeForLocation } from "@/modules/crm/components/quotes/lib/gst-states";
+import { useCollapsiblePanel } from "@/modules/core/hooks/use-collapsible-panel";
+import { QuoteMoreActionsMenu } from "@/modules/crm/components/quotes/QuoteMoreActionsMenu";
+import { actionDuplicateQuote, actionSendQuoteEmail } from "@/modules/crm/actions";
+import { Copy, Printer } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Map mock QuoteListStatus (lowercase-hyphenated) → ApprovalStatus (UPPER_SNAKE)
 function toApprovalStatus(s: Exclude<QuoteListStatus, "all">): ApprovalStatus {
@@ -242,6 +248,7 @@ export function QuoteDetailsPage({
     canAdminRestore: false,
   };
   const effectiveCaps = caps ?? defaultCaps;
+  const router = useRouter();
   const approvalFlow = quote.workflowContext?.approvalFlow ?? null;
   const conversion = quote.workflowContext?.conversion ?? null;
   const pendingActions = (() => {
@@ -267,7 +274,10 @@ export function QuoteDetailsPage({
   const [search, setSearch] = useState("");
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
   const [activeTab, setActiveTab] = useState<"details" | "activity">("details");
-  const [detailMode, setDetailMode] = useState<"details" | "pdf">("details");
+  const {
+    collapsed: pdfPanelCollapsed,
+    toggle: togglePdfPanel,
+  } = useCollapsiblePanel("quotePdfPanelCollapsed");
   const [displayCurrency, setDisplayCurrency] = useState<"INR" | "foreign">(
     "INR",
   );
@@ -277,11 +287,13 @@ export function QuoteDetailsPage({
   const [filterOpen, setFilterOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [mailDialogOpen, setMailDialogOpen] = useState(false);
+  const [mailTo, setMailTo] = useState(quote.customerEmail || "");
+  const [mailSubject, setMailSubject] = useState(`Quote ${quote.quoteNumber}`);
+  const [mailMessage, setMailMessage] = useState("Please find the attached quotation.");
+  const [isSendingMail, setIsSendingMail] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-  const [selectedManagerId, setSelectedManagerId] = useState(
-    approvalFlow?.selectedManagerId ?? quote.managerOptions?.[0]?.id ?? "",
-  );
-  const [isSubmittingForApproval, startSubmitTransition] = useTransition();
   const canSubmitForApproval =
     quote.status === "draft" && effectiveCaps.canSubmit;
   const filterRef = useRef<HTMLDivElement | null>(null);
@@ -317,18 +329,48 @@ export function QuoteDetailsPage({
     }
   };
 
-  const handleSubmitForApproval = () => {
-    startSubmitTransition(async () => {
-      try {
-        await actionSubmitForApproval(quote.id, undefined, selectedManagerId);
-        toast.success("Quotation submitted for manager approval.");
-        setSubmitDialogOpen(false);
-        window.location.reload();
-      } catch (err) {
-        const error = err as Error;
-        toast.error(error.message || "Failed to submit quotation for approval.");
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      const res = await actionDuplicateQuote(quote.id);
+      if (res.ok && res.data?.id) {
+        toast.success("Quote duplicated successfully.");
+        router.push(`/crm/quotes/${res.data.id}`);
+      } else {
+        toast.error(res.ok ? "Failed to duplicate quote." : res.error);
       }
-    });
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "An error occurred.");
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  const handleSendMail = async () => {
+    if (!mailTo.trim()) {
+      toast.error("Recipient email is required.");
+      return;
+    }
+    setIsSendingMail(true);
+    try {
+      const res = await actionSendQuoteEmail(quote.id, {
+        to: mailTo,
+        subject: mailSubject,
+        message: mailMessage,
+      });
+      if (res.ok) {
+        toast.success("Quote emailed successfully.");
+        setMailDialogOpen(false);
+      } else {
+        toast.error(res.error);
+      }
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "An error occurred.");
+    } finally {
+      setIsSendingMail(false);
+    }
   };
 
   const listData = allQuotes || quoteDetails;
@@ -384,11 +426,11 @@ export function QuoteDetailsPage({
 
   return (
     <div className="flex min-w-0 flex-col gap-6 text-[var(--mnx-text-strong)]">
-      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
         <aside
           className={cn(
-            "sticky top-0 flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-mono-card transition-all mnx-shadow-panel",
-            isSidebarCollapsed ? "xl:w-[132px]" : "xl:w-full",
+            "sticky top-0 flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] transition-all mnx-shadow-panel",
+            isSidebarCollapsed ? "lg:w-[132px]" : "lg:w-full",
           )}
         >
           <div className="border-b border-[var(--mnx-border)] px-4 py-4">
@@ -398,7 +440,7 @@ export function QuoteDetailsPage({
                   <CrmButton
                     type="button"
                     onClick={() => setFilterOpen((current) => !current)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
                   >
                     <span>{activeViewLabel} Quotes</span>
                     <ChevronDown
@@ -415,7 +457,7 @@ export function QuoteDetailsPage({
                         setFilterOpen(false);
                         setIsSidebarCollapsed(true);
                       }}
-                      className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                      className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
                       aria-label="Collapse quote sidebar"
                       title="Collapse quote sidebar"
                     >
@@ -423,18 +465,41 @@ export function QuoteDetailsPage({
                     </CrmButton>
                     <Link
                       href="/crm/quotes/new"
-                      className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-mono-text transition-colors hover:bg-[var(--mnx-accent)]/90"
+                      className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] transition-colors hover:bg-[var(--mnx-accent)]/90"
                       aria-label="Create quote"
                     >
                       <Plus className="size-4" />
                     </Link>
-                    <CrmButton
-                      type="button"
-                      className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
-                      aria-label="More actions"
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </CrmButton>
+                    <QuoteMoreActionsMenu
+                      items={[
+                        {
+                          key: "duplicate",
+                          label: isDuplicating ? "Duplicating..." : "Duplicate quote",
+                          icon: Copy,
+                          disabled: isDuplicating,
+                          onClick: handleDuplicate,
+                        },
+                        {
+                          key: "print",
+                          label: "Print",
+                          icon: Printer,
+                          onClick: () =>
+                            window.open(`/api/crm/quotes/${quote.id}/pdf`, "_blank"),
+                        },
+                        ...(quote.status === "draft"
+                          ? [
+                              {
+                                key: "delete",
+                                label: isDeleting ? "Deleting..." : "Delete draft",
+                                icon: Trash2,
+                                disabled: isDeleting,
+                                danger: true,
+                                onClick: handleDelete,
+                              },
+                            ]
+                          : []),
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -470,7 +535,7 @@ export function QuoteDetailsPage({
                   <CrmButton
                     type="button"
                     onClick={() => setIsSidebarCollapsed(false)}
-                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
                     aria-label="Expand quote sidebar"
                     title="Expand quote sidebar"
                   >
@@ -478,18 +543,42 @@ export function QuoteDetailsPage({
                   </CrmButton>
                   <Link
                     href="/crm/quotes/new"
-                    className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-mono-text transition-colors hover:bg-[var(--mnx-accent)]/90"
+                    className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] transition-colors hover:bg-[var(--mnx-accent)]/90"
                     aria-label="Create quote"
                   >
                     <Plus className="size-4" />
                   </Link>
-                  <CrmButton
-                    type="button"
-                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
-                    aria-label="More actions"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </CrmButton>
+                  <QuoteMoreActionsMenu
+                    items={[
+                      {
+                        key: "duplicate",
+                        label: isDuplicating ? "Duplicating..." : "Duplicate quote",
+                        icon: Copy,
+                        disabled: isDuplicating,
+                        onClick: handleDuplicate,
+                      },
+                      {
+                        key: "print",
+                        label: "Print",
+                        icon: Printer,
+                        onClick: () =>
+                          window.open(`/api/crm/quotes/${quote.id}/pdf`, "_blank"),
+                      },
+                      ...(quote.status === "draft"
+                        ? [
+                            {
+                              key: "delete",
+                              label: isDeleting ? "Deleting..." : "Delete draft",
+                              icon: Trash2,
+                              disabled: isDeleting,
+                              danger: true,
+                              onClick: handleDelete,
+                            },
+                          ]
+                        : []),
+                    ]}
+                    triggerClassName="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
+                  />
                 </div>
               </div>
             )}
@@ -503,7 +592,7 @@ export function QuoteDetailsPage({
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search quotes"
-                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
+                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
                 />
               </div>
             </div>
@@ -526,7 +615,7 @@ export function QuoteDetailsPage({
                 >
                   <div className="flex items-start gap-3">
                     <span
-                      className="mt-1 block size-4 rounded border border-[var(--mnx-border)] bg-mono-card"
+                      className="mt-1 block size-4 rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)]"
                       aria-hidden="true"
                     />
                     <div className="min-w-0 flex-1">
@@ -577,7 +666,7 @@ export function QuoteDetailsPage({
         <div className="min-w-0 space-y-6">
           <CrmPanel
             className={cn(
-              "relative overflow-visible border border-[var(--mnx-border)] bg-mono-card",
+              "relative overflow-visible border border-[var(--mnx-border)] bg-[var(--mnx-surface)]",
               actionsOpen ? "z-20" : "",
             )}
           >
@@ -626,7 +715,7 @@ export function QuoteDetailsPage({
                 {quote.status === "draft" ? (
                   <Link
                     href={`/crm/quotes/${quote.id}/edit`}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
                   >
                     <Pencil className="size-4 text-[var(--mnx-text-muted)]" />
                     <span>Edit</span>
@@ -635,7 +724,7 @@ export function QuoteDetailsPage({
                   <CrmButton
                     disabled
                     type="button"
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm opacity-50 cursor-not-allowed"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm opacity-50 cursor-not-allowed"
                   >
                     <Pencil className="size-4 text-[var(--mnx-text-muted)]" />
                     <span>Edit</span>
@@ -651,28 +740,42 @@ export function QuoteDetailsPage({
                   className={cn(
                     "inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-medium shadow-sm",
                     canSubmitForApproval
-                      ? "bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]/90"
-                      : "cursor-not-allowed border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)] opacity-50",
+                      ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-accent)]/90"
+                      : "cursor-not-allowed border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] opacity-50",
                   )}
                 >
                   <Send className="size-4" />
                   <span>Submit For Approval</span>
                 </CrmButton>
-                <ToolbarButton icon={Mail} label="Mails" dropdown />
-                <ToolbarButton icon={Share2} label="Share" />
-                <ToolbarButton icon={FileOutput} label="PDF/Print" dropdown />
+                <ToolbarButton
+                  icon={Mail}
+                  label="Mails"
+                  onClick={() => setMailDialogOpen(true)}
+                />
+                <ToolbarButton
+                  icon={Share2}
+                  label="Share"
+                  onClick={() =>
+                    toast.info("Quote sharing is coming soon (pending a database update).")
+                  }
+                />
+                <ToolbarButton
+                  icon={FileOutput}
+                  label="PDF/Print"
+                  onClick={() => window.open(`/api/crm/quotes/${quote.id}/pdf`, "_blank")}
+                />
                 {/* Approval actions replace the static buttons */}
                 <div className="relative">
                   <CrmButton
                     type="button"
                     onClick={() => setActionsOpen((current) => !current)}
-                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
                     aria-label="More quote actions"
                   >
                     <MoreHorizontal className="size-4" />
                   </CrmButton>
                   {actionsOpen ? (
-                    <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
+                    <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] mnx-shadow-panel">
                       {quote.status === "draft" && (
                         <ActionMenuButton
                           icon={Trash2}
@@ -684,6 +787,10 @@ export function QuoteDetailsPage({
                       <div className="border-t border-[var(--mnx-border)] p-2">
                         <CrmButton
                           type="button"
+                          onClick={() => {
+                            setActionsOpen(false);
+                            toast.info("Workflow preferences are coming soon (pending a database update).");
+                          }}
                           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]"
                         >
                           <span className="flex size-6 items-center justify-center rounded-full border border-[var(--mnx-border)] text-[var(--mnx-text-muted)]">
@@ -699,28 +806,20 @@ export function QuoteDetailsPage({
             </div>
           </CrmPanel>
 
-          {submitDialogOpen ? (
+          {mailDialogOpen ? (
             <CrmDialog
               open
-              onClose={() => setSubmitDialogOpen(false)}
-              title="Submit For Manager Approval"
+              onClose={() => setMailDialogOpen(false)}
+              title="Email Quote"
               size="compact"
               footer={
                 <div className="flex justify-end gap-3">
-                  <CrmButton
-                    onClick={() => setSubmitDialogOpen(false)}
-                    variant="secondary"
-                  >
+                  <CrmButton onClick={() => setMailDialogOpen(false)} variant="secondary">
                     Cancel
                   </CrmButton>
-                  <CrmButton
-                    onClick={handleSubmitForApproval}
-                    disabled={isSubmittingForApproval || !selectedManagerId}
-                  >
-                    {isSubmittingForApproval ? (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    ) : null}
-                    Submit
+                  <CrmButton onClick={handleSendMail} disabled={isSendingMail}>
+                    {isSendingMail ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                    Send
                   </CrmButton>
                 </div>
               }
@@ -728,24 +827,39 @@ export function QuoteDetailsPage({
               <div className="space-y-4">
                 <label className="block space-y-1">
                   <span className="text-xs font-semibold uppercase tracking-wide text-[var(--mnx-text-muted)]">
-                    Approving manager
+                    To
                   </span>
-                  <CrmSelect
-                    value={selectedManagerId}
-                    onChange={(event) => setSelectedManagerId(event.target.value)}
+                  <CrmInput
+                    type="email"
+                    value={mailTo}
+                    onChange={(event) => setMailTo(event.target.value)}
+                    placeholder="customer@example.com"
                     className="h-11 w-full rounded-xl"
-                  >
-                    <option value="">Select manager</option>
-                    {quote.managerOptions?.map((manager) => (
-                      <option key={manager.id} value={manager.id}>
-                        {manager.name}
-                      </option>
-                    ))}
-                  </CrmSelect>
+                  />
                 </label>
-                <p className="text-sm text-[var(--mnx-text-muted)]">
-                  The selected manager will receive the approval request and must
-                  complete the review before customer approval can be recorded.
+                <label className="block space-y-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--mnx-text-muted)]">
+                    Subject
+                  </span>
+                  <CrmInput
+                    value={mailSubject}
+                    onChange={(event) => setMailSubject(event.target.value)}
+                    className="h-11 w-full rounded-xl"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--mnx-text-muted)]">
+                    Message
+                  </span>
+                  <CrmTextarea
+                    value={mailMessage}
+                    onChange={(event) => setMailMessage(event.target.value)}
+                    rows={5}
+                    className="w-full rounded-xl"
+                  />
+                </label>
+                <p className="text-xs text-[var(--mnx-text-muted)]">
+                  The quote will be attached as a PDF.
                 </p>
               </div>
             </CrmDialog>
@@ -857,6 +971,9 @@ export function QuoteDetailsPage({
                     reworkNote={quote.reworkNote}
                     managerOptions={quote.managerOptions}
                     workflowContext={quote.workflowContext}
+                    externalSubmitDialogOpen={submitDialogOpen}
+                    onExternalSubmitDialogClose={() => setSubmitDialogOpen(false)}
+                    onSuccess={() => router.refresh()}
                   />
                 </div>
               </CrmSection>
@@ -1003,7 +1120,7 @@ export function QuoteDetailsPage({
                   </div>
                 }
               >
-              <section className="overflow-hidden border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
+              <section className="overflow-hidden border border-[var(--mnx-border)] bg-[var(--mnx-surface)] mnx-shadow-panel">
                 <div className="border-b border-[var(--mnx-border)] px-5 pt-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     {activeTab === "details" ? (
@@ -1031,7 +1148,7 @@ export function QuoteDetailsPage({
                                 className={cn(
                                   "rounded-lg px-4 py-2 text-left transition-colors",
                                   isActive
-                                    ? "bg-mono-card shadow-sm"
+                                    ? "bg-[var(--mnx-surface)] shadow-sm"
                                     : "text-[var(--mnx-text-muted)]",
                                   state === "unavailable" &&
                                     "cursor-not-allowed opacity-45",
@@ -1069,7 +1186,7 @@ export function QuoteDetailsPage({
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
                               displayCurrency === "INR"
-                                ? "bg-[var(--mnx-accent)] text-mono-text shadow-sm"
+                                ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] shadow-sm"
                                 : "text-[var(--mnx-text-muted)]",
                             )}
                           >
@@ -1081,46 +1198,44 @@ export function QuoteDetailsPage({
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
                               displayCurrency === "foreign"
-                                ? "bg-[var(--mnx-accent)] text-mono-text shadow-sm"
+                                ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] shadow-sm"
                                 : "text-[var(--mnx-text-muted)]",
                             )}
                           >
                             Foreign
                           </CrmButton>
                         </div>
-                        <div className="inline-flex items-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-1">
-                          <CrmButton
-                            type="button"
-                            onClick={() => setDetailMode("details")}
-                            className={cn(
-                              "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
-                              detailMode === "details"
-                                ? "bg-mono-card text-[var(--mnx-text-strong)] shadow-sm"
-                                : "text-[var(--mnx-text-muted)]",
-                            )}
-                          >
-                            Details
-                          </CrmButton>
-                          <CrmButton
-                            type="button"
-                            onClick={() => setDetailMode("pdf")}
-                            className={cn(
-                              "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
-                              detailMode === "pdf"
-                                ? "bg-mono-card text-[var(--mnx-text-strong)] shadow-sm"
-                                : "text-[var(--mnx-text-muted)]",
-                            )}
-                          >
-                            PDF
-                          </CrmButton>
-                        </div>
+                        <CrmButton
+                          type="button"
+                          onClick={togglePdfPanel}
+                          className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-sm font-medium text-[var(--mnx-text-muted)]"
+                          aria-label={pdfPanelCollapsed ? "Show PDF preview" : "Hide PDF preview"}
+                          title={pdfPanelCollapsed ? "Show PDF preview" : "Hide PDF preview"}
+                        >
+                          <FileText className="size-4" />
+                          <span>PDF Preview</span>
+                          {pdfPanelCollapsed ? (
+                            <ChevronLeft className="size-4" />
+                          ) : (
+                            <ChevronRight className="size-4" />
+                          )}
+                        </CrmButton>
                       </div>
                     ) : null}
                   </div>
                 </div>
 
                 {activeTab === "details" ? (
-                  detailMode === "details" ? (
+                  <div
+                    className={cn(
+                      "grid items-start gap-0 lg:grid-cols-[minmax(0,1fr)_var(--mnx-pdf-panel-width)]",
+                    )}
+                    style={
+                      {
+                        "--mnx-pdf-panel-width": pdfPanelCollapsed ? "48px" : "420px",
+                      } as React.CSSProperties
+                    }
+                  >
                     <div className="space-y-6 p-5">
                       {(quote.status === "sent" ||
                         quote.status === "customer-viewed") &&
@@ -1177,7 +1292,7 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
                         <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
                           Customer Details
                         </div>
@@ -1208,7 +1323,7 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
                         <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
                           Logistics Details
                         </div>
@@ -1254,7 +1369,7 @@ export function QuoteDetailsPage({
 
                       {selectedDepartmentState !== "available" ||
                       !selectedDepartmentQuote ? (
-                        <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-8 text-center">
+                        <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-8 text-center">
                           <p className="text-lg font-semibold text-[var(--mnx-text-strong)]">
                             {resolvedDepartmentView === "FREIGHT_FORWARDING"
                               ? selectedDepartmentState === "pending"
@@ -1271,7 +1386,7 @@ export function QuoteDetailsPage({
                           </p>
                         </section>
                       ) : (
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]">
                         <div className="flex items-center justify-between border-b border-[var(--mnx-border)] px-5 py-4">
                           <div className="flex items-center gap-3">
                             <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--mnx-text-strong)]">
@@ -1412,7 +1527,7 @@ export function QuoteDetailsPage({
                       </section>
                       )}
 
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
                         <div className="grid gap-6 xl:grid-cols-2">
                           <div>
                             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
@@ -1498,32 +1613,54 @@ export function QuoteDetailsPage({
                         })()}
                       </section>
                     </div>
-                  ) : selectedDepartmentState === "available" &&
-                    selectedDepartmentQuote ? (
-                    <QuotePdfPreview
-                      quote={selectedDepartmentQuote}
-                      displayCurrency={displayCurrency}
-                    />
-                  ) : (
-                    <div className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-8 text-center">
-                      <p className="text-lg font-semibold text-[var(--mnx-text-strong)]">
-                        {resolvedDepartmentView === "FREIGHT_FORWARDING"
-                          ? selectedDepartmentState === "pending"
-                            ? "Freight PDF yet to receive"
-                            : "Freight PDF not available"
-                          : selectedDepartmentState === "pending"
-                            ? "Clearance PDF yet to receive"
-                            : "Clearance PDF not available"}
-                      </p>
-                      <p className="mt-2 text-sm text-[var(--mnx-text-muted)]">
-                        {selectedDepartmentState === "pending"
-                          ? "The department quotation has not been submitted yet."
-                          : "This shipment does not have a quotation for the selected department."}
-                      </p>
-                    </div>
-                  )
+
+                    <aside
+                      className={cn(
+                        "sticky top-0 flex min-w-0 flex-col overflow-hidden border-l border-[var(--mnx-border)] bg-[var(--mnx-surface)] transition-all",
+                      )}
+                    >
+                      {pdfPanelCollapsed ? (
+                        <button
+                          type="button"
+                          onClick={togglePdfPanel}
+                          className="flex h-full min-h-[240px] flex-1 items-center justify-center py-4"
+                          aria-label="Show PDF preview"
+                          title="Show PDF preview"
+                        >
+                          <span className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)] [writing-mode:vertical-rl]">
+                            PDF Preview
+                          </span>
+                        </button>
+                      ) : selectedDepartmentState === "available" &&
+                        selectedDepartmentQuote ? (
+                        <div className="flex-1 overflow-y-auto p-4">
+                          <QuotePdfPreview
+                            quote={selectedDepartmentQuote}
+                            displayCurrency={displayCurrency}
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-6 text-center">
+                          <p className="text-sm font-semibold text-[var(--mnx-text-strong)]">
+                            {resolvedDepartmentView === "FREIGHT_FORWARDING"
+                              ? selectedDepartmentState === "pending"
+                                ? "Freight PDF yet to receive"
+                                : "Freight PDF not available"
+                              : selectedDepartmentState === "pending"
+                                ? "Clearance PDF yet to receive"
+                                : "Clearance PDF not available"}
+                          </p>
+                          <p className="mt-2 text-xs text-[var(--mnx-text-muted)]">
+                            {selectedDepartmentState === "pending"
+                              ? "The department quotation has not been submitted yet."
+                              : "This shipment does not have a quotation for the selected department."}
+                          </p>
+                        </div>
+                      )}
+                    </aside>
+                  </div>
                 ) : (
-                  <div className="p-6 bg-mono-card rounded-2xl border border-[var(--mnx-border)]">
+                  <div className="p-6 bg-[var(--mnx-surface)] rounded-2xl border border-[var(--mnx-border)]">
                     <ApprovalLogList logs={quote.approvalLogs || []} />
                   </div>
                 )}
@@ -1541,15 +1678,21 @@ function ToolbarButton({
   icon: Icon,
   label,
   dropdown = false,
+  onClick,
+  disabled = false,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   dropdown?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <CrmButton
       type="button"
-      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Icon className="size-4 text-[var(--mnx-text-muted)]" />
       <span>{label}</span>
@@ -1581,7 +1724,7 @@ function ActionMenuButton({
       className={cn(
         "flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-colors",
         active
-          ? "bg-[var(--mnx-accent)] text-mono-text"
+          ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
           : "text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]",
         disabled && "opacity-50 cursor-not-allowed",
       )}
@@ -1696,8 +1839,8 @@ function QuotePdfPreview({
 
   return (
     <div className="overflow-auto bg-[var(--mnx-surface)] p-6 sm:p-8">
-      <div className=" mx-auto w-full max-w-[1120px] border border-[var(--mnx-border)] bg-mono-card p-6 mnx-shadow-panel sm:p-10">
-        <div className="relative mx-auto max-w-[920px] border border-[var(--mnx-border)] bg-mono-card overflow-hidden">
+      <div className=" mx-auto w-full max-w-[1120px] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-6 mnx-shadow-panel sm:p-10">
+        <div className="relative mx-auto max-w-[920px] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] overflow-hidden">
           <StatusWatermark status={quote.status} />
 
           <div className="grid grid-cols-[220px_1fr_200px] border-b border-[var(--mnx-border)]">
@@ -1710,19 +1853,19 @@ function QuotePdfPreview({
                 className="h-auto w-[180px]"
               />
             </div>
-            <div className="px-5 py-5 text-[17px] leading-8 text-mono-text">
+            <div className="px-5 py-5 text-[17px] leading-8 text-[var(--mnx-text-strong)]">
               <div className="font-semibold">Adarsh shipping and services</div>
               <div>CHOOLAI</div>
               <div>Chennai Tamil Nadu 600112</div>
               <div>India</div>
               <div>GSTIN 33AAAFA4117G1Z5</div>
             </div>
-            <div className="flex items-center justify-center px-5 py-5 text-[34px] tracking-wide text-mono-text">
+            <div className="flex items-center justify-center px-5 py-5 text-[34px] tracking-wide text-[var(--mnx-text-strong)]">
               QUOTE
             </div>
           </div>
 
-          <div className="grid grid-cols-2 border-b border-[var(--mnx-border)] text-[14px] text-mono-text">
+          <div className="grid grid-cols-2 border-b border-[var(--mnx-border)] text-[14px] text-[var(--mnx-text-strong)]">
             <div className="border-r border-[var(--mnx-border)]">
               <PdfMetaRow label="#" value={quote.quoteNumber} />
               <PdfMetaRow label="Quote Date" value={formatDate(quote.date)} />
@@ -1732,7 +1875,7 @@ function QuotePdfPreview({
             </div>
           </div>
 
-          <div className="border-b border-[var(--mnx-border)] px-3 py-2 text-[13px] font-semibold text-mono-text">
+          <div className="border-b border-[var(--mnx-border)] px-3 py-2 text-[13px] font-semibold text-[var(--mnx-text-strong)]">
             Bill To
           </div>
           <div className="border-b border-[var(--mnx-border)] px-3 py-2 text-[15px] font-semibold text-[var(--mnx-accent)]">
@@ -1740,7 +1883,7 @@ function QuotePdfPreview({
           </div>
 
           <div className="overflow-x-auto w-full">
-            <CrmTable className="w-full border-collapse text-[13px] text-mono-text min-w-[920px]">
+            <CrmTable className="w-full border-collapse text-[13px] text-[var(--mnx-text-strong)] min-w-[920px]">
               <thead>
                 <tr className="bg-[var(--mnx-surface)]">
                   <PdfCell
@@ -1965,12 +2108,12 @@ function QuotePdfPreview({
             </CrmTable>
           </div>
 
-          <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-mono-text">
+          <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-[var(--mnx-text-strong)]">
             <div className="mb-2 font-semibold">Notes</div>
             <div>{quote.notes || "Looking forward for your business."}</div>
           </div>
 
-          <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-mono-text">
+          <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-[var(--mnx-text-strong)]">
             <div className="mb-2 font-semibold">Terms and Conditions</div>
             <div>{quote.terms || "No Terms and Conditions"}</div>
           </div>
@@ -1978,7 +2121,7 @@ function QuotePdfPreview({
             const bank = bankAccounts.find((b) => b.id === quote.bankDetailsId);
             if (!bank) return null;
             return (
-              <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-mono-text">
+              <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-[var(--mnx-text-strong)]">
                 <div className="mb-2 font-semibold">Bank Details</div>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                   <div>

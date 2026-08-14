@@ -48,26 +48,26 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
     <div className="space-y-6">
 
       {/* Unified Table Shell — toolbar + table in one rounded container */}
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] shadow-sm">
 
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-mono-border">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-[var(--mnx-border)]">
           <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+              <Search className="absolute left-3 top-2.5 size-4 text-[var(--mnx-muted)]" />
               <CrmInput
                 type="text"
                 name="search"
                 defaultValue={search}
                 placeholder="Search contacts by name, email, department..."
-                className="w-full pl-9 pr-3 py-1.5 bg-mono-soft rounded-lg text-sm text-mono-text placeholder:text-placeholder focus:outline-none"
+                className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-soft)] rounded-lg text-sm text-[var(--mnx-text-strong)] placeholder:text-placeholder focus:outline-none"
               />
             </div>
 
             <CrmButton
               type="submit"
-              className="px-4 py-1.5 bg-mono-soft hover:bg-mono-soft border border-mono-border text-mono-text rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+              className="px-4 py-1.5 bg-[var(--mnx-soft)] hover:bg-[var(--mnx-soft)] border border-[var(--mnx-border)] text-[var(--mnx-text-strong)] rounded-lg text-xs font-semibold cursor-pointer transition-colors"
             >
               Search
             </CrmButton>
@@ -75,7 +75,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
             {search && (
               <Link
                 href="/crm/contacts"
-                className="px-3 py-1.5 text-mono-muted hover:text-mono-text text-xs font-semibold flex items-center justify-center"
+                className="px-3 py-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] text-xs font-semibold flex items-center justify-center"
               >
                 Reset
               </Link>
@@ -83,12 +83,12 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
           </form>
           
           <div className="flex items-center gap-3 shrink-0">
-            <div className="text-xs text-mono-muted font-bold">
+            <div className="text-xs text-[var(--mnx-muted)] font-bold">
               Showing {contacts.length} contacts
             </div>
             <Link
               href="/crm/contacts/new"
-              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               <span>Create Contact</span>
@@ -99,11 +99,11 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
         {/* Table Content */}
         {contacts.length === 0 ? (
           <div className="p-12 text-center space-y-4">
-            <div className="size-12 rounded-full bg-mono-soft text-mono-muted flex items-center justify-center mx-auto">
+            <div className="size-12 rounded-full bg-[var(--mnx-soft)] text-[var(--mnx-muted)] flex items-center justify-center mx-auto">
               <Users className="size-6" />
             </div>
-            <h3 className="font-bold text-base text-mono-text">No active contacts found</h3>
-            <p className="text-xs text-mono-muted max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
+            <h3 className="font-bold text-base text-[var(--mnx-text-strong)]">No active contacts found</h3>
+            <p className="text-xs text-[var(--mnx-muted)] max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
             <Link
               href="/crm/contacts/new"
               className="inline-flex items-center gap-1.5 text-[var(--mnx-accent)] hover:underline text-xs font-bold"
@@ -141,35 +141,35 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                       {contact.account ? (
                         <Link
                           href={`/crm/customers/${contact.account.id}`}
-                          className="flex items-center gap-1.5 text-mono-muted hover:text-[var(--mnx-accent)] transition-colors px-6 py-4 block w-full h-full"
+                          className="flex items-center gap-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-accent)] transition-colors px-6 py-4 block w-full h-full"
                         >
                           <Building className="size-3.5" />
                           <span>{contact.account.name}</span>
                         </Link>
                       ) : (
                         <div className="px-6 py-4">
-                          <span className="text-mono-muted italic">No account linked</span>
+                          <span className="text-[var(--mnx-muted)] italic">No account linked</span>
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.email ? (
-                        <div className="flex items-center gap-1.5 text-xs text-mono-muted">
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)]">
                           <Mail className="size-3.5" />
                           <span>{contact.email}</span>
                         </div>
                       ) : (
-                        <span className="text-mono-muted italic">No email</span>
+                        <span className="text-[var(--mnx-muted)] italic">No email</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.phone || contact.mobile ? (
-                        <div className="flex items-center gap-1.5 text-xs text-mono-muted">
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)]">
                           <Phone className="size-3.5" />
                           <span>{contact.phone || contact.mobile}</span>
                         </div>
                       ) : (
-                        <span className="text-mono-muted italic">No phone</span>
+                        <span className="text-[var(--mnx-muted)] italic">No phone</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -178,7 +178,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                           DECISION MAKER
                         </span>
                       ) : (
-                        <span className="text-mono-muted text-xs">Standard</span>
+                        <span className="text-[var(--mnx-muted)] text-xs">Standard</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-xs">
@@ -188,7 +188,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/crm/contacts/${contact.id}`}
-                          className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
+                          className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] rounded hover:bg-[var(--mnx-soft)] cursor-pointer"
                           title="View Details"
                         >
                           <Eye className="size-4" />
@@ -197,7 +197,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                           recordId={contact.id}
                           deleteAction={deleteContactAction}
                           confirmMessage="Are you sure you want to delete this contact?"
-                          className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer transition-colors"
+                          className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer transition-colors"
                         />
                       </div>
                     </td>

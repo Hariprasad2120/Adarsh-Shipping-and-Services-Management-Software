@@ -43,10 +43,10 @@ function readSnapshotValue(
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-mono-muted">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
         {label}
       </div>
-      <div className="break-words text-sm text-mono-text">{value}</div>
+      <div className="break-words text-sm text-[var(--mnx-text-strong)]">{value}</div>
     </div>
   );
 }
@@ -63,15 +63,15 @@ function SnapshotPanel({
   return (
     <div className="min-w-0 space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-mono-text">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--mnx-text-strong)]">
           {title}
         </h2>
-        <span className="rounded-full border border-[var(--mnx-border)] bg-[var(--mnx-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-mono-muted">
+        <span className="rounded-full border border-[var(--mnx-border)] bg-[var(--mnx-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--mnx-muted)]">
           JSON
         </span>
       </div>
       <div className="min-w-0 overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-soft)]/65">
-        <pre className="max-h-[28rem] min-w-0 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-6 text-mono-text">
+        <pre className="max-h-[28rem] min-w-0 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-6 text-[var(--mnx-text-strong)]">
           {formattedSnapshot}
         </pre>
       </div>
@@ -115,7 +115,7 @@ export function ServiceEnquiryDetail({
       <CrmPanel>
         <div className="grid items-start gap-6 md:grid-cols-2">
           <div className="min-w-0 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-mono-text">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--mnx-text-strong)]">
               Customer and cargo
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
@@ -151,7 +151,7 @@ export function ServiceEnquiryDetail({
           </div>
 
           <div className="min-w-0 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-mono-text">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--mnx-text-strong)]">
               Workflow links
             </h2>
             <div className="grid gap-4 md:grid-cols-2">

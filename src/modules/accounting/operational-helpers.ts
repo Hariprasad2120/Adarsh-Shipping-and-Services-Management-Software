@@ -96,7 +96,7 @@ export function formatDecimalString(
     .slice(0, maximumFractionDigits)
     .replace(/0+$/, "")
     .padEnd(minimumFractionDigits, "0");
-  const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const grouped = integerPart.replace(/\B(?=(\d\d)+(\d)(?!\d))/g, ",");
   return `${negative ? "−" : ""}${grouped}${fraction ? `.${fraction}` : ""}`;
 }
 

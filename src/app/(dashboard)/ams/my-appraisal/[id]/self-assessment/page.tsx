@@ -12,6 +12,11 @@ import type {
 import { mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
+import {
+  PerformanceSection,
+  PerformanceSectionHeader,
+} from "@/modules/performance/components/performance-workspace";
+import { WorkspaceBadge } from "@/components/layout/workspace";
 
 export default async function SelfAssessmentPage({
   params,
@@ -104,18 +109,19 @@ export default async function SelfAssessmentPage({
           }}
         />
 
-        <div className="mnx-performance-surface mnx-accent-edge rounded-[var(--mn-radius-panel)] border border-mono-border/35 bg-mono-card p-6">
-          <h2 className="mnx-title-2 text-mono-text">
-            Self-Assessment Summary
-          </h2>
-          <div className="mt-4 space-y-2 text-sm text-mono-muted">
-            <p className="text-base font-semibold text-mono-text">
-              {appraisal.employee.name}
-            </p>
+        <PerformanceSection>
+          <PerformanceSectionHeader
+            eyebrow="Self-assessment summary"
+            title={appraisal.employee.name}
+            description={`${appraisal.cycle.name} ${appraisal.cycle.year}`}
+            actions={
+              <WorkspaceBadge variant={canEdit ? "accent" : "warning"}>
+                {canEdit ? "Editable" : "View only"}
+              </WorkspaceBadge>
+            }
+          />
+          <div className="space-y-2 px-5 pb-5 text-sm text-mono-muted">
             <p>{appraisal.employee.designation ?? "No designation"}</p>
-            <p>
-              {appraisal.cycle.name} {appraisal.cycle.year}
-            </p>
             <p>
               Current stage:{" "}
               <span className="font-medium text-mono-text">
@@ -133,7 +139,7 @@ export default async function SelfAssessmentPage({
               </p>
             ) : null}
           </div>
-        </div>
+        </PerformanceSection>
       </div>
 
       <div className="max-w-4xl">

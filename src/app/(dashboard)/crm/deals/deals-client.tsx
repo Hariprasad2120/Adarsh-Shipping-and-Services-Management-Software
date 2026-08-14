@@ -3,6 +3,8 @@
 import {
   CrmButton,
   CrmInput,
+  CrmMetric,
+  CrmMetrics,
   CrmTable,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
@@ -117,51 +119,29 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Mini Stats Summary Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[var(--mnx-surface)]/55 border border-[var(--mnx-border)]/55 rounded-xl p-4">
-        <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
-            Open Pipeline
-          </span>
-          <span className="text-mono-text font-bold text-lg">
-            ₹{stats.totalPipeline.toLocaleString("en-IN")}
-          </span>
-        </div>
-        <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
-            Weighted Forecast
-          </span>
-          <span className="text-[var(--mnx-accent)] font-bold text-lg">
-            ₹{stats.totalForecast.toLocaleString("en-IN")}
-          </span>
-        </div>
-        <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
-            Active Enquiries
-          </span>
-          <span className="text-mono-text font-bold text-lg">
-            {stats.openCount} Deals
-          </span>
-        </div>
-        <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
-            Negotiations Won
-          </span>
-          <span className="text-[var(--mnx-success)] font-bold text-lg">
-            {stats.wonCount} Closed
-          </span>
-        </div>
-      </div>
+      <CrmMetrics>
+        <CrmMetric
+          label="Open Pipeline"
+          value={`₹${stats.totalPipeline.toLocaleString("en-IN")}`}
+        />
+        <CrmMetric
+          label="Weighted Forecast"
+          value={`₹${stats.totalForecast.toLocaleString("en-IN")}`}
+        />
+        <CrmMetric label="Active Enquiries" value={`${stats.openCount} Deals`} />
+        <CrmMetric label="Negotiations Won" value={`${stats.wonCount} Closed`} />
+      </CrmMetrics>
 
       {/* Search Filter bar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+          <Search className="absolute left-3 top-2.5 size-4 text-[var(--mnx-muted)]" />
           <CrmInput
             type="text"
             placeholder="Filter deals by name or account..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
+            className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
           />
         </div>
         <div className="flex items-center gap-3">
@@ -171,7 +151,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
               className={`p-1.5 rounded-md cursor-pointer ${
                 viewMode === "KANBAN"
                   ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]"
-                  : "text-mono-muted hover:text-mono-text"
+                  : "text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
               }`}
               title="Pipeline Kanban Grid"
             >
@@ -182,7 +162,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
               className={`p-1.5 rounded-md cursor-pointer ${
                 viewMode === "LIST"
                   ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]"
-                  : "text-mono-muted hover:text-mono-text"
+                  : "text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
               }`}
               title="Table List View"
             >
@@ -191,7 +171,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
           </div>
           <Link
             href="/crm/deals/new"
-            className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all mnx-shadow-panel cursor-pointer"
+            className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all mnx-shadow-panel cursor-pointer"
           >
             <Plus className="size-3.5" />
             <span>Create Deal</span>
@@ -213,10 +193,10 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
-                  <span className="text-xs font-bold text-mono-text uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider">
                     {stage.replace("_", " ")}
                   </span>
-                  <span className="text-[10px] font-bold text-mono-muted bg-[var(--mnx-surface)] px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-[var(--mnx-muted)] bg-[var(--mnx-surface)] px-2 py-0.5 rounded-full">
                     {stageDeals.length}
                   </span>
                 </div>
@@ -227,7 +207,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                 {/* Cards List */}
                 <div className="space-y-2.5 min-h-[300px] overflow-y-auto max-h-[500px] custom-scrollbar">
                   {stageDeals.length === 0 ? (
-                    <div className="py-8 text-center text-mono-muted text-xs italic">
+                    <div className="py-8 text-center text-[var(--mnx-muted)] text-xs italic">
                       No deals
                     </div>
                   ) : (
@@ -242,12 +222,12 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                         <div className="space-y-1">
                           <Link
                             href={`/crm/deals/${deal.id}`}
-                            className="font-bold text-mono-text text-xs block hover:underline hover:text-[var(--mnx-accent)] truncate pr-4"
+                            className="font-bold text-[var(--mnx-text-strong)] text-xs block hover:underline hover:text-[var(--mnx-accent)] truncate pr-4"
                           >
                             {deal.name}
                           </Link>
                           {deal.account && (
-                            <span className="text-[10px] text-mono-muted block truncate">
+                            <span className="text-[10px] text-[var(--mnx-muted)] block truncate">
                               {deal.account.name}
                             </span>
                           )}
@@ -255,14 +235,14 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
 
                         <div className="flex items-center justify-between text-[11px] font-bold text-[var(--mnx-accent)]">
                           <span>₹{deal.amount.toLocaleString("en-IN")}</span>
-                          <span className="text-[9px] text-mono-muted uppercase tracking-wide bg-mono-soft px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] text-[var(--mnx-muted)] uppercase tracking-wide bg-[var(--mnx-soft)] px-1.5 py-0.5 rounded">
                             {deal.probability}%
                           </span>
                         </div>
 
                         {/* Dropdown to quick shift stage */}
                         <div className="pt-2 border-t border-[var(--mnx-border)]/30 flex items-center justify-between gap-1.5">
-                          <span className="text-[9px] text-mono-muted truncate">
+                          <span className="min-w-0 flex-1 truncate text-[9px] text-[var(--mnx-muted)]">
                             Owner: {deal.owner.name.split(" ")[0]}
                           </span>
                           <NativeSelect
@@ -271,7 +251,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                               handleStageChange(deal.id, e.target.value)
                             }
                             disabled={updatingId === deal.id}
-                            className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[9.5px] font-semibold text-mono-muted rounded px-1 py-0.5 focus:outline-none focus:border-[var(--mnx-accent)] cursor-pointer"
+                            className="shrink-0 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[9.5px] font-semibold text-[var(--mnx-muted)] rounded px-1 py-0.5 focus:outline-none focus:border-[var(--mnx-accent)] cursor-pointer"
                           >
                             {STAGES.map((st) => (
                               <option key={st} value={st}>
@@ -290,9 +270,9 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
         </div>
       ) : (
         /* ─── LIST VIEW ─── */
-        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] shadow-sm">
           {filteredDeals.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted">
+            <div className="p-8 text-center text-[var(--mnx-muted)]">
               No deals matched search criteria
             </div>
           ) : (
@@ -335,7 +315,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                             {deal.account.name}
                           </Link>
                         ) : (
-                          <span className="text-mono-muted italic">
+                          <span className="text-[var(--mnx-muted)] italic">
                             No account
                           </span>
                         )}
@@ -356,7 +336,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                       <td className="px-6 py-4 font-medium text-[var(--mnx-accent)]">
                         ₹{deal.amount.toLocaleString("en-IN")}
                       </td>
-                      <td className="px-6 py-4 text-mono-muted text-xs">
+                      <td className="px-6 py-4 text-[var(--mnx-muted)] text-xs">
                         {deal.expectedCloseDate
                           ? new Date(deal.expectedCloseDate).toLocaleDateString(
                               "en-IN",
@@ -368,13 +348,13 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/crm/deals/${deal.id}`}
-                            className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
+                            className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] rounded hover:bg-[var(--mnx-soft)] cursor-pointer"
                           >
                             <Eye className="size-4" />
                           </Link>
                           <CrmButton
                             onClick={() => handleDelete(deal.id)}
-                            className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer"
+                            className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer"
                           >
                             <Trash2 className="size-4" />
                           </CrmButton>

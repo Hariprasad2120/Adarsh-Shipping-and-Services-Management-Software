@@ -80,9 +80,9 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
       <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
         <div className="flex items-center gap-2">
           <Paperclip className="size-4.5 text-[var(--mnx-accent)]" />
-          <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">File Attachments</h3>
+          <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">File Attachments</h3>
         </div>
-        <span className="text-xs text-mono-muted font-bold">{attachments.length} files</span>
+        <span className="text-xs text-[var(--mnx-muted)] font-bold">{attachments.length} files</span>
       </div>
 
       {/* Upload Zone */}
@@ -96,16 +96,16 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
         />
         <div className="flex flex-col items-center gap-2">
           <UploadCloud className="size-8 text-[var(--mnx-accent)]" />
-          <span className="text-sm font-semibold text-mono-text">
+          <span className="text-sm font-semibold text-[var(--mnx-text-strong)]">
             {isUploading ? "Uploading file..." : "Click or drag files to upload"}
           </span>
-          <span className="text-[11px] text-mono-muted">Max file size: 10MB</span>
+          <span className="text-[11px] text-[var(--mnx-muted)]">Max file size: 10MB</span>
         </div>
       </div>
 
       {/* Attachments List */}
       {attachments.length === 0 ? (
-        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
+        <div className="p-6 text-center text-[var(--mnx-muted)] text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
           No files attached.
         </div>
       ) : (
@@ -116,14 +116,14 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
               className="p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/40 hover:border-[var(--mnx-border)] transition-all rounded-lg flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 bg-mono-soft text-mono-muted rounded-lg shrink-0">
+                <div className="p-2 bg-[var(--mnx-soft)] text-[var(--mnx-muted)] rounded-lg shrink-0">
                   <File className="size-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="font-semibold text-mono-text text-xs block truncate leading-tight">
+                  <span className="font-semibold text-[var(--mnx-text-strong)] text-xs block truncate leading-tight">
                     {attachment.fileName}
                   </span>
-                  <span className="text-[10px] text-mono-muted block mt-1 uppercase font-semibold">
+                  <span className="text-[10px] text-[var(--mnx-muted)] block mt-1 uppercase font-semibold">
                     {formatBytes(attachment.fileSize)} • By {attachment.createdBy.name}
                   </span>
                 </div>
@@ -135,14 +135,14 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
                     e.preventDefault();
                     toast.success(`Simulating download of: ${attachment.fileName}`);
                   }}
-                  className="p-1.5 text-mono-muted hover:text-[var(--mnx-accent)] rounded hover:bg-mono-soft cursor-pointer"
+                  className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-accent)] rounded hover:bg-[var(--mnx-soft)] cursor-pointer"
                   title="Download File"
                 >
                   <Download className="size-4" />
                 </a>
                 <CrmButton
                   onClick={() => handleDeleteAttachment(attachment.id)}
-                  className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer"
+                  className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer"
                   title="Remove Attachment"
                 >
                   <Trash2 className="size-4" />

@@ -61,14 +61,14 @@ export default async function CrmLeadSourcesPage() {
                   JD
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-mono-text">Justdial Importer</h3>
-                  <span className="text-xs text-mono-muted">RPA Persistent Browser Automation</span>
+                  <h3 className="text-lg font-bold text-[var(--mnx-text-strong)]">Justdial Importer</h3>
+                  <span className="text-xs text-[var(--mnx-muted)]">RPA Persistent Browser Automation</span>
                 </div>
               </div>
 
               {/* Status Pill */}
               {!config ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-mono-soft text-mono-muted uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[var(--mnx-soft)] text-[var(--mnx-muted)] uppercase tracking-wider">
                   Not Configured
                 </span>
               ) : isOffline ? (
@@ -91,7 +91,7 @@ export default async function CrmLeadSourcesPage() {
               </div>
             )}
 
-            <p className="text-mono-muted text-xs leading-relaxed">
+            <p className="text-[var(--mnx-muted)] text-xs leading-relaxed">
               Connects to your Justdial business listing dashboard using Playwright browser context, loading injected active session cookies. Automatically expands inquiries detail cards to retrieve client contact information, location, query category, and rating status without mass scraping.
             </p>
 
@@ -100,7 +100,7 @@ export default async function CrmLeadSourcesPage() {
                 <AlertCircle className="size-4 shrink-0 text-[var(--mnx-danger)] mt-0.5" />
                 <div className="space-y-1">
                   <span className="font-bold">Integration Offline</span>
-                  <p className="text-mono-muted leading-relaxed">
+                  <p className="text-[var(--mnx-muted)] leading-relaxed">
                     The latest automation run failed: <span className="text-[var(--mnx-danger)]">"{logs[0].errorMessage || "Unknown scraper error"}"</span>. This usually indicates that the session cookies have expired or the dashboard URL is invalid. Please configure the importer with updated parameters.
                   </p>
                 </div>
@@ -110,34 +110,34 @@ export default async function CrmLeadSourcesPage() {
             {config ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-[var(--mnx-surface)]/50 p-4 rounded-xl border border-[var(--mnx-border)]/30 text-xs">
                 <div>
-                  <span className="text-mono-muted block">Mode</span>
-                  <span className="font-semibold text-mono-text uppercase">{config.importMode}</span>
+                  <span className="text-[var(--mnx-muted)] block">Mode</span>
+                  <span className="font-semibold text-[var(--mnx-text-strong)] uppercase">{config.importMode}</span>
                 </div>
                 <div>
-                  <span className="text-mono-muted block">Interval</span>
-                  <span className="font-semibold text-mono-text">{config.importMode === "SCHEDULED" ? config.scheduleInterval : "Manual Only"}</span>
+                  <span className="text-[var(--mnx-muted)] block">Interval</span>
+                  <span className="font-semibold text-[var(--mnx-text-strong)]">{config.importMode === "SCHEDULED" ? config.scheduleInterval : "Manual Only"}</span>
                 </div>
                 <div>
-                  <span className="text-mono-muted block">Max Leads / Run</span>
+                  <span className="text-[var(--mnx-muted)] block">Max Leads / Run</span>
                   <span className="font-semibold text-[var(--mnx-accent)]">{config.maxLeads} leads</span>
                 </div>
                 <div>
-                  <span className="text-mono-muted block">Duplicate Handling</span>
-                  <span className="font-semibold text-mono-text uppercase">{config.duplicateHandling.replace("_", " ")}</span>
+                  <span className="text-[var(--mnx-muted)] block">Duplicate Handling</span>
+                  <span className="font-semibold text-[var(--mnx-text-strong)] uppercase">{config.duplicateHandling.replace("_", " ")}</span>
                 </div>
                 <div>
-                  <span className="text-mono-muted block">Last Synced</span>
-                  <span className="font-semibold text-mono-text">
+                  <span className="text-[var(--mnx-muted)] block">Last Synced</span>
+                  <span className="font-semibold text-[var(--mnx-text-strong)]">
                     {config.lastSyncedAt ? new Date(config.lastSyncedAt).toLocaleString("en-IN") : "Never"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-mono-muted block">Default Owner</span>
-                  <span className="font-semibold text-mono-text">{config.defaultOwner.name}</span>
+                  <span className="text-[var(--mnx-muted)] block">Default Owner</span>
+                  <span className="font-semibold text-[var(--mnx-text-strong)]">{config.defaultOwner.name}</span>
                 </div>
               </div>
             ) : (
-              <div className="p-4 bg-[var(--mnx-surface)]/40 rounded-xl border border-dashed border-[var(--mnx-border)]/60 text-center text-xs text-mono-muted">
+              <div className="p-4 bg-[var(--mnx-surface)]/40 rounded-xl border border-dashed border-[var(--mnx-border)]/60 text-center text-xs text-[var(--mnx-muted)]">
                 Setup your Justdial parameters to authorize session cookie injection.
               </div>
             )}
@@ -146,7 +146,7 @@ export default async function CrmLeadSourcesPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[var(--mnx-border)]/30 pt-5 mt-4">
             <Link
               href="/crm/lead-sources/justdial"
-              className="flex items-center gap-1 text-mono-muted hover:text-mono-text text-xs font-bold transition-colors"
+              className="flex items-center gap-1 text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] text-xs font-bold transition-colors"
             >
               <Settings className="size-4" />
               <span>Configure Importer</span>
@@ -163,24 +163,24 @@ export default async function CrmLeadSourcesPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
               <TrendingUp className="size-4 text-[var(--mnx-accent)]" />
-              <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">Sync Quick Stats</h3>
+              <h3 className="font-bold text-xs text-[var(--mnx-text-strong)] uppercase tracking-wider">Sync Quick Stats</h3>
             </div>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs py-1.5 border-b border-[var(--mnx-border)]/20">
-                <span className="text-mono-muted">Total JD Snapshots</span>
-                <span className="font-bold text-mono-text">
+                <span className="text-[var(--mnx-muted)]">Total JD Snapshots</span>
+                <span className="font-bold text-[var(--mnx-text-strong)]">
                   {logs.length > 0 ? logs.reduce((acc, log) => acc + log.totalScanned, 0) : 0}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs py-1.5 border-b border-[var(--mnx-border)]/20">
-                <span className="text-mono-muted">Success Ingestions</span>
+                <span className="text-[var(--mnx-muted)]">Success Ingestions</span>
                 <span className="font-bold text-[var(--mnx-success)]">
                   {logs.length > 0 ? logs.reduce((acc, log) => acc + log.newLeads, 0) : 0}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs py-1.5 border-b border-[var(--mnx-border)]/20">
-                <span className="text-mono-muted">Duplicates Handled</span>
+                <span className="text-[var(--mnx-muted)]">Duplicates Handled</span>
                 <span className="font-bold text-[var(--mnx-warning)]">
                   {logs.length > 0 ? logs.reduce((acc, log) => acc + log.updatedLeads, 0) : 0}
                 </span>
@@ -188,12 +188,12 @@ export default async function CrmLeadSourcesPage() {
             </div>
           </div>
 
-          <div className="p-4 bg-mono-soft0/5 rounded-xl border border-mono-border/40 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-mono-muted">
+          <div className="p-4 bg-[var(--mnx-soft)]/5 rounded-xl border border-[var(--mnx-border)]/40 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--mnx-muted)]">
               <HelpCircle className="size-4 text-[var(--mnx-accent)]" />
               <span>Cookie Synchronization</span>
             </div>
-            <p className="text-[11px] text-mono-muted leading-relaxed">
+            <p className="text-[11px] text-[var(--mnx-muted)] leading-relaxed">
               Playwright uses the cookie JSON saved in your configuration parameters. If login expired warnings appear, export cookies from your authenticated Justdial desktop tab and paste the text block.
             </p>
           </div>
@@ -205,7 +205,7 @@ export default async function CrmLeadSourcesPage() {
         <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
           <div className="flex items-center gap-2">
             <History className="size-4.5 text-[var(--mnx-accent)]" />
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Recent Import Runs</h3>
+            <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Recent Import Runs</h3>
           </div>
           {logs.length > 0 && (
             <Link
@@ -219,14 +219,14 @@ export default async function CrmLeadSourcesPage() {
         </div>
 
         {logs.length === 0 ? (
-          <div className="p-8 text-center text-mono-muted text-xs">
+          <div className="p-8 text-center text-[var(--mnx-muted)] text-xs">
             No recent import activities found. Trigger a manual sync run above.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <CrmTable className="w-full text-left text-xs border-collapse text-mono-muted">
+            <CrmTable className="w-full text-left text-xs border-collapse text-[var(--mnx-muted)]">
               <thead>
-                <tr className="border-b border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/50 text-[10px] font-bold uppercase tracking-wider text-mono-muted">
+                <tr className="border-b border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/50 text-[10px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                   <th className="px-4 py-3">Start Date/Time</th>
                   <th className="px-4 py-3">Duration</th>
                   <th className="px-4 py-3">Status</th>
@@ -243,10 +243,10 @@ export default async function CrmLeadSourcesPage() {
                     : "Running";
                   return (
                     <tr key={log.id} className="hover:bg-[var(--mnx-surface)]/35 transition-colors">
-                      <td className="px-4 py-3 font-semibold text-mono-text">
+                      <td className="px-4 py-3 font-semibold text-[var(--mnx-text-strong)]">
                         {new Date(log.startedAt).toLocaleString("en-IN")}
                       </td>
-                      <td className="px-4 py-3 text-mono-muted">{duration}</td>
+                      <td className="px-4 py-3 text-[var(--mnx-muted)]">{duration}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                           log.status === "SUCCESS"
@@ -258,10 +258,10 @@ export default async function CrmLeadSourcesPage() {
                           {log.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center font-bold text-mono-text">{log.totalScanned}</td>
+                      <td className="px-4 py-3 text-center font-bold text-[var(--mnx-text-strong)]">{log.totalScanned}</td>
                       <td className="px-4 py-3 text-center font-bold text-[var(--mnx-accent)]">{log.newLeads}</td>
                       <td className="px-4 py-3 text-center font-bold text-[var(--mnx-warning)]">{log.updatedLeads}</td>
-                      <td className="px-4 py-3 text-mono-muted truncate max-w-xs" title={log.errorMessage || undefined}>
+                      <td className="px-4 py-3 text-[var(--mnx-muted)] truncate max-w-xs" title={log.errorMessage || undefined}>
                         {log.errorMessage || "-"}
                       </td>
                     </tr>

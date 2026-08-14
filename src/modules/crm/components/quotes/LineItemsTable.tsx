@@ -1,6 +1,6 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/modules/crm/components/workspace/crm-workspace";
+import { CrmButton, CrmDialog, CrmInput, CrmTable, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import { NativeSelect } from "@/components/ui/native-select";
@@ -108,7 +108,7 @@ export function LineItemRow({
     <tr
       className={[
         "border-b border-[var(--mnx-border)] align-top transition-colors",
-        isDragTarget ? "bg-[var(--mnx-accent)]/5" : "bg-mono-card",
+        isDragTarget ? "bg-[var(--mnx-accent)]/5" : "bg-[var(--mnx-surface)]",
       ].join(" ")}
       onDragOver={(event) => onDragOver(index, event)}
       onDrop={() => onDrop(index)}
@@ -207,7 +207,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[90px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           value={currency}
           onChange={(e) => handleCurrencyChange(e.target.value)}
         >
@@ -222,7 +222,7 @@ export function LineItemRow({
         <CrmInput
           type="number"
           step="0.0001"
-          className="h-9 w-full rounded-xl border bg-mono-card px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
           disabled={currency === "INR"}
           value={exchangeRate}
           onChange={(e) => {
@@ -236,7 +236,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[100px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.unit`)}
         >
           {units.map((unit) => (
@@ -251,7 +251,7 @@ export function LineItemRow({
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-xl border bg-mono-card px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
           {...form.register(`lineItems.${index}.quantity`, {
             valueAsNumber: true,
             onChange: (e) => {
@@ -269,7 +269,7 @@ export function LineItemRow({
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-xl border bg-mono-card px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
           {...form.register(`lineItems.${index}.rate`, {
             valueAsNumber: true,
             onChange: (e) => {
@@ -284,7 +284,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[110px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.tax`)}
         >
           <option value="">Select a Tax</option>
@@ -297,7 +297,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[110px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
+          className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.tds`)}
         >
           {tdsOptions.map((tds) => (
@@ -337,6 +337,20 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
   const [rowImages, setRowImages] = useState<RowImageMap>({});
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragTargetIndex, setDragTargetIndex] = useState<number | null>(null);
+  const [bulkAddOpen, setBulkAddOpen] = useState(false);
+  const [bulkAddText, setBulkAddText] = useState("");
+
+  const handleBulkAdd = () => {
+    const lines = bulkAddText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    lines.forEach((description) => {
+      append({ ...createEmptyLineItem(), description });
+    });
+    setBulkAddText("");
+    setBulkAddOpen(false);
+  };
 
   const handleImageChange = (rowKey: string, event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -390,7 +404,7 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
               className="h-9"
               variant="outline"
               size="sm"
-              onClick={() => append(createEmptyLineItem())}
+              onClick={() => setBulkAddOpen(true)}
             >
               <Plus className="mr-1 size-4" />
               Bulk add
@@ -399,7 +413,7 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
         }
       />
       <div className="overflow-x-auto border border-[var(--mnx-border)]">
-        <CrmTable className="min-w-[1280px] w-full bg-mono-card">
+        <CrmTable className="min-w-[1280px] w-full bg-[var(--mnx-surface)]">
           <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--mnx-text-muted)] whitespace-nowrap">
             <tr>
               <th className="w-10 px-2 py-3"></th>
@@ -449,6 +463,36 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
           </tbody>
         </CrmTable>
       </div>
+      {bulkAddOpen ? (
+        <CrmDialog
+          open
+          onClose={() => setBulkAddOpen(false)}
+          title="Bulk add line items"
+          size="compact"
+          footer={
+            <div className="flex justify-end gap-3">
+              <CrmButton onClick={() => setBulkAddOpen(false)} variant="secondary">
+                Cancel
+              </CrmButton>
+              <CrmButton onClick={handleBulkAdd}>Add lines</CrmButton>
+            </div>
+          }
+        >
+          <div className="space-y-2">
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              Enter one item description per line. Each line becomes a new line item, which you can
+              then fill in with rate, quantity, tax, etc.
+            </p>
+            <CrmTextarea
+              value={bulkAddText}
+              onChange={(event) => setBulkAddText(event.target.value)}
+              rows={8}
+              placeholder={"Ocean freight charges\nTerminal handling charges\nCustoms clearance fee"}
+              className="w-full rounded-xl"
+            />
+          </div>
+        </CrmDialog>
+      ) : null}
     </div>
   );
 }

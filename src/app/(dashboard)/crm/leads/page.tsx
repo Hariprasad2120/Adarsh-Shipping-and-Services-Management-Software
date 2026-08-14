@@ -132,7 +132,7 @@ export default async function CrmLeadsPage({
               <tbody>
                 <OperationalTableEmpty colSpan={6}>
                   <div className="flex flex-col items-center justify-center gap-4 p-14 text-center">
-                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-mono-soft text-mono-muted">
+                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--mnx-soft)] text-[var(--mnx-muted)]">
                       <Users className="size-6" />
                     </div>
                     <div className="space-y-2">
@@ -193,19 +193,19 @@ export default async function CrmLeadsPage({
                     />
                     <OperationalTableCell>
                       <div className="flex items-center gap-1.5">
-                        <Briefcase className="size-3.5 text-mono-muted" />
+                        <Briefcase className="size-3.5 text-[var(--mnx-muted)]" />
                         <span>{lead.company}</span>
                       </div>
                     </OperationalTableCell>
                     <OperationalTableCell className="space-y-1">
                       {lead.email ? (
-                        <div className="flex items-center gap-1.5 text-xs text-mono-muted">
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)]">
                           <Mail className="size-3.5" />
                           <span className="truncate">{lead.email}</span>
                         </div>
                       ) : null}
                       {lead.phone ? (
-                        <div className="flex items-center gap-1.5 text-xs text-mono-muted">
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)]">
                           <Phone className="size-3.5" />
                           <span>{lead.phone}</span>
                         </div>

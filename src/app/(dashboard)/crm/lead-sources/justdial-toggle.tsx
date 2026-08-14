@@ -38,7 +38,7 @@ export function JustdialToggle({ initialActive }: JustdialToggleProps) {
 
   return (
     <div className="flex items-center gap-3 bg-[var(--mnx-surface)]/40 dark:bg-[var(--mnx-surface)]/30 px-3.5 py-2 rounded-xl border border-[var(--mnx-border)]/30 dark:border-[var(--mnx-border)]/40">
-      <span className="text-xs font-bold text-mono-muted dark:text-mono-muted uppercase tracking-wide select-none">
+      <span className="text-xs font-bold text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] uppercase tracking-wide select-none">
         Import Scheduler
       </span>
 
@@ -46,12 +46,12 @@ export function JustdialToggle({ initialActive }: JustdialToggleProps) {
         onClick={handleToggle}
         disabled={isPending}
         className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--mnx-accent)]/20 ${
-          isActive ? "bg-[var(--mnx-accent)]" : "bg-mono-soft dark:bg-mono-soft"
+          isActive ? "bg-[var(--mnx-accent)]" : "bg-[var(--mnx-soft)] dark:bg-[var(--mnx-soft)]"
         } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
         aria-label="Toggle Justdial Importer Scheduler"
       >
         <span
-          className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-mono-card shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
+          className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-[var(--mnx-surface)] shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
             isActive ? "translate-x-4.5" : "translate-x-0"
           }`}
         >

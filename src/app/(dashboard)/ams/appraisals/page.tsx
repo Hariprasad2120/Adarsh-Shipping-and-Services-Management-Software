@@ -1,4 +1,8 @@
 import { PerformanceTableRow } from "@/modules/performance/components/performance-workspace";
+import {
+  PerformanceSection,
+  PerformanceSectionHeader,
+} from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -10,6 +14,7 @@ import {
   OperationalTableEmpty,
   OperationalTableHead,
 } from "@/components/data-display/operational-data-table";
+import { WorkspaceBadge } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
@@ -137,19 +142,19 @@ export default async function AppraisalsPage({
 
   return (
     <div className="space-y-8">
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <h2 className="mnx-title-2 text-mono-text">Due This Month</h2>
-          <span className="text-sm text-mono-muted">
-            - {MONTH_NAMES[defaultMonth]} {defaultYear}
-          </span>
-          {dueThisMonthRowsSafe.length > 0 && (
-            <Badge className="bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]">
-              {dueThisMonthRowsSafe.length}
-            </Badge>
-          )}
-        </div>
-
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Urgent workload"
+          title="Due this month"
+          description={`Appraisal items due in ${MONTH_NAMES[defaultMonth]} ${defaultYear}.`}
+          actions={
+            dueThisMonthRowsSafe.length > 0 ? (
+              <WorkspaceBadge variant="warning">
+                {dueThisMonthRowsSafe.length} due
+              </WorkspaceBadge>
+            ) : undefined
+          }
+        />
         <OperationalDataTableWrap>
           <OperationalTable>
             <thead>
@@ -182,19 +187,23 @@ export default async function AppraisalsPage({
             </tbody>
           </OperationalTable>
         </OperationalDataTableWrap>
-      </section>
+      </PerformanceSection>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="mnx-title-2 text-mono-text">In Progress</h2>
-          <InProgressFilterMenu
-            cycles={cycles as Cycles}
-            stageOptions={Object.keys(STAGE_COLOR)}
-          />
-        </div>
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Live workflow"
+          title="In progress"
+          description="Track open appraisals and move each record through its active stage."
+          actions={
+            <InProgressFilterMenu
+              cycles={cycles as Cycles}
+              stageOptions={Object.keys(STAGE_COLOR)}
+            />
+          }
+        />
 
         {sp.cycleId || sp.stage ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 px-5">
             {sp.cycleId ? (
               <Badge className="bg-mono-accent/10 text-mono-accent">
                 Cycle:{" "}
@@ -274,31 +283,27 @@ export default async function AppraisalsPage({
             </tbody>
           </OperationalTable>
         </OperationalDataTableWrap>
-      </section>
+      </PerformanceSection>
 
-      <section className="space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="mnx-title-2 text-mono-text">
-              {isDueFilterApplied ? "Eligible For Appraisal" : "All Employees"}
-            </h2>
-            {isDueFilterApplied ? (
-              <span className="text-sm text-mono-muted">
-                - {MONTH_NAMES[month]} {year}
-              </span>
-            ) : (
-              <span className="text-sm text-mono-muted">
-                - Company directory
-              </span>
-            )}
-            {eligibleRowsToShow.length > 0 && (
-              <Badge className="bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]">
-                {eligibleRowsToShow.length}
-              </Badge>
-            )}
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Appraisal readiness"
+          title={isDueFilterApplied ? "Eligible for appraisal" : "All employees"}
+          description={
+            isDueFilterApplied
+              ? `Eligibility view for ${MONTH_NAMES[month]} ${year}.`
+              : "Company directory with appraisal-ready employees."
+          }
+          actions={<EligibleAppraisalFilterMenu />}
+        />
+
+        {eligibleRowsToShow.length > 0 ? (
+          <div className="px-5">
+            <WorkspaceBadge variant="accent">
+              {eligibleRowsToShow.length} visible
+            </WorkspaceBadge>
           </div>
-          <EligibleAppraisalFilterMenu />
-        </div>
+        ) : null}
 
         <OperationalDataTableWrap>
           <OperationalTable>
@@ -334,7 +339,7 @@ export default async function AppraisalsPage({
             </tbody>
           </OperationalTable>
         </OperationalDataTableWrap>
-      </section>
+      </PerformanceSection>
     </div>
   );
 }

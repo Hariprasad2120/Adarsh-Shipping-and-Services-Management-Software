@@ -28,26 +28,26 @@ export default async function CrmLeadSourcesLogsPage() {
   return (
     <div className="space-y-6">
       <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
-        <div className="flex items-center gap-2 text-mono-muted border-b border-[var(--mnx-border)]/20 pb-2">
+        <div className="flex items-center gap-2 text-[var(--mnx-muted)] border-b border-[var(--mnx-border)]/20 pb-2">
           <Link
             href="/crm/lead-sources"
-            className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
+            className="p-1.5 text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] rounded hover:bg-[var(--mnx-soft)] cursor-pointer"
           >
             <ArrowLeft className="size-4" />
           </Link>
           <History className="size-4.5 text-[var(--mnx-accent)]" />
-          <h3 className="font-bold text-xs uppercase tracking-wider text-mono-text">Ingestion Run Audit Log</h3>
+          <h3 className="font-bold text-xs uppercase tracking-wider text-[var(--mnx-text-strong)]">Ingestion Run Audit Log</h3>
         </div>
 
         {logs.length === 0 ? (
-          <div className="p-12 text-center text-mono-muted text-xs">
+          <div className="p-12 text-center text-[var(--mnx-muted)] text-xs">
             No sync execution entries found. Trigger an import run to capture metrics.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <CrmTable className="w-full text-left text-xs border-collapse text-mono-muted">
+            <CrmTable className="w-full text-left text-xs border-collapse text-[var(--mnx-muted)]">
               <thead>
-                <tr className="border-b border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/50 text-[10px] font-bold uppercase tracking-wider text-mono-muted">
+                <tr className="border-b border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/50 text-[10px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                   <th className="px-4 py-3">Start Date/Time</th>
                   <th className="px-4 py-3">Duration</th>
                   <th className="px-4 py-3">Status</th>
@@ -65,10 +65,10 @@ export default async function CrmLeadSourcesLogsPage() {
                     : "Running";
                   return (
                     <tr key={log.id} className="hover:bg-[var(--mnx-surface)]/35 transition-colors">
-                      <td className="px-4 py-3 font-semibold text-mono-text">
+                      <td className="px-4 py-3 font-semibold text-[var(--mnx-text-strong)]">
                         {new Date(log.startedAt).toLocaleString("en-IN")}
                       </td>
-                      <td className="px-4 py-3 text-mono-muted">{duration}</td>
+                      <td className="px-4 py-3 text-[var(--mnx-muted)]">{duration}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 w-max ${
                           log.status === "SUCCESS"
@@ -87,11 +87,11 @@ export default async function CrmLeadSourcesLogsPage() {
                           <span>{log.status}</span>
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center font-bold text-mono-text">{log.totalScanned}</td>
+                      <td className="px-4 py-3 text-center font-bold text-[var(--mnx-text-strong)]">{log.totalScanned}</td>
                       <td className="px-4 py-3 text-center font-bold text-[var(--mnx-accent)]">{log.newLeads}</td>
                       <td className="px-4 py-3 text-center font-bold text-[var(--mnx-warning)]">{log.updatedLeads}</td>
                       <td className="px-4 py-3 text-center font-bold text-[var(--mnx-danger)]">{log.failedLeads}</td>
-                      <td className="px-4 py-3 text-mono-muted max-w-sm break-words leading-relaxed">
+                      <td className="px-4 py-3 text-[var(--mnx-muted)] max-w-sm break-words leading-relaxed">
                         {log.errorMessage || "-"}
                       </td>
                     </tr>

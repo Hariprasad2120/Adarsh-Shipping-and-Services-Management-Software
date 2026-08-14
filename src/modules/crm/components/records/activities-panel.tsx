@@ -105,7 +105,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[var(--mnx-border)]/30 pb-3">
         <div className="flex items-center gap-2">
           <CheckSquare className="size-4.5 text-[var(--mnx-accent)]" />
-          <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Scheduled Activities</h3>
+          <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Scheduled Activities</h3>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <CrmButton
@@ -136,23 +136,23 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
       {activeForm !== "NONE" && (
         <div className="p-4 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
-            <span className="text-xs font-bold text-mono-text uppercase tracking-wider">
+            <span className="text-xs font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider">
               {activeForm === "TASK" ? "Schedule a Task" : activeForm === "EVENT" ? "Schedule a Meeting" : "Log a Call"}
             </span>
-            <CrmButton onClick={resetForm} className="text-mono-muted hover:text-mono-text cursor-pointer">
+            <CrmButton onClick={resetForm} className="text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] cursor-pointer">
               <X className="size-4" />
             </CrmButton>
           </div>
 
           <form onSubmit={handleCreateActivity} className="space-y-3">
             <div>
-              <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Title *</label>
+              <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Title *</label>
               <CrmInput
                 type="text"
                 placeholder={activeForm === "TASK" ? "e.g. Email quote document" : activeForm === "EVENT" ? "e.g. Final pricing negotiation" : "e.g. Cold intro pitch"}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 required
               />
             </div>
@@ -160,11 +160,11 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
             <div className="grid grid-cols-2 gap-3">
               {activeForm === "TASK" && (
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Due Date</label>
+                  <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Due Date</label>
                   <DateInput
                     value={dueAt}
                     onChange={(e) => setDueAt(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               )}
@@ -172,21 +172,21 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
               {activeForm === "EVENT" && (
                 <>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Start Time</label>
+                    <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Start Time</label>
                     <CrmInput
                       type="datetime-local"
                       value={startAt}
                       onChange={(e) => setStartAt(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">End Time</label>
+                    <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">End Time</label>
                     <CrmInput
                       type="datetime-local"
                       value={endAt}
                       onChange={(e) => setEndAt(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </>
@@ -195,34 +195,34 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
               {activeForm === "CALL" && (
                 <>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Duration (Mins)</label>
+                    <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Duration (Mins)</label>
                     <CrmInput
                       type="number"
                       placeholder="e.g. 15"
                       value={durationMins}
                       onChange={(e) => setDurationMins(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Call Result</label>
+                    <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Call Result</label>
                     <CrmInput
                       type="text"
                       placeholder="e.g. Busy, Answered, Left message"
                       value={callResult}
                       onChange={(e) => setCallResult(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </>
               )}
 
               <div>
-                <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Priority</label>
+                <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Priority</label>
                 <NativeSelect
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 >
                   <option value="LOW">Low</option>
                   <option value="NORMAL">Normal</option>
@@ -233,25 +233,25 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
             {activeForm === "EVENT" && (
               <div>
-                <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Location</label>
+                <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Location</label>
                 <CrmInput
                   type="text"
                   placeholder="e.g. Conference room, Google Meet link"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-[11px] font-bold uppercase text-mono-muted mb-1">Description</label>
+              <label className="block text-[11px] font-bold uppercase text-[var(--mnx-muted)] mb-1">Description</label>
               <CrmTextarea
                 placeholder="Log follow-up details..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
 
@@ -259,14 +259,14 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
               <CrmButton
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)] rounded text-xs font-semibold cursor-pointer"
+                className="px-4 py-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-[var(--mnx-muted)] border border-[var(--mnx-border)] rounded text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </CrmButton>
               <CrmButton
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-1.5 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text rounded text-xs font-bold transition-all cursor-pointer"
+                className="px-4 py-1.5 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] rounded text-xs font-bold transition-all cursor-pointer"
               >
                 {isSubmitting ? "Saving..." : "Save Activity"}
               </CrmButton>
@@ -277,7 +277,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
       {/* Activities List */}
       {activities.length === 0 ? (
-        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
+        <div className="p-6 text-center text-[var(--mnx-muted)] text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
           No activities planned yet.
         </div>
       ) : (
@@ -306,32 +306,32 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="font-bold text-mono-text text-sm block truncate leading-tight">
+                  <span className="font-bold text-[var(--mnx-text-strong)] text-sm block truncate leading-tight">
                     {activity.title}
                   </span>
                   <span
                     className={`px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider shrink-0 ${
                       activity.priority === "HIGH"
                         ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
-                        : "bg-mono-soft text-mono-muted"
+                        : "bg-[var(--mnx-soft)] text-[var(--mnx-muted)]"
                     }`}
                   >
                     {activity.priority}
                   </span>
                 </div>
 
-                <p className="text-xs text-mono-muted mt-1">{activity.description}</p>
+                <p className="text-xs text-[var(--mnx-muted)] mt-1">{activity.description}</p>
 
-                <div className="flex flex-wrap items-center gap-3 text-[10px] text-mono-muted mt-2">
+                <div className="flex flex-wrap items-center gap-3 text-[10px] text-[var(--mnx-muted)] mt-2">
                   {activity.type === "TASK" && activity.dueAt && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-mono-muted" />
+                      <Clock className="size-3 text-[var(--mnx-muted)]" />
                       <span>Due: {new Date(activity.dueAt).toLocaleDateString("en-IN")}</span>
                     </span>
                   )}
                   {activity.type === "EVENT" && activity.startAt && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-mono-muted" />
+                      <Clock className="size-3 text-[var(--mnx-muted)]" />
                       <span>
                         Time: {new Date(activity.startAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
                       </span>
@@ -339,7 +339,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   )}
                   {activity.type === "CALL" && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-mono-muted" />
+                      <Clock className="size-3 text-[var(--mnx-muted)]" />
                       <span>
                         Duration: {activity.durationMins || "0"}m • {activity.callResult || "No result"}
                       </span>
@@ -347,7 +347,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   )}
                   {activity.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="size-3 text-mono-muted" />
+                      <MapPin className="size-3 text-[var(--mnx-muted)]" />
                       <span>{activity.location}</span>
                     </span>
                   )}

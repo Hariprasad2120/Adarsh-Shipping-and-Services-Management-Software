@@ -607,7 +607,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
               activeTab === "OTHER_DETAILS"
                 ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]"
-                : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
+                : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--color-on-surface)]"
             }`}
           >
             Other Details
@@ -618,7 +618,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
               activeTab === "ADDRESS"
                 ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]"
-                : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
+                : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--color-on-surface)]"
             }`}
           >
             Address
@@ -629,7 +629,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
               activeTab === "REMARKS"
                 ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]"
-                : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
+                : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--color-on-surface)]"
             }`}
           >
             Remarks
@@ -1128,7 +1128,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] text-mono-text rounded-xl text-sm font-bold transition-all mnx-shadow-panel hover:-translate-y-0.5  hover:bg-[var(--mnx-accent)] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] rounded-xl text-sm font-bold transition-all mnx-shadow-panel hover:-translate-y-0.5  hover:bg-[var(--mnx-accent)] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
         >
           <Save className="size-4" />
           <span>

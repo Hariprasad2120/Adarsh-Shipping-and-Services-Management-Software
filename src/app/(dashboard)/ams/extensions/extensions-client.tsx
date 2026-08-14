@@ -21,17 +21,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { requestExtensionAction, decideExtensionAction } from "./actions";
 import {
-  Plus,
   Check,
   X,
-  Calendar,
-  User,
-  MessageSquare,
   AlertCircle,
   FileText,
 } from "lucide-react";
 
-type Request = {
+export type ExtensionRequestRow = {
   id: string;
   appraisalId: string;
   requesterId: string;
@@ -47,29 +43,28 @@ type Request = {
   };
 };
 
-type ActiveAppraisal = {
+export type ActiveExtensionAppraisal = {
   id: string;
   cycle: { name: string };
   employee: { name: string };
 };
 
 interface ExtensionsClientProps {
-  initialRequests: Request[];
-  activeAppraisals: ActiveAppraisal[];
+  initialRequests: ExtensionRequestRow[];
+  activeAppraisals: ActiveExtensionAppraisal[];
   isAdmin: boolean;
-  currentUserId: string;
 }
 
 export function ExtensionsClient({
   initialRequests,
   activeAppraisals,
   isAdmin,
-  currentUserId,
 }: ExtensionsClientProps) {
-  const [requests, setRequests] = useState<Request[]>(initialRequests);
+  const [requests, setRequests] = useState<ExtensionRequestRow[]>(
+    initialRequests,
+  );
   const [appraisalId, setAppraisalId] = useState("");
   const [reason, setReason] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
   const [pendingDecision, startDecisionTransition] = useTransition();
   const [pendingRequest, startRequestTransition] = useTransition();
 
@@ -124,7 +119,6 @@ export function ExtensionsClient({
       toast.success("Extension request submitted successfully");
       setReason("");
       setAppraisalId("");
-      setFormOpen(false);
       // Let's reload to update the requests list
       window.location.reload();
     });

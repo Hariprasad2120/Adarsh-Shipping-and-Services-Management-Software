@@ -3,7 +3,16 @@ import { db } from "@/lib/db";
 import { loadCaps } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { ExtensionsClient } from "./extensions-client";
+import type {
+  ActiveExtensionAppraisal,
+  ExtensionRequestRow,
+} from "./extensions-client";
 import { Calendar } from "lucide-react";
+import {
+  PerformanceSection,
+  PerformanceSectionHeader,
+} from "@/modules/performance/components/performance-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 
 export const metadata = {
   title: "Deadline Extensions | AMS | Adarsh Shipping",
@@ -16,9 +25,13 @@ export default async function ExtensionsPage() {
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Organisation configuration missing.
-      </div>
+      <WorkspaceState
+        variant="danger"
+        eyebrow="Appraisal operations"
+        title="Configuration error"
+        description="Organisation configuration is missing."
+        icon={<Calendar aria-hidden="true" />}
+      />
     );
   }
 
@@ -92,21 +105,23 @@ export default async function ExtensionsPage() {
     : [];
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
-          {isAdmin
+    <PerformanceSection>
+      <PerformanceSectionHeader
+        eyebrow="Appraisal operations"
+        title="Deadline extensions"
+        description={
+          isAdmin
             ? "Manage extension request submissions and extend self-assessments or reviewer deadlines."
-            : "Request more time to complete your self-assessments or reviewer ratings."}
-        </p>
-      </div>
-
-      <ExtensionsClient
-        initialRequests={requests as any}
-        activeAppraisals={activeAppraisals}
-        isAdmin={isAdmin}
-        currentUserId={session.user.id}
+            : "Request more time to complete your self-assessments or reviewer ratings."
+        }
       />
-    </div>
+      <div className="px-5 pb-5">
+        <ExtensionsClient
+          initialRequests={requests as ExtensionRequestRow[]}
+          activeAppraisals={activeAppraisals as ActiveExtensionAppraisal[]}
+          isAdmin={isAdmin}
+        />
+      </div>
+    </PerformanceSection>
   );
 }

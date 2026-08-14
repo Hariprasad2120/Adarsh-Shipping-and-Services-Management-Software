@@ -127,13 +127,13 @@ export function ImportButtons({
         <CrmButton
           onClick={handleImport}
           disabled={isPending}
-          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text px-4 py-2 rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
+          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-[var(--mnx-text-strong)] px-4 py-2 rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
           title="Trigger manual browser scraper run"
         >
           {runningImport ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
-            <Play className="size-4 text-mono-text" />
+            <Play className="size-4 text-[var(--mnx-text-strong)]" />
           )}
           <span>
             {runningImport
@@ -165,7 +165,7 @@ export function ImportButtons({
                 </div>
 
                 {/* Mock Address Bar */}
-                <div className="flex items-center gap-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] px-3 py-1 rounded-lg text-xs text-mono-muted w-full max-w-2xl font-mono select-none">
+                <div className="flex items-center gap-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] px-3 py-1 rounded-lg text-xs text-[var(--mnx-muted)] w-full max-w-2xl font-mono select-none">
                   <Loader2 className="size-3 text-[var(--mnx-accent)] animate-spin shrink-0" />
                   <span id="justdial-live-viewport-title" className="truncate">
                     {status?.currentUrl ||
@@ -177,7 +177,7 @@ export function ImportButtons({
               {/* Close/Minimize */}
               <CrmButton
                 onClick={() => setShowViewport(false)}
-                className="ml-4 px-3 py-1 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted hover:text-mono-text rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
+                className="ml-4 px-3 py-1 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)] rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
               >
                 Minimize Viewport
               </CrmButton>
@@ -188,12 +188,12 @@ export function ImportButtons({
               {/* Left Side: Live Screenshot Viewport (2 cols) */}
               <div className="md:col-span-2 p-4 flex flex-col justify-between bg-[var(--mnx-surface)] overflow-y-auto">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs text-mono-muted">
+                  <div className="flex items-center justify-between text-xs text-[var(--mnx-muted)]">
                     <span className="flex items-center gap-1.5">
                       <span className="size-2 rounded-full bg-[var(--mnx-success-bg)] animate-pulse" />
                       Live Headless Scraper Stream
                     </span>
-                    <span className="font-mono text-mono-muted">
+                    <span className="font-mono text-[var(--mnx-muted)]">
                       {status?.timestamp
                         ? `Updated: ${new Date(status.timestamp).toLocaleTimeString()}`
                         : "Initializing..."}
@@ -215,7 +215,7 @@ export function ImportButtons({
                         }}
                       />
                     ) : (
-                      <div className="text-center space-y-2 text-mono-muted">
+                      <div className="text-center space-y-2 text-[var(--mnx-muted)]">
                         <Loader2 className="size-8 animate-spin mx-auto text-[var(--mnx-accent)]" />
                         <p className="text-xs">
                           Connecting to headless browser...
@@ -227,7 +227,7 @@ export function ImportButtons({
 
                 {/* Scraper Status details */}
                 <div className="mt-4 p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)] space-y-2 shrink-0">
-                  <div className="flex items-center justify-between text-xs font-bold text-mono-text">
+                  <div className="flex items-center justify-between text-xs font-bold text-[var(--mnx-text-strong)]">
                     <span>STATUS: {status?.status || "RUNNING"}</span>
                     <span>
                       Ingesting: {status?.processedCount ?? 0} /{" "}
@@ -251,7 +251,7 @@ export function ImportButtons({
                       }}
                     />
                   </div>
-                  <p className="text-xs text-mono-muted truncate">
+                  <p className="text-xs text-[var(--mnx-muted)] truncate">
                     <span className="text-[var(--mnx-accent)] font-semibold">
                       Active Step:
                     </span>{" "}
@@ -263,7 +263,7 @@ export function ImportButtons({
               {/* Right Side: Log Console (1 col) */}
               <div className="p-4 bg-[var(--mnx-surface)] flex flex-col justify-between overflow-hidden">
                 <div className="space-y-3 flex flex-col overflow-hidden h-full">
-                  <div className="flex items-center gap-1.5 text-xs text-mono-muted shrink-0">
+                  <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)] shrink-0">
                     <Terminal className="size-4 text-[var(--mnx-accent)]" />
                     <span className="font-semibold uppercase tracking-wider">
                       Console Output Logs
@@ -278,14 +278,14 @@ export function ImportButtons({
                           key={idx}
                           className="whitespace-pre-wrap select-text"
                         >
-                          <span className="text-mono-muted select-none mr-1.5">
+                          <span className="text-[var(--mnx-muted)] select-none mr-1.5">
                             &gt;
                           </span>
                           {log}
                         </div>
                       ))
                     ) : (
-                      <div className="text-mono-muted italic">
+                      <div className="text-[var(--mnx-muted)] italic">
                         Initializing console logs output buffer...
                       </div>
                     )}

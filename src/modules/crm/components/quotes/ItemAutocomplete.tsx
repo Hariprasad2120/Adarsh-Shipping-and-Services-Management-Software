@@ -171,7 +171,7 @@ export function ItemAutocomplete({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={open ? "item-autocomplete-dropdown" : undefined}
-        className="h-9 w-full rounded-md border border-[var(--mnx-border)] bg-mono-card px-3 text-[12px] text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
+        className="h-9 w-full rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-[12px] text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
       />
       {error && (
         <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{error}</p>
@@ -191,7 +191,7 @@ export function ItemAutocomplete({
               left: `${coords.left}px`,
               width: `${coords.width}px`,
               minWidth: "280px",
-              background: "var(--color-surface)",
+              background: "var(--mnx-surface)",
               border: "1px solid var(--mnx-accent-soft)",
               maxHeight: "280px",
               overflowY: "auto",
@@ -203,8 +203,8 @@ export function ItemAutocomplete({
                 <div
                   className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest"
                   style={{
-                    color: "var(--color-on-surface-variant)",
-                    background: "var(--color-surface-container-low)",
+                    color: "var(--mnx-muted)",
+                    background: "var(--mnx-soft)",
                   }}
                 >
                   Items Master
@@ -240,7 +240,7 @@ export function ItemAutocomplete({
                     <div className="min-w-0 flex-1">
                       <p
                         className="text-[13px] font-medium"
-                        style={{ color: "var(--color-on-surface)" }}
+                        style={{ color: "var(--mnx-text-strong)" }}
                       >
                         {highlight(item.name, value)}
                       </p>
@@ -248,7 +248,7 @@ export function ItemAutocomplete({
                         {item.hsnSac && (
                           <span
                             className="text-[10px]"
-                            style={{ color: "var(--color-on-surface-variant)" }}
+                            style={{ color: "var(--mnx-muted)" }}
                           >
                             HSN: {item.hsnSac}
                           </span>
@@ -264,7 +264,7 @@ export function ItemAutocomplete({
                         {item.usageUnit && (
                           <span
                             className="text-[10px]"
-                            style={{ color: "var(--color-on-surface-variant)" }}
+                            style={{ color: "var(--mnx-muted)" }}
                           >
                             / {item.usageUnit}
                           </span>
@@ -279,7 +279,7 @@ export function ItemAutocomplete({
             {suggestions.length === 0 && value.trim() && (
               <div
                 className="px-3 py-3 text-[12px]"
-                style={{ color: "var(--color-on-surface-variant)" }}
+                style={{ color: "var(--mnx-muted)" }}
               >
                 No items found for &ldquo;{value}&rdquo;
               </div>
@@ -331,7 +331,7 @@ export function ItemAutocomplete({
                     </p>
                     <p
                       className="text-[10px]"
-                      style={{ color: "var(--color-on-surface-variant)" }}
+                      style={{ color: "var(--mnx-muted)" }}
                     >
                       Saves to Items master permanently
                     </p>

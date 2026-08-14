@@ -119,7 +119,7 @@ export default async function CrmEnquiriesPage({
             <tbody>
               <OperationalTableEmpty colSpan={6}>
                 <div className="flex flex-col items-center justify-center gap-4 p-14 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-mono-soft text-mono-muted">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-[var(--mnx-soft)] text-[var(--mnx-muted)]">
                     <AlertTriangle className="size-6" />
                   </div>
                   <div className="space-y-2">

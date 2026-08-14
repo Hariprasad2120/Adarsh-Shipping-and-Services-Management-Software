@@ -73,7 +73,7 @@ export function FixedActionBar({
             <ChevronDown className="size-4" />
           </CrmButton>
           {templateMenuOpen ? (
-            <div className="absolute right-0 top-full mt-2 min-w-[180px] rounded-md border border-[var(--mnx-border)] bg-mono-card py-1 mnx-shadow-panel">
+            <div className="absolute right-0 top-full mt-2 min-w-[180px] rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] py-1 mnx-shadow-panel">
               {templateOptions.map((option) => (
                 <CrmButton
                   key={option}

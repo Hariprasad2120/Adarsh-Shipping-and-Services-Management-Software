@@ -1,7 +1,9 @@
 "use client";
 
+import type { CarbonIconType } from "@carbon/icons-react";
 import {
   ArrowRight,
+  Calendar,
   Check,
   CircleDot,
   Info,
@@ -10,6 +12,7 @@ import {
   PackageSearch,
   Plus,
   Search,
+  Settings,
   Ship,
 } from "lucide-react";
 import {
@@ -25,6 +28,7 @@ import {
   MonolithAction,
   MonolithBadge,
   MonolithIconAction,
+  MonolithSearchCommand,
   MonolithSurface,
   MonolithThemePicker,
   NativeSelect,
@@ -62,6 +66,9 @@ import {
 } from "@/components/monolith/catalogue/types";
 
 const themes = allCatalogueThemes;
+const SearchCommandSettingsIcon = Settings as unknown as CarbonIconType;
+const SearchCommandCalendarIcon = Calendar as unknown as CarbonIconType;
+const SearchCommandShipIcon = Ship as unknown as CarbonIconType;
 
 export const sharedCatalogue: CatalogueEntry[] = [
   {
@@ -78,6 +85,65 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["light", "night", "violet"],
     interactive: true,
     accessibility: "Pressed state and visible theme names identify the active selection.",
+  },
+  {
+    id: "monolith-search-command",
+    component: "MonolithSearchCommand",
+    displayName: "Global search command",
+    category: "Navigation",
+    scope: "shared",
+    description: "Role-aware workspace and page search used by the shared Monolith navbar.",
+    status: "stable",
+    source: "src/components/navigation/monolith-search-command.tsx",
+    render: () => (
+      <MonolithSearchCommand
+        embedded
+        open
+        query="pay"
+        entries={[
+          {
+            id: "page:hrms:/hrms/payroll",
+            href: "/hrms/payroll",
+            label: "Payroll Batches",
+            description: "HRMS workspace • salary operations",
+            icon: SearchCommandSettingsIcon,
+            kind: "page",
+            sectionId: "hrms",
+            sectionLabel: "HRMS",
+            searchText: "payroll hrms salary batches",
+          },
+          {
+            id: "page:attendance:/attendance/leaves",
+            href: "/attendance/leaves",
+            label: "Leaves",
+            description: "Attendance workspace • leave requests",
+            icon: SearchCommandCalendarIcon,
+            kind: "page",
+            sectionId: "attendance",
+            sectionLabel: "Attendance",
+            searchText: "attendance leaves leave requests",
+          },
+          {
+            id: "workspace:accounting",
+            href: "/accounting",
+            label: "Accounting",
+            description: "Run accounting operations, ledgers, journals, banking, approvals, and reports.",
+            icon: SearchCommandShipIcon,
+            kind: "workspace",
+            sectionId: "accounting",
+            sectionLabel: "Accounting",
+            searchText: "accounting finance ledgers journals banking approvals reports",
+          },
+        ]}
+        onClose={() => undefined}
+        onOpenChange={() => undefined}
+        onQueryChange={() => undefined}
+      />
+    ),
+    themes,
+    states: ["query", "grouped results", "role-aware"],
+    interactive: true,
+    accessibility: "Keyboard users can type, arrow through results, press Enter, and dismiss the surface with Escape.",
   },
   {
     id: "workspace-section-heading",
@@ -193,9 +259,13 @@ export const sharedCatalogue: CatalogueEntry[] = [
             id="catalogue-mode"
             defaultValue="sea"
             options={[
+              { value: "road", label: "Road cross-border" },
               { value: "sea", label: "Sea import" },
+              { value: "sea-export", label: "Sea export" },
               { value: "air", label: "Air export" },
+              { value: "rail", label: "Rail bonded transfer" },
             ]}
+            searchPlaceholder="Type to narrow transport modes..."
           />
         </WorkspaceField>
         <WorkspaceField label="Native status" htmlFor="catalogue-status">
@@ -213,9 +283,9 @@ export const sharedCatalogue: CatalogueEntry[] = [
       </div>
     ),
     themes,
-    states: ["required", "selected", "checked", "textarea"],
+    states: ["required", "searchable", "selected", "checked", "textarea"],
     interactive: true,
-    accessibility: "Every control has a programmatic label and native keyboard support.",
+    accessibility: "Every control has a programmatic label; dropdowns support typing to filter, arrow-key navigation, and scroll selection.",
   },
   {
     id: "document-dropzone-field",

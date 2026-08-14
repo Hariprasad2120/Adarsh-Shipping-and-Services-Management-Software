@@ -160,8 +160,8 @@ export default async function CrmDashboardPage() {
           {/* Sales Funnel Chart */}
           <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-5">
             <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Freight Sales Pipeline Funnel</h3>
-              <span className="text-xs text-mono-muted">{deals.length} total negotiations</span>
+              <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Freight Sales Pipeline Funnel</h3>
+              <span className="text-xs text-[var(--mnx-muted)]">{deals.length} total negotiations</span>
             </div>
             
             <div className="space-y-3">
@@ -173,8 +173,8 @@ export default async function CrmDashboardPage() {
                 return (
                   <div key={stage} className="space-y-1">
                     <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-mono-muted uppercase tracking-wide text-[11px]">{stage.replace("_", " ")}</span>
-                      <span className="text-mono-muted">
+                      <span className="text-[var(--mnx-muted)] uppercase tracking-wide text-[11px]">{stage.replace("_", " ")}</span>
+                      <span className="text-[var(--mnx-muted)]">
                         {stageData.count} {stageData.count === 1 ? "deal" : "deals"} (₹{(stageData.value / 1000).toFixed(0)}K)
                       </span>
                     </div>
@@ -199,7 +199,7 @@ export default async function CrmDashboardPage() {
           {/* Recent Leads Panel */}
           <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Recently Acquired Leads</h3>
+              <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Recently Acquired Leads</h3>
               <Link href="/crm/leads" className="text-xs text-[var(--mnx-accent)] hover:underline flex items-center gap-1 font-semibold cursor-pointer">
                 <span>All Leads</span>
                 <ChevronRight className="size-3" />
@@ -207,18 +207,18 @@ export default async function CrmDashboardPage() {
             </div>
 
             {recentLeads.length === 0 ? (
-              <div className="p-8 text-center text-mono-muted text-sm">No new leads available</div>
+              <div className="p-8 text-center text-[var(--mnx-muted)] text-sm">No new leads available</div>
             ) : (
               <div className="divide-y divide-[var(--mnx-border)]/30">
                 {recentLeads.map((lead) => (
                   <div key={lead.id} className="py-3 flex items-center justify-between">
                     <div>
-                      <Link href={`/crm/leads/${lead.id}`} className="font-bold text-mono-text hover:text-[var(--mnx-accent)] transition-colors block text-sm">
+                      <Link href={`/crm/leads/${lead.id}`} className="font-bold text-[var(--mnx-text-strong)] hover:text-[var(--mnx-accent)] transition-colors block text-sm">
                         {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
                       </Link>
-                      <span className="text-xs text-mono-muted">{lead.company} • Owner: {lead.owner.name}</span>
+                      <span className="text-xs text-[var(--mnx-muted)]">{lead.company} • Owner: {lead.owner.name}</span>
                     </div>
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-[var(--mnx-surface)] text-mono-muted rounded uppercase tracking-wider">
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-[var(--mnx-surface)] text-[var(--mnx-muted)] rounded uppercase tracking-wider">
                       {lead.status}
                     </span>
                   </div>
@@ -235,12 +235,12 @@ export default async function CrmDashboardPage() {
           <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4 flex flex-col h-full justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
-                <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Signals & Reminders</h3>
+                <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Signals & Reminders</h3>
                 <span className="text-xs text-[var(--mnx-warning)] font-bold">{activities.length} pending</span>
               </div>
 
               {activities.length === 0 ? (
-                <div className="p-8 text-center text-mono-muted text-sm">No pending activity tasks scheduled for today</div>
+                <div className="p-8 text-center text-[var(--mnx-muted)] text-sm">No pending activity tasks scheduled for today</div>
               ) : (
                 <div className="space-y-3.5 mt-4">
                   {activities.map((activity) => (
@@ -255,8 +255,8 @@ export default async function CrmDashboardPage() {
                         {activity.type === "TASK" ? <CheckSquare className="size-4" /> : activity.type === "EVENT" ? <Calendar className="size-4" /> : <PhoneCall className="size-4" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="font-bold text-mono-text text-xs block truncate leading-tight">{activity.title}</span>
-                        <span className="text-[10px] text-mono-muted block mt-1 uppercase tracking-wider font-semibold">
+                        <span className="font-bold text-[var(--mnx-text-strong)] text-xs block truncate leading-tight">{activity.title}</span>
+                        <span className="text-[10px] text-[var(--mnx-muted)] block mt-1 uppercase tracking-wider font-semibold">
                           Due: {activity.dueAt ? new Date(activity.dueAt).toLocaleDateString("en-IN") : "No date"} • Priority: {activity.priority}
                         </span>
                       </div>
@@ -266,7 +266,7 @@ export default async function CrmDashboardPage() {
               )}
             </div>
             
-            <div className="pt-4 border-t border-[var(--mnx-border)]/30 flex items-center justify-between text-xs text-mono-muted">
+            <div className="pt-4 border-t border-[var(--mnx-border)]/30 flex items-center justify-between text-xs text-[var(--mnx-muted)]">
               <div className="flex items-center gap-1.5">
                 <Clock className="size-3.5 text-[var(--mnx-warning)]" />
                 <span>Overdue: {activities.filter(a => a.dueAt && new Date(a.dueAt) < new Date()).length} tasks</span>

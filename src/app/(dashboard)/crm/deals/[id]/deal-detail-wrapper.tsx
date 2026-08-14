@@ -66,15 +66,15 @@ export function DealDetailWrapper({
           {/* Main Deal Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-[var(--mnx-surface)]/30 border border-[var(--mnx-border)]/55 text-center">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                 Deal Value
               </span>
-              <span className="text-mono-text font-bold text-lg">
+              <span className="text-[var(--mnx-text-strong)] font-bold text-lg">
                 ₹{deal.amount.toLocaleString("en-IN")}
               </span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                 Win Probability
               </span>
               <span className="text-[var(--mnx-accent)] font-bold text-lg">
@@ -82,10 +82,10 @@ export function DealDetailWrapper({
               </span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                 Close Target
               </span>
-              <span className="text-mono-text font-bold text-sm leading-8">
+              <span className="text-[var(--mnx-text-strong)] font-bold text-sm leading-8">
                 {formattedCloseDate}
               </span>
             </div>
@@ -93,14 +93,14 @@ export function DealDetailWrapper({
           <div className="flex items-center justify-end gap-2">
             <Link
               href={`/crm/deals/${deal.id}/edit`}
-              className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               <Edit2 className="size-3.5" />
               <span>Edit</span>
             </Link>
             <CrmButton
               onClick={handleDelete}
-              className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] hover:text-[var(--mnx-danger)] border border-[var(--mnx-border)] text-mono-muted px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] hover:text-[var(--mnx-danger)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               <Trash2 className="size-3.5" />
               <span>Delete</span>
@@ -111,17 +111,17 @@ export function DealDetailWrapper({
           <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
               <Info className="size-4.5 text-[var(--mnx-accent)]" />
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+              <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">
                 Deal Details
               </h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Customer Company
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {deal.account ? (
                     <Link
                       href={`/crm/customers/${deal.account.id}`}
@@ -135,14 +135,14 @@ export function DealDetailWrapper({
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Primary Contact
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {deal.contact ? (
                     <Link
                       href={`/crm/contacts/${deal.contact.id}`}
-                      className="hover:underline text-mono-muted"
+                      className="hover:underline text-[var(--mnx-muted)]"
                     >
                       {deal.contact.firstName
                         ? `${deal.contact.firstName} `
@@ -155,18 +155,18 @@ export function DealDetailWrapper({
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Next Follow-Up Date
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {formattedFollowUp}
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Deal Owner
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {deal.owner.name}
                 </span>
               </div>
@@ -177,33 +177,33 @@ export function DealDetailWrapper({
           <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
               <Truck className="size-4.5 text-[var(--mnx-accent)]" />
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+              <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">
                 Logistics & Service Profile
               </h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Service Category
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {deal.serviceType || "Freight Forwarding"}
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Logistics Type
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {deal.logisticsCategory || "Import"}
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block">
                   Competitor
                 </span>
-                <span className="text-mono-text font-medium">
+                <span className="text-[var(--mnx-text-strong)] font-medium">
                   {deal.competitor || "None Tracked"}
                 </span>
               </div>
@@ -213,10 +213,10 @@ export function DealDetailWrapper({
           {/* Description & Lost reason / Invoice details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-2">
-              <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block border-b border-[var(--mnx-border)]/30 pb-1.5">
+              <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider block border-b border-[var(--mnx-border)]/30 pb-1.5">
                 Description
               </span>
-              <p className="text-sm text-mono-muted whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-[var(--mnx-muted)] whitespace-pre-wrap leading-relaxed">
                 {deal.description || "No deal description details provided."}
               </p>
             </div>
@@ -234,14 +234,14 @@ export function DealDetailWrapper({
               <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4 mnx-crm-panel-surface ">
                 <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
                   <Receipt className="size-4.5 text-[var(--mnx-accent)]" />
-                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+                  <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">
                     Billing & Invoice
                   </h3>
                 </div>
                 {invoice ? (
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-mono-muted">Invoice Number:</span>
+                      <span className="text-[var(--mnx-muted)]">Invoice Number:</span>
                       <Link
                         href={`/accounting/sales-invoices/${invoice.id}`}
                         className="text-[var(--mnx-accent)] hover:underline font-mono font-bold"
@@ -250,13 +250,13 @@ export function DealDetailWrapper({
                       </Link>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-mono-muted">Amount:</span>
-                      <span className="text-mono-text font-bold font-mono">
+                      <span className="text-[var(--mnx-muted)]">Amount:</span>
+                      <span className="text-[var(--mnx-text-strong)] font-bold font-mono">
                         ₹{Number(invoice.grandTotal).toLocaleString("en-IN")}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-mono-muted">Status:</span>
+                      <span className="text-[var(--mnx-muted)]">Status:</span>
                       <span
                         className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
                           invoice.status === "PAID"
@@ -272,7 +272,7 @@ export function DealDetailWrapper({
                     <div className="pt-2">
                       <Link
                         href={`/accounting/sales-invoices/${invoice.id}`}
-                        className="inline-block text-center bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]  px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
+                        className="inline-block text-center bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-accent)]  px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
                       >
                         View Invoice Detail
                       </Link>
@@ -280,7 +280,7 @@ export function DealDetailWrapper({
                   </div>
                 ) : (
                   <div className="space-y-3 text-xs">
-                    <p className="text-mono-muted">
+                    <p className="text-[var(--mnx-muted)]">
                       This deal is won. Prepare an immutable invoice request for
                       Accounting to validate, approve, and number.
                     </p>
@@ -308,7 +308,7 @@ export function DealDetailWrapper({
                           setIsGeneratingInvoice(false);
                         }
                       }}
-                      className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]  px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
+                      className="bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-accent)]  px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
                     >
                       {isGeneratingInvoice
                         ? "Preparing Request..."
@@ -329,8 +329,8 @@ export function DealDetailWrapper({
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
                   activeTab === "OVERVIEW"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
+                    ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                    : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
                 }`}
               >
                 Overview
@@ -339,8 +339,8 @@ export function DealDetailWrapper({
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
                   activeTab === "NOTES"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
+                    ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                    : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
                 }`}
               >
                 Notes ({notes.length})
@@ -349,8 +349,8 @@ export function DealDetailWrapper({
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
                   activeTab === "ACTIVITIES"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
+                    ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                    : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
                 }`}
               >
                 Activities ({activities.length})
@@ -359,8 +359,8 @@ export function DealDetailWrapper({
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
                   activeTab === "ATTACHMENTS"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
+                    ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                    : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
                 }`}
               >
                 Files ({attachments.length})
@@ -369,8 +369,8 @@ export function DealDetailWrapper({
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
                   activeTab === "TIMELINE"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
+                    ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                    : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-text-strong)]"
                 }`}
               >
                 Audit
@@ -381,26 +381,26 @@ export function DealDetailWrapper({
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-4 text-xs">
                   <div className="p-3 bg-[var(--mnx-surface)]/60 rounded-lg space-y-2 border border-[var(--mnx-border)]/30">
-                    <span className="font-bold text-mono-text block uppercase tracking-wider">
+                    <span className="font-bold text-[var(--mnx-text-strong)] block uppercase tracking-wider">
                       Opportunity Stats
                     </span>
-                    <div className="space-y-1 text-mono-muted">
+                    <div className="space-y-1 text-[var(--mnx-muted)]">
                       <div>
-                        <strong className="text-mono-text">
+                        <strong className="text-[var(--mnx-text-strong)]">
                           Service Type:{" "}
                         </strong>
                         {deal.serviceType || "Freight Forwarding"}
                       </div>
                       <div>
-                        <strong className="text-mono-text">Category: </strong>
+                        <strong className="text-[var(--mnx-text-strong)]">Category: </strong>
                         {deal.logisticsCategory || "Import"}
                       </div>
                       <div>
-                        <strong className="text-mono-text">Close Date: </strong>
+                        <strong className="text-[var(--mnx-text-strong)]">Close Date: </strong>
                         {formattedCloseDate}
                       </div>
                       <div>
-                        <strong className="text-mono-text">
+                        <strong className="text-[var(--mnx-text-strong)]">
                           Probability:{" "}
                         </strong>
                         {deal.probability}%

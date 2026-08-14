@@ -8,7 +8,7 @@ import {
 } from "@/modules/crm/components/workspace/crm-workspace";
 
 import Link from "next/link";
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import {
   ArchiveRestore,
   CheckCircle,
@@ -277,6 +277,11 @@ interface ApprovalActionBarProps {
   onSuccess?: () => void;
   managerOptions?: QuoteManagerOption[];
   workflowContext?: QuoteWorkflowContextLike;
+  /** When true, forces the "Submit for approval" dialog open, letting a caller
+   * (e.g. a prominent header button elsewhere on the page) drive this bar's
+   * own submit dialog instead of maintaining a second, duplicate dialog. */
+  externalSubmitDialogOpen?: boolean;
+  onExternalSubmitDialogClose?: () => void;
 }
 
 export function ApprovalActionBar({
@@ -288,8 +293,19 @@ export function ApprovalActionBar({
   onSuccess,
   managerOptions = [],
   workflowContext = null,
+  externalSubmitDialogOpen = false,
+  onExternalSubmitDialogClose,
 }: ApprovalActionBarProps) {
   const [dialog, setDialog] = useState<DialogState>(null);
+
+  useEffect(() => {
+    if (externalSubmitDialogOpen) setDialog({ type: "submit" });
+  }, [externalSubmitDialogOpen]);
+
+  function closeDialog() {
+    setDialog(null);
+    onExternalSubmitDialogClose?.();
+  }
   const [isPending, startTransition] = useTransition();
   const [selectedManagerId, setSelectedManagerId] = useState(
     workflowContext?.approvalFlow?.selectedManagerId ?? managerOptions[0]?.id ?? "",
@@ -300,7 +316,7 @@ export function ApprovalActionBar({
       try {
         await action();
         toast.success(successMessage);
-        setDialog(null);
+        closeDialog();
         onSuccess?.();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Action failed");
@@ -374,7 +390,7 @@ export function ApprovalActionBar({
             <CrmButton
               onClick={() => setDialog({ type: "submit" })}
               disabled={isPending}
-              className={`${actionClass} bg-[var(--mnx-accent)] text-mono-text`}
+              className={`${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`}
             >
               <Send size={14} />
               Submit For Approval
@@ -386,7 +402,7 @@ export function ApprovalActionBar({
               <CrmButton
                 onClick={() => setDialog({ type: "approve" })}
                 disabled={isPending}
-                className={`${actionClass} bg-[var(--mnx-accent)] text-mono-text`}
+                className={`${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`}
               >
                 <UserCheck size={14} />
                 Approve
@@ -394,7 +410,7 @@ export function ApprovalActionBar({
               <CrmButton
                 onClick={() => setDialog({ type: "rework" })}
                 disabled={isPending}
-                className={`${actionClass} bg-[var(--mnx-warning)] text-mono-text`}
+                className={`${actionClass} bg-[var(--mnx-warning)] text-[var(--mnx-text-strong)]`}
               >
                 <RotateCcw size={14} />
                 Reject To Draft
@@ -407,7 +423,7 @@ export function ApprovalActionBar({
               <CrmButton
                 onClick={() => setDialog({ type: "customer-approve" })}
                 disabled={isPending}
-                className={`${actionClass} bg-[var(--mnx-success)] text-mono-text`}
+                className={`${actionClass} bg-[var(--mnx-success)] text-[var(--mnx-text-strong)]`}
               >
                 <ClipboardCheck size={14} />
                 Record Customer Approval
@@ -415,7 +431,7 @@ export function ApprovalActionBar({
               <CrmButton
                 onClick={() => setDialog({ type: "customer-reject" })}
                 disabled={isPending}
-                className={`${actionClass} bg-[var(--mnx-danger)] text-mono-text`}
+                className={`${actionClass} bg-[var(--mnx-danger)] text-[var(--mnx-text-strong)]`}
               >
                 <XCircle size={14} />
                 Record Customer Rejection
@@ -427,7 +443,7 @@ export function ApprovalActionBar({
             <CrmButton
               onClick={() => setDialog({ type: "booking" })}
               disabled={isPending}
-              className={`${actionClass} bg-[var(--mnx-success)] text-mono-text`}
+              className={`${actionClass} bg-[var(--mnx-success)] text-[var(--mnx-text-strong)]`}
             >
               <FilePlus2 size={14} />
               Create Booking
@@ -520,12 +536,12 @@ export function ApprovalActionBar({
         {dialog?.type === "submit" ? (
           <CrmDialog
             open
-            onClose={() => setDialog(null)}
+            onClose={closeDialog}
             title="Submit For Manager Approval"
             size="compact"
             footer={
               <div className="flex justify-end gap-3">
-                <CrmButton onClick={() => setDialog(null)} variant="secondary">
+                <CrmButton onClick={closeDialog} variant="secondary">
                   Cancel
                 </CrmButton>
                 <CrmButton
@@ -555,7 +571,7 @@ export function ApprovalActionBar({
                 <select
                   value={selectedManagerId}
                   onChange={(event) => setSelectedManagerId(event.target.value)}
-                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3 text-sm text-[var(--mnx-text-strong)]"
+                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm text-[var(--mnx-text-strong)]"
                 >
                   <option value="">Select manager</option>
                   {managerOptions.map((manager) => (
@@ -662,7 +678,7 @@ export function ApprovalActionBar({
       show: caps.canSubmit && (approvalStatus === "DRAFT" || approvalStatus === "REWORK"),
       label: "Submit",
       icon: <Send size={14} />,
-      className: `${actionClass} bg-[var(--mnx-accent)] text-mono-text`,
+      className: `${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`,
       onClick: () =>
         run(
           () => actionSubmitForApproval(invoiceId),
@@ -674,7 +690,7 @@ export function ApprovalActionBar({
       show: caps.canApprove && approvalStatus === "PENDING_APPROVAL",
       label: "Approve",
       icon: <CheckCircle size={14} />,
-      className: `${actionClass} bg-[var(--mnx-accent)] text-mono-text`,
+      className: `${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`,
       onClick: () =>
         run(() => actionApproveDocument(invoiceId), "Approved"),
     },
@@ -683,7 +699,7 @@ export function ApprovalActionBar({
       show: caps.canApprove && approvalStatus === "PENDING_APPROVAL",
       label: "Rework",
       icon: <RotateCcw size={14} />,
-      className: `${actionClass} bg-[var(--mnx-warning)] text-mono-text`,
+      className: `${actionClass} bg-[var(--mnx-warning)] text-[var(--mnx-text-strong)]`,
       onClick: () => setDialog({ type: "rework" }),
     },
     {
@@ -694,7 +710,7 @@ export function ApprovalActionBar({
         entityType === "SALES_ORDER",
       label: "Convert To Invoice",
       icon: <FilePlus2 size={14} />,
-      className: `${actionClass} bg-[var(--mnx-success)] text-mono-text`,
+      className: `${actionClass} bg-[var(--mnx-success)] text-[var(--mnx-text-strong)]`,
       onClick: () =>
         run(
           async () => {
@@ -712,7 +728,7 @@ export function ApprovalActionBar({
         entityType === "INVOICE",
       label: "Raise Direct Sales Order",
       icon: <FilePlus2 size={14} />,
-      className: `${actionClass} bg-[var(--mnx-accent)] text-mono-text`,
+      className: `${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`,
       onClick: () =>
         run(
           async () => {

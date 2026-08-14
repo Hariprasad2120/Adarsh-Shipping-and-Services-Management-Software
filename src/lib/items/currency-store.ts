@@ -8,7 +8,7 @@ const STORAGE_KEY = "crm_currencies";
 const TOGGLE_KEY = "crm_auto_exchange_rate";
 
 const BASIC_CURRENCIES: CurrencyInfo[] = [
-  { code: "INR", symbol: "₹", exchangeRate: 1.0 },
+  { code: "INR", symbol: "Rs", exchangeRate: 1.0 },
   { code: "USD", symbol: "$", exchangeRate: 83.50 },
   { code: "EUR", symbol: "€", exchangeRate: 90.20 },
   { code: "GBP", symbol: "£", exchangeRate: 106.10 },

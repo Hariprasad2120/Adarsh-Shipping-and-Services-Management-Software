@@ -491,7 +491,7 @@ export function PunchCard({
             </div>
 
             {/* Date Navigation Control */}
-            <div className="flex items-center gap-1.5 rounded-2xl border border-mono-border/50 bg-mono-soft p-1 shadow-sm">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -501,7 +501,7 @@ export function PunchCard({
               >
                 <ChevronLeft className="size-4" />
               </Button>
-              <span className="min-w-[110px] select-none px-2 text-center text-xs font-medium tracking-[0.04em] text-mono-text">
+              <span className="min-w-[110px] select-none px-1 text-center text-xs font-medium tracking-[0.04em] text-mono-text">
                 {new Date(selectedYear, selectedMonth - 1).toLocaleString(
                   "en-IN",
                   {
@@ -828,40 +828,40 @@ export function PunchCard({
       </div>
 
       {/* Right Column: Detailed Day Panel (spans 1 column) */}
-      <div className="space-y-6 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-180px)] lg:overflow-hidden">
+      <div className="space-y-5 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-180px)] lg:overflow-hidden">
         <div className="mnx-content-wide flex h-full flex-col border border-mono-border/40 bg-mono-card shadow-sm">
           {/* Sidebar Header */}
-          <div className="space-y-1 border-b border-mono-border/30 p-5 pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+          <div className="space-y-2.5 border-b border-mono-border/30 px-5 py-4 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <span className="inline-flex items-center justify-center text-[var(--mnx-accent)]">
                   <Calendar className="size-4" />
                 </span>
-                <h3 className="text-sm font-medium tracking-[0.04em] text-mono-text">
+                <h3 className="text-[1.75rem] font-medium leading-none tracking-[0.01em] text-mono-text sm:text-[1.9rem]">
                   {selectedDateFormatted}
                 </h3>
               </div>
-              <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+              <span className="inline-flex items-center gap-1.5 self-center text-[0.8rem] font-medium uppercase tracking-[0.12em] text-mono-muted">
                 <Sparkles className="size-3.5 text-[var(--mnx-accent)]" />
                 Day pulse
               </span>
             </div>
-            <p className="mt-1 text-[10px] font-medium tracking-[0.06em] text-mono-muted">
+            <p className="text-lg font-medium tracking-[0.01em] text-mono-text/85">
               General [9:30 AM - 5:30 PM]
             </p>
           </div>
 
           {/* Sidebar Body */}
-          <div className="flex-1 space-y-6 overflow-y-auto p-5">
+          <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
             {/* Status Badge */}
-            <div className="space-y-3 rounded-2xl border border-mono-border/35 bg-mono-soft/70 p-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
+            <div className="space-y-4 rounded-[1.6rem] border border-mono-border/35 bg-mono-soft/70 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <span className="text-[0.95rem] font-medium tracking-[0.04em] text-mono-text">
                   Attendance Status
                 </span>
                 {selectedDayMetrics.dayPunch?.inAt ? (
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}
+                    className={`inline-flex items-center gap-2 rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-4 py-2 text-base font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}
                   >
                     {!selectedDayMetrics.dayPunch?.outAt &&
                     selectedDateStr === todayStr ? (
@@ -875,39 +875,39 @@ export function PunchCard({
                     Present
                   </span>
                 ) : selectedDayMetrics.dayMeta?.isWeekend ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-mono-border/50 bg-mono-card px-3 py-1 text-xs font-medium text-mono-muted">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-mono-border/50 bg-mono-card px-4 py-2 text-base font-medium text-mono-muted">
                     Weekend
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--mnx-danger)]/20 bg-[var(--mnx-danger-bg)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-danger)]">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--mnx-danger)]/20 bg-[var(--mnx-danger-bg)]/10 px-4 py-2 text-base font-medium text-[var(--mnx-danger)]">
                     Absent
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-3 divide-x divide-mono-border/25 overflow-hidden rounded-xl border border-mono-border/20 bg-mono-card/70">
-                <div className="px-3 py-2">
-                  <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+              <div className="overflow-hidden rounded-[1.25rem] border border-mono-border/20 bg-mono-card/70">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 border-b border-mono-border/20 px-6 py-4">
+                  <p className="text-[0.98rem] font-medium uppercase tracking-[0.12em] text-mono-text">
                     First In
                   </p>
-                  <p className="mt-1 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-mono-text">
+                  <p className="text-[1.1rem] font-medium tabular-nums text-mono-text text-right">
                     {timelineSessions.length > 0
                       ? fmt(timelineSessions[0]!.in)
                       : "—"}
                   </p>
                 </div>
-                <div className="px-3 py-2">
-                  <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 border-b border-mono-border/20 px-6 py-4">
+                  <p className="text-[0.98rem] font-medium uppercase tracking-[0.12em] text-mono-text">
                     Last Out
                   </p>
-                  <p className="mt-1 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-mono-text">
+                  <p className="text-[1.1rem] font-medium tabular-nums text-mono-text text-right">
                     {lastProperOutTime ? fmt(lastProperOutTime) : "—"}
                   </p>
                 </div>
-                <div className="px-3 py-2">
-                  <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 px-6 py-4">
+                  <p className="text-[0.98rem] font-medium uppercase tracking-[0.12em] text-mono-text">
                     Worked
                   </p>
-                  <p className="mt-1 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-mono-text">
+                  <p className="text-[1.1rem] font-medium tabular-nums text-mono-text text-right">
                     {totalWorkedSelectedDay > 0
                       ? formatHoursAndMins(totalWorkedSelectedDay)
                       : "—"}
@@ -918,11 +918,11 @@ export function PunchCard({
 
             {/* Paired Sessions List */}
             <div className="space-y-4">
-              <p className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
+              <p className="text-[0.95rem] font-medium tracking-[0.04em] text-mono-text">
                 Punch Sessions
               </p>
               {timelineError ? (
-                <div className="rounded-2xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/10 px-3 py-2 text-[10px] font-medium tracking-[0.04em] text-[var(--mnx-warning)] text-[var(--mnx-warning)]">
+                <div className="rounded-2xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/10 px-4 py-3 text-sm font-medium leading-6 tracking-[0.01em] text-[var(--mnx-warning)]">
                   {timelineError}. Showing summary data where available.
                 </div>
               ) : null}
@@ -936,7 +936,7 @@ export function PunchCard({
                   No registered sessions
                 </div>
               ) : (
-                <div className="space-y-3.5">
+                <div className="space-y-4">
                   {timelineSessions.map((session, idx) => {
                     const isLive =
                       session.out === null && selectedDateStr === todayStr;
@@ -953,23 +953,23 @@ export function PunchCard({
                     return (
                       <div
                         key={idx}
-                        className="space-y-3 rounded-2xl border border-mono-border/30 bg-mono-soft/70 p-4 transition hover:border-mono-border/50"
+                        className="space-y-4 rounded-[1.6rem] border border-mono-border/30 bg-mono-soft/70 p-5 transition hover:border-mono-border/50"
                       >
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
                           {/* Check In */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                               <ArrowRight className="size-3.5 -rotate-45 shrink-0" />
-                              <span className="text-[9px] font-medium tracking-[0.08em]">
+                              <span className="text-[0.78rem] font-medium tracking-[0.1em]">
                                 IN
                               </span>
                             </div>
-                            <div className="pl-6">
-                              <p className="text-xs font-medium text-mono-text">
+                            <div className="space-y-1 pl-5.5">
+                              <p className="text-[1.05rem] font-medium leading-none text-mono-text">
                                 {fmt(session.in)}
                               </p>
                               <p
-                                className="mt-0.5 truncate text-[8px] font-medium text-mono-muted"
+                                className="break-words text-[0.95rem] font-medium leading-7 text-mono-text/80"
                                 title={session.inDevice || "Unknown Device"}
                               >
                                 {session.inDevice || "Unknown Device"}
@@ -978,29 +978,29 @@ export function PunchCard({
                           </div>
 
                           {/* Check Out */}
-                          <div className="space-y-1 border-l border-mono-border/30 pl-4">
-                            <div className="flex items-center gap-1.5 text-[var(--mnx-warning)]">
+                          <div className="space-y-2 border-t border-mono-border/30 pt-4 sm:border-t-0 sm:border-l sm:pl-5 sm:pt-0">
+                            <div className="flex items-center gap-2 text-[var(--mnx-warning)]">
                               <ArrowRight className="size-3.5 rotate-45 shrink-0" />
-                              <span className="text-[9px] font-medium tracking-[0.08em]">
+                              <span className="text-[0.78rem] font-medium tracking-[0.1em]">
                                 OUT
                               </span>
                             </div>
-                            <div className="pl-6">
+                            <div className="space-y-1 pl-5.5">
                               {session.out ? (
-                                <p className="text-xs font-medium text-mono-text">
+                                <p className="text-[1.05rem] font-medium leading-none text-mono-text">
                                   {fmt(session.out)}
                                 </p>
                               ) : isLive ? (
-                                <span className="inline-flex select-none items-center gap-1 rounded border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/10 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.08em] text-[var(--mnx-warning)] animate-pulse">
+                                <span className="inline-flex w-fit select-none items-center gap-1 rounded-xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/10 px-3 py-1.5 text-[0.8rem] font-medium tracking-[0.08em] text-[var(--mnx-warning)] animate-pulse">
                                   STILL INSIDE
                                 </span>
                               ) : (
-                                <p className="text-xs font-medium text-mono-muted">
+                                <p className="text-[1.05rem] font-medium leading-none text-mono-muted">
                                   —
                                 </p>
                               )}
                               <p
-                                className="mt-0.5 truncate text-[8px] font-medium text-mono-muted"
+                                className="break-words text-[0.95rem] font-medium leading-7 text-mono-text/80"
                                 title={session.outDevice || "—"}
                               >
                                 {session.outDevice ||
@@ -1011,9 +1011,9 @@ export function PunchCard({
                         </div>
 
                         {/* Session Footer Details */}
-                        <div className="flex items-center justify-between border-t border-mono-border/25 pt-2.5 text-[9px] font-medium text-mono-muted">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mono-border/25 pt-3 text-[0.85rem] font-medium text-mono-muted">
                           <span>Session {idx + 1}</span>
-                          <span className="inline-flex select-none items-center rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-2 py-0.5 font-mono text-[9px] font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
+                          <span className="inline-flex select-none items-center rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-3 py-1.5 font-mono text-[0.95rem] font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                             {durationText}
                           </span>
                         </div>
@@ -1025,34 +1025,34 @@ export function PunchCard({
             </div>
 
             {/* Overtime Section Card */}
-            <div className="space-y-3.5 rounded-2xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/4 p-4 select-none">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-[var(--mnx-warning)]">
+            <div className="space-y-3.5 rounded-[1.6rem] border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/4 p-5 select-none">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-medium tracking-[0.08em] text-[var(--mnx-warning)]">
                   <TrendingUp className="size-4 shrink-0 text-[var(--mnx-warning)]" />
                   <span>OVERTIME</span>
                 </div>
                 {selectedDayOtMinutes > 0 ? (
-                  <span className="inline-flex items-center rounded-full border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/12 px-2.5 py-1 font-mono text-[10px] font-medium text-[var(--mnx-warning)]">
+                  <span className="inline-flex items-center rounded-full border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/12 px-2.5 py-1 font-mono text-[11px] font-medium text-[var(--mnx-warning)]">
                     +{selectedDayOtMinutes} min
                   </span>
                 ) : null}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
+                  <p className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
                     OT Hours
                   </p>
-                  <p className="font-mono text-sm font-medium text-[var(--mnx-warning)]">
+                  <p className="font-mono text-xl font-medium text-[var(--mnx-warning)]">
                     {selectedDayOtMinutes > 0
                       ? `${selectedDayOtMinutes} Mins`
                       : "0 Mins"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
+                  <p className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
                     OT Amount
                   </p>
-                  <p className="font-mono text-sm font-medium text-[var(--mnx-warning)]">
+                  <p className="font-mono text-xl font-medium text-[var(--mnx-warning)]">
                     ₹
                     {selectedDayMetrics.dayOt &&
                     selectedDayMetrics.dayOt.otHours > 0
@@ -1064,28 +1064,32 @@ export function PunchCard({
             </div>
 
             {/* Summary Metrics at the bottom */}
-            <div className="space-y-4 border-t border-mono-border/30 pt-4 select-none">
-              <div className="grid grid-cols-3 gap-2 text-center font-sans text-[9px] font-medium tracking-[0.08em] text-mono-muted">
-                <div>First In</div>
-                <div>Last Out</div>
-                <div>Hours</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs font-medium text-mono-text">
-                <div>
+            <div className="space-y-3 border-t border-mono-border/30 pt-4 select-none">
+              <div className="space-y-2 rounded-xl border border-mono-border/20 bg-mono-soft/40 p-3">
+                <div className="flex items-center justify-between gap-3 text-[10px] font-medium tracking-[0.08em] text-mono-muted">
+                  <span>First In</span>
+                  <span className="font-mono text-sm text-mono-text">
                   {timelineSessions.length > 0
                     ? fmt(timelineSessions[0]!.in)
                     : "—"}
+                  </span>
                 </div>
-                <div>{lastProperOutTime ? fmt(lastProperOutTime) : "—"}</div>
-                <div>
+                <div className="flex items-center justify-between gap-3 text-[10px] font-medium tracking-[0.08em] text-mono-muted">
+                  <span>Last Out</span>
+                  <span className="font-mono text-sm text-mono-text">{lastProperOutTime ? fmt(lastProperOutTime) : "—"}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[10px] font-medium tracking-[0.08em] text-mono-muted">
+                  <span>Hours</span>
+                  <span className="font-mono text-sm text-mono-text">
                   {totalWorkedSelectedDay > 0
                     ? formatHoursAndMins(totalWorkedSelectedDay)
                     : "—"}
+                  </span>
                 </div>
               </div>
 
               {selectedDayMetrics.dayPunch?.inAt && (
-                <div className="flex select-none items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-accent)]/15 bg-[var(--mnx-accent)]/6 py-2 text-[10px] font-medium tracking-[0.08em] text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
+                <div className="flex select-none items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-accent)]/15 bg-[var(--mnx-accent)]/6 py-2.5 text-[11px] font-medium tracking-[0.08em] text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                   <CheckCircle className="size-3.5" />
                   <span>Approved</span>
                 </div>

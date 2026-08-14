@@ -69,14 +69,14 @@ export function ContactForm({
     >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <User className="size-4 text-[var(--mnx-accent)]" />
           <span>Contact Identity</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               First Name
             </label>
             <CrmInput
@@ -84,11 +84,11 @@ export function ContactForm({
               name="firstName"
               defaultValue={initialData?.firstName || ""}
               placeholder="e.g. Adarsh"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Last Name *
             </label>
             <CrmInput
@@ -97,18 +97,18 @@ export function ContactForm({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="e.g. Hari"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Linked Account (Company) *
             </label>
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Account</option>
@@ -120,7 +120,7 @@ export function ContactForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Designation
             </label>
             <CrmInput
@@ -128,11 +128,11 @@ export function ContactForm({
               name="designation"
               defaultValue={initialData?.designation || ""}
               placeholder="e.g. Purchase Manager"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Department
             </label>
             <CrmInput
@@ -140,7 +140,7 @@ export function ContactForm({
               name="department"
               defaultValue={initialData?.department || ""}
               placeholder="e.g. Procurement / Import"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div className="flex items-center gap-2.5 pt-6">
@@ -154,7 +154,7 @@ export function ContactForm({
             />
             <label
               htmlFor="is-decision-maker"
-              className="text-xs font-bold text-mono-text uppercase tracking-wide cursor-pointer select-none"
+              className="text-xs font-bold text-[var(--mnx-text-strong)] uppercase tracking-wide cursor-pointer select-none"
             >
               Key Decision Maker / CHA Liaison
             </label>
@@ -164,14 +164,14 @@ export function ContactForm({
 
       {/* ─── SECTION: CONTACT CHANNELS ───────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <Mail className="size-4 text-[var(--mnx-accent)]" />
           <span>Contact Channels</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Email Address
             </label>
             <CrmInput
@@ -179,11 +179,11 @@ export function ContactForm({
               name="email"
               defaultValue={initialData?.email || ""}
               placeholder="e.g. contact@domain.com"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Phone (Direct)
             </label>
             <CrmInput
@@ -191,11 +191,11 @@ export function ContactForm({
               name="phone"
               defaultValue={initialData?.phone || ""}
               placeholder="e.g. +91 44 2819 1234"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Mobile Number
             </label>
             <CrmInput
@@ -203,7 +203,7 @@ export function ContactForm({
               name="mobile"
               defaultValue={initialData?.mobile || ""}
               placeholder="e.g. +91 98840 12345"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -211,20 +211,20 @@ export function ContactForm({
 
       {/* ─── SECTION: ASSIGNMENT ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <Tag className="size-4 text-[var(--mnx-accent)]" />
           <span>Assignment & Ownership</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Contact Owner *
             </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Owner</option>
@@ -236,7 +236,7 @@ export function ContactForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Street Address
             </label>
             <CrmInput
@@ -244,7 +244,7 @@ export function ContactForm({
               name="address"
               defaultValue={initialData?.address || ""}
               placeholder="e.g. Chennai Office details"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -255,14 +255,14 @@ export function ContactForm({
         <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-[var(--mnx-muted)] border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
         >
           Cancel
         </CrmButton>
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-[var(--mnx-text-strong)] rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>

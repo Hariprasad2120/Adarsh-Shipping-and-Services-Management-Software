@@ -20,7 +20,7 @@ export default async function RaiseTicketPage() {
     <div className="space-y-6">
       <div>
         <Link href="/crm/tickets" passHref>
-          <CrmButton className="flex items-center gap-2 text-sm font-semibold text-mono-muted hover:text-mono-muted dark:hover:text-mono-text transition">
+          <CrmButton className="flex items-center gap-2 text-sm font-semibold text-[var(--mnx-muted)] hover:text-[var(--mnx-muted)] dark:hover:text-[var(--mnx-text-strong)] transition">
             <ArrowLeft className="size-4" /> Back to Support Tickets
           </CrmButton>
         </Link>

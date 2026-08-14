@@ -158,12 +158,8 @@ function numberToWords(value: number) {
 
 // Formatting Helpers
 export function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "₹0";
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(value);
+  if (value === null || value === undefined) return "Rs 0";
+  return `Rs ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value)}`;
 }
 
 export function formatDate(date: Date | string | null | undefined): string {

@@ -33,7 +33,7 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
           <div className="flex gap-2">
             <CrmInput
               aria-required="true"
-              className="h-9 flex-1 rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+              className="h-9 flex-1 rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("quoteNumber")}
             />
             <CrmButton
@@ -48,7 +48,7 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
 
         <FormRow label="Enquiry Number" error={errors.referenceNumber?.message}>
           <CrmInput
-            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+            className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             placeholder="Enter enquiry number"
             {...form.register("referenceNumber")}
           />

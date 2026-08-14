@@ -23,7 +23,7 @@ const CATEGORIES = [
 ];
 
 const PRIORITIES = [
-  { value: "LOW", label: "Low", color: "text-mono-muted" },
+  { value: "LOW", label: "Low", color: "text-[var(--mnx-muted)]" },
   { value: "MEDIUM", label: "Medium", color: "text-[var(--mnx-warning)]" },
   { value: "HIGH", label: "High", color: "text-[var(--mnx-warning)]" },
   { value: "URGENT", label: "Urgent", color: "text-[var(--mnx-danger)]" },
@@ -79,14 +79,14 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
   }
 
   return (
-    <Card className="border-0 shadow-sm border-l-4 border-l-[var(--mnx-accent)] bg-mono-card">
+    <Card className="border-0 shadow-sm border-l-4 border-l-[var(--mnx-accent)] bg-[var(--mnx-surface)]">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-bold text-mono-muted dark:text-mono-muted">
+        <CardTitle className="text-base font-bold text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)]">
           New Support Ticket
         </CardTitle>
         <CrmButton
           onClick={() => setOpen(false)}
-          className="text-mono-muted hover:text-mono-muted transition"
+          className="text-[var(--mnx-muted)] hover:text-[var(--mnx-muted)] transition"
         >
           <ChevronUp className="size-4" />
         </CrmButton>
@@ -94,7 +94,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
               Title
             </label>
             <CrmInput
@@ -103,19 +103,19 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Brief summary of the issue..."
               maxLength={200}
-              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-mono-muted dark:text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition"
+              className="w-full rounded-lg border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-3 py-2 text-sm text-[var(--mnx-muted)] dark:text-[var(--mnx-text-strong)] placeholder:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] transition"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                 Category
               </label>
               <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-mono-muted dark:text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] transition"
+                className="w-full rounded-lg border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-3 py-2.5 text-sm text-[var(--mnx-muted)] dark:text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] transition"
               >
                 <option value="">Select category</option>
                 {CATEGORIES.map((c) => (
@@ -125,13 +125,13 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                 Priority
               </label>
               <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-mono-muted dark:text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] transition"
+                className="w-full rounded-lg border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-3 py-2.5 text-sm text-[var(--mnx-muted)] dark:text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] transition"
               >
                 {PRIORITIES.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -143,7 +143,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
               Description
             </label>
             <CrmTextarea
@@ -151,7 +151,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="Describe the issue in detail — what happened, what you expected, and steps to reproduce..."
-              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-mono-muted dark:text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition resize-none"
+              className="w-full rounded-lg border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-3 py-2 text-sm text-[var(--mnx-muted)] dark:text-[var(--mnx-text-strong)] placeholder:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] transition resize-none"
             />
           </div>
 

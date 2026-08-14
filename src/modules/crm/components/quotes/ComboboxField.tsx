@@ -81,7 +81,7 @@ export function ComboboxField({
           value={inputValue}
           placeholder={placeholder}
           className={cn(
-            "h-9 w-full rounded-xl border bg-mono-card pl-9 pr-9 text-[13px] text-[var(--mnx-text-strong)] outline-none transition",
+            "h-9 w-full rounded-xl border bg-[var(--mnx-surface)] pl-9 pr-9 text-[13px] text-[var(--mnx-text-strong)] outline-none transition",
             "disabled:cursor-not-allowed disabled:bg-[var(--mnx-surface)] disabled:text-[var(--mnx-text-muted)]",
           )}
           onFocus={() => {
@@ -134,7 +134,7 @@ export function ComboboxField({
         <div
           id={`${id}-listbox`}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[var(--mnx-border)] bg-mono-card py-1 mnx-shadow-panel"
+          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] py-1 mnx-shadow-panel"
         >
           {filteredOptions.length ? (
             filteredOptions.map((option, index) => {

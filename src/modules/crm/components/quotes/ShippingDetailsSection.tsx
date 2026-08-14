@@ -48,7 +48,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
             <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">{field.label}</label>
             <CrmInput
               type={field.type ?? "text"}
-              className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+              className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register(field.name, field.type === "number" ? { valueAsNumber: true } : undefined)}
             />
             {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors[field.name]?.message}</p> : null}
@@ -58,7 +58,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">INCOTERM</label>
           <NativeSelect
-            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+            className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("incoterm")}
           >
             <option value="">Select INCOTERM</option>
@@ -73,7 +73,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">Container type</label>
           <NativeSelect
-            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+            className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("containerType")}
           >
             <option value="">Select container type</option>
@@ -90,7 +90,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
             <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">{field.label}</label>
             <CrmInput
               type={field.type ?? "text"}
-              className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+              className="h-9 w-full rounded-xl border bg-[var(--mnx-surface)] px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register(field.name, field.type === "number" ? { valueAsNumber: true } : undefined)}
             />
             {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors[field.name]?.message}</p> : null}

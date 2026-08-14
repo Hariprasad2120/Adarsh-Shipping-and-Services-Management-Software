@@ -69,7 +69,7 @@ export function RemarksModal({ leadId, onClose, onSuccess }: RemarksModalProps) 
     >
         <form id="lead-remarks-form" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-[11px] font-bold text-mono-muted uppercase tracking-wider mb-2">
+              <label className="block text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-2">
                 Reason / Remarks *
               </label>
               <CrmTextarea
@@ -80,7 +80,7 @@ export function RemarksModal({ leadId, onClose, onSuccess }: RemarksModalProps) 
                 placeholder="State the reason why the client is not interested (e.g. Price too high, chose competitor, no requirement at present)..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full p-3.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted min-h-[80px]"
+                className="w-full p-3.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-[var(--mnx-muted)] min-h-[80px]"
               />
             </div>
         </form>

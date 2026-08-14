@@ -35,7 +35,7 @@ describe("Phase 5 decimal-safe UI helpers", () => {
 
   it("formats exact values without converting to JavaScript Number", () => {
     expect(formatAccountingMoney("123456789012345.1200", "inr", 4)).toBe(
-      "INR 123,456,789,012,345.12",
+      "INR 12,34,56,78,90,12,345.12",
     );
   });
 });

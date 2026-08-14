@@ -6,7 +6,8 @@ import {
 } from "@/modules/people/components/people-controls";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
 import {
   OperationalDataTable,
@@ -21,6 +22,21 @@ import {
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";
+
+type CalculationPreview = {
+  requestedUnits: number;
+  weekendUnits: number;
+  holidayUnits: number;
+  sandwichUnits: number;
+  paidUnits: number;
+  partialPaidUnits: number;
+  lopUnits: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  warnings: { code: string; message: string }[];
+  violations: { code: string; message: string }[];
+  explanation: string[];
+};
 
 type LeaveType = { id: string; name: string; paid: boolean };
 type Balance = { leaveType: LeaveType; balance: number };
@@ -67,39 +83,112 @@ export function LeavesClient({
   const [toDate, setToDate] = useState("");
   const [halfDay, setHalfDay] = useState(false);
   const [notes, setNotes] = useState("");
+  const [preview, setPreview] = useState<CalculationPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Server-side calculation preview (spec §18) — recomputed whenever the
+  // key inputs change. Submission always recalculates again server-side;
+  // this is display-only.
+  const hasCompleteInputs = Boolean(leaveTypeId && fromDate && toDate);
+
+  useEffect(() => {
+    if (!hasCompleteInputs) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- standard loading-flag-before-fetch pattern
+    setPreviewLoading(true);
+    fetch("/api/leave/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leaveTypeId, fromDate, toDate, halfDay }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setPreview(data);
+      })
+      .catch(() => {
+        if (!cancelled) setPreview(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasCompleteInputs, leaveTypeId, fromDate, toDate, halfDay]);
+
+  // Derived, not stateful: when inputs are incomplete there is nothing to
+  // preview, regardless of what the last fetch returned.
+  const visiblePreview = hasCompleteInputs ? preview : null;
 
   async function submitLeave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
-    await fetch("/api/attendance/leaves", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        leaveTypeId: fd.get("leaveTypeId"),
-        fromDate: fd.get("fromDate"),
-        toDate: fd.get("toDate"),
-        halfDay: fd.get("halfDay") === "on",
-        notes: fd.get("notes") || undefined,
-      }),
-    });
-    setLoading(false);
-    setShowForm(false);
-    setLeaveTypeId("");
-    setFromDate("");
-    setToDate("");
-    setHalfDay(false);
-    setNotes("");
-    router.refresh();
+    try {
+      const res = await fetch("/api/attendance/leaves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leaveTypeId: fd.get("leaveTypeId"),
+          fromDate: fd.get("fromDate"),
+          toDate: fd.get("toDate"),
+          halfDay: fd.get("halfDay") === "on",
+          notes: fd.get("notes") || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error?.message ?? body.error ?? "Failed to submit leave request");
+      }
+      toast.success("Leave request submitted");
+      setShowForm(false);
+      setLeaveTypeId("");
+      setFromDate("");
+      setToDate("");
+      setHalfDay(false);
+      setNotes("");
+      setPreview(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to submit leave request");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function decide(id: string, decision: "approved" | "rejected") {
-    await fetch(`/api/attendance/leaves/${id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ decision }),
-    });
-    router.refresh();
+    try {
+      const res = await fetch(`/api/attendance/leaves/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision }),
+      });
+      if (!res.ok) throw new Error("Failed to record decision");
+      toast.success(decision === "approved" ? "Leave approved" : "Leave rejected");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to record decision");
+    }
+  }
+
+  async function cancelRequest(id: string) {
+    const reason = window.prompt("Reason for cancellation:");
+    if (!reason) return;
+    try {
+      const res = await fetch(`/api/leave/requests/${id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to cancel leave request");
+      }
+      toast.success("Leave request cancelled");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to cancel leave request");
+    }
   }
 
   const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-IN");
@@ -223,6 +312,34 @@ export function LeavesClient({
                 className="flex-1"
               />
             </div>
+
+            {previewLoading && (
+              <p className="text-xs text-[var(--mnx-muted)]">Calculating…</p>
+            )}
+            {visiblePreview && !previewLoading && (
+              <div className="rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-3 text-xs text-[var(--mnx-text)]">
+                <p className="mb-1 font-medium">Calculation Summary</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+                  <span>Requested: {visiblePreview.requestedUnits}</span>
+                  <span>Weekends: {visiblePreview.weekendUnits}</span>
+                  <span>Holidays: {visiblePreview.holidayUnits}</span>
+                  {visiblePreview.sandwichUnits > 0 && <span>Sandwiched: {visiblePreview.sandwichUnits}</span>}
+                  <span>Paid: {visiblePreview.paidUnits}</span>
+                  {visiblePreview.partialPaidUnits > 0 && <span>Partial pay: {visiblePreview.partialPaidUnits}</span>}
+                  {visiblePreview.lopUnits > 0 && (
+                    <span className="text-[var(--mnx-danger-text,inherit))]">LOP: {visiblePreview.lopUnits}</span>
+                  )}
+                  <span>Balance after: {visiblePreview.balanceAfter}</span>
+                </div>
+                {visiblePreview.warnings.map((w) => (
+                  <p key={w.code} className="mt-1 text-[var(--mnx-warning-text,inherit)]">⚠ {w.message}</p>
+                ))}
+                {visiblePreview.violations.map((v) => (
+                  <p key={v.code} className="mt-1 text-[var(--mnx-danger-text,inherit)]">✕ {v.message}</p>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <MnxAction
                 type="submit"
@@ -246,33 +363,48 @@ export function LeavesClient({
           <OperationalTable>
             <thead>
               <tr>
-                {["Type", "From", "To", "Half Day", "Status", "Note"].map((h) => (
+                {["Type", "From", "To", "Half Day", "Status", "Note", ""].map((h) => (
                   <OperationalTableHead key={h}>{h}</OperationalTableHead>
                 ))}
               </tr>
             </thead>
             <tbody>
               {myRequests.length === 0 ? (
-                <OperationalTableEmpty colSpan={6}>
+                <OperationalTableEmpty colSpan={7}>
                   No requests.
                 </OperationalTableEmpty>
               ) : (
-                myRequests.map((r) => (
-                  <tr key={r.id}>
-                    <OperationalTableCell>{r.leaveType.name}</OperationalTableCell>
-                    <OperationalTableCell>{fmtDate(r.fromDate)}</OperationalTableCell>
-                    <OperationalTableCell>{fmtDate(r.toDate)}</OperationalTableCell>
-                    <OperationalTableCell>{r.halfDay ? "Yes" : "No"}</OperationalTableCell>
-                    <OperationalTableCell>
-                      <OperationalStatus tone={STATUS_TONE[r.status] ?? "neutral"}>
-                        {r.status}
-                      </OperationalStatus>
-                    </OperationalTableCell>
-                    <OperationalTableCell className="text-[var(--mnx-muted)]">
-                      {r.notes ?? "-"}
-                    </OperationalTableCell>
-                  </tr>
-                ))
+                myRequests.map((r) => {
+                  const normalizedStatus = r.status.toLowerCase();
+                  const cancellable =
+                    normalizedStatus === "pending" || normalizedStatus === "approved";
+                  return (
+                    <tr key={r.id}>
+                      <OperationalTableCell>{r.leaveType.name}</OperationalTableCell>
+                      <OperationalTableCell>{fmtDate(r.fromDate)}</OperationalTableCell>
+                      <OperationalTableCell>{fmtDate(r.toDate)}</OperationalTableCell>
+                      <OperationalTableCell>{r.halfDay ? "Yes" : "No"}</OperationalTableCell>
+                      <OperationalTableCell>
+                        <OperationalStatus tone={STATUS_TONE[normalizedStatus] ?? "neutral"}>
+                          {r.status}
+                        </OperationalStatus>
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-[var(--mnx-muted)]">
+                        {r.notes ?? "-"}
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        {cancellable && (
+                          <MnxAction
+                            onClick={() => cancelRequest(r.id)}
+                            className="rounded border px-2 py-1 text-xs text-[var(--mnx-text)]"
+                          >
+                            Cancel
+                          </MnxAction>
+                        )}
+                      </OperationalTableCell>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </OperationalTable>

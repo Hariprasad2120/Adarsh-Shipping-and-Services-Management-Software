@@ -39,6 +39,11 @@ export default async function FreightForwardingProcessPage() {
         eyebrow="Freight forwarding"
         title="Process"
         description="Approved quotations land here first. Review the quote details, then open a record to choose transaction mode and complete the freight booking."
+        actions={
+          <ButtonLink href="/freight-forwarding/create-booking" variant="accent">
+            Create Booking
+          </ButtonLink>
+        }
       />
 
       <OperationalDataTable>

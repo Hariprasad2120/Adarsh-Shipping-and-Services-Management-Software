@@ -1,6 +1,138 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-07
+Last updated: 2026-08-14
+
+## 2026-08-14 Shared navbar command search
+
+Rebuilt the authenticated Monolith navbar search into a shared, role-aware
+command surface so people can search across the workspaces and pages available
+to their permissions instead of only scanning a small section list.
+
+Delivered:
+
+- added `src/components/navigation/monolith-search-command.tsx` as the shared
+  production command palette owner for navbar search;
+- extended `src/lib/navigation.ts` so search entries are derived from the same
+  RBAC, module, and feature-gated navigation registry that drives sidebar
+  visibility, which keeps hidden destinations out of the navbar search;
+- updated `src/modules/core/components/monolith-app-shell.tsx` so the topbar
+  search now opens the shared command palette instead of the previous
+  route-local quick-navigation overlay;
+- updated `src/components/monolith/catalogue/shared-catalogue.tsx` and
+  `src/components/monolith/index.ts` so the search surface is documented as a
+  shared production component;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after this shell/search UI
+  batch.
+
+Verification on Friday, August 14, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/lib/navigation.ts' 'src/lib/navigation.test.ts' 'src/components/navigation/monolith-search-command.tsx' 'src/modules/core/components/monolith-app-shell.tsx' 'src/components/monolith/catalogue/shared-catalogue.tsx'`:
+  completed with the existing `monolith-app-shell.tsx` raw-button warnings that
+  predate this batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  pending rerun after the final search-catalogue icon typing adjustment in this
+  session;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the long-standing repository baseline that
+  `src/components/monolith` contains compatibility implementations outside the
+  allowed barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged baseline that `design-system-catalogue.css` is
+  missing.
+
+Known limits:
+
+- the shared navbar search is now a strong master search for Monolith
+  workspaces and registered pages, but it does not yet index live business
+  records such as individual employees, customers, jobs, or quotes because
+  those domain search APIs are separate work;
+- manual browser verification in Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-14 Shared searchable dropdown contract
+
+Standardized the shared Monolith dropdown interaction so routes using
+`DropdownSelect` now follow one searchable, type-to-filter pattern instead of
+relying on route-local dropdown behavior.
+
+Delivered:
+
+- updated `src/components/ui/dropdown-select.tsx` so the shared dropdown now
+  opens from typed input, focuses an in-menu search field, narrows options live
+  against labels and values, preserves scroll selection, and shows a canonical
+  empty state when nothing matches;
+- updated `src/styles/monolith-system.css` so the searchable dropdown uses
+  shared spacing, sticky search treatment, focus styles, and empty-state
+  typography instead of ad hoc route styling;
+- updated `src/components/monolith/catalogue/shared-catalogue.tsx` so the
+  design-system catalogue documents the searchable dropdown contract with a live
+  specimen.
+
+Verification on Friday, August 14, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint src/components/ui/dropdown-select.tsx src/components/monolith/catalogue/shared-catalogue.tsx`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- this batch standardizes the shared `DropdownSelect` owner and every current
+  route that consumes it, but it does not migrate every native HTML
+  `<select>`/`NativeSelect` usage in the repository to the searchable contract;
+- manual browser verification across every `DropdownSelect` consumer is still
+  pending in this Codex session.
+
+## 2026-08-14 Product catalogue and freight button contract cleanup
+
+Replaced broken route-local button implementations with canonical design-system
+actions so Product Catalogue and Freight Forwarding no longer depend on
+hardcoded raw button markup for the affected controls.
+
+Delivered:
+
+- updated `src/app/(dashboard)/product-catalogue/page.tsx` so the route now
+  uses shared `Button`, `ButtonLink`, and interactive `WorkspacePanel`
+  contracts for the workflow/outcomes CTAs, module selection cards, workflow
+  view switch, module tabs, and stage selectors instead of route-local raw
+  buttons;
+- updated
+  `src/modules/freight-forwarding/components/freight-forwarding-create-booking-client.tsx`
+  so the MBL/HBL detail switcher now uses shared `Button` variants instead of
+  raw segmented buttons;
+- updated `src/styles/monolith-system.css` so Product Catalogue tab/stage
+  styling now targets canonical `.mnx-button` contracts and the segmented
+  mobile rule also applies to design-system buttons;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after this UI batch.
+
+Verification on Friday, August 14, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/product-catalogue/page.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-create-booking-client.tsx' 'src/components/ui/button.tsx' 'src/styles/monolith-system.css'`:
+  completed with the existing global-stylesheet warning that
+  `src/styles/monolith-system.css` is ignored by the current ESLint config;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  button cleanup is source-verified and static-check-verified rather than
+  manually browser-checked in Light, Night, and Violet themes;
+- Product Catalogue still contains broader route-local composition that remains
+  tracked by the migration audit even though the broken hardcoded button set was
+  replaced in this pass.
 
 ## 2026-08-09 Dashboard final authority cleanup
 
@@ -6625,3 +6757,58 @@ Known limits:
 - `docs/ui-route-audit.md` and
   `docs/ui-component-and-style-ownership-audit.md` have not yet been
   regenerated after this customer portal batch.
+
+## 2026-08-14 AMS spacing and design-system alignment handoff
+
+The AMS route family received a focused spacing, alignment, and shared-surface
+ pass so the main route wrappers lean on the production performance workspace
+ primitives instead of mixing route-local card shells and ad hoc spacing.
+
+Delivered:
+
+- `src/app/(dashboard)/ams/page.tsx` now uses shared section actions and
+  consistent card spacing for the AMS action-lane dashboard;
+- `src/app/(dashboard)/ams/appraisals/page.tsx`,
+  `src/app/(dashboard)/ams/assets/page.tsx`,
+  `src/app/(dashboard)/ams/extensions/page.tsx`,
+  `src/app/(dashboard)/ams/history/page.tsx`,
+  `src/app/(dashboard)/ams/kpi/page.tsx`,
+  `src/app/(dashboard)/ams/my-appraisal/page.tsx`,
+  `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx`, and
+  `src/app/(dashboard)/ams/slabs/page.tsx` now use
+  `PerformanceSection`, `PerformanceSectionHeader`, shared workspace alerts,
+  state blocks, and normalized inner padding instead of older mixed wrappers;
+- `src/app/(dashboard)/ams/assets/[id]/page.tsx` was rebuilt onto the shared
+  workspace composition with a consistent detail header, profile summary, and
+  depreciation journal presentation;
+- `src/app/(dashboard)/ams/extensions/page.tsx` and
+  `src/app/(dashboard)/ams/extensions/extensions-client.tsx` were tightened so
+  the page wrapper is typed cleanly and the targeted AMS lint pass closes
+  without warnings;
+- `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` were regenerated after the
+  AMS batch.
+
+Verification on Friday, August 14, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/ams/page.tsx' 'src/app/(dashboard)/ams/appraisals/page.tsx' 'src/app/(dashboard)/ams/assets/page.tsx' 'src/app/(dashboard)/ams/assets/[id]/page.tsx' 'src/app/(dashboard)/ams/history/page.tsx' 'src/app/(dashboard)/ams/slabs/page.tsx' 'src/app/(dashboard)/ams/my-appraisal/page.tsx' 'src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx' 'src/app/(dashboard)/ams/kpi/page.tsx' 'src/app/(dashboard)/ams/extensions/page.tsx' 'src/app/(dashboard)/ams/extensions/extensions-client.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit.
+
+Known limits:
+
+- static audit output improved, but several AMS routes remain conservatively
+  classified as `PARTIAL` or `NON_COMPLIANT` because route-local business
+  composition still uses raw headings, cards, or utility-heavy inner sections;
+- no manual browser/runtime verification was completed in this Codex session,
+  so visual confirmation across Light, Night, and Violet themes is still
+  pending;
+- broader repo baselines outside this AMS batch remain unchanged, including the
+  previously known `architecture:check` and `design-system:verify` failures
+  noted earlier in the migration stream.

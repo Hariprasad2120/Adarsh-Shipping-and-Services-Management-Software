@@ -70,27 +70,27 @@ export default async function CrmProjectsPage({
         {/* Left Column: Projects list table */}
         <div className="lg:col-span-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+            <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">
               Active Operations
             </h3>
-            <span className="text-xs text-mono-muted font-bold">
+            <span className="text-xs text-[var(--mnx-muted)] font-bold">
               {projects.length} running projects
             </span>
           </div>
 
           <form method="GET" className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+            <Search className="absolute left-3 top-2.5 size-4 text-[var(--mnx-muted)]" />
             <CrmInput
               type="text"
               name="search"
               defaultValue={search}
               placeholder="Search projects by name..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
+              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
             />
           </form>
 
           {projects.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted text-xs italic">
+            <div className="p-8 text-center text-[var(--mnx-muted)] text-xs italic">
               No operational projects tracked.
             </div>
           ) : (
@@ -101,14 +101,14 @@ export default async function CrmProjectsPage({
                   className="py-4 flex items-center justify-between gap-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-bold text-mono-text text-sm block truncate">
+                    <span className="font-bold text-[var(--mnx-text-strong)] text-sm block truncate">
                       {project.name}
                     </span>
-                    <span className="text-xs text-mono-muted block mt-0.5">
+                    <span className="text-xs text-[var(--mnx-muted)] block mt-0.5">
                       Client: {project.account?.name || "No Account"} • Status:{" "}
                       {project.status}
                     </span>
-                    <div className="flex gap-4 text-[10px] text-mono-muted mt-1.5">
+                    <div className="flex gap-4 text-[10px] text-[var(--mnx-muted)] mt-1.5">
                       {project.startDate && (
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3" />
@@ -155,7 +155,7 @@ export default async function CrmProjectsPage({
         <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
             <FolderKanban className="size-4.5 text-[var(--mnx-accent)]" />
-            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">
+            <h3 className="font-bold text-xs text-[var(--mnx-text-strong)] uppercase tracking-wider">
               Start Operation Project
             </h3>
           </div>
@@ -168,24 +168,24 @@ export default async function CrmProjectsPage({
             className="space-y-4"
           >
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                 Project Title *
               </label>
               <CrmInput
                 type="text"
                 name="name"
                 placeholder="e.g. Adarsh Cargo Dispatch setup"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 required
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                 Linked Client Account *
               </label>
               <NativeSelect
                 name="accountId"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 required
               >
                 <option value="">Select Customer</option>
@@ -198,33 +198,33 @@ export default async function CrmProjectsPage({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                   Start Date
                 </label>
                 <DateInput
                   name="startDate"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                   End Date
                 </label>
                 <DateInput
                   name="endDate"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                   Status
                 </label>
                 <NativeSelect
                   name="status"
                   defaultValue="PLANNING"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                 >
                   <option value="PLANNING">Planning</option>
                   <option value="IN_PROGRESS">In Progress</option>
@@ -233,12 +233,12 @@ export default async function CrmProjectsPage({
                 </NativeSelect>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                   Project Owner *
                 </label>
                 <NativeSelect
                   name="ownerId"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                   required
                 >
                   {employees.map((emp) => (
@@ -250,19 +250,19 @@ export default async function CrmProjectsPage({
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider mb-1.5">
                 Description
               </label>
               <CrmTextarea
                 name="description"
                 placeholder="Log operational instructions..."
                 rows={3}
-                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <CrmButton
               type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all mnx-shadow-panel cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] font-bold rounded-lg text-xs transition-all mnx-shadow-panel cursor-pointer"
             >
               <Save className="size-4" />
               <span>Launch Project</span>

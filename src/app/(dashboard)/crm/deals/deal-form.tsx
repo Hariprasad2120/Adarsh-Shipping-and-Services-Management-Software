@@ -112,14 +112,14 @@ export function DealForm({
     >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <Landmark className="size-4 text-[var(--mnx-accent)]" />
           <span>Deal Information</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Deal Name *
             </label>
             <CrmInput
@@ -128,18 +128,18 @@ export function DealForm({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Adarsh Freight Deal"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Owner *
             </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Owner</option>
@@ -151,13 +151,13 @@ export function DealForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Account (Company) *
             </label>
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Link Account</option>
@@ -169,13 +169,13 @@ export function DealForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Primary Contact
             </label>
             <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               <option value="">Link Contact</option>
               {contacts.map((c) => (
@@ -190,21 +190,21 @@ export function DealForm({
 
       {/* ─── SECTION: STAGING & METRICS ───────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <Tag className="size-4 text-[var(--mnx-accent)]" />
           <span>Stage & Valuation</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Deal Stage
             </label>
             <NativeSelect
               name="stage"
               value={stage}
               onChange={(e) => handleStageChange(e.target.value)}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {stagesList.map((st) => (
                 <option key={st} value={st}>
@@ -214,7 +214,7 @@ export function DealForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Deal Value (INR)
             </label>
             <CrmInput
@@ -222,11 +222,11 @@ export function DealForm({
               name="amount"
               defaultValue={initialData?.amount || ""}
               placeholder="e.g. 150000"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Probability (%)
             </label>
             <CrmInput
@@ -238,11 +238,11 @@ export function DealForm({
                 )
               }
               placeholder="e.g. 40"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Expected Close Date
             </label>
             <DateInput
@@ -254,11 +254,11 @@ export function DealForm({
                       .split("T")[0]
                   : ""
               }
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Next Follow Up Date
             </label>
             <DateInput
@@ -270,7 +270,7 @@ export function DealForm({
                       .split("T")[0]
                   : ""
               }
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -278,20 +278,20 @@ export function DealForm({
 
       {/* ─── SECTION: LOGISTICS & CATEGORIES ────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
           <Landmark className="size-4 text-[var(--mnx-accent)]" />
           <span>Logistics & Shipping Details</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Service Type
             </label>
             <NativeSelect
               name="serviceType"
               defaultValue={initialData?.serviceType || "Freight Forwarding"}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {serviceTypes.map((t) => (
                 <option key={t} value={t}>
@@ -301,13 +301,13 @@ export function DealForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Logistics Category
             </label>
             <NativeSelect
               name="logisticsCategory"
               defaultValue={initialData?.logisticsCategory || "Import"}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {logisticsCategories.map((c) => (
                 <option key={c} value={c}>
@@ -317,7 +317,7 @@ export function DealForm({
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
               Competitor
             </label>
             <CrmInput
@@ -325,7 +325,7 @@ export function DealForm({
               name="competitor"
               defaultValue={initialData?.competitor || ""}
               placeholder="e.g. DHL, FedEx"
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -334,7 +334,7 @@ export function DealForm({
       {/* Description / Lost Reason */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+          <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
             Description
           </label>
           <CrmTextarea
@@ -342,11 +342,11 @@ export function DealForm({
             defaultValue={initialData?.description || ""}
             placeholder="Log key specifications or client demands..."
             rows={3}
-            className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+            className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+          <label className="block text-xs font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1.5">
             Reason for Loss
           </label>
           <CrmTextarea
@@ -354,7 +354,7 @@ export function DealForm({
             defaultValue={initialData?.lostReason || ""}
             placeholder="Specify reason if deal is lost..."
             rows={3}
-            className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+            className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
           />
         </div>
       </div>
@@ -364,14 +364,14 @@ export function DealForm({
         <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-[var(--mnx-muted)] border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
         >
           Cancel
         </CrmButton>
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-[var(--mnx-text-strong)] rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>

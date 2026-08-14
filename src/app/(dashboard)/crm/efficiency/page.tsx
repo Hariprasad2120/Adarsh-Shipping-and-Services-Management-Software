@@ -182,8 +182,8 @@ export default async function CrmEfficiencyPage() {
       {/* ─── TITLE SECTION ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-mono-text uppercase tracking-wider">Salesperson Efficiency & Impact</h2>
-          <p className="text-xs text-mono-muted mt-1">Analytics on lead response times, conversion rates, and total client hours spent.</p>
+          <h2 className="text-xl font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider">Salesperson Efficiency & Impact</h2>
+          <p className="text-xs text-[var(--mnx-muted)] mt-1">Analytics on lead response times, conversion rates, and total client hours spent.</p>
         </div>
       </div>
 
@@ -193,11 +193,11 @@ export default async function CrmEfficiencyPage() {
         {/* KPI: Avg. Response Time */}
         <div className="p-5 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-bold text-mono-muted uppercase tracking-wider">Avg. Response Time</span>
-            <div className="text-3xl font-black text-mono-text">
+            <span className="text-[12px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider">Avg. Response Time</span>
+            <div className="text-3xl font-black text-[var(--mnx-text-strong)]">
               {avgResponseTime === 0 ? "N/A" : avgResponseTime < 1 ? `${Math.round(avgResponseTime * 60)}m` : `${avgResponseTime.toFixed(1)}h`}
             </div>
-            <p className="text-[10px] text-mono-muted">Lead capture to initial salesperson activity</p>
+            <p className="text-[10px] text-[var(--mnx-muted)]">Lead capture to initial salesperson activity</p>
           </div>
           <div className="p-3 bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] rounded-lg">
             <Clock className="size-5" />
@@ -207,11 +207,11 @@ export default async function CrmEfficiencyPage() {
         {/* KPI: Avg. Conversion Time */}
         <div className="p-5 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-bold text-mono-muted uppercase tracking-wider">Avg. Conversion Time</span>
-            <div className="text-3xl font-black text-mono-text">
+            <span className="text-[12px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider">Avg. Conversion Time</span>
+            <div className="text-3xl font-black text-[var(--mnx-text-strong)]">
               {avgConversionTime === 0 ? "N/A" : `${avgConversionTime.toFixed(1)} days`}
             </div>
-            <p className="text-[10px] text-mono-muted">Lead capture to account qualification</p>
+            <p className="text-[10px] text-[var(--mnx-muted)]">Lead capture to account qualification</p>
           </div>
           <div className="p-3 bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] rounded-lg">
             <TrendingUp className="size-5" />
@@ -221,9 +221,9 @@ export default async function CrmEfficiencyPage() {
         {/* KPI: Total Logged Hours */}
         <div className="p-5 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-bold text-mono-muted uppercase tracking-wider">Team Logged Hours</span>
+            <span className="text-[12px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider">Team Logged Hours</span>
             <div className="text-3xl font-black text-[var(--mnx-accent)]">{totalLoggedHours.toFixed(1)} hrs</div>
-            <p className="text-[10px] text-mono-muted">Total work hours spent on client interactions</p>
+            <p className="text-[10px] text-[var(--mnx-muted)]">Total work hours spent on client interactions</p>
           </div>
           <div className="p-3 bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] rounded-lg">
             <Clock className="size-5" />
@@ -233,9 +233,9 @@ export default async function CrmEfficiencyPage() {
         {/* KPI: Team Conversion Rate */}
         <div className="p-5 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 flex items-start justify-between">
           <div className="space-y-2">
-            <span className="text-[12px] font-bold text-mono-muted uppercase tracking-wider">Conversion Rate</span>
-            <div className="text-3xl font-black text-mono-text">{orgConversionRate.toFixed(1)}%</div>
-            <p className="text-[10px] text-mono-muted">{convertedLeadsCount} converted / {totalLeadsCount} total leads</p>
+            <span className="text-[12px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider">Conversion Rate</span>
+            <div className="text-3xl font-black text-[var(--mnx-text-strong)]">{orgConversionRate.toFixed(1)}%</div>
+            <p className="text-[10px] text-[var(--mnx-muted)]">{convertedLeadsCount} converted / {totalLeadsCount} total leads</p>
           </div>
           <div className="p-3 bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] rounded-lg">
             <UserCheck className="size-5" />
@@ -247,8 +247,8 @@ export default async function CrmEfficiencyPage() {
       {/* ─── TEAM LEADERBOARD ─────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
         <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
-          <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Sales Team Leaderboard & Performance</h3>
-          <span className="text-xs text-mono-muted">Individual efficiency metrics</span>
+          <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Sales Team Leaderboard & Performance</h3>
+          <span className="text-xs text-[var(--mnx-muted)]">Individual efficiency metrics</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -276,16 +276,16 @@ export default async function CrmEfficiencyPage() {
 
                   return (
                     <tr key={userId} className="hover:bg-[var(--mnx-surface)]/30 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-mono-text">{data.name}</td>
-                      <td className="py-3.5 px-4 text-center text-mono-muted font-medium">{data.leadsCount}</td>
-                      <td className="py-3.5 px-4 text-center text-mono-muted">
+                      <td className="py-3.5 px-4 font-bold text-[var(--mnx-text-strong)]">{data.name}</td>
+                      <td className="py-3.5 px-4 text-center text-[var(--mnx-muted)] font-medium">{data.leadsCount}</td>
+                      <td className="py-3.5 px-4 text-center text-[var(--mnx-muted)]">
                         {avgResp === 0 ? "N/A" : avgResp < 1 ? `${Math.round(avgResp * 60)} mins` : `${avgResp.toFixed(1)} hrs`}
                       </td>
-                      <td className="py-3.5 px-4 text-center text-mono-muted">
+                      <td className="py-3.5 px-4 text-center text-[var(--mnx-muted)]">
                         {avgConv === 0 ? "N/A" : `${avgConv.toFixed(1)} days`}
                       </td>
                       <td className="py-3.5 px-4 text-center text-[var(--mnx-accent)] font-black">{data.totalHoursLogged.toFixed(1)} hrs</td>
-                      <td className="py-3.5 px-4 text-right font-black text-mono-text">
+                      <td className="py-3.5 px-4 text-right font-black text-[var(--mnx-text-strong)]">
                         {data.wonDealsValue === 0 ? "-" : `₹${data.wonDealsValue.toLocaleString("en-IN")}`}
                       </td>
                     </tr>
@@ -301,33 +301,33 @@ export default async function CrmEfficiencyPage() {
         {/* Column 1 & 2: Recent Log Entries Feed */}
         <div className="lg:col-span-2 p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Recent Work Log Entries</h3>
+            <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Recent Work Log Entries</h3>
             <span className="text-xs text-[var(--mnx-accent)] font-semibold">{workTimeLogs.length} total entries</span>
           </div>
 
           {workTimeLogs.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted text-sm italic">No work hours logged yet.</div>
+            <div className="p-8 text-center text-[var(--mnx-muted)] text-sm italic">No work hours logged yet.</div>
           ) : (
             <div className="divide-y divide-[var(--mnx-border)]/30 max-h-[500px] overflow-y-auto pr-1">
               {workTimeLogs.slice(0, 15).map((log) => (
                 <div key={log.id} className="py-3.5 flex items-start justify-between gap-4">
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-mono-text text-xs">
+                      <span className="font-bold text-[var(--mnx-text-strong)] text-xs">
                         {log.user.name}
                       </span>
-                      <span className="text-mono-muted font-semibold">•</span>
+                      <span className="text-[var(--mnx-muted)] font-semibold">•</span>
                       <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase bg-[var(--mnx-accent)]/5 px-2 py-0.5 rounded border border-[var(--mnx-accent)]/15">
                         {activityLabels[log.activityType] || log.activityType}
                       </span>
-                      <span className="text-mono-muted font-semibold">•</span>
-                      <span className="text-mono-muted font-black">{log.durationHours} hr{log.durationHours === 1 ? "" : "s"}</span>
+                      <span className="text-[var(--mnx-muted)] font-semibold">•</span>
+                      <span className="text-[var(--mnx-muted)] font-black">{log.durationHours} hr{log.durationHours === 1 ? "" : "s"}</span>
                     </div>
                     {log.description && (
-                      <p className="text-mono-muted text-xs leading-normal font-normal pl-0.5">{log.description}</p>
+                      <p className="text-[var(--mnx-muted)] text-xs leading-normal font-normal pl-0.5">{log.description}</p>
                     )}
                     {log.lead && (
-                      <div className="text-[10px] text-mono-muted font-medium">
+                      <div className="text-[10px] text-[var(--mnx-muted)] font-medium">
                         Linked Client:{" "}
                         <Link href={`/crm/leads/${log.lead.id}`} className="text-[var(--mnx-accent)] hover:underline font-bold">
                           {`${log.lead.firstName || ""} ${log.lead.lastName}`.trim()} ({log.lead.company})
@@ -335,7 +335,7 @@ export default async function CrmEfficiencyPage() {
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] text-mono-muted shrink-0 font-medium">
+                  <span className="text-[10px] text-[var(--mnx-muted)] shrink-0 font-medium">
                     {new Date(log.loggedAt).toLocaleDateString("en-IN")}
                   </span>
                 </div>
@@ -347,8 +347,8 @@ export default async function CrmEfficiencyPage() {
         {/* Column 3: Work Distribution by activity type */}
         <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Activity Distribution</h3>
-            <span className="text-xs text-mono-muted">Logged Hours</span>
+            <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">Activity Distribution</h3>
+            <span className="text-xs text-[var(--mnx-muted)]">Logged Hours</span>
           </div>
 
           <div className="space-y-4">
@@ -361,8 +361,8 @@ export default async function CrmEfficiencyPage() {
               return (
                 <div key={key} className="space-y-1">
                   <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-mono-muted uppercase tracking-wide text-[10px]">{label}</span>
-                    <span className="text-mono-muted">{hours.toFixed(1)} hrs ({pct.toFixed(0)}%)</span>
+                    <span className="text-[var(--mnx-muted)] uppercase tracking-wide text-[10px]">{label}</span>
+                    <span className="text-[var(--mnx-muted)]">{hours.toFixed(1)} hrs ({pct.toFixed(0)}%)</span>
                   </div>
                   <div className="h-2.5 bg-[var(--mnx-surface)] rounded-full overflow-hidden border border-[var(--mnx-border)]/40">
                     <div

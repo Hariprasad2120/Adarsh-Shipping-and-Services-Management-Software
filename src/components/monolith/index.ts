@@ -16,6 +16,7 @@ export * from "@/components/feedback/warning-indicator-popover";
 export * from "@/components/data-display/operational-data-table";
 export * from "@/components/data-display/dashboard-insights";
 export * from "@/components/navigation/clickable-row";
+export * from "@/components/navigation/monolith-search-command";
 export * from "@/modules/admin/components/admin-workspace";
 export * from "@/modules/accounting/components/accounting-workspace";
 export * from "@/modules/accounting/components/accounting-invoice-form";

@@ -279,6 +279,79 @@
   }
 }
 
+.mnx-dev-perf-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--frappe-space-2);
+  margin-bottom: var(--frappe-space-2);
+}
+
+.mnx-dev-perf-summary > div {
+  border: 1px solid var(--frappe-border);
+  border-radius: var(--frappe-radius-md);
+  padding: var(--frappe-space-2);
+}
+
+.mnx-dev-perf-summary dt {
+  margin: 0 0 var(--frappe-space-1);
+  color: var(--frappe-text-muted);
+  font-size: var(--frappe-font-size-xs);
+}
+
+.mnx-dev-perf-summary dd {
+  margin: 0;
+}
+
+.mnx-dev-empty-inline {
+  color: var(--frappe-text-muted);
+  font-size: var(--frappe-font-size-sm);
+}
+
+.mnx-dev-ping-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--frappe-space-2);
+}
+
+.mnx-dev-ping-meter-track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--frappe-radius-pill);
+  background: var(--frappe-bg-subtle);
+  overflow: hidden;
+}
+
+.mnx-dev-ping-meter-fill {
+  height: 100%;
+  border-radius: var(--frappe-radius-pill);
+  background: var(--frappe-green-500);
+  transition: width 0.2s ease;
+}
+
+.mnx-dev-ping-meter.is-ok .mnx-dev-ping-meter-fill {
+  background: var(--frappe-amber-500);
+}
+
+.mnx-dev-ping-meter.is-slow .mnx-dev-ping-meter-fill {
+  background: var(--frappe-red-500);
+}
+
+.mnx-dev-ping-value {
+  flex: 0 0 auto;
+  font-family: var(--frappe-font-family-mono, monospace);
+  font-size: var(--frappe-font-size-xs);
+  font-weight: var(--frappe-font-weight-medium);
+}
+
+.mnx-dev-list-item.is-good {
+  border-color: var(--frappe-green-300);
+}
+
+.mnx-dev-list-item.is-ok {
+  border-color: var(--frappe-amber-300);
+  background: var(--frappe-amber-50);
+}
+
 .mnx-dev-crash-fallback {
   display: grid;
   place-items: center;

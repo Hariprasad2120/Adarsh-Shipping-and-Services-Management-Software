@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getVisibleSections } from "@/lib/navigation";
+import {
+  getSearchCommandEntries,
+  getVisibleSections,
+  rankSearchCommandEntries,
+} from "@/lib/navigation";
 import { ACCOUNTING_WORKSPACE_CATALOG } from "@/modules/accounting/workspace-catalog";
 import {
   getManagedFeatureIdForPath,
@@ -45,6 +49,35 @@ describe("module visibility helpers", () => {
     const withLabsItems =
       withLabs.find((section) => section.id === "cha")?.items.map((item) => item.href) ?? [];
     expect(withLabsItems).toContain("/cha/labs/import-job-creation");
+  });
+
+  it("builds search entries only from role-visible destinations", () => {
+    const caps = {
+      "attendance.punch.self": true,
+      "attendance.leave.request": true,
+    };
+
+    const entries = getSearchCommandEntries(caps, ["attendance"]);
+    const hrefs = entries.map((entry) => entry.href);
+
+    expect(hrefs).toContain("/attendance");
+    expect(hrefs).toContain("/attendance/leaves");
+    expect(hrefs).not.toContain("/attendance/settings");
+    expect(hrefs).not.toContain("/attendance/reports");
+  });
+
+  it("ranks page matches ahead of broader workspace matches when the query is specific", () => {
+    const caps = {
+      "attendance.punch.self": true,
+      "attendance.leave.request": true,
+      "attendance.punch.manage": true,
+    };
+
+    const entries = getSearchCommandEntries(caps, ["attendance"]);
+    const ranked = rankSearchCommandEntries(entries, "leave");
+
+    expect(ranked[0]?.href).toBe("/attendance/leaves");
+    expect(ranked.some((entry) => entry.href === "/attendance")).toBe(true);
   });
 
   it("keeps the CRM Masters workspace in the shared sidebar model", () => {

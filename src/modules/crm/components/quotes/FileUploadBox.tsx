@@ -13,7 +13,7 @@ export function FileUploadBox({ files, onFilesChange }: FileUploadBoxProps) {
   return (
     <div className="rounded-md border border-dashed border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-[var(--mnx-border)] bg-mono-card px-3 py-2 text-[12px] font-medium text-[var(--mnx-text-strong)]">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-[12px] font-medium text-[var(--mnx-text-strong)]">
           <Upload className="size-4 text-[var(--mnx-accent)]" />
           <span>Attach File(s)</span>
           <CrmInput

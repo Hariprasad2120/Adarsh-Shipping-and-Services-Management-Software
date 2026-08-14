@@ -1,10 +1,9 @@
 import { db } from "@/lib/db";
-import { notify } from "@/lib/notify";
 import { getNow } from "@/lib/clock";
-import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
 import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
 import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
 import { getCachedLeaveTypes } from "@/lib/cache";
+import { submitLeaveRequest, decideLeaveRequest as decideLeaveRequestV2 } from "@/modules/leave/request";
 
 // ─── Punch ────────────────────────────────────────────────────────────────────
 
@@ -126,35 +125,25 @@ export async function getLeaveRequests(orgId: string, filters?: {
   });
 }
 
+// NOTE: createLeaveRequest/decideLeaveRequest are now thin compatibility
+// wrappers around src/modules/leave/request.ts — the consolidated leave
+// engine (ledger-backed, policy-versioned, multi-step approval). Kept here
+// so existing callers (src/app/api/attendance/leaves*) keep working
+// unchanged. See docs/leave-management/ARCHITECTURE.md §1.
 export async function createLeaveRequest(userId: string, data: {
   leaveTypeId: string; fromDate: Date; toDate: Date; halfDay: boolean; notes?: string;
 }) {
-  const request = await db.leaveRequest.create({
-    data: { userId, ...data, status: "pending" },
-    include: {
-      user: { select: { id: true, name: true, orgId: true } },
-      leaveType: { select: { name: true } },
-    },
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { orgId: true } });
+  if (!user.orgId) throw new Error("User has no organisation");
+  const { request } = await submitLeaveRequest({
+    orgId: user.orgId,
+    userId,
+    leaveTypeId: data.leaveTypeId,
+    fromDate: data.fromDate,
+    toDate: data.toDate,
+    halfDay: data.halfDay,
+    notes: data.notes,
   });
-
-  if (request.user.orgId) {
-    const approverIds = await getUsersWithPermission(request.user.orgId, "attendance.leave.approve");
-    const recipientIds = approverIds.filter((id) => id !== userId);
-    if (recipientIds.length > 0) {
-      await notifyMany(recipientIds, {
-        orgId: request.user.orgId,
-        kind: "LEAVE_REQUEST_SUBMITTED",
-        title: `Leave request from ${request.user.name}`,
-        body: `${request.user.name} submitted a ${request.leaveType.name} leave request.`,
-        link: "/attendance/leaves",
-        payload: {
-          leaveRequestId: request.id,
-          requesterId: request.user.id,
-        },
-      });
-    }
-  }
-
   return request;
 }
 
@@ -163,43 +152,11 @@ export async function decideLeaveRequest(
   approverId: string,
   decision: "approved" | "rejected"
 ) {
-  const req = await db.leaveRequest.update({
-    where: { id: requestId },
-    data: { status: decision, approverId },
-    include: { leaveType: true, user: { select: { id: true, name: true, orgId: true } } },
+  return decideLeaveRequestV2({
+    requestId,
+    approverId,
+    decision: decision === "approved" ? "APPROVED" : "REJECTED",
   });
-
-  // Deduct balance on approval
-  if (decision === "approved") {
-    const days =
-      Math.ceil(
-        (req.toDate.getTime() - req.fromDate.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1;
-    const deduct = req.halfDay ? 0.5 : days;
-    const year = req.fromDate.getFullYear();
-
-    await db.leaveBalance.updateMany({
-      where: { userId: req.userId, leaveTypeId: req.leaveTypeId, year },
-      data: { balance: { decrement: deduct } },
-    });
-  }
-
-  await notify({
-    userId: req.userId,
-    orgId: req.user.orgId ?? undefined,
-    kind: "LEAVE_DECISION",
-    title: `Leave ${decision}: ${req.leaveType.name}`,
-    body: `Your leave request from ${req.fromDate.toDateString()} to ${req.toDate.toDateString()} was ${decision}.`,
-    link: "/attendance/leaves",
-    email: true,
-    payload: {
-      leaveRequestId: req.id,
-      decision,
-      approverId,
-    },
-  });
-
-  return req;
 }
 
 // ─── OT ───────────────────────────────────────────────────────────────────────

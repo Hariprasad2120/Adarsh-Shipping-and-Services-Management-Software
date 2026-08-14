@@ -557,7 +557,7 @@ export function EnquiryDetailClient({
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Client Name
                       </label>
                       <CrmInput
@@ -565,52 +565,52 @@ export function EnquiryDetailClient({
                         required
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Company
                       </label>
                       <CrmInput
                         type="text"
                         value={company}
                         onChange={(e) => setCompany(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Email
                       </label>
                       <CrmInput
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                           Phone
                         </label>
                         <CrmInput
                           type="text"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                           Mobile
                         </label>
                         <CrmInput
                           type="text"
                           value={mobile}
                           onChange={(e) => setMobile(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                         />
                       </div>
                     </div>
@@ -624,38 +624,38 @@ export function EnquiryDetailClient({
                   </span>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Cargo Mode
                       </label>
                       <NativeSelect
                         value={enquiryType}
                         onChange={(e) => setEnquiryType(e.target.value as any)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       >
                         <option value="Sea">Sea Enquiry</option>
                         <option value="Air">Air Enquiry</option>
                       </NativeSelect>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Commodity
                       </label>
                       <CrmInput
                         type="text"
                         value={commodity}
                         onChange={(e) => setCommodity(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Weight / Packages
                       </label>
                       <CrmInput
                         type="text"
                         value={weight}
                         onChange={(e) => setWeight(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                   </div>
@@ -663,50 +663,50 @@ export function EnquiryDetailClient({
                   {enquiryType === "Sea" ? (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                           POL (Port of Loading)
                         </label>
                         <CrmInput
                           type="text"
                           value={pol}
                           onChange={(e) => setPol(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                           POD (Port of Discharge)
                         </label>
                         <CrmInput
                           type="text"
                           value={pod}
                           onChange={(e) => setPod(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                         />
                       </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                           AOL (Airport of Loading)
                         </label>
                         <CrmInput
                           type="text"
                           value={aol}
                           onChange={(e) => setAol(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                           AOD (Airport of Discharge)
                         </label>
                         <CrmInput
                           type="text"
                           value={aod}
                           onChange={(e) => setAod(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                         />
                       </div>
                     </div>
@@ -714,36 +714,36 @@ export function EnquiryDetailClient({
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Incoterm
                       </label>
                       <CrmInput
                         type="text"
                         value={incoterm}
                         onChange={(e) => setIncoterm(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Shipment Planning
                       </label>
                       <CrmInput
                         type="text"
                         value={planning}
                         onChange={(e) => setPlanning(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Purpose of Cargo
                       </label>
                       <CrmInput
                         type="text"
                         value={purpose}
                         onChange={(e) => setPurpose(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)]"
                       />
                     </div>
                   </div>
@@ -753,14 +753,14 @@ export function EnquiryDetailClient({
                   <CrmButton
                     type="button"
                     onClick={() => setIsEditingCargoDetails(false)}
-                    className="px-4 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-mono-muted rounded-lg text-xs font-semibold"
+                    className="px-4 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] rounded-lg text-xs font-semibold"
                   >
                     Cancel
                   </CrmButton>
                   <CrmButton
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
                   >
                     <Save className="size-3.5" />
                     <span>{isSubmitting ? "Saving..." : "Save Details"}</span>
@@ -770,7 +770,7 @@ export function EnquiryDetailClient({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                     Client Name
                   </span>
                   <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
@@ -778,7 +778,7 @@ export function EnquiryDetailClient({
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                     Company
                   </span>
                   <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
@@ -786,7 +786,7 @@ export function EnquiryDetailClient({
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                     Email
                   </span>
                   <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -794,7 +794,7 @@ export function EnquiryDetailClient({
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                     Phone Number
                   </span>
                   <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -802,7 +802,7 @@ export function EnquiryDetailClient({
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                     Mobile Number
                   </span>
                   <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -812,7 +812,7 @@ export function EnquiryDetailClient({
 
                 <div className="md:col-span-2 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Cargo Mode
                     </span>
                     <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
@@ -820,10 +820,10 @@ export function EnquiryDetailClient({
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Commodity
                     </span>
-                    <span className="block pl-1 text-mono-text font-normal">
+                    <span className="block pl-1 text-[var(--mnx-text-strong)] font-normal">
                       {commodity || "Not Specified"} •{" "}
                       {weight || "Not Specified"}
                     </span>
@@ -834,7 +834,7 @@ export function EnquiryDetailClient({
                       <span className="text-[11px] font-normal text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
                         Routing (Sea POL ➔ POD)
                       </span>
-                      <span className="block pl-1 text-mono-text font-normal text-sm">
+                      <span className="block pl-1 text-[var(--mnx-text-strong)] font-normal text-sm">
                         {pol || "N/A"} ➔ {pod || "N/A"}
                       </span>
                     </div>
@@ -843,14 +843,14 @@ export function EnquiryDetailClient({
                       <span className="text-[11px] font-normal text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
                         Routing (Air AOL ➔ AOD)
                       </span>
-                      <span className="block pl-1 text-mono-text font-normal text-sm">
+                      <span className="block pl-1 text-[var(--mnx-text-strong)] font-normal text-sm">
                         {aol || "N/A"} ➔ {aod || "N/A"}
                       </span>
                     </div>
                   )}
 
                   <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Shipment Planning
                     </span>
                     <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -858,7 +858,7 @@ export function EnquiryDetailClient({
                     </span>
                   </div>
                   <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Purpose of Cargo
                     </span>
                     <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -878,13 +878,13 @@ export function EnquiryDetailClient({
                   <span className="size-8 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center text-base">
                     ❄️
                   </span>
-                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+                  <h3 className="font-bold text-sm text-[var(--mnx-text-strong)] uppercase tracking-wider">
                     Perishable Cargo Parameters
                   </h3>
                 </div>
                 <CrmButton
                   onClick={() => setIsEditingPerishables(!isEditingPerishables)}
-                  className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/50 text-mono-muted px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/50 text-[var(--mnx-muted)] px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                 >
                   {isEditingPerishables ? (
                     <X className="size-3.5" />
@@ -901,13 +901,13 @@ export function EnquiryDetailClient({
                 <form onSubmit={handleSavePerishables} className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Cargo Category
                       </label>
                       <NativeSelect
                         value={perishableType}
                         onChange={(e) => setPerishableType(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                       >
                         <option value="Fruit/Vegetables">
                           Fruit & Vegetables
@@ -924,7 +924,7 @@ export function EnquiryDetailClient({
                       </NativeSelect>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Required Temp (°C)
                       </label>
                       <CrmInput
@@ -932,11 +932,11 @@ export function EnquiryDetailClient({
                         value={temperature}
                         onChange={(e) => setTemperature(e.target.value)}
                         placeholder="e.g. 2 to 8"
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                         Humidity Control (%)
                       </label>
                       <CrmInput
@@ -944,12 +944,12 @@ export function EnquiryDetailClient({
                         value={humidity}
                         onChange={(e) => setHumidity(e.target.value)}
                         placeholder="e.g. 85%"
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                       Special Handling Remarks / Ventilation
                     </label>
                     <CrmTextarea
@@ -957,21 +957,21 @@ export function EnquiryDetailClient({
                       value={perishableRemarks}
                       onChange={(e) => setPerishableRemarks(e.target.value)}
                       placeholder="Specify container ventilation settings, pre-cooling requirements, or emergency instructions..."
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-[var(--mnx-muted)]"
                     />
                   </div>
                   <div className="flex justify-end gap-3">
                     <CrmButton
                       type="button"
                       onClick={() => setIsEditingPerishables(false)}
-                      className="px-4 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-mono-muted rounded-lg text-xs font-semibold"
+                      className="px-4 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] rounded-lg text-xs font-semibold"
                     >
                       Cancel
                     </CrmButton>
                     <CrmButton
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
+                      className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-[var(--mnx-text-strong)] rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
                     >
                       <Save className="size-3.5" />
                       <span>
@@ -983,15 +983,15 @@ export function EnquiryDetailClient({
               ) : (
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Cargo Category
                     </span>
-                    <span className="text-mono-text font-normal">
+                    <span className="text-[var(--mnx-text-strong)] font-normal">
                       {perishableType}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Operating Temp
                     </span>
                     <span className="text-[var(--mnx-accent)] font-normal block mnx-numeric">
@@ -999,18 +999,18 @@ export function EnquiryDetailClient({
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Humidity Target
                     </span>
-                    <span className="text-mono-text font-normal block mnx-numeric">
+                    <span className="text-[var(--mnx-text-strong)] font-normal block mnx-numeric">
                       {humidity || "N/A"}
                     </span>
                   </div>
                   <div className="col-span-3 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 space-y-1">
-                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Ventilation & Airflow Remarks
                     </span>
-                    <p className="text-xs text-mono-muted bg-[var(--mnx-surface)]/40 p-2.5 rounded-lg border border-[var(--mnx-border)]/20 leading-relaxed italic">
+                    <p className="text-xs text-[var(--mnx-muted)] bg-[var(--mnx-surface)]/40 p-2.5 rounded-lg border border-[var(--mnx-border)]/20 leading-relaxed italic">
                       {perishableRemarks ||
                         "No special handling instructions logged."}
                     </p>
@@ -1047,13 +1047,13 @@ export function EnquiryDetailClient({
                   value={pasteText}
                   onChange={(e) => setPasteText(e.target.value)}
                   placeholder="Paste raw quote email text here. E.g., 'Ocean Freight: 1500 USD, CFS Charges: 4000 INR...'"
-                  className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted"
+                  className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-[var(--mnx-muted)]"
                 />
                 <CrmButton
                   type="button"
                   onClick={handleParsePasteText}
                   disabled={isParsingPaste || !pasteText.trim()}
-                  className="px-4 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)] text-mono-muted rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+                  className="px-4 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)] text-[var(--mnx-muted)] rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
                 >
                   {isParsingPaste ? "Extracting..." : "Parse Text & Test"}
                 </CrmButton>
@@ -1071,7 +1071,7 @@ export function EnquiryDetailClient({
               >
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    <label className="block text-[9px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                       From Address
                     </label>
                     <CrmInput
@@ -1079,11 +1079,11 @@ export function EnquiryDetailClient({
                       required
                       value={simFromEmail}
                       onChange={(e) => setSimFromEmail(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    <label className="block text-[9px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                       Email Subject Line (Ref Required)
                     </label>
                     <CrmInput
@@ -1091,12 +1091,12 @@ export function EnquiryDetailClient({
                       required
                       value={simSubject}
                       onChange={(e) => setSimSubject(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                  <label className="block text-[9px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
                     Email Body Content
                   </label>
                   <CrmTextarea
@@ -1104,14 +1104,14 @@ export function EnquiryDetailClient({
                     required
                     value={simBody}
                     onChange={(e) => setSimBody(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] font-mono leading-relaxed"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)] font-mono leading-relaxed"
                   />
                 </div>
                 <div className="flex justify-end pt-1">
                   <CrmButton
                     type="submit"
                     disabled={isSimulatingEmail}
-                    className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-[var(--mnx-text-strong)] px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
                   >
                     <Mail className="size-3.5" />
                     <span>
@@ -1135,13 +1135,13 @@ export function EnquiryDetailClient({
               <span className="text-[10px] font-bold text-[var(--mnx-warning)] uppercase tracking-widest block font-sans">
                 Follow-up Alarm
               </span>
-              <div className="flex items-center gap-2 text-mono-text">
+              <div className="flex items-center gap-2 text-[var(--mnx-text-strong)]">
                 <Clock className="size-4.5 text-[var(--mnx-warning)] shrink-0" />
                 <span className="font-bold text-sm mnx-numeric">
                   {new Date(lead.followUpReminderDate).toLocaleString("en-IN")}
                 </span>
               </div>
-              <p className="text-[11px] text-mono-muted italic">
+              <p className="text-[11px] text-[var(--mnx-muted)] italic">
                 A sales reminder is active. Mark the lead interested or
                 converted to clear active follow-up directives.
               </p>
@@ -1207,30 +1207,30 @@ export function EnquiryDetailClient({
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-3">
                   <div className="rounded-xl border border-[var(--mnx-border)]/30 bg-[var(--mnx-surface)]/50 p-3.5 space-y-2">
-                    <span className="font-normal text-mono-text block uppercase tracking-wider">
+                    <span className="font-normal text-[var(--mnx-text-strong)] block uppercase tracking-wider">
                       Enquiry Logging Details
                     </span>
-                    <p className="text-mono-muted leading-relaxed">
+                    <p className="text-[var(--mnx-muted)] leading-relaxed">
                       This enquiry record was qualified on{" "}
                       {new Date(lead.updatedAt).toLocaleDateString("en-IN")}.
                       Standard validation rules apply before quoting.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-mono-muted">
+                  <div className="grid grid-cols-2 gap-4 text-[var(--mnx-muted)]">
                     <div>
-                      <span className="font-normal text-mono-muted block uppercase text-[9px]">
+                      <span className="font-normal text-[var(--mnx-muted)] block uppercase text-[9px]">
                         Source
                       </span>
-                      <span className="text-mono-muted">
+                      <span className="text-[var(--mnx-muted)]">
                         {lead.source || "Direct"}
                       </span>
                     </div>
                     <div>
-                      <span className="font-normal text-mono-muted block uppercase text-[9px]">
+                      <span className="font-normal text-[var(--mnx-muted)] block uppercase text-[9px]">
                         Qualified At
                       </span>
-                      <span className="text-mono-muted">
+                      <span className="text-[var(--mnx-muted)]">
                         {new Date(lead.updatedAt).toLocaleDateString("en-IN")}
                       </span>
                     </div>
@@ -1260,7 +1260,7 @@ export function EnquiryDetailClient({
               {activeTab === "TIME_TRACKER" && (
                 <div className="space-y-3">
                   {workTimeLogs.length === 0 ? (
-                    <p className="text-mono-muted italic py-4 text-center">
+                    <p className="text-[var(--mnx-muted)] italic py-4 text-center">
                       No time logs recorded for this enquiry yet.
                     </p>
                   ) : (
@@ -1271,14 +1271,14 @@ export function EnquiryDetailClient({
                           className="p-3 bg-[var(--mnx-surface)]/50 rounded-lg border border-[var(--mnx-border)]/30 flex items-start justify-between"
                         >
                           <div>
-                            <span className="text-mono-text font-bold text-xs">
+                            <span className="text-[var(--mnx-text-strong)] font-bold text-xs">
                               {log.user?.name || "Unknown"}
                             </span>
-                            <span className="text-mono-muted text-[10px] ml-2">
+                            <span className="text-[var(--mnx-muted)] text-[10px] ml-2">
                               {log.activityType || "General"}
                             </span>
                             {log.description && (
-                              <p className="text-mono-muted text-[11px] mt-1">
+                              <p className="text-[var(--mnx-muted)] text-[11px] mt-1">
                                 {log.description}
                               </p>
                             )}
@@ -1287,7 +1287,7 @@ export function EnquiryDetailClient({
                             <span className="text-[var(--mnx-accent)] font-bold font-mono text-sm">
                               {log.durationHours}h
                             </span>
-                            <span className="text-mono-muted text-[10px] block">
+                            <span className="text-[var(--mnx-muted)] text-[10px] block">
                               {new Date(log.loggedAt).toLocaleDateString(
                                 "en-IN",
                               )}
@@ -1296,10 +1296,10 @@ export function EnquiryDetailClient({
                         </div>
                       ))}
                       <div className="text-right pt-2 border-t border-[var(--mnx-border)]/30">
-                        <span className="text-mono-muted text-[10px] uppercase font-bold">
+                        <span className="text-[var(--mnx-muted)] text-[10px] uppercase font-bold">
                           Total:{" "}
                         </span>
-                        <span className="text-mono-text font-bold font-mono">
+                        <span className="text-[var(--mnx-text-strong)] font-bold font-mono">
                           {workTimeLogs
                             .reduce(
                               (sum: number, l: any) =>
@@ -1319,7 +1319,7 @@ export function EnquiryDetailClient({
               {activeTab === "CALLS" && (
                 <div className="space-y-3">
                   {localCalls.length === 0 ? (
-                    <p className="text-mono-muted italic py-4 text-center">
+                    <p className="text-[var(--mnx-muted)] italic py-4 text-center">
                       No call recordings for this enquiry yet.
                     </p>
                   ) : (
@@ -1347,10 +1347,10 @@ export function EnquiryDetailClient({
                                   📞
                                 </span>
                                 <div>
-                                  <span className="text-mono-text font-bold text-xs block">
+                                  <span className="text-[var(--mnx-text-strong)] font-bold text-xs block">
                                     {call.salesperson?.name || "Salesperson"}
                                   </span>
-                                  <span className="text-mono-muted text-[10px]">
+                                  <span className="text-[var(--mnx-muted)] text-[10px]">
                                     {call.customerPhone} •{" "}
                                     {new Date(
                                       call.callStartedAt,
@@ -1382,7 +1382,7 @@ export function EnquiryDetailClient({
                                             ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
                                             : call.status === "PENDING"
                                               ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
-                                              : "bg-mono-soft text-mono-muted"
+                                              : "bg-[var(--mnx-soft)] text-[var(--mnx-muted)]"
                                   }`}
                                 >
                                   {recording?.uploadStatus === "UPLOADED"
@@ -1395,7 +1395,7 @@ export function EnquiryDetailClient({
                                           ? "FAILED"
                                           : call.status}
                                 </span>
-                                <span className="text-mono-muted">
+                                <span className="text-[var(--mnx-muted)]">
                                   {isExpanded ? "▲" : "▼"}
                                 </span>
                               </div>
@@ -1403,18 +1403,18 @@ export function EnquiryDetailClient({
 
                             {/* Expanded: recording + transcript */}
                             {isExpanded && (
-                              <div className="p-3 bg-mono-card border-t border-mono-border space-y-3">
+                              <div className="p-3 bg-[var(--mnx-surface)] border-t border-[var(--mnx-border)] space-y-3">
                                 {recording ? (
                                   <>
                                     {/* Audio player */}
-                                    <div className="space-y-2 p-2 bg-mono-soft rounded-lg border border-mono-border/40">
+                                    <div className="space-y-2 p-2 bg-[var(--mnx-soft)] rounded-lg border border-[var(--mnx-border)]/40">
                                       <div className="flex items-center justify-between gap-3 min-w-0">
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                                          <span className="text-[9px] font-bold text-mono-muted uppercase shrink-0">
+                                          <span className="text-[9px] font-bold text-[var(--mnx-muted)] uppercase shrink-0">
                                             Recording:
                                           </span>
                                           <span
-                                            className="text-mono-muted text-[11px] truncate"
+                                            className="text-[var(--mnx-muted)] text-[11px] truncate"
                                             title={recording.fileName}
                                           >
                                             {recording.fileName}
@@ -1523,8 +1523,8 @@ export function EnquiryDetailClient({
                                         }
                                         className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
                                           callSubTab === "TRANSCRIPT"
-                                            ? "border-[var(--mnx-accent)] text-mono-text"
-                                            : "border-transparent text-mono-muted hover:text-mono-muted"
+                                            ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                                            : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-muted)]"
                                         }`}
                                       >
                                         AI Transcript
@@ -1533,8 +1533,8 @@ export function EnquiryDetailClient({
                                         onClick={() => setCallSubTab("SUMMARY")}
                                         className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
                                           callSubTab === "SUMMARY"
-                                            ? "border-[var(--mnx-accent)] text-mono-text"
-                                            : "border-transparent text-mono-muted hover:text-mono-muted"
+                                            ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                                            : "border-transparent text-[var(--mnx-muted)] hover:text-[var(--mnx-muted)]"
                                         }`}
                                       >
                                         AI Summary
@@ -1544,11 +1544,11 @@ export function EnquiryDetailClient({
                                     {callSubTab === "TRANSCRIPT" && (
                                       <div>
                                         {transcript ? (
-                                          <div className="p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)]/30 max-h-[200px] overflow-y-auto whitespace-pre-line leading-relaxed text-mono-muted text-[11px]">
+                                          <div className="p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)]/30 max-h-[200px] overflow-y-auto whitespace-pre-line leading-relaxed text-[var(--mnx-muted)] text-[11px]">
                                             {transcript.transcriptText}
                                           </div>
                                         ) : (
-                                          <p className="text-mono-muted italic text-[11px]">
+                                          <p className="text-[var(--mnx-muted)] italic text-[11px]">
                                             Transcription{" "}
                                             {recording.transcriptionStatus?.toLowerCase() ||
                                               "pending"}
@@ -1563,15 +1563,15 @@ export function EnquiryDetailClient({
                                         {transcript ? (
                                           <div className="space-y-2">
                                             <div>
-                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                              <span className="font-bold text-[var(--mnx-muted)] uppercase text-[9px] block">
                                                 AI Summary
                                               </span>
-                                              <p className="text-mono-muted text-[11px] mt-1 leading-normal">
+                                              <p className="text-[var(--mnx-muted)] text-[11px] mt-1 leading-normal">
                                                 {transcript.summary}
                                               </p>
                                             </div>
                                             <div>
-                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                              <span className="font-bold text-[var(--mnx-muted)] uppercase text-[9px] block">
                                                 Objections
                                               </span>
                                               <p
@@ -1581,16 +1581,16 @@ export function EnquiryDetailClient({
                                               </p>
                                             </div>
                                             <div>
-                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                              <span className="font-bold text-[var(--mnx-muted)] uppercase text-[9px] block">
                                                 Follow-up Actions
                                               </span>
-                                              <p className="text-mono-muted text-[11px] mt-1">
+                                              <p className="text-[var(--mnx-muted)] text-[11px] mt-1">
                                                 {transcript.followUpActions}
                                               </p>
                                             </div>
                                             <div className="flex gap-4">
                                               <div>
-                                                <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                <span className="font-bold text-[var(--mnx-muted)] uppercase text-[9px] block">
                                                   Sentiment
                                                 </span>
                                                 <span
@@ -1601,24 +1601,24 @@ export function EnquiryDetailClient({
                                                       : transcript.sentiment ===
                                                           "NEGATIVE"
                                                         ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border border-[var(--mnx-danger)]"
-                                                        : "bg-mono-soft text-mono-muted border border-mono-border"
+                                                        : "bg-[var(--mnx-soft)] text-[var(--mnx-muted)] border border-[var(--mnx-border)]"
                                                   }`}
                                                 >
                                                   {transcript.sentiment}
                                                 </span>
                                               </div>
                                               <div>
-                                                <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                <span className="font-bold text-[var(--mnx-muted)] uppercase text-[9px] block">
                                                   Quality Score
                                                 </span>
-                                                <span className="text-mono-text mt-1 font-extrabold text-[13px] block font-mono">
+                                                <span className="text-[var(--mnx-text-strong)] mt-1 font-extrabold text-[13px] block font-mono">
                                                   {transcript.qualityScore}%
                                                 </span>
                                               </div>
                                             </div>
                                           </div>
                                         ) : (
-                                          <p className="text-mono-muted italic text-[11px]">
+                                          <p className="text-[var(--mnx-muted)] italic text-[11px]">
                                             AI analysis pending transcription.
                                           </p>
                                         )}
@@ -1626,7 +1626,7 @@ export function EnquiryDetailClient({
                                     )}
                                   </>
                                 ) : (
-                                  <p className="text-mono-muted italic text-[11px]">
+                                  <p className="text-[var(--mnx-muted)] italic text-[11px]">
                                     No recording uploaded for this call attempt.
                                   </p>
                                 )}

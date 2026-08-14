@@ -66,11 +66,11 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
         <form id="convert-lead-form" onSubmit={handleConvert} className="space-y-5">
           <div className="p-3 bg-[var(--mnx-surface)]/40 border border-[var(--mnx-border)]/50 rounded-lg flex items-start gap-3">
             <AlertCircle className="size-5 text-[var(--mnx-accent)] shrink-0 mt-0.5" />
-            <div className="text-xs text-mono-muted leading-relaxed">
-              Converting lead <strong className="text-mono-text">{leadName}</strong> will establish:
+            <div className="text-xs text-[var(--mnx-muted)] leading-relaxed">
+              Converting lead <strong className="text-[var(--mnx-text-strong)]">{leadName}</strong> will establish:
               <ul className="list-disc pl-4 mt-1.5 space-y-1">
-                <li>A new Customer Account named <strong className="text-mono-text">{companyName}</strong></li>
-                <li>A Contact Profile for <strong className="text-mono-text">{leadName}</strong></li>
+                <li>A new Customer Account named <strong className="text-[var(--mnx-text-strong)]">{companyName}</strong></li>
+                <li>A Contact Profile for <strong className="text-[var(--mnx-text-strong)]">{leadName}</strong></li>
                 <li>Transfer of all notes, file attachments, and pending follow-up activities</li>
               </ul>
             </div>
@@ -85,7 +85,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
               onChange={(e) => setCreateDeal(e.target.checked)}
               className="size-4 rounded border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-accent)] focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <label htmlFor="create-deal-checkbox" className="text-xs font-bold text-mono-text uppercase tracking-wide cursor-pointer select-none">
+            <label htmlFor="create-deal-checkbox" className="text-xs font-bold text-[var(--mnx-text-strong)] uppercase tracking-wide cursor-pointer select-none">
               Create a new Deal for this account
             </label>
           </div>
@@ -95,26 +95,26 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
             <div className="p-4 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg space-y-4 animate-in slide-in-from-top-2 duration-150">
               <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2 mb-1">
                 <Landmark className="size-4 text-[var(--mnx-success)]" />
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wide">Deal Information</span>
+                <span className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide">Deal Information</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Amount (INR)</label>
+                  <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">Amount (INR)</label>
                   <CrmInput
                     type="number"
                     placeholder="e.g. 50000"
                     value={dealAmount}
                     onChange={(e) => setDealAmount(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     required={createDeal}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Close Date</label>
+                  <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">Close Date</label>
                   <DateInput
                     value={dealCloseDate}
                     onChange={(e) => setDealCloseDate(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
                     required={createDeal}
                   />
                 </div>

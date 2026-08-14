@@ -4,6 +4,11 @@ import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { KpiClient } from "./kpi-client";
 import { Award } from "lucide-react";
+import {
+  PerformanceSection,
+  PerformanceSectionHeader,
+} from "@/modules/performance/components/performance-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 
 export const metadata = {
   title: "Department KPI | AMS | Adarsh Shipping",
@@ -18,9 +23,13 @@ export default async function DepartmentKpiPage() {
 
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Organisation configuration missing.
-      </div>
+      <WorkspaceState
+        variant="danger"
+        eyebrow="Performance configuration"
+        title="Configuration error"
+        description="Organisation configuration is missing."
+        icon={<Award aria-hidden="true" />}
+      />
     );
   }
 
@@ -38,15 +47,15 @@ export default async function DepartmentKpiPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
-          Create department-specific KPI templates, assign metrics weights, and
-          track monthly scoring reviews.
-        </p>
+    <PerformanceSection>
+      <PerformanceSectionHeader
+        eyebrow="Performance configuration"
+        title="Department KPI"
+        description="Create department-specific KPI templates, assign metric weights, and track monthly scoring reviews."
+      />
+      <div className="px-5 pb-5">
+        <KpiClient departments={departments} />
       </div>
-
-      <KpiClient departments={departments} />
-    </div>
+    </PerformanceSection>
   );
 }

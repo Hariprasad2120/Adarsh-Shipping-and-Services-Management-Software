@@ -43,15 +43,15 @@ export default async function NewEnquiryPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
         <div className="space-y-1">
-          <h1 className="mnx-title-2 text-mono-text">Create New Enquiry</h1>
-          <p className="text-sm text-mono-muted">
+          <h1 className="mnx-title-2 text-[var(--mnx-text-strong)]">Create New Enquiry</h1>
+          <p className="text-sm text-[var(--mnx-muted)]">
             Capture a new enquiry directly from CRM and place it into the enquiries queue.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/crm/lead-sources"
-            className="inline-flex items-center justify-center rounded-lg border border-[var(--mnx-border)] px-4 py-2 text-xs font-semibold text-mono-muted transition-colors hover:text-mono-text"
+            className="inline-flex items-center justify-center rounded-lg border border-[var(--mnx-border)] px-4 py-2 text-xs font-semibold text-[var(--mnx-muted)] transition-colors hover:text-[var(--mnx-text-strong)]"
           >
             Lead Sources
           </Link>

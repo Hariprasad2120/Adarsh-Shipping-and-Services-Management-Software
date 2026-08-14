@@ -35,11 +35,11 @@ const STATUS_COLORS: Record<string, string> = {
   OPEN: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)] dark:bg-[var(--mnx-accent-soft)] dark:text-[var(--mnx-accent-text)] border-[var(--mnx-accent)] dark:border-[var(--mnx-accent)]",
   IN_PROGRESS: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)] border-[var(--mnx-warning)] dark:border-[var(--mnx-warning)]",
   RESOLVED: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] dark:bg-[var(--mnx-success-bg)] dark:text-[var(--mnx-success)] border-[var(--mnx-success)] dark:border-[var(--mnx-success)]",
-  CLOSED: "bg-mono-soft text-mono-muted dark:bg-mono-soft dark:text-mono-muted border-mono-border dark:border-mono-border",
+  CLOSED: "bg-[var(--mnx-soft)] text-[var(--mnx-muted)] dark:bg-[var(--mnx-soft)] dark:text-[var(--mnx-muted)] border-[var(--mnx-border)] dark:border-[var(--mnx-border)]",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-mono-soft text-mono-muted dark:bg-mono-soft dark:text-mono-muted",
+  LOW: "bg-[var(--mnx-soft)] text-[var(--mnx-muted)] dark:bg-[var(--mnx-soft)] dark:text-[var(--mnx-muted)]",
   MEDIUM: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
   HIGH: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
   URGENT: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] dark:bg-[var(--mnx-danger-bg)] dark:text-[var(--mnx-danger)] border border-[var(--mnx-danger)] dark:border-[var(--mnx-danger)]",
@@ -126,19 +126,19 @@ export function TicketsClient({
   return (
     <div className="space-y-6">
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-mono-soft dark:bg-mono-soft/50 p-4 rounded-xl border border-mono-border/40">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[var(--mnx-soft)] dark:bg-[var(--mnx-soft)]/50 p-4 rounded-xl border border-[var(--mnx-border)]/40">
         <div className="flex-1 min-w-[280px]">
           <CrmInput
             type="text"
             placeholder="Search tickets by title, category, description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-4 py-2 text-sm text-mono-muted dark:text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition"
+            className="w-full rounded-lg border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-4 py-2 text-sm text-[var(--mnx-muted)] dark:text-[var(--mnx-text-strong)] placeholder:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] transition"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-mono-card rounded-lg p-0.5 border border-mono-border/60">
+          <div className="flex items-center gap-1.5 bg-[var(--mnx-surface)] rounded-lg p-0.5 border border-[var(--mnx-border)]/60">
             {["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((s) => {
               const count = s === "ALL" ? tickets.length : tickets.filter((t) => t.status === s).length;
               return (
@@ -147,8 +147,8 @@ export function TicketsClient({
                   onClick={() => setStatusFilter(s)}
                   className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition ${
                     statusFilter === s
-                      ? "bg-[var(--mnx-accent)] text-mono-text"
-                      : "text-mono-muted hover:text-mono-muted dark:hover:text-mono-text"
+                      ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
+                      : "text-[var(--mnx-muted)] hover:text-[var(--mnx-muted)] dark:hover:text-[var(--mnx-text-strong)]"
                   }`}
                 >
                   {s.replace("_", " ")} ({count})
@@ -160,7 +160,7 @@ export function TicketsClient({
           <NativeSelect
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-xs font-semibold text-mono-muted dark:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition"
+            className="rounded-lg border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-3 py-2 text-xs font-semibold text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)] transition"
           >
             <option value="ALL">All Priorities</option>
             <option value="LOW">Low</option>
@@ -173,8 +173,8 @@ export function TicketsClient({
 
       {/* Ticket Cards List */}
       {filteredTickets.length === 0 ? (
-        <Card className="border-0 shadow-sm bg-mono-card">
-          <CardContent className="py-16 text-center text-mono-muted text-sm font-medium">
+        <Card className="border-0 shadow-sm bg-[var(--mnx-surface)]">
+          <CardContent className="py-16 text-center text-[var(--mnx-muted)] text-sm font-medium">
             No support tickets match the current filters.
           </CardContent>
         </Card>
@@ -183,7 +183,7 @@ export function TicketsClient({
           {filteredTickets.map((ticket) => (
             <Card
               key={ticket.id}
-              className={`border-0 shadow-sm border-l-4 bg-mono-card transition hover:shadow-md ${
+              className={`border-0 shadow-sm border-l-4 bg-[var(--mnx-surface)] transition hover:shadow-md ${
                 ticket.priority === "URGENT"
                   ? "border-l-rose-500"
                   : ticket.priority === "HIGH"
@@ -203,23 +203,23 @@ export function TicketsClient({
                       <span className={`text-[10px] px-2 py-0.5 rounded border font-bold uppercase ${STATUS_COLORS[ticket.status]}`}>
                         {ticket.status.replace("_", " ")}
                       </span>
-                      <span className="text-[10px] text-mono-muted font-bold uppercase tracking-wider">
+                      <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase tracking-wider">
                         {ticket.category}
                       </span>
                     </div>
 
-                    <h3 className="text-base font-bold text-mono-muted dark:text-mono-text truncate">
+                    <h3 className="text-base font-bold text-[var(--mnx-muted)] dark:text-[var(--mnx-text-strong)] truncate">
                       {ticket.title}
                     </h3>
 
-                    <p className="text-xs text-mono-muted dark:text-mono-muted line-clamp-1">
+                    <p className="text-xs text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] line-clamp-1">
                       {ticket.description}
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-mono-muted font-semibold">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[var(--mnx-muted)] font-semibold">
                       <span className="flex items-center gap-1">
                         <User className="size-3.5" />
-                        Raised by: <span className="text-mono-muted dark:text-mono-muted font-bold">{ticket.raisedBy.name}</span>
+                        Raised by: <span className="text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] font-bold">{ticket.raisedBy.name}</span>
                         {ticket.raisedBy.designation && ` (${ticket.raisedBy.designation})`}
                       </span>
                       <span className="flex items-center gap-1">
@@ -242,19 +242,19 @@ export function TicketsClient({
                   </div>
 
                   {/* Right side actions */}
-                  <div className="flex flex-wrap items-center gap-4 shrink-0 md:border-l md:border-mono-border/30 md:pl-5">
+                  <div className="flex flex-wrap items-center gap-4 shrink-0 md:border-l md:border-[var(--mnx-border)]/30 md:pl-5">
                     {/* Admin Status/Assign controls */}
                     {isAdmin ? (
                       <div className="flex flex-col gap-2 min-w-[140px]">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">
+                          <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                             Assignee
                           </label>
                           <NativeSelect
                             value={ticket.assignee?.id || ""}
                             onChange={(e) => handleAssigneeChange(ticket.id, e.target.value)}
                             disabled={assignPending}
-                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-mono-muted dark:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                            className="w-full rounded border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-2.5 py-1 text-xs text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                           >
                             <option value="">Unassigned</option>
                             {admins.map((u) => (
@@ -266,14 +266,14 @@ export function TicketsClient({
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">
+                          <label className="text-[9px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
                             Status
                           </label>
                           <NativeSelect
                             value={ticket.status}
                             onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
                             disabled={statusPending}
-                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-mono-muted dark:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                            className="w-full rounded border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)] px-2.5 py-1 text-xs text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] focus:outline-none focus:border-[var(--mnx-accent)]"
                           >
                             <option value="OPEN">Open</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -283,12 +283,12 @@ export function TicketsClient({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1 min-w-[130px] text-xs text-mono-muted font-semibold">
+                      <div className="flex flex-col gap-1 min-w-[130px] text-xs text-[var(--mnx-muted)] font-semibold">
                         <span className="flex items-center gap-1.5">
                           <Shield className="size-3.5 text-[var(--mnx-accent)]" />
                           Assignee:
                         </span>
-                        <span className="text-mono-muted dark:text-mono-muted font-bold ml-5">
+                        <span className="text-[var(--mnx-muted)] dark:text-[var(--mnx-muted)] font-bold ml-5">
                           {ticket.assignee ? ticket.assignee.name : "Unassigned"}
                         </span>
                       </div>

@@ -8,14 +8,19 @@ import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronRight,
-  MoreHorizontal,
+  Copy,
+  Download,
   Plus,
   Search,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { quoteViews } from "@/modules/crm/components/quotes/lib/quote-list-data";
 import type { QuoteListStatus, QuoteRecord } from "@/modules/crm/components/quotes/lib/types";
+import { QuoteMoreActionsMenu } from "@/modules/crm/components/quotes/QuoteMoreActionsMenu";
+import { deleteInvoiceActionBulk } from "@/modules/crm/actions";
 
 const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
   draft: "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]",
@@ -79,6 +84,8 @@ export function QuotesIndexPage({
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const filterRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -103,17 +110,86 @@ export function QuotesIndexPage({
   const activeViewLabel =
     quoteViews.find((view) => view.id === activeView)?.label ?? "All";
 
+  function toggleSelectAll() {
+    setSelectedIds((current) => {
+      if (current.size === filteredRecords.length && filteredRecords.length > 0) {
+        return new Set();
+      }
+      return new Set(filteredRecords.map((record) => record.id));
+    });
+  }
+
+  function toggleSelectOne(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function exportRecordsToCsv(records: QuoteRecord[]) {
+    const header = ["Date", "Location", "Quote Number", "Reference Number", "Customer Name", "Status", "Amount"];
+    const rows = records.map((record) => [
+      formatDate(record.date),
+      record.location,
+      record.quoteNumber,
+      record.referenceNumber ?? "",
+      record.customerName,
+      formatStatus(record.status),
+      String(record.amount),
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `quotes-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleBulkDeleteDrafts() {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected quote(s)? Only draft quotes can be deleted.`)) return;
+    setIsBulkDeleting(true);
+    try {
+      const res = await deleteInvoiceActionBulk(Array.from(selectedIds));
+      if (res.ok) {
+        toast.success("Selected quotes deleted.");
+        setSelectedIds(new Set());
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "An error occurred.");
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
       <div className="flex min-h-screen min-w-0 flex-col">
-        <div className="border-b border-[var(--mnx-border)] bg-mono-card px-4 py-4 sm:px-6">
+        <div className="border-b border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-4 sm:px-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               <CrmButton
                 type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
+                onClick={() => setFilterOpen((current) => !current)}
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
               >
                 <span>{activeViewLabel} Quotes</span>
+                <ChevronDown
+                  className={cn(
+                    "size-4 text-[var(--mnx-text-muted)] transition-transform",
+                    filterOpen ? "rotate-180" : "",
+                  )}
+                />
               </CrmButton>
             </div>
 
@@ -122,14 +198,14 @@ export function QuotesIndexPage({
                 <CrmButton
                   type="button"
                   onClick={() => setFilterOpen((current) => !current)}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-4 text-sm font-semibold text-[var(--mnx-text-strong)]"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 text-sm font-semibold text-[var(--mnx-text-strong)]"
                 >
                   <SlidersHorizontal className="size-4 text-[var(--mnx-text-muted)]" />
                   <span>Filter</span>
                   <ChevronDown className="size-4 text-[var(--mnx-text-muted)]" />
                 </CrmButton>
                 {filterOpen ? (
-                  <div className="absolute right-0 top-12 z-20 w-[280px] rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-3 mnx-shadow-panel">
+                  <div className="absolute right-0 top-12 z-20 w-[280px] rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-3 mnx-shadow-panel">
                     <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                       Quote Views
                     </div>
@@ -170,23 +246,61 @@ export function QuotesIndexPage({
               </div>
               <Link
                 href="/crm/quotes/new"
-                className="inline-flex h-10 items-center rounded-xl bg-[var(--mnx-accent)] px-4 text-sm font-medium text-mono-text transition-colors hover:bg-[var(--mnx-accent)] "
+                className="inline-flex h-10 items-center rounded-xl bg-[var(--mnx-accent)] px-4 text-sm font-medium text-[var(--mnx-text-strong)] transition-colors hover:bg-[var(--mnx-accent)] "
               >
                 <Plus className="mr-1 size-4" />
                 New
               </Link>
-              <CrmButton
-                type="button"
-                className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
-                aria-label="More actions"
-              >
-                <MoreHorizontal className="size-4" />
-              </CrmButton>
+              <QuoteMoreActionsMenu
+                items={[
+                  {
+                    key: "export",
+                    label: "Export list",
+                    icon: Download,
+                    onClick: () => exportRecordsToCsv(filteredRecords),
+                  },
+                  {
+                    key: "bulk-delete",
+                    label: isBulkDeleting ? "Deleting..." : `Delete selected (${selectedIds.size})`,
+                    icon: Trash2,
+                    danger: true,
+                    disabled: selectedIds.size === 0 || isBulkDeleting,
+                    onClick: handleBulkDeleteDrafts,
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>
 
-        <div className="border-b border-[var(--mnx-text-muted)] bg-mono-card px-4 py-4">
+        {selectedIds.size > 0 ? (
+          <div className="flex items-center justify-between border-b border-[var(--mnx-border)] bg-[var(--mnx-accent)]/5 px-4 py-2.5 sm:px-6">
+            <span className="text-sm font-medium text-[var(--mnx-text-strong)]">
+              {selectedIds.size} selected
+            </span>
+            <div className="flex items-center gap-2">
+              <CrmButton
+                type="button"
+                onClick={() => exportRecordsToCsv(filteredRecords.filter((record) => selectedIds.has(record.id)))}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-xs font-semibold text-[var(--mnx-text-strong)]"
+              >
+                <Download className="size-3.5" />
+                Export selected
+              </CrmButton>
+              <CrmButton
+                type="button"
+                onClick={handleBulkDeleteDrafts}
+                disabled={isBulkDeleting}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[var(--mnx-danger)] px-3 text-xs font-semibold text-[var(--mnx-text-strong)] disabled:opacity-50"
+              >
+                <Trash2 className="size-3.5" />
+                {isBulkDeleting ? "Deleting..." : "Delete selected"}
+              </CrmButton>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="border-b border-[var(--mnx-text-muted)] bg-[var(--mnx-surface)] px-4 py-4">
           <div className="mx-auto w-full max-w-md sm:hidden">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[var(--mnx-text-muted)]" />
@@ -194,7 +308,7 @@ export function QuotesIndexPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
+                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
               />
             </div>
           </div>
@@ -205,14 +319,14 @@ export function QuotesIndexPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
+                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
               />
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-auto p-4 pt-5 sm:p-6 sm:pt-5">
-          <div className="overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
+          <div className="overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] mnx-shadow-panel">
             <div className="flex items-center justify-between border-b border-[var(--mnx-text-muted)] px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium text-[var(--mnx-text-muted)]">
                 <SlidersHorizontal className="size-4" />
@@ -231,6 +345,11 @@ export function QuotesIndexPage({
                       <CrmInput
                         type="checkbox"
                         aria-label="Select all quotes"
+                        checked={
+                          filteredRecords.length > 0 &&
+                          selectedIds.size === filteredRecords.length
+                        }
+                        onChange={toggleSelectAll}
                       />
                     </th>
                     <th className="px-4 py-3">Date</th>
@@ -252,10 +371,12 @@ export function QuotesIndexPage({
                       className="mnx-row-link"
                       onClick={() => router.push(`/crm/quotes/${record.id}`)}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <CrmInput
                           type="checkbox"
                           aria-label={`Select ${record.quoteNumber}`}
+                          checked={selectedIds.has(record.id)}
+                          onChange={() => toggleSelectOne(record.id)}
                         />
                       </td>
                       <td className="px-4 py-3 text-[var(--mnx-text-muted)]">

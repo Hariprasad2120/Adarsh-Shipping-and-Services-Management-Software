@@ -2331,6 +2331,206 @@ export async function deleteInvoiceAction(invoiceId: string): Promise<ActionResp
   }
 }
 
+export async function deleteInvoiceActionBulk(invoiceIds: string[]): Promise<ActionResponse> {
+  try {
+    if (invoiceIds.length === 0) return { ok: false, error: "No records selected" };
+
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.invoice.manage");
+
+    const invoices = await db.crmInvoice.findMany({
+      where: { id: { in: invoiceIds }, orgId },
+      select: { id: true, type: true, approvalStatus: true },
+    });
+
+    const nonDraftQuote = invoices.find(
+      (invoice) => invoice.type === "QUOTE" && invoice.approvalStatus !== "DRAFT",
+    );
+    if (nonDraftQuote) {
+      return { ok: false, error: "Only draft quotes can be deleted" };
+    }
+
+    await db.crmInvoice.deleteMany({
+      where: { id: { in: invoices.map((invoice) => invoice.id) }, orgId },
+    });
+
+    revalidatePath("/crm/invoices");
+    revalidatePath("/crm/quotes");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete invoices" };
+  }
+}
+
+export async function actionDuplicateQuote(quoteId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.invoice.manage");
+
+    const source = await db.crmInvoice.findUnique({
+      where: { id: quoteId, orgId },
+      include: { items: true },
+    });
+
+    if (!source || source.type !== "QUOTE") {
+      return { ok: false, error: "Quote not found" };
+    }
+
+    const newInvoiceNumber = `${source.invoiceNumber}-COPY-${Date.now().toString(36).toUpperCase()}`;
+
+    const duplicate = await db.crmInvoice.create({
+      data: {
+        orgId,
+        ownerId: session.user.id,
+        invoiceNumber: newInvoiceNumber,
+        type: "QUOTE",
+        date: new Date(),
+        status: "DRAFT",
+        discount: source.discount,
+        tax: source.tax,
+        total: source.total,
+        approvalStatus: "DRAFT",
+        accountId: source.accountId,
+        contactId: source.contactId,
+        dealId: source.dealId,
+        vendorId: source.vendorId,
+        crmLeadId: source.crmLeadId,
+        bankDetails: source.bankDetails,
+        manualNotes: source.manualNotes,
+        terms: source.terms,
+        referenceNumber: source.referenceNumber,
+        location: source.location,
+        placeOfSupply: source.placeOfSupply,
+        portOfLoading: source.portOfLoading,
+        portOfLoadingCountry: source.portOfLoadingCountry,
+        portOfDischarge: source.portOfDischarge,
+        portOfDestinationCountry: source.portOfDestinationCountry,
+        incoterm: source.incoterm,
+        containerType: source.containerType,
+        numberOfContainers: source.numberOfContainers,
+        commodity: source.commodity,
+        weight: source.weight,
+        discountType: source.discountType,
+        createdById: session.user.id,
+        updatedById: session.user.id,
+        items: {
+          create: source.items.map((item) => ({
+            productName: item.productName,
+            qty: item.qty,
+            rate: item.rate,
+            taxPercent: item.taxPercent,
+            taxLabel: item.taxLabel,
+            tds: item.tds,
+            unit: item.unit,
+            amount: item.amount,
+            currency: item.currency,
+            exchangeRate: item.exchangeRate,
+          })),
+        },
+      },
+    });
+
+    revalidatePath("/crm/quotes");
+    return { ok: true, data: { id: duplicate.id } };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to duplicate quote" };
+  }
+}
+
+export async function actionSendQuoteEmail(
+  quoteId: string,
+  payload: { to: string; subject: string; message: string },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.invoice.manage");
+
+    if (!payload.to?.trim()) {
+      return { ok: false, error: "Recipient email is required" };
+    }
+
+    const { generateQuotePdfBuffer } = await import("./pdf/generate");
+    const result = await generateQuotePdfBuffer(quoteId, orgId);
+    if (!result) {
+      return { ok: false, error: "Quote not found" };
+    }
+
+    const { sendEmail } = await import("@/lib/email");
+    await sendEmail({
+      to: payload.to.trim(),
+      subject: payload.subject?.trim() || `Quote ${result.quoteNumber}`,
+      html: `<p>${(payload.message || "Please find the attached quotation.").replace(/\n/g, "<br/>")}</p>`,
+      attachments: [
+        {
+          filename: `${result.quoteNumber}.pdf`,
+          content: result.buffer,
+          mimeType: "application/pdf",
+        },
+      ],
+      metadata: { quoteId, orgId },
+    });
+
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to send quote email" };
+  }
+}
+
+export async function actionCreateQuoteShareLink(quoteId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.invoice.manage");
+
+    const { createOrGetShareToken } = await import("./share");
+    const result = await createOrGetShareToken(quoteId, orgId);
+    if (!result) return { ok: false, error: "Quote not found" };
+
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create share link" };
+  }
+}
+
+export async function actionRevokeQuoteShareLink(quoteId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.invoice.manage");
+
+    const { revokeShareToken } = await import("./share");
+    const ok = await revokeShareToken(quoteId, orgId);
+    if (!ok) return { ok: false, error: "Quote not found" };
+
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to revoke share link" };
+  }
+}
+
 // ─── Project CRUD Actions ───────────────────────────────────────────────────
 
 export async function createProjectAction(formData: FormData): Promise<ActionResponse> {

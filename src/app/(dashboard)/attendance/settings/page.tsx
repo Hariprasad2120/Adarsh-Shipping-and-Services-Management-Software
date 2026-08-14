@@ -33,6 +33,27 @@ const controlAreas = [
     icon: <CalendarClock aria-hidden="true" />,
   },
   {
+    href: "/attendance/leaves/policies",
+    title: "Leave types & policies",
+    description:
+      "Configure entitlement, accrual, reset, carry-forward, and approval routing for each leave type.",
+    icon: <Settings2 aria-hidden="true" />,
+  },
+  {
+    href: "/attendance/leaves/hr-console",
+    title: "HR leave operations",
+    description:
+      "Manually adjust balances, grant special leave, and approve compensatory-off credits — all ledger-audited.",
+    icon: <FileText aria-hidden="true" />,
+  },
+  {
+    href: "/attendance/leaves/team-calendar",
+    title: "Team leave calendar",
+    description:
+      "See direct reports' scheduled leave for the month and flag overlapping absences before approving.",
+    icon: <CalendarClock aria-hidden="true" />,
+  },
+  {
     href: "/attendance/biometric-sync",
     title: "Biometric integrations",
     description:

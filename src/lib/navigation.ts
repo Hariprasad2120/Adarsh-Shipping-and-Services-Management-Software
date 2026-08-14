@@ -32,10 +32,12 @@ export type SecondaryNavItem = {
   label: string;
   icon: CarbonIconType;
   sectionLabel?: string;
+  description?: string;
   permission?: string | string[];
   hideFor?: string;
   featureId?: string;
   matchPaths?: string[];
+  searchAliases?: string[];
 };
 
 export type PrimaryNavSection = {
@@ -44,10 +46,24 @@ export type PrimaryNavSection = {
   label: string;
   icon: CarbonIconType;
   alwaysVisible?: boolean;
+  description?: string;
   permission?: string | string[];
   hideFor?: string;
   matchPaths?: string[];
+  searchAliases?: string[];
   items: SecondaryNavItem[];
+};
+
+export type SearchCommandEntry = {
+  id: string;
+  href: string;
+  label: string;
+  description: string;
+  icon: CarbonIconType;
+  kind: "workspace" | "page";
+  sectionId: string;
+  sectionLabel: string;
+  searchText: string;
 };
 
 export const NAV_SECTIONS: PrimaryNavSection[] = [
@@ -57,6 +73,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     label: "Dashboard",
     icon: Dashboard,
     alwaysVisible: true,
+    description: "Open the shared Monolith dashboard and module command center.",
+    searchAliases: ["home", "overview", "control center", "command center"],
     matchPaths: ["/dashboard"],
     items: [],
   },
@@ -66,6 +84,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     label: "Product Catalogue",
     icon: Report,
     alwaysVisible: true,
+    description: "Browse Monolith capabilities, product flows, and operating models.",
+    searchAliases: ["products", "catalog", "catalogue", "features"],
     matchPaths: ["/product-catalogue"],
     items: [],
   },
@@ -75,6 +95,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     label: "To-Do",
     icon: Task,
     alwaysVisible: true,
+    description: "Track personal action items, tasks, and execution queues.",
+    searchAliases: ["tasks", "task list", "todo", "follow up"],
     matchPaths: ["/todo"],
     items: [{ href: "/todo", label: "Tasks", icon: Task, matchPaths: ["/todo"] }],
   },
@@ -84,6 +106,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     label: "Notifications",
     icon: Notification,
     alwaysVisible: true,
+    description: "Review alerts, updates, and cross-workspace activity.",
+    searchAliases: ["alerts", "inbox", "updates"],
     matchPaths: ["/notifications"],
     items: [{ href: "/notifications", label: "Notification Center", icon: Notification, matchPaths: ["/notifications"] }],
   },
@@ -92,6 +116,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/hrms",
     label: "HRMS",
     icon: UserMultiple,
+    description: "Manage employees, payroll, onboarding, approvals, and HR operations.",
+    searchAliases: ["people", "human resources", "employee management", "hr"],
     permission: [
       "hrms.employee.read",
       "hrms.employee.create",
@@ -253,6 +279,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/attendance",
     label: "Attendance",
     icon: Calendar,
+    description: "Handle punches, leaves, overtime, timesheets, and attendance reporting.",
+    searchAliases: ["leave", "leaves", "timesheet", "overtime", "punch"],
     permission: "attendance.punch.self",
     matchPaths: ["/attendance"],
     items: [
@@ -318,6 +346,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/ams",
     label: "AMS",
     icon: Folder,
+    description: "Run appraisals, cycles, criteria, KPI tracking, and performance reviews.",
+    searchAliases: ["appraisal", "performance review", "okr", "kpi"],
     matchPaths: ["/ams"],
     items: [
       {
@@ -420,6 +450,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/lms",
     label: "LMS",
     icon: Education,
+    description: "Manage learning content, assignments, courses, and reports.",
+    searchAliases: ["learning", "training", "courses"],
     matchPaths: ["/lms"],
     items: [
       {
@@ -465,6 +497,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/crm/dashboard",
     label: "CRM",
     icon: Analytics,
+    description: "Manage leads, enquiries, customers, deals, quotes, tickets, and projects.",
+    searchAliases: ["sales", "customer", "pipeline", "quotes", "tickets"],
     permission: "crm.access",
     matchPaths: ["/crm"],
     items: [
@@ -699,6 +733,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/freight-forwarding",
     label: "Freight Forwarding",
     icon: Folder,
+    description: "Handle freight workflows, MBL/HBL records, and shipment processing.",
+    searchAliases: ["shipment", "logistics", "forwarding", "mbl", "hbl"],
     matchPaths: ["/freight-forwarding"],
     items: [
       {
@@ -706,12 +742,6 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         label: "Workspace Home",
         icon: Dashboard,
         matchPaths: ["/freight-forwarding"],
-      },
-      {
-        href: "/freight-forwarding/create-booking",
-        label: "Create Booking",
-        icon: DocumentAdd,
-        matchPaths: ["/freight-forwarding/create-booking"],
       },
       {
         href: "/freight-forwarding/process",
@@ -746,6 +776,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     label: "Expense",
     icon: Report,
     alwaysVisible: true,
+    description: "Review expense operations and related operational controls.",
+    searchAliases: ["expenses", "claims", "spend"],
     matchPaths: ["/expense"],
     items: [],
   },
@@ -754,6 +786,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/cha",
     label: "CHA",
     icon: Report,
+    description: "Operate customs house agent workflows, jobs, expenses, and approvals.",
+    searchAliases: ["customs", "clearance", "job filing", "cha"],
     permission: "cha.access",
     matchPaths: ["/cha"],
     items: [
@@ -828,6 +862,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/accounting",
     label: "Accounting",
     icon: Analytics,
+    description: "Run accounting operations, ledgers, journals, banking, approvals, and reports.",
+    searchAliases: ["finance", "ledger", "journal", "banking", "invoices"],
     permission: [
       "accounting.dashboard.view",
       "accounting.document.read",
@@ -872,6 +908,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/hrms/recruit",
     label: "Recruit",
     icon: Search,
+    description: "Manage hiring, applications, candidates, and job-seeker workflows.",
+    searchAliases: ["recruitment", "careers", "jobs", "candidates", "hiring"],
     permission: ["recruit.view", "recruit.jobseeker.use"],
     matchPaths: ["/hrms/recruit"],
     items: [
@@ -977,6 +1015,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     label: "Communication",
     icon: Group,
     alwaysVisible: true,
+    description: "Access mail, chat, meetings, job spaces, drive, and calendar tools.",
+    searchAliases: ["mail", "chat", "calendar", "meetings", "drive"],
     matchPaths: ["/communication"],
     items: [
       {
@@ -1040,6 +1080,8 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
     href: "/admin",
     label: "Admin",
     icon: Security,
+    description: "Manage roles, sessions, settings, notifications, and platform controls.",
+    searchAliases: ["administration", "settings", "roles", "permissions", "system"],
     permission: "admin.org.manage",
     matchPaths: ["/admin"],
     items: [
@@ -1174,4 +1216,108 @@ export function getVisibleSectionById(
       (section) => section.id === id,
     ) ?? null
   );
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function buildSearchText(parts: Array<string | undefined>) {
+  return normalizeSearchText(parts.filter(Boolean).join(" "));
+}
+
+export function getSearchCommandEntries(
+  caps: Caps,
+  enabledSectionIds?: Iterable<string>,
+  enabledFeatureIds?: Iterable<string>,
+) {
+  const visibleSections = getVisibleSections(caps, enabledSectionIds, enabledFeatureIds);
+
+  return visibleSections.flatMap((section) => {
+    const workspaceEntry: SearchCommandEntry = {
+      id: `workspace:${section.id}`,
+      href: section.href,
+      label: section.label,
+      description:
+        section.description ??
+        (section.items.length > 0
+          ? `${section.items.length} role-visible page${section.items.length === 1 ? "" : "s"}`
+          : "Open workspace"),
+      icon: section.icon,
+      kind: "workspace",
+      sectionId: section.id,
+      sectionLabel: section.label,
+      searchText: buildSearchText([
+        section.label,
+        section.description,
+        ...(section.searchAliases ?? []),
+        section.href,
+      ]),
+    };
+
+    const pageEntries = section.items.map<SearchCommandEntry>((item) => ({
+      id: `page:${section.id}:${item.href}`,
+      href: item.href,
+      label: item.label,
+      description:
+        item.description ??
+        item.sectionLabel ??
+        `${section.label} workspace`,
+      icon: item.icon,
+      kind: "page",
+      sectionId: section.id,
+      sectionLabel: section.label,
+      searchText: buildSearchText([
+        item.label,
+        item.description,
+        item.sectionLabel,
+        section.label,
+        section.description,
+        ...(item.searchAliases ?? []),
+        ...(section.searchAliases ?? []),
+        item.href,
+        ...(item.matchPaths ?? []),
+      ]),
+    }));
+
+    return [workspaceEntry, ...pageEntries];
+  });
+}
+
+export function rankSearchCommandEntries(entries: SearchCommandEntry[], query: string) {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return entries;
+
+  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+
+  return entries
+    .map((entry) => {
+      const label = normalizeSearchText(entry.label);
+      const description = normalizeSearchText(entry.description);
+      let score = 0;
+
+      if (label === normalizedQuery) score += 500;
+      if (label.startsWith(normalizedQuery)) score += 300;
+      if (entry.href.toLowerCase() === query.trim().toLowerCase()) score += 280;
+
+      for (const token of tokens) {
+        if (label.includes(token)) score += 80;
+        if (description.includes(token)) score += 32;
+        if (entry.searchText.includes(token)) score += 16;
+      }
+
+      if (entry.kind === "page") score += 12;
+
+      return { entry, score };
+    })
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      if (left.entry.kind !== right.entry.kind) return left.entry.kind === "page" ? -1 : 1;
+      return left.entry.label.localeCompare(right.entry.label);
+    })
+    .map((candidate) => candidate.entry);
 }

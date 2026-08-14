@@ -35,6 +35,7 @@ import {
   saveManualBankAccountAction,
 } from "@/modules/accounting/banking-actions";
 import { BANKING_ACCOUNT_KIND_OPTIONS } from "@/modules/accounting/banking-shared";
+import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";
 import { StatementDialog } from "./statement-dialog";
 
 type OverviewRow = {
@@ -141,7 +142,7 @@ type ManageFormState = {
 function formatMoneyList(values: OverviewSummary[]) {
   if (values.length === 0) return "—";
   return values
-    .map((value) => `${value.currencyCode.toUpperCase()} ${value.amount}`)
+    .map((value) => formatAccountingMoney(value.amount, value.currencyCode, 2))
     .join(" · ");
 }
 
