@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   leaveRequestFindUniqueOrThrow: vi.fn(),
   leaveRequestUpdate: vi.fn(),
   leaveApprovalStepUpdate: vi.fn(),
+  userFindUnique: vi.fn(),
   notify: vi.fn(),
   notifyMany: vi.fn(),
   writeLeaveAudit: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@/lib/db", () => ({
       update: mocks.leaveRequestUpdate,
     },
     leaveApprovalStep: { update: mocks.leaveApprovalStepUpdate },
+    user: { findUnique: mocks.userFindUnique },
   },
 }));
 
@@ -77,6 +79,10 @@ import { decideLeaveRequest } from "../request";
 describe("decideLeaveRequest — authorization", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: approver is in the same org as every test fixture's
+    // requester ("org-1") — the cross-org-authorization.test.ts file
+    // covers the mismatched-org case explicitly.
+    mocks.userFindUnique.mockResolvedValue({ orgId: "org-1" });
   });
 
   it("refuses to let a requester approve their own leave request", async () => {

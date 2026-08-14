@@ -15,8 +15,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const parsed = BodySchema.safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 
-  const request = await db.leaveRequest.findUnique({ where: { id }, select: { userId: true } });
+  const request = await db.leaveRequest.findUnique({
+    where: { id },
+    select: { userId: true, user: { select: { orgId: true } } },
+  });
   if (!request) return err("Leave request not found", 404);
+  if (request.user.orgId !== session!.user.orgId) {
+    return err("Leave request not found", 404); // 404, not 403 — don't reveal cross-org existence
+  }
 
   const isOwner = request.userId === session!.user.id;
   const isAdmin = await can(session!.user.id, "attendance.leave.manage");

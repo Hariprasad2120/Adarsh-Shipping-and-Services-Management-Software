@@ -1,5 +1,17 @@
 import { db } from "@/lib/db";
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
+
+/**
+ * Ledger arithmetic uses Prisma.Decimal (decimal.js under the hood, same
+ * convention as src/modules/accounting) rather than JS floats, so repeated
+ * accrual/debit/credit operations over years cannot drift (e.g. 0.1 + 0.2
+ * !== 0.3 in IEEE-754, but is exact in decimal.js). Callers may still pass
+ * plain numbers for quantity — they're converted to Decimal immediately on
+ * entry and never summed as floats internally.
+ */
+export function toDecimal(value: number | string | Prisma.Decimal): Prisma.Decimal {
+  return value instanceof Prisma.Decimal ? value : new Prisma.Decimal(value);
+}
 
 export type LedgerEntryType =
   | "OPENING_BALANCE"
@@ -30,6 +42,21 @@ export class InsufficientBalanceError extends Error {
   }
 }
 
+/**
+ * Shared cross-module authorization error: an actor attempted to
+ * read/mutate a leave-domain resource (request, comp-off credit, grant)
+ * that belongs to a different organisation than their own. Centralized
+ * here (rather than one copy per module) so every call site's
+ * `instanceof CrossOrgAccessError` check works regardless of which module
+ * threw it.
+ */
+export class CrossOrgAccessError extends Error {
+  constructor() {
+    super("This resource does not belong to your organisation.");
+    this.name = "CrossOrgAccessError";
+  }
+}
+
 export class LedgerConcurrencyError extends Error {
   constructor() {
     super("Balance was modified concurrently; retry the operation");
@@ -43,7 +70,7 @@ export interface PostLedgerEntryInput {
   leaveTypeId: string;
   policyVersionId?: string | null;
   type: LedgerEntryType;
-  quantity: number; // signed: positive = credit, negative = debit
+  quantity: number | Prisma.Decimal; // signed: positive = credit, negative = debit
   unit?: "DAY" | "HOUR";
   effectiveDate: Date;
   year: number; // LeaveBalance is keyed by (userId, leaveTypeId, year)
@@ -90,17 +117,18 @@ export async function postLedgerEntry(input: PostLedgerEntryInput) {
               userId: input.userId,
               leaveTypeId: input.leaveTypeId,
               year: input.year,
-              balance: 0,
+              balance: new Prisma.Decimal(0),
               version: 0,
             },
           });
         }
 
+        const quantity = toDecimal(input.quantity);
         const balanceBefore = balanceRow.balance;
-        const balanceAfter = balanceBefore + input.quantity;
+        const balanceAfter = balanceBefore.plus(quantity);
 
-        if (!input.allowNegative && balanceAfter < 0) {
-          throw new InsufficientBalanceError(balanceBefore, -input.quantity);
+        if (!input.allowNegative && balanceAfter.isNegative()) {
+          throw new InsufficientBalanceError(balanceBefore.toNumber(), quantity.negated().toNumber());
         }
 
         const updateResult = await tx.leaveBalance.updateMany({
@@ -118,7 +146,7 @@ export async function postLedgerEntry(input: PostLedgerEntryInput) {
             leaveTypeId: input.leaveTypeId,
             policyVersionId: input.policyVersionId ?? null,
             type: input.type,
-            quantity: input.quantity,
+            quantity,
             unit: input.unit ?? "DAY",
             effectiveDate: input.effectiveDate,
             balanceBefore,
@@ -156,11 +184,15 @@ export async function postLedgerEntry(input: PostLedgerEntryInput) {
   throw new LedgerConcurrencyError();
 }
 
-export async function getMaterializedBalance(userId: string, leaveTypeId: string, year: number) {
+export async function getMaterializedBalance(
+  userId: string,
+  leaveTypeId: string,
+  year: number,
+): Promise<Prisma.Decimal> {
   const row = await db.leaveBalance.findUnique({
     where: { userId_leaveTypeId_year: { userId, leaveTypeId, year } },
   });
-  return row?.balance ?? 0;
+  return row?.balance ?? new Prisma.Decimal(0);
 }
 
 export async function getLedgerHistory(

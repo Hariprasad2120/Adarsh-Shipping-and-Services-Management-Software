@@ -28,6 +28,22 @@ export async function POST(req: NextRequest) {
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) return err(parsed.error.issues[0]?.message ?? "Invalid input");
 
+    // Verify the target employee and leave type actually belong to the
+    // actor's own organisation — without this, any admin with
+    // attendance.leave.manage in ANY org could post an adjustment against
+    // an arbitrary userId/leaveTypeId in a different org (found during the
+    // closure-pass authorization audit, §12/13).
+    const [targetUser, targetLeaveType] = await Promise.all([
+      db.user.findUnique({ where: { id: parsed.data.userId }, select: { orgId: true } }),
+      db.leaveType.findUnique({ where: { id: parsed.data.leaveTypeId }, select: { orgId: true } }),
+    ]);
+    if (!targetUser || targetUser.orgId !== session!.user.orgId) {
+      return err("Employee not found", 404);
+    }
+    if (!targetLeaveType || targetLeaveType.orgId !== session!.user.orgId) {
+      return err("Leave type not found", 404);
+    }
+
     const entry = await postLedgerEntry({
       orgId: session!.user.orgId,
       userId: parsed.data.userId,
@@ -54,6 +70,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { session, error } = await getSessionOrUnauth();
   if (error) return error;
+  if (!session!.user.orgId) return err("User has no organisation", 400);
   await requirePermission(session!.user.id, "attendance.leave.manage");
 
   const { searchParams } = new URL(req.url);
@@ -61,8 +78,13 @@ export async function GET(req: NextRequest) {
   const leaveTypeId = searchParams.get("leaveTypeId");
   if (!userId || !leaveTypeId) return err("userId and leaveTypeId are required");
 
+  // orgId is included directly in the where clause (LeaveLedgerEntry
+  // carries its own orgId column) rather than trusted from the query
+  // string — without this, this endpoint returned any org's ledger
+  // history to any admin (closure-pass authorization audit, §12/13, §21
+  // IDOR testing).
   const entries = await db.leaveLedgerEntry.findMany({
-    where: { userId, leaveTypeId },
+    where: { userId, leaveTypeId, orgId: session!.user.orgId },
     orderBy: { createdAt: "desc" },
     take: 200,
   });

@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
-import { postLedgerEntry } from "@/modules/leave/ledger";
+import { postLedgerEntry, CrossOrgAccessError } from "@/modules/leave/ledger";
+
+export { CrossOrgAccessError } from "@/modules/leave/ledger";
 import { writeLeaveAudit } from "@/modules/leave/audit";
 import { notify } from "@/lib/notify";
 
@@ -91,8 +93,19 @@ async function postCompOffToLedger(creditId: string) {
   return entry;
 }
 
-export async function approveCompOffCredit(creditId: string, approverId: string) {
+/**
+ * Approves a comp-off credit. actorOrgId is required and checked against
+ * the credit's own orgId — requirePermission("attendance.leave.approve")
+ * alone only proves the actor has SOME approve permission, not that this
+ * specific credit belongs to their organisation; without this check any
+ * approver in any org could mutate any other org's comp-off credit by ID
+ * (found during the closure-pass authorization audit, §12/13).
+ */
+export async function approveCompOffCredit(creditId: string, approverId: string, actorOrgId: string) {
   const credit = await db.compOffCredit.findUniqueOrThrow({ where: { id: creditId } });
+  if (credit.orgId !== actorOrgId) {
+    throw new CrossOrgAccessError();
+  }
   if (credit.status !== "PENDING_APPROVAL") {
     throw new Error(`Cannot approve comp-off credit in status ${credit.status}`);
   }
@@ -114,7 +127,16 @@ export async function approveCompOffCredit(creditId: string, approverId: string)
   return credit;
 }
 
-export async function rejectCompOffCredit(creditId: string, approverId: string, reason?: string) {
+export async function rejectCompOffCredit(
+  creditId: string,
+  approverId: string,
+  actorOrgId: string,
+  reason?: string,
+) {
+  const existing = await db.compOffCredit.findUniqueOrThrow({ where: { id: creditId } });
+  if (existing.orgId !== actorOrgId) {
+    throw new CrossOrgAccessError();
+  }
   const credit = await db.compOffCredit.update({
     where: { id: creditId },
     data: { status: "REJECTED", approvedById: approverId },

@@ -39,13 +39,13 @@ export default async function LeaveHrConsolePage() {
         userName: c.user.name,
         earnedDate: c.earnedDate.toISOString(),
         sourceType: c.sourceType,
-        units: c.units,
+        units: c.units.toNumber(),
       }))}
       pendingGrants={pendingGrants.map((g) => ({
         id: g.id,
         userName: g.user.name,
         leaveTypeName: g.leaveType.name,
-        amount: g.amount,
+        amount: g.amount.toNumber(),
         reason: g.reason,
       }))}
     />

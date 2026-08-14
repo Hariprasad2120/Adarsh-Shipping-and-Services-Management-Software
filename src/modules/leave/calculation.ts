@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { calendarFromDb, isWorkingDate, type WorkingCalendarConfig } from "@/lib/working-hours";
 import { getMaterializedBalance } from "@/modules/leave/ledger";
 import type { LeavePolicyConfig } from "@/modules/leave/policy-config.schema";
@@ -71,17 +72,27 @@ async function buildCalendarConfig(orgId: string, holidayDateKeys: string[]): Pr
 
 /**
  * Applies rounding per the policy's roundingMode/roundingIncrement.
+ * roundingIncrement comes from Prisma as Decimal | null; accepted here as
+ * number | Decimal | null since rounding granularity (e.g. 0.25, 0.5) is
+ * always exactly representable in IEEE-754 and this is a display/policy
+ * concern, not an accumulation-prone balance operation — unlike the
+ * balance math in calculateLeaveRequest, which stays in Decimal throughout.
  */
-export function applyRounding(value: number, mode: string, increment?: number | null): number {
-  if (mode === "NONE" || !increment || increment <= 0) return value;
-  const steps = value / increment;
+export function applyRounding(
+  value: number,
+  mode: string,
+  increment?: number | Prisma.Decimal | null,
+): number {
+  const incrementNumber = increment == null ? null : Number(increment);
+  if (mode === "NONE" || !incrementNumber || incrementNumber <= 0) return value;
+  const steps = value / incrementNumber;
   switch (mode) {
     case "NEAREST":
-      return Math.round(steps) * increment;
+      return Math.round(steps) * incrementNumber;
     case "UP":
-      return Math.ceil(steps) * increment;
+      return Math.ceil(steps) * incrementNumber;
     case "DOWN":
-      return Math.floor(steps) * increment;
+      return Math.floor(steps) * incrementNumber;
     default:
       return value;
   }
@@ -95,7 +106,7 @@ export interface CalculateLeaveRequestInput {
   config: LeavePolicyConfig;
   classification: "PAID" | "UNPAID" | "ON_DUTY" | "RESTRICTED_HOLIDAY" | "PARTIALLY_PAID";
   roundingMode: string;
-  roundingIncrement: number | null;
+  roundingIncrement: number | Prisma.Decimal | null;
   fromDate: Date;
   toDate: Date;
   halfDay: boolean;
@@ -184,98 +195,110 @@ export async function calculateLeaveRequest(
   requestedUnits = applyRounding(requestedUnits, input.roundingMode, input.roundingIncrement);
 
   // ─── Balance / paid / LOP split ───────────────────────────────────────
+  // Decimal used for every operation touching the balance itself, so
+  // repeated accrual/consumption over years cannot drift the way JS float
+  // arithmetic can (e.g. 0.1 + 0.2 !== 0.3 exactly). requestedUnits and day
+  // counts above stay plain numbers — they're derived from integer
+  // date-range walks and quarter/half fractions, which are exact in
+  // IEEE-754, so converting them adds no safety, only friction. The
+  // requestedUnits value IS converted to Decimal right where it's compared
+  // against the balance, so that comparison and every downstream
+  // paid/LOP split is done in exact decimal arithmetic.
   const year = input.fromDate.getFullYear();
   const balanceBefore = await getMaterializedBalance(input.userId, input.leaveTypeId, year);
+  const requestedUnitsDecimal = new Prisma.Decimal(requestedUnits);
 
-  let paidUnits = 0;
-  let partialPaidUnits = 0;
-  let lopUnits = 0;
+  let paidUnitsDecimal = new Prisma.Decimal(0);
+  let partialPaidUnitsDecimal = new Prisma.Decimal(0);
+  let lopUnitsDecimal = new Prisma.Decimal(0);
+  let paidUnits: number;
+  let partialPaidUnits: number;
+  let lopUnits: number;
 
   if (input.classification === "UNPAID") {
-    lopUnits = requestedUnits;
+    lopUnitsDecimal = requestedUnitsDecimal;
     explanation.push(`Policy is Unpaid: all ${requestedUnits} unit(s) are LOP.`);
   } else if (input.classification === "ON_DUTY" || input.classification === "RESTRICTED_HOLIDAY") {
-    paidUnits = requestedUnits;
+    paidUnitsDecimal = requestedUnitsDecimal;
     explanation.push(`Policy classification ${input.classification}: does not draw from paid balance.`);
   } else if (input.classification === "PARTIALLY_PAID" && input.config.partialPaySlabs.length > 0) {
-    let remaining = requestedUnits;
-    let cumulative = 0;
+    let remaining = requestedUnitsDecimal;
+    let cumulative = new Prisma.Decimal(0);
     for (const slab of input.config.partialPaySlabs) {
-      if (remaining <= 0) break;
-      const slabCapacity = Math.max(0, slab.uptoUnits - cumulative);
-      const unitsInSlab = Math.min(remaining, slabCapacity);
-      if (unitsInSlab <= 0) continue;
-      if (slab.payPercentage >= 100) paidUnits += unitsInSlab;
-      else if (slab.payPercentage <= 0) lopUnits += unitsInSlab;
-      else partialPaidUnits += unitsInSlab;
-      cumulative += unitsInSlab;
-      remaining -= unitsInSlab;
+      if (remaining.lessThanOrEqualTo(0)) break;
+      const slabCapacity = Prisma.Decimal.max(0, new Prisma.Decimal(slab.uptoUnits).minus(cumulative));
+      const unitsInSlab = Prisma.Decimal.min(remaining, slabCapacity);
+      if (unitsInSlab.lessThanOrEqualTo(0)) continue;
+      if (slab.payPercentage >= 100) paidUnitsDecimal = paidUnitsDecimal.plus(unitsInSlab);
+      else if (slab.payPercentage <= 0) lopUnitsDecimal = lopUnitsDecimal.plus(unitsInSlab);
+      else partialPaidUnitsDecimal = partialPaidUnitsDecimal.plus(unitsInSlab);
+      cumulative = cumulative.plus(unitsInSlab);
+      remaining = remaining.minus(unitsInSlab);
     }
-    if (remaining > 0) {
-      lopUnits += remaining;
+    if (remaining.greaterThan(0)) {
+      lopUnitsDecimal = lopUnitsDecimal.plus(remaining);
     }
     explanation.push(
-      `Partial-pay slabs applied: ${paidUnits} fully paid, ${partialPaidUnits} partially paid, ${lopUnits} LOP.`,
+      `Partial-pay slabs applied: ${paidUnitsDecimal} fully paid, ${partialPaidUnitsDecimal} partially paid, ${lopUnitsDecimal} LOP.`,
     );
   } else {
     // PAID — subject to balance/negative-leave rules
-    if (requestedUnits <= balanceBefore) {
-      paidUnits = requestedUnits;
+    if (requestedUnitsDecimal.lessThanOrEqualTo(balanceBefore)) {
+      paidUnitsDecimal = requestedUnitsDecimal;
     } else {
-      const shortfall = requestedUnits - balanceBefore;
+      const shortfall = requestedUnitsDecimal.minus(balanceBefore);
       switch (input.config.negativeLeave.mode) {
         case "REJECT":
           violations.push({
             code: "INSUFFICIENT_BALANCE",
             message: `You have ${balanceBefore} unit(s) available. This request requires ${requestedUnits}.`,
           });
-          paidUnits = balanceBefore;
-          lopUnits = shortfall;
+          paidUnitsDecimal = balanceBefore;
+          lopUnitsDecimal = shortfall;
           break;
         case "ALLOW_UNLIMITED":
-          paidUnits = requestedUnits;
+          paidUnitsDecimal = requestedUnitsDecimal;
           warnings.push({
             code: "NEGATIVE_BALANCE",
             message: `This request will take your balance negative by ${shortfall} unit(s).`,
           });
           break;
         case "ALLOW_WITHIN_LIMIT": {
-          const limit = input.config.negativeLeave.limit ?? 0;
-          if (shortfall <= limit) {
-            paidUnits = requestedUnits;
+          const limit = new Prisma.Decimal(input.config.negativeLeave.limit ?? 0);
+          if (shortfall.lessThanOrEqualTo(limit)) {
+            paidUnitsDecimal = requestedUnitsDecimal;
             warnings.push({
               code: "NEGATIVE_BALANCE_WITHIN_LIMIT",
               message: `This request will take your balance negative by ${shortfall} unit(s), within the allowed limit of ${limit}.`,
             });
           } else {
-            paidUnits = balanceBefore + limit;
-            lopUnits = requestedUnits - paidUnits;
+            paidUnitsDecimal = balanceBefore.plus(limit);
+            lopUnitsDecimal = requestedUnitsDecimal.minus(paidUnitsDecimal);
             warnings.push({
               code: "EXCEEDS_NEGATIVE_LIMIT",
-              message: `Negative balance limit is ${limit}. ${lopUnits} unit(s) will become Loss of Pay.`,
+              message: `Negative balance limit is ${limit}. ${lopUnitsDecimal} unit(s) will become Loss of Pay.`,
             });
           }
           break;
         }
         case "CONVERT_EXCESS_TO_LOP":
         default:
-          paidUnits = balanceBefore;
-          lopUnits = shortfall;
+          paidUnitsDecimal = balanceBefore;
+          lopUnitsDecimal = shortfall;
           explanation.push(
-            `Paid Leave: ${paidUnits} unit(s). LOP: ${lopUnits} unit(s) — only ${balanceBefore} unit(s) are available for a ${requestedUnits}-unit request.`,
+            `Paid Leave: ${paidUnitsDecimal} unit(s). LOP: ${lopUnitsDecimal} unit(s) — only ${balanceBefore} unit(s) are available for a ${requestedUnits}-unit request.`,
           );
           break;
       }
     }
-
-    if (input.config.maxBalance != null && balanceBefore - paidUnits < 0) {
-      // no-op placeholder: max balance affects accrual, not consumption; kept
-      // here only as a documented non-issue for consumption-time calculation.
-    }
   }
 
-  const balanceReserved = paidUnits + partialPaidUnits;
-  const balanceAfter = balanceBefore - balanceReserved;
+  const balanceReservedDecimal = paidUnitsDecimal.plus(partialPaidUnitsDecimal);
+  const balanceAfterDecimal = balanceBefore.minus(balanceReservedDecimal);
+
+  paidUnits = paidUnitsDecimal.toNumber();
+  partialPaidUnits = partialPaidUnitsDecimal.toNumber();
+  lopUnits = lopUnitsDecimal.toNumber();
 
   return {
     requestedUnits,
@@ -287,9 +310,9 @@ export async function calculateLeaveRequest(
     paidUnits,
     partialPaidUnits,
     lopUnits,
-    balanceBefore,
-    balanceReserved,
-    balanceAfter,
+    balanceBefore: balanceBefore.toNumber(),
+    balanceReserved: balanceReservedDecimal.toNumber(),
+    balanceAfter: balanceAfterDecimal.toNumber(),
     warnings,
     violations,
     sandwichBreakdown,

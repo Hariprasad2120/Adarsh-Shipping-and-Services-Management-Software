@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 
 export interface ReportFilters {
   orgId: string;
@@ -105,9 +106,14 @@ export async function getLeaveTypeUtilizationReport(filters: ReportFilters, year
   const leaveTypes = await db.leaveType.findMany({ where: { orgId: filters.orgId } });
 
   return leaveTypes.map((lt) => {
-    const accrued = entries.find((e) => e.leaveTypeId === lt.id && e.type === "ACCRUAL")?._sum.quantity ?? 0;
+    const accrued = (
+      entries.find((e) => e.leaveTypeId === lt.id && e.type === "ACCRUAL")?._sum.quantity ?? new Prisma.Decimal(0)
+    ).toNumber();
     const consumed = Math.abs(
-      entries.find((e) => e.leaveTypeId === lt.id && e.type === "LEAVE_CONSUMED")?._sum.quantity ?? 0,
+      (
+        entries.find((e) => e.leaveTypeId === lt.id && e.type === "LEAVE_CONSUMED")?._sum.quantity ??
+        new Prisma.Decimal(0)
+      ).toNumber(),
     );
     return {
       leaveTypeId: lt.id,
@@ -143,7 +149,7 @@ export async function getDepartmentLeaveSummaryReport(filters: ReportFilters, ye
       departmentId: dept.id,
       departmentName: dept.name,
       employeeCount: userIds.length,
-      totalLeaveTaken: Math.abs(consumed._sum.quantity ?? 0),
+      totalLeaveTaken: Math.abs((consumed._sum.quantity ?? new Prisma.Decimal(0)).toNumber()),
     });
   }
   return results;

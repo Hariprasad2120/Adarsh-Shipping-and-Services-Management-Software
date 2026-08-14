@@ -84,21 +84,41 @@ export async function getLeaveBalances(userId: string, year: number) {
   });
 }
 
+/**
+ * Initializes opening leave balances for a new employee. Posts one
+ * OPENING_BALANCE ledger entry per applicable, published leave-type policy
+ * via postLedgerEntry — never writes LeaveBalance.balance directly, so
+ * every opening balance has a matching ledger row from day one (closes the
+ * gap where legacy seeding created balances with zero audit trail).
+ */
 export async function initLeaveBalancesForUser(userId: string, orgId: string, year: number) {
-  const types = await db.leaveType.findMany({ where: { orgId } });
-  if (types.length === 0) return;
+  const { postLedgerEntry } = await import("@/modules/leave/ledger");
+  const { getActivePolicyVersion } = await import("@/modules/leave/policy");
+  const { isPolicyApplicableToUser } = await import("@/modules/leave/eligibility");
 
-  // createMany with skipDuplicates replaces N sequential upserts with one
-  // batch INSERT ... ON CONFLICT DO NOTHING, reducing round trips from N to 1.
-  await db.leaveBalance.createMany({
-    data: types.map((t) => ({
+  const types = await db.leaveType.findMany({ where: { orgId } });
+  const asOf = new Date(year, 0, 1);
+
+  for (const type of types) {
+    const version = await getActivePolicyVersion(type.id, asOf);
+    if (!version) continue;
+    const applicable = await isPolicyApplicableToUser(version.id, userId);
+    if (!applicable) continue;
+
+    await postLedgerEntry({
+      orgId,
       userId,
-      leaveTypeId: t.id,
+      leaveTypeId: type.id,
+      policyVersionId: version.id,
+      type: "OPENING_BALANCE",
+      quantity: type.defaultBalance,
+      effectiveDate: asOf,
       year,
-      balance: t.defaultBalance,
-    })),
-    skipDuplicates: true,
-  });
+      source: "SYSTEM",
+      reason: "Initial balance on eligibility for this leave policy",
+      idempotencyKey: `opening-balance:${userId}:${type.id}:${year}`,
+    });
+  }
 }
 
 // ─── Leave requests ───────────────────────────────────────────────────────────

@@ -31,12 +31,24 @@ export default async function LeavesPage() {
   const myRequestRows = myRequests.map(serializeLeaveRequest);
   const approvalRows = pendingApprovals.map(serializeLeaveRequest);
 
+  // LeaveType.defaultBalance and LeaveBalance.balance are Prisma.Decimal
+  // server-side (see the Float→Decimal migration) — Decimal instances
+  // aren't serializable across the server/client boundary, so convert to
+  // plain numbers here rather than relying on the `as` casts below to
+  // paper over the shape mismatch.
+  const leaveTypeRows = leaveTypes.map((lt) => ({ ...lt, defaultBalance: lt.defaultBalance.toNumber() }));
+  const balanceRows = balances.map((b) => ({
+    ...b,
+    balance: b.balance.toNumber(),
+    leaveType: { ...b.leaveType, defaultBalance: b.leaveType.defaultBalance.toNumber() },
+  }));
+
   return (
     <div className="space-y-6">
       <LeavesClient
         myRequests={myRequestRows as LeavesClientProps["myRequests"]}
-        leaveTypes={leaveTypes as LeavesClientProps["leaveTypes"]}
-        balances={balances as LeavesClientProps["balances"]}
+        leaveTypes={leaveTypeRows as LeavesClientProps["leaveTypes"]}
+        balances={balanceRows as LeavesClientProps["balances"]}
         pendingApprovals={approvalRows as LeavesClientProps["pendingApprovals"]}
         canApprove={canApprove}
       />

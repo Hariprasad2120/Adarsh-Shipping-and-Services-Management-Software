@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission, apiError } from "@/lib/rbac";
 import { createLeaveGrant } from "@/modules/leave/grants";
+import { db } from "@/lib/db";
 
 const BodySchema = z.object({
   userId: z.string().min(1),
@@ -23,6 +24,15 @@ export async function POST(req: NextRequest) {
 
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) return err("Invalid input");
+
+    // Same cross-org verification as ledger/adjust — the target employee
+    // and leave type must belong to the actor's own org (§12/13, §21).
+    const [targetUser, targetLeaveType] = await Promise.all([
+      db.user.findUnique({ where: { id: parsed.data.userId }, select: { orgId: true } }),
+      db.leaveType.findUnique({ where: { id: parsed.data.leaveTypeId }, select: { orgId: true } }),
+    ]);
+    if (!targetUser || targetUser.orgId !== session!.user.orgId) return err("Employee not found", 404);
+    if (!targetLeaveType || targetLeaveType.orgId !== session!.user.orgId) return err("Leave type not found", 404);
 
     const grant = await createLeaveGrant({
       orgId: session!.user.orgId,

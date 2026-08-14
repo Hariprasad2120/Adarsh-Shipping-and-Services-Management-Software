@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { postLedgerEntry, getMaterializedBalance } from "@/modules/leave/ledger";
 import { parsePolicyConfig } from "@/modules/leave/policy";
 import type { LeavePolicyConfig } from "@/modules/leave/policy-config.schema";
@@ -103,26 +104,26 @@ export async function runDueResets(orgId: string, asOf: Date) {
     const currentBalance = await getMaterializedBalance(balance.userId, balance.leaveTypeId, balance.year);
     const resetDateKey = balance.nextResetDate!.toISOString().slice(0, 10);
 
-    let carriedForward = 0;
-    if (config.carryForward.mode !== "NONE" && currentBalance > 0) {
+    let carriedForward = new Prisma.Decimal(0);
+    if (config.carryForward.mode !== "NONE" && currentBalance.greaterThan(0)) {
       if (config.carryForward.mode === "ALL") {
         carriedForward = currentBalance;
       } else if (config.carryForward.mode === "FIXED_MAX") {
-        carriedForward = Math.min(currentBalance, config.carryForward.fixedMax ?? 0);
+        carriedForward = Prisma.Decimal.min(currentBalance, config.carryForward.fixedMax ?? 0);
       } else if (config.carryForward.mode === "PERCENTAGE") {
-        carriedForward = currentBalance * ((config.carryForward.percentage ?? 0) / 100);
+        carriedForward = currentBalance.times((config.carryForward.percentage ?? 0) / 100);
       }
     }
-    const forfeited = currentBalance - carriedForward;
+    const forfeited = currentBalance.minus(carriedForward);
 
-    if (forfeited > 0) {
+    if (forfeited.greaterThan(0)) {
       await postLedgerEntry({
         orgId,
         userId: balance.userId,
         leaveTypeId: balance.leaveTypeId,
         policyVersionId: version.id,
         type: "CARRY_FORWARD_EXPIRY",
-        quantity: -forfeited,
+        quantity: forfeited.negated(),
         effectiveDate: balance.nextResetDate!,
         year: balance.year,
         source: "SCHEDULER",
@@ -133,7 +134,7 @@ export async function runDueResets(orgId: string, asOf: Date) {
     }
 
     const nextYear = asOf.getUTCFullYear() + (config.reset.cadence === "MONTHLY" ? 0 : 1);
-    if (carriedForward > 0) {
+    if (carriedForward.greaterThan(0)) {
       await postLedgerEntry({
         orgId,
         userId: balance.userId,

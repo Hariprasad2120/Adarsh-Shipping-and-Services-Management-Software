@@ -1,7 +1,9 @@
 import { db } from "@/lib/db";
-import { postLedgerEntry } from "@/modules/leave/ledger";
+import { postLedgerEntry, CrossOrgAccessError } from "@/modules/leave/ledger";
 import { writeLeaveAudit } from "@/modules/leave/audit";
 import { notify } from "@/lib/notify";
+
+export { CrossOrgAccessError } from "@/modules/leave/ledger";
 
 export interface CreateLeaveGrantInput {
   orgId: string;
@@ -75,8 +77,15 @@ async function postGrantToLedger(grantId: string, actorId: string) {
   return entry;
 }
 
-export async function approveLeaveGrant(grantId: string, approverId: string) {
+/**
+ * actorOrgId is required and checked against the grant's own orgId — same
+ * cross-tenant IDOR fix as CompOffCredit approve/reject (§12/13 audit).
+ */
+export async function approveLeaveGrant(grantId: string, approverId: string, actorOrgId: string) {
   const grant = await db.leaveGrant.findUniqueOrThrow({ where: { id: grantId } });
+  if (grant.orgId !== actorOrgId) {
+    throw new CrossOrgAccessError();
+  }
   if (grant.status !== "PENDING") {
     throw new Error(`Cannot approve grant in status ${grant.status}`);
   }
@@ -93,7 +102,11 @@ export async function approveLeaveGrant(grantId: string, approverId: string) {
   return grant;
 }
 
-export async function rejectLeaveGrant(grantId: string, approverId: string, reason?: string) {
+export async function rejectLeaveGrant(grantId: string, approverId: string, actorOrgId: string, reason?: string) {
+  const existing = await db.leaveGrant.findUniqueOrThrow({ where: { id: grantId } });
+  if (existing.orgId !== actorOrgId) {
+    throw new CrossOrgAccessError();
+  }
   const grant = await db.leaveGrant.update({
     where: { id: grantId },
     data: { status: "REJECTED", approvedById: approverId },

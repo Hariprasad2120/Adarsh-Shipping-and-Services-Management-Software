@@ -843,7 +843,7 @@ model LeaveType {
   orgId           String
   name            String
   paid            Boolean @default(true)
-  defaultBalance  Float   @default(0)
+  defaultBalance  Decimal @default(0) @db.Decimal(10, 4)
   accrualRule     Json? // legacy, unused by new engine — kept for backward read compatibility
   code            String? // NEW — stable short code, e.g. "AL", "SL"; unique per org
   activeVersionId String? // NEW — points at the currently published LeavePolicyVersion
@@ -866,7 +866,7 @@ model LeaveBalance {
   userId        String
   leaveTypeId   String
   year          Int
-  balance       Float
+  balance       Decimal   @db.Decimal(10, 4)
   version       Int       @default(0) // NEW — optimistic lock for concurrent ledger writes
   updatedAt     DateTime  @default(now()) @updatedAt // NEW — default(now()) needed so ADD COLUMN NOT NULL is safe on existing rows
   nextResetDate DateTime? @db.Date // NEW — precomputed leave-year boundary for this balance row (calendar/financial/anniversary), so the daily reset cron does an indexed lookup instead of scanning + recomputing every employee's anniversary each run
@@ -896,9 +896,9 @@ model LeaveRequest {
 
   // NEW fields — additive, all nullable/defaulted so existing rows remain valid
   policyVersionId        String?
-  computedDurationUnits   Float?
-  paidUnits               Float?
-  lopUnits                Float?
+  computedDurationUnits   Decimal? @db.Decimal(10, 4)
+  paidUnits               Decimal? @db.Decimal(10, 4)
+  lopUnits                Decimal? @db.Decimal(10, 4)
   currentApprovalStepId   String?
   cancelledAt             DateTime?
   cancelReason             String?
@@ -931,7 +931,7 @@ model LeavePolicyVersion {
   entitlementModel  String    @default("FIXED") // FIXED | EXPERIENCE_BASED | GRANT_BASED | ATTENDANCE_BASED
   unit              String    @default("DAY") // DAY | HOUR
   roundingMode      String    @default("NONE") // NONE | NEAREST | UP | DOWN
-  roundingIncrement Float?
+  roundingIncrement Decimal?  @db.Decimal(10, 4)
   effectiveFrom     DateTime  @db.Date
   effectiveUntil    DateTime? @db.Date
   configuration     Json // Zod-validated structured config — see src/modules/leave/policy-config.schema.ts
@@ -988,11 +988,11 @@ model LeaveLedgerEntry {
                           // LEAVE_CONSUMED | LEAVE_RELEASED | CARRY_FORWARD | CARRY_FORWARD_EXPIRY |
                           // ENCASHMENT | RESET | COMP_OFF_CREDIT | COMP_OFF_EXPIRY | ADJUSTMENT |
                           // CANCELLATION_REVERSAL | POLICY_MIGRATION | IMPORT | LOP_CONVERSION
-  quantity        Float // signed: positive = credit, negative = debit
+  quantity        Decimal @db.Decimal(10, 4) // signed: positive = credit, negative = debit
   unit            String @default("DAY") // DAY | HOUR
   effectiveDate   DateTime @db.Date
-  balanceBefore   Float
-  balanceAfter    Float
+  balanceBefore   Decimal @db.Decimal(10, 4)
+  balanceAfter    Decimal @db.Decimal(10, 4)
   requestId       String?
   source          String // SYSTEM | SCHEDULER | ADMIN | EMPLOYEE | IMPORT
   actorId         String?
@@ -1035,7 +1035,7 @@ model CompOffCredit {
   earnedDate       DateTime  @db.Date
   sourceType       String // WEEKEND_WORK | HOLIDAY_WORK | OVERTIME | MANUAL_GRANT
   sourceOtRecordId String?
-  units            Float
+  units            Decimal   @db.Decimal(10, 4)
   unit             String    @default("DAY") // DAY | HOUR
   status           String    @default("PENDING_APPROVAL") // PENDING_APPROVAL | APPROVED | REJECTED | CONSUMED | EXPIRED
   expiresAt        DateTime?
@@ -1055,7 +1055,7 @@ model LeaveGrant {
   orgId       String
   userId      String
   leaveTypeId String
-  amount      Float
+  amount      Decimal  @db.Decimal(10, 4)
   effectiveDate DateTime @db.Date
   expiryDate  DateTime?
   reason      String

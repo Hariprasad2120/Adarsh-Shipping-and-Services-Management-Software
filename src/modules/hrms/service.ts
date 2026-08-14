@@ -12,7 +12,7 @@ import {
 } from "@/lib/attendance-date";
 import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
 import { invalidateDashboardMetricSnapshots } from "@/modules/dashboard/cache";
-import { submitLeaveRequest } from "@/modules/leave/request";
+import { submitLeaveRequest, decideLeaveRequest } from "@/modules/leave/request";
 import type { Prisma } from "@/generated/prisma/client";
 
 // ─── Core & Dashboard ──────────────────────────────────────────────────────────
@@ -1771,10 +1771,17 @@ export async function executeApprovalDecision(
   remarks?: string,
 ) {
   if (type === "LEAVE") {
-    const status = decision === "APPROVED" ? "approved" : "rejected";
-    return db.leaveRequest.update({
-      where: { id: requestId },
-      data: { status, approverId: userId, notes: remarks },
+    // Routes through the consolidated leave engine (ledger, policy,
+    // self-approval guard, audit, attendance/payroll bridges) rather than
+    // writing LeaveRequest.status directly — a direct write here bypassed
+    // every one of those (found during the Phase-2 consolidation audit;
+    // this was a third, previously-undiscovered leave approval path
+    // alongside the two legacy surfaces already reconciled in Phase 6).
+    return decideLeaveRequest({
+      requestId,
+      approverId: userId,
+      decision,
+      comment: remarks,
     });
   }
 

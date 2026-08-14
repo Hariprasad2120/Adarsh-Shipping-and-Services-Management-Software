@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "@/generated/prisma/client";
 import type { LeavePolicyConfig } from "../policy-config.schema";
 
 const mocks = vi.hoisted(() => ({
@@ -59,7 +60,7 @@ describe("calculateLeaveRequest", () => {
     vi.clearAllMocks();
     mocks.holidayFindMany.mockResolvedValue([]);
     mocks.workingCalendarFindUnique.mockResolvedValue(WORKWEEK_MON_SAT);
-    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: 10, version: 0 });
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
   });
 
   it("counts a Mon-Fri request as 5 working days with no weekend/holiday", async () => {
@@ -194,7 +195,7 @@ describe("calculateLeaveRequest", () => {
   });
 
   it("converts excess over balance to LOP when negativeLeave.mode is CONVERT_EXCESS_TO_LOP", async () => {
-    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: 2, version: 0 });
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(2), version: 0 });
 
     const result = await calculateLeaveRequest({
       orgId: "org-1",
@@ -216,7 +217,7 @@ describe("calculateLeaveRequest", () => {
   });
 
   it("rejects (violation, not silent LOP) when negativeLeave.mode is REJECT and balance is insufficient", async () => {
-    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: 1, version: 0 });
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(1), version: 0 });
 
     const result = await calculateLeaveRequest({
       orgId: "org-1",
@@ -237,7 +238,7 @@ describe("calculateLeaveRequest", () => {
   });
 
   it("allows unlimited negative balance and warns instead of blocking", async () => {
-    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: 0, version: 0 });
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(0), version: 0 });
 
     const result = await calculateLeaveRequest({
       orgId: "org-1",
@@ -259,7 +260,7 @@ describe("calculateLeaveRequest", () => {
   });
 
   it("treats UNPAID classification as 100% LOP regardless of balance", async () => {
-    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: 100, version: 0 });
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(100), version: 0 });
 
     const result = await calculateLeaveRequest({
       orgId: "org-1",
@@ -280,7 +281,7 @@ describe("calculateLeaveRequest", () => {
   });
 
   it("splits PARTIALLY_PAID leave across slabs correctly", async () => {
-    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: 100, version: 0 });
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(100), version: 0 });
 
     const result = await calculateLeaveRequest({
       orgId: "org-1",

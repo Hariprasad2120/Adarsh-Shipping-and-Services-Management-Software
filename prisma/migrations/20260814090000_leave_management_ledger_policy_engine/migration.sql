@@ -3,22 +3,24 @@ Loaded Prisma config from prisma.config.ts.
 -- AlterTable
 ALTER TABLE "LeaveBalance" ADD COLUMN     "nextResetDate" DATE,
 ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "version" INTEGER NOT NULL DEFAULT 0;
+ADD COLUMN     "version" INTEGER NOT NULL DEFAULT 0,
+ALTER COLUMN "balance" SET DATA TYPE DECIMAL(10,4);
 
 -- AlterTable
 ALTER TABLE "LeaveRequest" ADD COLUMN     "cancelReason" TEXT,
 ADD COLUMN     "cancelledAt" TIMESTAMP(3),
-ADD COLUMN     "computedDurationUnits" DOUBLE PRECISION,
+ADD COLUMN     "computedDurationUnits" DECIMAL(10,4),
 ADD COLUMN     "currentApprovalStepId" TEXT,
 ADD COLUMN     "extendedFromRequestId" TEXT,
-ADD COLUMN     "lopUnits" DOUBLE PRECISION,
-ADD COLUMN     "paidUnits" DOUBLE PRECISION,
+ADD COLUMN     "lopUnits" DECIMAL(10,4),
+ADD COLUMN     "paidUnits" DECIMAL(10,4),
 ADD COLUMN     "policyVersionId" TEXT;
 
 -- AlterTable
 ALTER TABLE "LeaveType" ADD COLUMN     "activeVersionId" TEXT,
 ADD COLUMN     "code" TEXT,
-ADD COLUMN     "isCompOffType" BOOLEAN NOT NULL DEFAULT false;
+ADD COLUMN     "isCompOffType" BOOLEAN NOT NULL DEFAULT false,
+ALTER COLUMN "defaultBalance" SET DATA TYPE DECIMAL(10,4);
 
 -- CreateTable
 CREATE TABLE "LeavePolicyVersion" (
@@ -30,7 +32,7 @@ CREATE TABLE "LeavePolicyVersion" (
     "entitlementModel" TEXT NOT NULL DEFAULT 'FIXED',
     "unit" TEXT NOT NULL DEFAULT 'DAY',
     "roundingMode" TEXT NOT NULL DEFAULT 'NONE',
-    "roundingIncrement" DOUBLE PRECISION,
+    "roundingIncrement" DECIMAL(10,4),
     "effectiveFrom" DATE NOT NULL,
     "effectiveUntil" DATE,
     "configuration" JSONB NOT NULL,
@@ -78,11 +80,11 @@ CREATE TABLE "LeaveLedgerEntry" (
     "leaveTypeId" TEXT NOT NULL,
     "policyVersionId" TEXT,
     "type" TEXT NOT NULL,
-    "quantity" DOUBLE PRECISION NOT NULL,
+    "quantity" DECIMAL(10,4) NOT NULL,
     "unit" TEXT NOT NULL DEFAULT 'DAY',
     "effectiveDate" DATE NOT NULL,
-    "balanceBefore" DOUBLE PRECISION NOT NULL,
-    "balanceAfter" DOUBLE PRECISION NOT NULL,
+    "balanceBefore" DECIMAL(10,4) NOT NULL,
+    "balanceAfter" DECIMAL(10,4) NOT NULL,
     "requestId" TEXT,
     "source" TEXT NOT NULL,
     "actorId" TEXT,
@@ -119,7 +121,7 @@ CREATE TABLE "CompOffCredit" (
     "earnedDate" DATE NOT NULL,
     "sourceType" TEXT NOT NULL,
     "sourceOtRecordId" TEXT,
-    "units" DOUBLE PRECISION NOT NULL,
+    "units" DECIMAL(10,4) NOT NULL,
     "unit" TEXT NOT NULL DEFAULT 'DAY',
     "status" TEXT NOT NULL DEFAULT 'PENDING_APPROVAL',
     "expiresAt" TIMESTAMP(3),
@@ -137,7 +139,7 @@ CREATE TABLE "LeaveGrant" (
     "orgId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "leaveTypeId" TEXT NOT NULL,
-    "amount" DOUBLE PRECISION NOT NULL,
+    "amount" DECIMAL(10,4) NOT NULL,
     "effectiveDate" DATE NOT NULL,
     "expiryDate" TIMESTAMP(3),
     "reason" TEXT NOT NULL,

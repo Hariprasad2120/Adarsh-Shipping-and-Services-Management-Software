@@ -5,6 +5,7 @@ import {
   getPendingApprovals,
   executeApprovalDecision,
 } from "@/modules/hrms/service";
+import { CrossOrgAccessError } from "@/modules/leave/ledger";
 
 export async function GET() {
   try {
@@ -85,6 +86,12 @@ export async function POST(req: Request) {
     );
     return NextResponse.json({ ok: true, data });
   } catch (error) {
+    if (error instanceof CrossOrgAccessError) {
+      return NextResponse.json(
+        { ok: false, error: { code: "FORBIDDEN", message: error.message } },
+        { status: 403 },
+      );
+    }
     return apiError(error);
   }
 }

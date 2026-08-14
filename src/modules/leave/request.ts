@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { notify, notifyMany } from "@/lib/notify";
 import { getUsersWithPermission } from "@/modules/notifications/service";
 import { getActivePolicyVersion, parsePolicyConfig } from "@/modules/leave/policy";
 import { calculateLeaveRequest } from "@/modules/leave/calculation";
-import { postLedgerEntry } from "@/modules/leave/ledger";
+import { postLedgerEntry, toDecimal, CrossOrgAccessError } from "@/modules/leave/ledger";
 import { writeLeaveAudit } from "@/modules/leave/audit";
 import { buildApprovalSteps } from "@/modules/leave/approval";
 import { isPolicyApplicableToUser, isServiceEligible } from "@/modules/leave/eligibility";
@@ -241,6 +242,19 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
     throw new Error("A leave request cannot be approved or rejected by its own requester.");
   }
 
+  // Defense in depth: requirePermission("attendance.leave.approve") on the
+  // calling route only proves the actor has SOME approve permission
+  // somewhere, not that this specific request belongs to their
+  // organisation — found during the closure-pass authorization audit
+  // (§12/13), same class of gap as the comp-off/grant cross-org fixes.
+  const approver = await db.user.findUnique({
+    where: { id: input.approverId },
+    select: { orgId: true },
+  });
+  if (!approver || !request.user.orgId || approver.orgId !== request.user.orgId) {
+    throw new CrossOrgAccessError();
+  }
+
   const currentStatus = normalizeStatus(request.status);
   assertValidTransition(currentStatus, input.decision);
 
@@ -317,7 +331,7 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
         leaveTypeId: request.leaveTypeId,
         policyVersionId: request.policyVersionId,
         type: "LEAVE_RELEASED",
-        quantity: request.paidUnits + (request.lopUnits ?? 0),
+        quantity: toDecimal(request.paidUnits).plus(toDecimal(request.lopUnits ?? 0)),
         effectiveDate: request.fromDate,
         year: request.fromDate.getFullYear(),
         requestId: request.id,
@@ -337,13 +351,13 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
         halfDay: request.halfDay,
       });
 
-      if (request.lopUnits && request.lopUnits > 0) {
+      if (request.lopUnits && toDecimal(request.lopUnits).greaterThan(0)) {
         try {
           await applyLopFromLeaveRequest({
             orgId: updated.user.orgId,
             userId: request.userId,
             fromDate: request.fromDate,
-            lopUnits: request.lopUnits,
+            lopUnits: toDecimal(request.lopUnits).toNumber(),
             actorId: input.approverId,
             requestId: request.id,
           });
@@ -426,8 +440,8 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
     },
   });
 
-  const totalReserved = (request.paidUnits ?? 0) + (request.lopUnits ?? 0);
-  if (targetStatus !== "CANCEL_PENDING" && totalReserved > 0 && request.user.orgId) {
+  const totalReserved = toDecimal(request.paidUnits ?? 0).plus(toDecimal(request.lopUnits ?? 0));
+  if (targetStatus !== "CANCEL_PENDING" && totalReserved.greaterThan(0) && request.user.orgId) {
     await postLedgerEntry({
       orgId: request.user.orgId,
       userId: request.userId,
@@ -452,13 +466,13 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
         toDate: request.toDate,
       });
 
-      if (request.lopUnits && request.lopUnits > 0) {
+      if (request.lopUnits && toDecimal(request.lopUnits).greaterThan(0)) {
         try {
           await reverseLopFromLeaveRequest({
             orgId: request.user.orgId,
             userId: request.userId,
             fromDate: request.fromDate,
-            lopUnits: request.lopUnits,
+            lopUnits: toDecimal(request.lopUnits).toNumber(),
             actorId: input.actorId,
             requestId: request.id,
           });
@@ -493,6 +507,189 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
   });
 
   return updated;
+}
+
+export interface PartialCancelLeaveRequestInput {
+  requestId: string;
+  actorId: string;
+  reason: string;
+  /** The sub-range being cancelled — must be a leading or trailing edge of
+   *  the original request (e.g. original 1-5 Aug, cancel 4-5 Aug leaves
+   *  1-3 Aug approved). Cancelling an interior gap (splitting into two
+   *  separate periods) is out of scope — it would require creating a
+   *  second LeaveRequest and is not handled by this function. */
+  cancelFromDate: Date;
+  cancelToDate: Date;
+}
+
+/**
+ * Partial cancellation (spec §9): shrinks an approved request to whatever
+ * remains after removing the cancelled edge, reversing only the delta —
+ * not the whole reservation. Recalculates the remaining period through the
+ * same calculateLeaveRequest() authoritative engine (never hand-computed),
+ * so paid/LOP/sandwich are recalculated fresh, then reverses the removed
+ * portion's ledger impact, attendance marking, and LOP.
+ */
+export async function cancelLeaveRequestPartial(input: PartialCancelLeaveRequestInput) {
+  const request = await db.leaveRequest.findUniqueOrThrow({
+    where: { id: input.requestId },
+    include: { user: { select: { orgId: true } }, leaveType: true },
+  });
+
+  const currentStatus = normalizeStatus(request.status);
+  if (currentStatus !== "APPROVED") {
+    throw new Error("Partial cancellation is only available for approved leave requests.");
+  }
+  if (!request.user.orgId) {
+    throw new Error("User has no organisation.");
+  }
+
+  const isLeadingEdge = input.cancelFromDate.getTime() === request.fromDate.getTime();
+  const isTrailingEdge = input.cancelToDate.getTime() === request.toDate.getTime();
+  if (!isLeadingEdge && !isTrailingEdge) {
+    throw new Error(
+      "Partial cancellation must remove a leading or trailing portion of the request, not an interior gap.",
+    );
+  }
+  if (input.cancelFromDate < request.fromDate || input.cancelToDate > request.toDate) {
+    throw new Error("Cancellation range must fall within the original request's dates.");
+  }
+
+  const remainingFromDate = isLeadingEdge
+    ? new Date(input.cancelToDate.getTime() + 24 * 60 * 60 * 1000)
+    : request.fromDate;
+  const remainingToDate = isTrailingEdge
+    ? new Date(input.cancelFromDate.getTime() - 24 * 60 * 60 * 1000)
+    : request.toDate;
+
+  if (remainingFromDate > remainingToDate) {
+    throw new Error("Cancelling this entire range — use full cancellation instead of partial.");
+  }
+
+  // Recalculation uses the ORIGINAL pinned policy version's configuration
+  // (spec §4 — historical interpretation must not shift), not whatever is
+  // currently published, by reading the pinned version's config directly
+  // rather than re-resolving "active".
+  const pinnedVersion = request.policyVersionId
+    ? await db.leavePolicyVersion.findUnique({ where: { id: request.policyVersionId } })
+    : null;
+  if (!pinnedVersion) {
+    throw new Error("Cannot recalculate: original policy version is unavailable.");
+  }
+  const config = parsePolicyConfig(pinnedVersion.configuration);
+
+  const remainingCalculation = await calculateLeaveRequest({
+    orgId: request.user.orgId,
+    userId: request.userId,
+    leaveTypeId: request.leaveTypeId,
+    policyVersionId: pinnedVersion.id,
+    config,
+    classification: pinnedVersion.classification as
+      | "PAID"
+      | "UNPAID"
+      | "ON_DUTY"
+      | "RESTRICTED_HOLIDAY"
+      | "PARTIALLY_PAID",
+    roundingMode: pinnedVersion.roundingMode,
+    roundingIncrement: pinnedVersion.roundingIncrement,
+    fromDate: remainingFromDate,
+    toDate: remainingToDate,
+    halfDay: false,
+  });
+
+  const originalPaid = toDecimal(request.paidUnits ?? 0);
+  const originalLop = toDecimal(request.lopUnits ?? 0);
+  const originalTotal = originalPaid.plus(originalLop);
+  const remainingPaid = new Prisma.Decimal(remainingCalculation.paidUnits);
+  const remainingLop = new Prisma.Decimal(remainingCalculation.lopUnits);
+  const remainingTotal = remainingPaid.plus(remainingLop);
+  const reversedTotal = originalTotal.minus(remainingTotal);
+  const reversedLop = originalLop.minus(remainingLop);
+
+  if (reversedTotal.lessThanOrEqualTo(0)) {
+    throw new Error("Nothing to reverse — the remaining period accounts for the full original reservation.");
+  }
+
+  await db.leaveRequest.update({
+    where: { id: input.requestId },
+    data: {
+      fromDate: remainingFromDate,
+      toDate: remainingToDate,
+      computedDurationUnits: remainingCalculation.requestedUnits,
+      paidUnits: remainingPaid,
+      lopUnits: remainingLop,
+      cancelReason: input.reason,
+    },
+  });
+
+  await postLedgerEntry({
+    orgId: request.user.orgId,
+    userId: request.userId,
+    leaveTypeId: request.leaveTypeId,
+    policyVersionId: request.policyVersionId,
+    type: "CANCELLATION_REVERSAL",
+    quantity: reversedTotal,
+    effectiveDate: input.cancelFromDate,
+    year: input.cancelFromDate.getFullYear(),
+    requestId: request.id,
+    source: "EMPLOYEE",
+    reason: `Partial cancellation: ${input.cancelFromDate.toDateString()} to ${input.cancelToDate.toDateString()}`,
+    actorId: input.actorId,
+    idempotencyKey: `partial-cancel-reversal:${request.id}:${input.cancelFromDate.toISOString().slice(0, 10)}`,
+    allowNegative: true,
+  });
+
+  await removeLeaveFromAttendance({
+    userId: request.userId,
+    fromDate: input.cancelFromDate,
+    toDate: input.cancelToDate,
+  });
+
+  if (reversedLop.greaterThan(0)) {
+    try {
+      await reverseLopFromLeaveRequest({
+        orgId: request.user.orgId,
+        userId: request.userId,
+        fromDate: input.cancelFromDate,
+        lopUnits: reversedLop.toNumber(),
+        actorId: input.actorId,
+        requestId: request.id,
+      });
+    } catch (err) {
+      if (!(err instanceof PayrollLockedError)) throw err;
+      await writeLeaveAudit({
+        orgId: request.user.orgId,
+        userId: input.actorId,
+        action: "LEAVE_LOP_REVERSAL_BLOCKED_PAYROLL_LOCKED",
+        details: { requestId: request.id, lopUnits: reversedLop.toString(), message: err.message },
+      });
+    }
+  }
+
+  await notify({
+    userId: request.userId,
+    orgId: request.user.orgId,
+    kind: "LEAVE_CANCELLED",
+    title: "Leave request partially cancelled",
+    body: `${input.cancelFromDate.toDateString()} to ${input.cancelToDate.toDateString()} was cancelled from your leave request. Remaining: ${remainingFromDate.toDateString()} to ${remainingToDate.toDateString()}.`,
+    link: "/attendance/leaves",
+    payload: { leaveRequestId: request.id },
+  });
+
+  await writeLeaveAudit({
+    orgId: request.user.orgId,
+    userId: input.actorId,
+    action: "LEAVE_PARTIALLY_CANCELLED",
+    details: {
+      requestId: request.id,
+      reason: input.reason,
+      cancelledRange: { from: input.cancelFromDate, to: input.cancelToDate },
+      remainingRange: { from: remainingFromDate, to: remainingToDate },
+      reversedUnits: reversedTotal.toString(),
+    },
+  });
+
+  return { request: await db.leaveRequest.findUniqueOrThrow({ where: { id: input.requestId } }), remainingCalculation };
 }
 
 export interface ExtendLeaveRequestInput {
