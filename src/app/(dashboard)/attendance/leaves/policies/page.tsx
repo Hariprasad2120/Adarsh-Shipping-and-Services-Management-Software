@@ -4,6 +4,7 @@ import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { WorkspaceState } from "@/components/layout/workspace";
 import { PoliciesClient } from "./policies-client";
+import { ShieldAlert } from "lucide-react";
 
 export default async function LeavePoliciesPage() {
   const session = await getSession();
@@ -14,6 +15,8 @@ export default async function LeavePoliciesPage() {
     return (
       <WorkspaceState
         variant="danger"
+        eyebrow="Leave management"
+        icon={<ShieldAlert aria-hidden="true" />}
         title="Access denied"
         description="You need HR/admin leave-management permissions to configure leave policies. Contact your administrator if you believe this is a mistake."
       />

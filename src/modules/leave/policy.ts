@@ -178,3 +178,89 @@ export async function listPolicyVersions(leaveTypeId: string) {
     include: { applicabilityRules: true },
   });
 }
+
+/**
+ * Clone lifecycle (spec §6): creates a new DRAFT version pre-filled from
+ * an existing version's configuration — the admin edits the clone rather
+ * than the published original (which is immutable, see createPolicyVersion's
+ * doc comment). Applicability rules are copied too, since "start from what
+ * already works" is the whole point of cloning.
+ */
+export async function clonePolicyVersion(sourceVersionId: string, actorId: string) {
+  const source = await db.leavePolicyVersion.findUniqueOrThrow({
+    where: { id: sourceVersionId },
+    include: { applicabilityRules: true, leaveType: true },
+  });
+
+  return createPolicyVersion(
+    {
+      leaveTypeId: source.leaveTypeId,
+      classification: source.classification as CreatePolicyVersionInput["classification"],
+      unit: source.unit as "DAY" | "HOUR",
+      roundingMode: source.roundingMode as CreatePolicyVersionInput["roundingMode"],
+      roundingIncrement: source.roundingIncrement ? Number(source.roundingIncrement) : undefined,
+      effectiveFrom: new Date(), // clone starts fresh — admin adjusts before publishing
+      effectiveUntil: null,
+      configuration: parsePolicyConfig(source.configuration),
+      applicabilityRules: source.applicabilityRules.map((r) => ({
+        mode: r.mode as ApplicabilityRuleInput["mode"],
+        dimension: r.dimension as ApplicabilityRuleInput["dimension"],
+        value: r.value,
+      })),
+    },
+    actorId,
+  );
+}
+
+export interface PolicyVersionDiffEntry {
+  path: string;
+  before: unknown;
+  after: unknown;
+}
+
+/**
+ * Version comparison (spec §6) — a flat field-by-field diff of two
+ * versions' top-level metadata and configuration JSON, so HR/admin can see
+ * exactly what changed between e.g. v2 and v3 of a policy before deciding
+ * which is "correct" for a historical dispute.
+ */
+export async function comparePolicyVersions(versionIdA: string, versionIdB: string): Promise<PolicyVersionDiffEntry[]> {
+  const [a, b] = await Promise.all([
+    db.leavePolicyVersion.findUniqueOrThrow({ where: { id: versionIdA } }),
+    db.leavePolicyVersion.findUniqueOrThrow({ where: { id: versionIdB } }),
+  ]);
+
+  const diffs: PolicyVersionDiffEntry[] = [];
+  const topLevelFields: Array<keyof typeof a> = [
+    "classification",
+    "entitlementModel",
+    "unit",
+    "roundingMode",
+    "roundingIncrement",
+    "effectiveFrom",
+    "effectiveUntil",
+  ];
+  for (const field of topLevelFields) {
+    const beforeVal = a[field];
+    const afterVal = b[field];
+    if (JSON.stringify(beforeVal) !== JSON.stringify(afterVal)) {
+      diffs.push({ path: field, before: beforeVal, after: afterVal });
+    }
+  }
+
+  // Shallow diff of the configuration JSON's top-level keys — a full deep
+  // diff isn't worth the complexity here; each key (entitlement, reset,
+  // carryForward, etc.) is itself a small structured object, and admins
+  // reviewing this care about which SECTION changed, then can inspect the
+  // two full configs side by side for the details.
+  const configA = a.configuration as Record<string, unknown>;
+  const configB = b.configuration as Record<string, unknown>;
+  const allKeys = new Set([...Object.keys(configA ?? {}), ...Object.keys(configB ?? {})]);
+  for (const key of allKeys) {
+    if (JSON.stringify(configA?.[key]) !== JSON.stringify(configB?.[key])) {
+      diffs.push({ path: `configuration.${key}`, before: configA?.[key], after: configB?.[key] });
+    }
+  }
+
+  return diffs;
+}

@@ -336,3 +336,64 @@ export async function getSchedulerRunsReport(filters: ReportFilters) {
     take: 500,
   });
 }
+
+/** Report 16: Expired Leave — CARRY_FORWARD_EXPIRY and COMP_OFF_EXPIRY entries (distinct from "Expiring" which is forward-looking). */
+export async function getExpiredLeaveReport(filters: ReportFilters) {
+  return db.leaveLedgerEntry.findMany({
+    where: {
+      orgId: filters.orgId,
+      type: { in: ["CARRY_FORWARD_EXPIRY", "COMP_OFF_EXPIRY"] },
+      ...(filters.leaveTypeId ? { leaveTypeId: filters.leaveTypeId } : {}),
+      ...(filters.fromDate || filters.toDate
+        ? { effectiveDate: { ...(filters.fromDate ? { gte: filters.fromDate } : {}), ...(filters.toDate ? { lte: filters.toDate } : {}) } }
+        : {}),
+    },
+    include: { user: { select: { name: true, employeeNumber: true } }, leaveType: { select: { name: true } } },
+    orderBy: { effectiveDate: "desc" },
+  });
+}
+
+/** Report 17: Policy Assignment — which employees are covered by which published policy, via live applicability evaluation. */
+export async function getPolicyAssignmentReport(filters: ReportFilters) {
+  const leaveTypes = await db.leaveType.findMany({
+    where: { orgId: filters.orgId, activeVersionId: { not: null } },
+  });
+
+  const { isPolicyApplicableToUser } = await import("@/modules/leave/eligibility");
+  const users = await db.user.findMany({
+    where: { orgId: filters.orgId, active: true },
+    select: { id: true, name: true, employeeNumber: true },
+  });
+
+  const results = [];
+  for (const leaveType of leaveTypes) {
+    if (!leaveType.activeVersionId) continue;
+    const assignedUsers = [];
+    for (const user of users) {
+      const applicable = await isPolicyApplicableToUser(leaveType.activeVersionId, user.id);
+      if (applicable) assignedUsers.push({ userId: user.id, name: user.name, employeeNumber: user.employeeNumber });
+    }
+    results.push({ leaveTypeId: leaveType.id, leaveTypeName: leaveType.name, assignedCount: assignedUsers.length, assignedUsers });
+  }
+  return results;
+}
+
+/** Report 18: Compliance Exceptions — published policies whose entitlement is below a statutory minimum (spec §27's checkPolicyCompliance, aggregated across all policies for the org rather than one at a time). */
+export async function getComplianceExceptionsReport(filters: ReportFilters, jurisdictionCountry: string, jurisdictionState?: string) {
+  const { checkPolicyCompliance } = await import("@/modules/leave/compliance");
+
+  const publishedVersions = await db.leavePolicyVersion.findMany({
+    where: { status: "PUBLISHED", leaveType: { orgId: filters.orgId } },
+    include: { leaveType: true },
+  });
+
+  const exceptions = [];
+  for (const version of publishedVersions) {
+    const results = await checkPolicyCompliance(version.id, jurisdictionCountry, jurisdictionState ?? null, version.classification);
+    const flagged = results.filter((r) => r.belowMinimum);
+    if (flagged.length > 0) {
+      exceptions.push({ leaveTypeId: version.leaveTypeId, leaveTypeName: version.leaveType.name, version: version.version, issues: flagged });
+    }
+  }
+  return exceptions;
+}

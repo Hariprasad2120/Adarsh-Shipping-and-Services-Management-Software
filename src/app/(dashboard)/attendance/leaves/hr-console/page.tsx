@@ -4,6 +4,7 @@ import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { WorkspaceState } from "@/components/layout/workspace";
 import { HrConsoleClient } from "./hr-console-client";
+import { ShieldAlert } from "lucide-react";
 
 export default async function LeaveHrConsolePage() {
   const session = await getSession();
@@ -14,6 +15,8 @@ export default async function LeaveHrConsolePage() {
     return (
       <WorkspaceState
         variant="danger"
+        eyebrow="Leave management"
+        icon={<ShieldAlert aria-hidden="true" />}
         title="Access denied"
         description="You need HR/admin leave-management permissions to view this console. Contact your administrator if you believe this is a mistake."
       />

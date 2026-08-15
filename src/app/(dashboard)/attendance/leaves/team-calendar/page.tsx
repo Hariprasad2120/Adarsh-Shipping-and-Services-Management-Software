@@ -4,6 +4,7 @@ import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { WorkspaceState } from "@/components/layout/workspace";
 import { TeamCalendarClient } from "./team-calendar-client";
+import { ShieldAlert } from "lucide-react";
 
 export default async function TeamCalendarPage() {
   const session = await getSession();
@@ -14,6 +15,8 @@ export default async function TeamCalendarPage() {
     return (
       <WorkspaceState
         variant="danger"
+        eyebrow="Leave management"
+        icon={<ShieldAlert aria-hidden="true" />}
         title="Access denied"
         description="You need leave-approval permissions to view team leave calendars. Contact your administrator if you believe this is a mistake."
       />

@@ -17,6 +17,9 @@ import {
   getAccrualHistoryReport,
   getBalanceAdjustmentsReport,
   getSchedulerRunsReport,
+  getExpiredLeaveReport,
+  getPolicyAssignmentReport,
+  getComplianceExceptionsReport,
 } from "@/modules/leave/reports";
 
 const REPORT_TYPES = [
@@ -35,6 +38,9 @@ const REPORT_TYPES = [
   "accrual-history",
   "balance-adjustments",
   "scheduler-runs",
+  "expired",
+  "policy-assignment",
+  "compliance-exceptions",
 ] as const;
 
 /**
@@ -99,6 +105,16 @@ export async function GET(req: NextRequest) {
         return ok(await getBalanceAdjustmentsReport(filters));
       case "scheduler-runs":
         return ok(await getSchedulerRunsReport(filters));
+      case "expired":
+        return ok(await getExpiredLeaveReport(filters));
+      case "policy-assignment":
+        return ok(await getPolicyAssignmentReport(filters));
+      case "compliance-exceptions": {
+        const country = searchParams.get("country");
+        if (!country) return err("country query param is required for compliance-exceptions");
+        const state = searchParams.get("state") ?? undefined;
+        return ok(await getComplianceExceptionsReport(filters, country, state));
+      }
       default:
         return err("Unknown report type");
     }
