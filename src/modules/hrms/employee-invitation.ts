@@ -631,6 +631,20 @@ export async function acceptEmployeeInvitation(params: {
       ),
     );
   }
+  // New-joiner leave balance automation (closure-pass gap): previously
+  // initLeaveBalancesForUser existed but had no caller anywhere, so every
+  // new hire required a manual admin action before they had any leave
+  // balance at all. Best-effort, matching the appraisal-sync pattern above
+  // — a failure here must not block account activation.
+  {
+    const { initLeaveBalancesForUser } = await import("@/modules/attendance/service");
+    await initLeaveBalancesForUser(invitation.userId, invitation.orgId, now.getFullYear()).catch((error) =>
+      console.error(
+        "[employee-invitation] Leave balance initialisation failed:",
+        error,
+      ),
+    );
+  }
   await logSecurityEvent({
     event: "EMPLOYEE_INVITATION_ACCEPTED",
     outcome: "SUCCESS",
