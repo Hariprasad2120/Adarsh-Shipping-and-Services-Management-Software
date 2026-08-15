@@ -1,13 +1,24 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/rbac";
+import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
+import { WorkspaceState } from "@/components/layout/workspace";
 import { PoliciesClient } from "./policies-client";
 
 export default async function LeavePoliciesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  await requirePermission(session.user.id, "attendance.leave.manage");
+
+  const authorized = await can(session.user.id, "attendance.leave.manage");
+  if (!authorized) {
+    return (
+      <WorkspaceState
+        variant="danger"
+        title="Access denied"
+        description="You need HR/admin leave-management permissions to configure leave policies. Contact your administrator if you believe this is a mistake."
+      />
+    );
+  }
 
   const [leaveTypes, departments, branches] = await Promise.all([
     db.leaveType.findMany({

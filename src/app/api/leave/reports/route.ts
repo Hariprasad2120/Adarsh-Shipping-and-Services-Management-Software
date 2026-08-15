@@ -11,6 +11,12 @@ import {
   getLopReport,
   getExpiringLeaveReport,
   getApprovalTurnaroundReport,
+  getCarryForwardReport,
+  getEncashmentReport,
+  getCompOffReport,
+  getAccrualHistoryReport,
+  getBalanceAdjustmentsReport,
+  getSchedulerRunsReport,
 } from "@/modules/leave/reports";
 
 const REPORT_TYPES = [
@@ -23,6 +29,12 @@ const REPORT_TYPES = [
   "lop",
   "expiring",
   "approval-turnaround",
+  "carry-forward",
+  "encashment",
+  "comp-off",
+  "accrual-history",
+  "balance-adjustments",
+  "scheduler-runs",
 ] as const;
 
 /**
@@ -75,6 +87,18 @@ export async function GET(req: NextRequest) {
         return ok(await getExpiringLeaveReport(filters, Number(searchParams.get("daysAhead")) || 60));
       case "approval-turnaround":
         return ok(await getApprovalTurnaroundReport(filters));
+      case "carry-forward":
+        return ok(await getCarryForwardReport(filters));
+      case "encashment":
+        return ok(await getEncashmentReport(filters));
+      case "comp-off":
+        return ok(await getCompOffReport(filters));
+      case "accrual-history":
+        return ok(await getAccrualHistoryReport(filters));
+      case "balance-adjustments":
+        return ok(await getBalanceAdjustmentsReport(filters));
+      case "scheduler-runs":
+        return ok(await getSchedulerRunsReport(filters));
       default:
         return err("Unknown report type");
     }

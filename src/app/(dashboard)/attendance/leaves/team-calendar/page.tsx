@@ -1,13 +1,24 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/rbac";
+import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
+import { WorkspaceState } from "@/components/layout/workspace";
 import { TeamCalendarClient } from "./team-calendar-client";
 
 export default async function TeamCalendarPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  await requirePermission(session.user.id, "attendance.leave.approve");
+
+  const authorized = await can(session.user.id, "attendance.leave.approve");
+  if (!authorized) {
+    return (
+      <WorkspaceState
+        variant="danger"
+        title="Access denied"
+        description="You need leave-approval permissions to view team leave calendars. Contact your administrator if you believe this is a mistake."
+      />
+    );
+  }
 
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));

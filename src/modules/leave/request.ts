@@ -279,6 +279,23 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
 
   if (!isFinalDecision) {
     const nextStep = remainingSteps[0];
+
+    // SLA due date for the newly-activated step (spec §11) — mirrors the
+    // slaHours logic in approval.ts's step-1 case, since only one step is
+    // ever PENDING at a time and this is where step 2+ first becomes it.
+    if (request.policyVersionId) {
+      const pinnedVersion = await db.leavePolicyVersion.findUnique({ where: { id: request.policyVersionId } });
+      if (pinnedVersion) {
+        const config = parsePolicyConfig(pinnedVersion.configuration);
+        if (config.approvalRouting.slaHours) {
+          await db.leaveApprovalStep.update({
+            where: { id: nextStep.id },
+            data: { slaDueAt: new Date(Date.now() + config.approvalRouting.slaHours * 60 * 60 * 1000) },
+          });
+        }
+      }
+    }
+
     const updated = await db.leaveRequest.update({
       where: { id: input.requestId },
       data: { currentApprovalStepId: nextStep.id },

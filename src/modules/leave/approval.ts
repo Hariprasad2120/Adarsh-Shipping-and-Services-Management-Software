@@ -124,13 +124,22 @@ export async function buildApprovalSteps(
     const approverUserId = naturalApproverUserId
       ? await resolveActiveApprover(naturalApproverUserId)
       : naturalApproverUserId;
+    // SLA due date (spec §11): only the first step gets a due date at
+    // creation time, since later steps aren't PENDING yet — decideLeaveRequest
+    // sets slaDueAt on the newly-activated step when it advances (see
+    // request.ts's !isFinalDecision branch).
+    const slaDueAt =
+      stepConfig.sequence === 1 && config.approvalRouting.slaHours
+        ? new Date(Date.now() + config.approvalRouting.slaHours * 60 * 60 * 1000)
+        : null;
     const step = await db.leaveApprovalStep.create({
       data: {
         requestId,
         sequence: stepConfig.sequence,
         approverType: stepConfig.approverType,
         approverUserId,
-        status: stepConfig.sequence === 1 ? "PENDING" : "PENDING",
+        status: "PENDING",
+        slaDueAt,
       },
     });
     created.push(step);

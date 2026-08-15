@@ -236,3 +236,103 @@ export async function getApprovalTurnaroundReport(filters: ReportFilters) {
     sampleSize: requests.length,
   };
 }
+
+/** Report 10: Carry Forward — CARRY_FORWARD ledger entries in a period. */
+export async function getCarryForwardReport(filters: ReportFilters) {
+  return db.leaveLedgerEntry.findMany({
+    where: {
+      orgId: filters.orgId,
+      type: "CARRY_FORWARD",
+      ...(filters.leaveTypeId ? { leaveTypeId: filters.leaveTypeId } : {}),
+      ...(filters.fromDate || filters.toDate
+        ? { effectiveDate: { ...(filters.fromDate ? { gte: filters.fromDate } : {}), ...(filters.toDate ? { lte: filters.toDate } : {}) } }
+        : {}),
+    },
+    include: { user: { select: { name: true, employeeNumber: true } }, leaveType: { select: { name: true } } },
+    orderBy: { effectiveDate: "desc" },
+  });
+}
+
+/** Report 11: Encashment — ENCASHMENT ledger entries, payroll-handoff shaped. */
+export async function getEncashmentReport(filters: ReportFilters) {
+  const entries = await db.leaveLedgerEntry.findMany({
+    where: {
+      orgId: filters.orgId,
+      type: "ENCASHMENT",
+      ...(filters.leaveTypeId ? { leaveTypeId: filters.leaveTypeId } : {}),
+      ...(filters.fromDate || filters.toDate
+        ? { effectiveDate: { ...(filters.fromDate ? { gte: filters.fromDate } : {}), ...(filters.toDate ? { lte: filters.toDate } : {}) } }
+        : {}),
+    },
+    include: { user: { select: { name: true, employeeNumber: true } }, leaveType: { select: { name: true } } },
+    orderBy: { effectiveDate: "desc" },
+  });
+  return entries.map((e) => ({
+    userId: e.userId,
+    name: e.user.name,
+    employeeNumber: e.user.employeeNumber,
+    leaveTypeName: e.leaveType.name,
+    units: e.quantity.abs().toNumber(),
+    effectiveDate: e.effectiveDate,
+    source: (e.metadata as { encashmentSource?: string } | null)?.encashmentSource ?? null,
+  }));
+}
+
+/** Report 12: Comp-Off — all CompOffCredit rows with status. */
+export async function getCompOffReport(filters: ReportFilters) {
+  return db.compOffCredit.findMany({
+    where: {
+      orgId: filters.orgId,
+      ...(filters.fromDate || filters.toDate
+        ? { earnedDate: { ...(filters.fromDate ? { gte: filters.fromDate } : {}), ...(filters.toDate ? { lte: filters.toDate } : {}) } }
+        : {}),
+    },
+    include: { user: { select: { name: true, employeeNumber: true } } },
+    orderBy: { earnedDate: "desc" },
+  });
+}
+
+/** Report 13: Accrual History — ACCRUAL ledger entries in a period. */
+export async function getAccrualHistoryReport(filters: ReportFilters) {
+  return db.leaveLedgerEntry.findMany({
+    where: {
+      orgId: filters.orgId,
+      type: "ACCRUAL",
+      ...(filters.leaveTypeId ? { leaveTypeId: filters.leaveTypeId } : {}),
+      ...(filters.fromDate || filters.toDate
+        ? { effectiveDate: { ...(filters.fromDate ? { gte: filters.fromDate } : {}), ...(filters.toDate ? { lte: filters.toDate } : {}) } }
+        : {}),
+    },
+    include: { user: { select: { name: true, employeeNumber: true } }, leaveType: { select: { name: true } } },
+    orderBy: { effectiveDate: "desc" },
+    take: 5000,
+  });
+}
+
+/** Report 14: Balance Adjustments — MANUAL_CREDIT/MANUAL_DEBIT/ADJUSTMENT ledger entries. */
+export async function getBalanceAdjustmentsReport(filters: ReportFilters) {
+  return db.leaveLedgerEntry.findMany({
+    where: {
+      orgId: filters.orgId,
+      type: { in: ["MANUAL_CREDIT", "MANUAL_DEBIT", "ADJUSTMENT"] },
+      ...(filters.leaveTypeId ? { leaveTypeId: filters.leaveTypeId } : {}),
+      ...(filters.fromDate || filters.toDate
+        ? { effectiveDate: { ...(filters.fromDate ? { gte: filters.fromDate } : {}), ...(filters.toDate ? { lte: filters.toDate } : {}) } }
+        : {}),
+    },
+    include: {
+      user: { select: { name: true, employeeNumber: true } },
+      leaveType: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/** Report 15: Scheduler Runs — LeaveSchedulerRun history (observability, spec §44). */
+export async function getSchedulerRunsReport(filters: ReportFilters) {
+  return db.leaveSchedulerRun.findMany({
+    where: { orgId: filters.orgId },
+    orderBy: { startedAt: "desc" },
+    take: 500,
+  });
+}
