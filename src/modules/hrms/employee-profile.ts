@@ -313,7 +313,7 @@ export async function updateEmployeeHrmsProfile(params: {
   const { orgId, userId, actorId, input } = params;
   const existingUser = await db.user.findFirst({
     where: { id: userId, orgId },
-    select: { id: true, active: true },
+    select: { id: true, active: true, branchId: true, departmentId: true, divisionId: true, designation: true, employmentType: true },
   });
   if (!existingUser) throw new Error("Employee not found");
   if (input.managerId === userId || input.tlId === userId) {
@@ -460,6 +460,31 @@ export async function updateEmployeeHrmsProfile(params: {
       joinDate: new Date(input.joinDate),
       priorExperienceYears: input.priorExperienceYears ?? 0,
     });
+  }
+
+  // Leave-policy applicability re-evaluation on employee move (closure-pass
+  // gap): applicability itself is already evaluated live off the user's
+  // CURRENT branch/department/etc for any new leave request going forward
+  // (isPolicyApplicableToUser reads db.user directly, no cached snapshot),
+  // so a move alone cannot desync a future request's calculation. What a
+  // move can desync is standing LeaveBalance rows: a branch/department
+  // transfer can make the employee newly eligible for a leave type they
+  // never had an opening balance for. Best-effort, same pattern as the
+  // appraisal sync above — never blocks the profile save.
+  const orgMoved =
+    existingUser.branchId !== input.branchId ||
+    existingUser.departmentId !== input.departmentId ||
+    existingUser.divisionId !== input.divisionId ||
+    existingUser.designation !== (input.designation || null) ||
+    existingUser.employmentType !== (input.employmentType || null);
+  if (orgMoved && input.active) {
+    const { initLeaveBalancesForUser } = await import("@/modules/attendance/service");
+    await initLeaveBalancesForUser(userId, orgId, new Date().getFullYear()).catch((error: unknown) =>
+      console.error(
+        "[employee-profile] Leave balance re-evaluation on employee move failed:",
+        error,
+      ),
+    );
   }
 
   return updatedProfile;

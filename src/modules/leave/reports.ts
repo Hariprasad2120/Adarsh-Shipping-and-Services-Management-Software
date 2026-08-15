@@ -397,3 +397,48 @@ export async function getComplianceExceptionsReport(filters: ReportFilters, juri
   }
   return exceptions;
 }
+
+/**
+ * Report 19: Stale Leave Balances — employees who hold a non-zero balance
+ * for a leave type they are no longer applicable to under its current
+ * published policy. The complement of Report 17 (which shows who IS
+ * currently assigned): this surfaces the drift left behind by an employee
+ * move (branch/department/designation change) where a balance was earned
+ * under the old assignment and never explicitly zeroed — HR review, never
+ * an automatic write, since a lateral move should not silently forfeit
+ * genuinely-earned leave (spec closure-pass "applicability re-evaluation
+ * on employee move").
+ */
+export async function getStaleLeaveBalancesReport(filters: ReportFilters, year: number) {
+  const { isPolicyApplicableToUser } = await import("@/modules/leave/eligibility");
+
+  const balances = await db.leaveBalance.findMany({
+    where: {
+      year,
+      leaveType: { orgId: filters.orgId, activeVersionId: { not: null } },
+      balance: { not: 0 },
+    },
+    include: {
+      user: { select: { id: true, name: true, employeeNumber: true, active: true } },
+      leaveType: { select: { id: true, name: true, activeVersionId: true } },
+    },
+  });
+
+  const stale = [];
+  for (const balance of balances) {
+    if (!balance.leaveType.activeVersionId) continue;
+    if (!balance.user.active) continue; // exited employees are a separate concern (employee-exit.ts), not a "move" drift
+    const applicable = await isPolicyApplicableToUser(balance.leaveType.activeVersionId, balance.userId);
+    if (applicable) continue;
+    stale.push({
+      userId: balance.userId,
+      userName: balance.user.name,
+      employeeNumber: balance.user.employeeNumber,
+      leaveTypeId: balance.leaveTypeId,
+      leaveTypeName: balance.leaveType.name,
+      year,
+      balance: balance.balance.toNumber(),
+    });
+  }
+  return stale;
+}

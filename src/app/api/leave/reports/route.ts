@@ -20,6 +20,7 @@ import {
   getExpiredLeaveReport,
   getPolicyAssignmentReport,
   getComplianceExceptionsReport,
+  getStaleLeaveBalancesReport,
 } from "@/modules/leave/reports";
 
 const REPORT_TYPES = [
@@ -41,6 +42,7 @@ const REPORT_TYPES = [
   "expired",
   "policy-assignment",
   "compliance-exceptions",
+  "stale-balances",
 ] as const;
 
 /**
@@ -115,6 +117,8 @@ export async function GET(req: NextRequest) {
         const state = searchParams.get("state") ?? undefined;
         return ok(await getComplianceExceptionsReport(filters, country, state));
       }
+      case "stale-balances":
+        return ok(await getStaleLeaveBalancesReport(filters, year));
       default:
         return err("Unknown report type");
     }
