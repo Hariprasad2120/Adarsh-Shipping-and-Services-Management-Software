@@ -44,6 +44,10 @@ function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+function addDaysToDate(date: Date, days: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
+}
+
 function* eachDateKey(fromKey: string, toKey: string): Generator<string> {
   let cursor = fromKey;
   while (cursor <= toKey) {
@@ -167,26 +171,78 @@ export async function calculateLeaveRequest(
     !input.halfDay &&
     requestedUnits > input.config.sandwich.activationThresholdUnits
   ) {
-    const sandwichedDates: string[] = [];
-    for (const key of allDateKeys) {
+    const sandwichKeyMatches = (key: string) => {
       const isHoliday = holidayDateKeys.includes(key);
       const isWorking = isWorkingDate(key, calendar);
-      if (isWorking) continue;
-      if (isHoliday && !input.config.sandwich.includeHolidays) continue;
-      if (!isHoliday && !isWorking && !input.config.sandwich.includeWeekends) continue;
-      sandwichedDates.push(key);
+      if (isWorking) return false;
+      if (isHoliday && !input.config.sandwich.includeHolidays) return false;
+      if (!isHoliday && !isWorking && !input.config.sandwich.includeWeekends) return false;
+      return true;
+    };
+
+    const sandwichedDates: string[] = [];
+    for (const key of allDateKeys) {
+      if (sandwichKeyMatches(key)) sandwichedDates.push(key);
     }
+
+    // Cross-request boundary case: this request's own range has zero
+    // non-working days inside it (e.g. a single Friday), but it is directly
+    // adjacent to an existing approved/pending request of the SAME leave
+    // type across the weekend/holiday gap (e.g. a separate Monday request)
+    // — splitting one sandwich into two single-day requests must not let it
+    // escape the rule (spec closure-pass sandwich/clubbing edge cases).
+    // Only counts the gap once, attributed to whichever request is
+    // calculated later, so the two requests never double-deduct the same
+    // gap days between them.
+    const neighbours = await db.leaveRequest.findMany({
+      where: {
+        userId: input.userId,
+        leaveTypeId: input.leaveTypeId,
+        status: { in: ["pending", "PENDING_APPROVAL", "approved", "APPROVED"] },
+        OR: [
+          { toDate: { gte: addDaysToDate(input.fromDate, -7), lt: input.fromDate } },
+          { fromDate: { gt: input.toDate, lte: addDaysToDate(input.toDate, 7) } },
+        ],
+      },
+    });
+
+    const scanGap = (start: string, end: string, direction: 1 | -1) => {
+      const gapDates: string[] = [];
+      let cursor = start;
+      while (direction === 1 ? cursor < end : cursor > end) {
+        if (!sandwichKeyMatches(cursor)) return null; // gap broken by a real working day
+        gapDates.push(cursor);
+        const [y, m, d] = cursor.split("-").map(Number);
+        cursor = new Date(Date.UTC(y!, m! - 1, d! + direction)).toISOString().slice(0, 10);
+      }
+      return gapDates;
+    };
+
+    const before = neighbours.find((r) => toDateKey(r.toDate) < fromKey);
+    if (before) {
+      const gapStart = toDateKey(addDaysToDate(before.toDate, 1));
+      const gap = scanGap(gapStart, fromKey, 1);
+      if (gap) for (const key of gap) if (!sandwichedDates.includes(key)) sandwichedDates.push(key);
+    }
+    const after = neighbours.find((r) => toDateKey(r.fromDate) > toKey);
+    if (after) {
+      const gapStart = toDateKey(addDaysToDate(input.toDate, 1));
+      const gap = scanGap(gapStart, toDateKey(after.fromDate), 1);
+      if (gap) for (const key of gap) if (!sandwichedDates.includes(key)) sandwichedDates.push(key);
+    }
+
     if (sandwichedDates.length > 0) {
       const totalDeduction = requestedUnits + sandwichedDates.length;
       sandwichBreakdown = {
         requestedUnits,
         sandwichedUnits: sandwichedDates.length,
         totalDeduction,
-        dates: sandwichedDates,
+        dates: sandwichedDates.sort(),
       };
       explanation.push(
         `Sandwich rule active: ${sandwichedDates.length} non-working day(s) between/adjacent to ` +
-          `requested leave are counted, total deduction = ${totalDeduction}.`,
+          `requested leave (including any adjacent existing request of the same leave type) are counted, ` +
+          `total deduction = ${totalDeduction}.`,
       );
       requestedUnits = totalDeduction;
     }

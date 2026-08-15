@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   holidayFindMany: vi.fn(),
   workingCalendarFindUnique: vi.fn(),
   leaveBalanceFindUnique: vi.fn(),
+  leaveRequestFindMany: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -13,6 +14,7 @@ vi.mock("@/lib/db", () => ({
     holiday: { findMany: mocks.holidayFindMany },
     workingCalendar: { findUnique: mocks.workingCalendarFindUnique },
     leaveBalance: { findUnique: mocks.leaveBalanceFindUnique },
+    leaveRequest: { findMany: mocks.leaveRequestFindMany },
   },
 }));
 
@@ -61,6 +63,7 @@ describe("calculateLeaveRequest", () => {
     mocks.holidayFindMany.mockResolvedValue([]);
     mocks.workingCalendarFindUnique.mockResolvedValue(WORKWEEK_MON_SAT);
     mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
+    mocks.leaveRequestFindMany.mockResolvedValue([]);
   });
 
   it("counts a Mon-Fri request as 5 working days with no weekend/holiday", async () => {
@@ -168,6 +171,79 @@ describe("calculateLeaveRequest", () => {
     expect(resultWithWeekendOff.sandwichBreakdown).not.toBeNull();
     expect(resultWithWeekendOff.requestedUnits).toBe(4); // 2 working + 2 sandwiched
     void result;
+  });
+
+  it("applies sandwich rule across two SEPARATE requests of the same leave type split around a weekend", async () => {
+    // Splitting Fri+Mon into two individual single-day requests must not
+    // let the weekend escape the sandwich rule — each request's own date
+    // range alone has zero non-working days, so the rule can only catch
+    // this by looking at the adjacent existing request (closure-pass
+    // sandwich/clubbing edge-case fix).
+    mocks.workingCalendarFindUnique.mockResolvedValue({
+      ...WORKWEEK_MON_SAT,
+      workingDays: "1,2,3,4,5", // Mon-Fri only
+    });
+    const config = baseConfig({
+      sandwich: { enabled: true, includeWeekends: true, includeHolidays: true, activationThresholdUnits: 0 },
+    });
+
+    // An already-approved Friday request exists; now the Monday request is
+    // being calculated and must pick up the intervening Sat+Sun.
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { id: "req-friday", fromDate: new Date("2026-08-21"), toDate: new Date("2026-08-21") },
+    ]);
+
+    const mondayResult = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config,
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-24"), // Monday
+      toDate: new Date("2026-08-24"),
+      halfDay: false,
+    });
+
+    expect(mondayResult.sandwichBreakdown).not.toBeNull();
+    expect(mondayResult.sandwichBreakdown?.dates).toEqual(["2026-08-22", "2026-08-23"]);
+    expect(mondayResult.requestedUnits).toBe(3); // 1 working (Monday) + 2 sandwiched (Sat+Sun)
+  });
+
+  it("does not apply cross-request sandwich when the gap includes a genuine working day", async () => {
+    mocks.workingCalendarFindUnique.mockResolvedValue({
+      ...WORKWEEK_MON_SAT,
+      workingDays: "1,2,3,4,5",
+    });
+    const config = baseConfig({
+      sandwich: { enabled: true, includeWeekends: true, includeHolidays: true, activationThresholdUnits: 0 },
+    });
+
+    // Existing request ends the PRECEDING Friday (a full week earlier) —
+    // the gap back to this Monday includes real working days, so it must
+    // not be swept into the sandwich.
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { id: "req-old-friday", fromDate: new Date("2026-08-14"), toDate: new Date("2026-08-14") },
+    ]);
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config,
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-24"), // Monday, a week+ after the old request
+      toDate: new Date("2026-08-24"),
+      halfDay: false,
+    });
+
+    expect(result.sandwichBreakdown).toBeNull();
+    expect(result.requestedUnits).toBe(1);
   });
 
   it("does not apply sandwich rule when disabled, even across a weekend", async () => {
