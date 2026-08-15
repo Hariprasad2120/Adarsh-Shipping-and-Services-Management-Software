@@ -134,8 +134,9 @@ function BalanceAdjustmentPanel({
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--mnx-text)]">Employee</label>
+            <label htmlFor="adjust-employee" className="text-xs font-medium text-[var(--mnx-text)]">Employee</label>
             <DropdownSelect
+              id="adjust-employee"
               value={userId}
               onValueChange={setUserId}
               options={employees.map((e) => ({
@@ -147,8 +148,9 @@ function BalanceAdjustmentPanel({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--mnx-text)]">Leave Type</label>
+            <label htmlFor="adjust-leave-type" className="text-xs font-medium text-[var(--mnx-text)]">Leave Type</label>
             <DropdownSelect
+              id="adjust-leave-type"
               value={leaveTypeId}
               onValueChange={setLeaveTypeId}
               options={leaveTypes.map((lt) => ({ value: lt.id, label: lt.name }))}
@@ -156,14 +158,14 @@ function BalanceAdjustmentPanel({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--mnx-text)]">
+            <label htmlFor="adjust-quantity" className="text-xs font-medium text-[var(--mnx-text)]">
               Quantity (+credit / -debit)
             </label>
-            <Input type="number" step="0.5" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+            <Input id="adjust-quantity" type="number" step="0.5" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--mnx-text)]">Reason</label>
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} required />
+            <label htmlFor="adjust-reason" className="text-xs font-medium text-[var(--mnx-text)]">Reason</label>
+            <Input id="adjust-reason" value={reason} onChange={(e) => setReason(e.target.value)} required />
           </div>
         </div>
         <MnxAction
@@ -244,8 +246,9 @@ function GrantsPanel({
         <form onSubmit={submit} className="space-y-3 px-5 py-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--mnx-text)]">Employee</label>
+              <label htmlFor="grant-employee" className="text-xs font-medium text-[var(--mnx-text)]">Employee</label>
               <DropdownSelect
+                id="grant-employee"
                 value={userId}
                 onValueChange={setUserId}
                 options={employees.map((e) => ({ value: e.id, label: e.name }))}
@@ -254,8 +257,9 @@ function GrantsPanel({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--mnx-text)]">Leave Type</label>
+              <label htmlFor="grant-leave-type" className="text-xs font-medium text-[var(--mnx-text)]">Leave Type</label>
               <DropdownSelect
+                id="grant-leave-type"
                 value={leaveTypeId}
                 onValueChange={setLeaveTypeId}
                 options={leaveTypes.map((lt) => ({ value: lt.id, label: lt.name }))}
@@ -263,12 +267,12 @@ function GrantsPanel({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--mnx-text)]">Amount</label>
-              <Input type="number" step="0.5" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+              <label htmlFor="grant-amount" className="text-xs font-medium text-[var(--mnx-text)]">Amount</label>
+              <Input id="grant-amount" type="number" step="0.5" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--mnx-text)]">Reason</label>
-              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Maternity, bereavement..." required />
+              <label htmlFor="grant-reason" className="text-xs font-medium text-[var(--mnx-text)]">Reason</label>
+              <Input id="grant-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Maternity, bereavement..." required />
             </div>
           </div>
           <MnxAction

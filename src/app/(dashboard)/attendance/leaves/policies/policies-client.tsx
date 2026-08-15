@@ -195,16 +195,17 @@ export function PoliciesClient({
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Name</label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Annual Leave" />
+                <label htmlFor="policy-name" className="text-xs font-medium text-[var(--mnx-text)]">Name</label>
+                <Input id="policy-name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Annual Leave" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Code</label>
-                <Input value={code} onChange={(e) => setCode(e.target.value)} required placeholder="AL" />
+                <label htmlFor="policy-code" className="text-xs font-medium text-[var(--mnx-text)]">Code</label>
+                <Input id="policy-code" value={code} onChange={(e) => setCode(e.target.value)} required placeholder="AL" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Classification</label>
+                <label htmlFor="policy-classification" className="text-xs font-medium text-[var(--mnx-text)]">Classification</label>
                 <DropdownSelect
+                  id="policy-classification"
                   value={classification}
                   onValueChange={setClassification}
                   options={[
@@ -217,8 +218,9 @@ export function PoliciesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Annual entitlement (days)</label>
+                <label htmlFor="policy-annual-amount" className="text-xs font-medium text-[var(--mnx-text)]">Annual entitlement (days)</label>
                 <Input
+                  id="policy-annual-amount"
                   type="number"
                   min="0"
                   value={annualAmount}
@@ -231,16 +233,18 @@ export function PoliciesClient({
             <p className="text-xs font-medium text-[var(--mnx-text)]">Applicability (optional)</p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Restrict to department</label>
+                <label htmlFor="policy-department" className="text-xs font-medium text-[var(--mnx-text)]">Restrict to department</label>
                 <DropdownSelect
+                  id="policy-department"
                   value={restrictToDepartmentId}
                   onValueChange={setRestrictToDepartmentId}
                   options={[{ value: "", label: "All departments" }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Restrict to branch</label>
+                <label htmlFor="policy-branch" className="text-xs font-medium text-[var(--mnx-text)]">Restrict to branch</label>
                 <DropdownSelect
+                  id="policy-branch"
                   value={restrictToBranchId}
                   onValueChange={setRestrictToBranchId}
                   options={[{ value: "", label: "All branches" }, ...branches.map((b) => ({ value: b.id, label: b.name }))]}
@@ -251,10 +255,11 @@ export function PoliciesClient({
             <p className="text-xs font-medium text-[var(--mnx-text)]">Restrictions (optional)</p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                <label htmlFor="policy-attachment-above" className="text-xs font-medium text-[var(--mnx-text)]">
                   Require attachment above (days)
                 </label>
                 <Input
+                  id="policy-attachment-above"
                   type="number"
                   min="0"
                   value={requireAttachmentAbove}
@@ -263,8 +268,9 @@ export function PoliciesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Max consecutive days</label>
+                <label htmlFor="policy-max-consecutive" className="text-xs font-medium text-[var(--mnx-text)]">Max consecutive days</label>
                 <Input
+                  id="policy-max-consecutive"
                   type="number"
                   min="0"
                   value={maxConsecutiveDays}
@@ -273,8 +279,9 @@ export function PoliciesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">Minimum notice (days)</label>
+                <label htmlFor="policy-min-notice" className="text-xs font-medium text-[var(--mnx-text)]">Minimum notice (days)</label>
                 <Input
+                  id="policy-min-notice"
                   type="number"
                   min="0"
                   value={minNoticeDays}
@@ -290,8 +297,9 @@ export function PoliciesClient({
               rules, and multi-level approval routing beyond a single manager step can be refined afterward via
               the API — a full step-by-step wizard for those is a follow-up.
             </p>
-            <label className="flex items-center gap-2 text-sm text-[var(--mnx-text)]">
+            <label htmlFor="policy-publish-now" className="flex items-center gap-2 text-sm text-[var(--mnx-text)]">
               <MnxInput
+                id="policy-publish-now"
                 type="checkbox"
                 checked={publishNow}
                 onChange={(e) => setPublishNow(e.target.checked)}

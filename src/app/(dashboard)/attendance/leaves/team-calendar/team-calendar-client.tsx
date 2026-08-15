@@ -60,7 +60,7 @@ export function TeamCalendarClient({
         <OperationalDataTableHeader eyebrow={monthLabel} title="Team Leave Calendar" />
 
         {overlapWarnings.length > 0 && (
-          <div className="border-b border-[var(--mnx-border)] bg-[var(--mnx-warning-bg,inherit)] px-5 py-3 text-xs text-[var(--mnx-text)]">
+          <div role="status" className="border-b border-[var(--mnx-border)] bg-[var(--mnx-warning-bg,inherit)] px-5 py-3 text-xs text-[var(--mnx-text)]">
             {[...new Set(overlapWarnings)].map((w) => (
               <p key={w}>⚠ {w}</p>
             ))}

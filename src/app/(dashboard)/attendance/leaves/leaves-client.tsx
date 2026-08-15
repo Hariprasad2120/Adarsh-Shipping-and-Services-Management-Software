@@ -251,10 +251,11 @@ export function LeavesClient({
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                <label htmlFor="leave-request-type" className="text-xs font-medium text-[var(--mnx-text)]">
                   Leave Type
                 </label>
                 <DropdownSelect
+                  id="leave-request-type"
                   name="leaveTypeId"
                   onValueChange={setLeaveTypeId}
                   options={leaveTypes.map((leaveType) => ({
@@ -266,10 +267,11 @@ export function LeavesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                <label htmlFor="leave-request-from" className="text-xs font-medium text-[var(--mnx-text)]">
                   From
                 </label>
                 <Input
+                  id="leave-request-from"
                   type="date"
                   name="fromDate"
                   onChange={(e) => setFromDate(e.target.value)}
@@ -279,10 +281,11 @@ export function LeavesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                <label htmlFor="leave-request-to" className="text-xs font-medium text-[var(--mnx-text)]">
                   To
                 </label>
                 <Input
+                  id="leave-request-to"
                   type="date"
                   name="toDate"
                   onChange={(e) => setToDate(e.target.value)}
@@ -293,8 +296,9 @@ export function LeavesClient({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm text-[var(--mnx-text)]">
+              <label htmlFor="leave-request-halfday" className="flex items-center gap-2 text-sm text-[var(--mnx-text)]">
                 <MnxInput
+                  id="leave-request-halfday"
                   checked={halfDay}
                   name="halfDay"
                   onChange={(e) => setHalfDay(e.target.checked)}
@@ -303,7 +307,11 @@ export function LeavesClient({
                 />{" "}
                 Half day
               </label>
+              <label htmlFor="leave-request-notes" className="sr-only">
+                Notes (optional)
+              </label>
               <Input
+                id="leave-request-notes"
                 type="text"
                 name="notes"
                 onChange={(e) => setNotes(e.target.value)}
@@ -314,10 +322,10 @@ export function LeavesClient({
             </div>
 
             {previewLoading && (
-              <p className="text-xs text-[var(--mnx-muted)]">Calculating…</p>
+              <p className="text-xs text-[var(--mnx-muted)]" role="status">Calculating…</p>
             )}
             {visiblePreview && !previewLoading && (
-              <div className="rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-3 text-xs text-[var(--mnx-text)]">
+              <div className="rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-3 text-xs text-[var(--mnx-text)]" aria-live="polite">
                 <p className="mb-1 font-medium">Calculation Summary</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
                   <span>Requested: {visiblePreview.requestedUnits}</span>
@@ -332,10 +340,10 @@ export function LeavesClient({
                   <span>Balance after: {visiblePreview.balanceAfter}</span>
                 </div>
                 {visiblePreview.warnings.map((w) => (
-                  <p key={w.code} className="mt-1 text-[var(--mnx-warning-text,inherit)]">⚠ {w.message}</p>
+                  <p key={w.code} role="alert" className="mt-1 text-[var(--mnx-warning-text,inherit)]">⚠ {w.message}</p>
                 ))}
                 {visiblePreview.violations.map((v) => (
-                  <p key={v.code} className="mt-1 text-[var(--mnx-danger-text,inherit)]">✕ {v.message}</p>
+                  <p key={v.code} role="alert" className="mt-1 text-[var(--mnx-danger-text,inherit)]">✕ {v.message}</p>
                 ))}
               </div>
             )}
