@@ -114,6 +114,38 @@ CREATE TABLE "LeaveApprovalStep" (
 );
 
 -- CreateTable
+CREATE TABLE "RestrictedHolidaySelection" (
+    "id" TEXT NOT NULL,
+    "orgId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "holidayId" TEXT NOT NULL,
+    "leaveTypeId" TEXT NOT NULL,
+    "year" INTEGER NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'SELECTED',
+    "approvedById" TEXT,
+    "ledgerEntryId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "RestrictedHolidaySelection_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LeaveApproverDelegation" (
+    "id" TEXT NOT NULL,
+    "orgId" TEXT NOT NULL,
+    "delegatorId" TEXT NOT NULL,
+    "delegateId" TEXT NOT NULL,
+    "effectiveFrom" DATE NOT NULL,
+    "effectiveTo" DATE,
+    "reason" TEXT,
+    "createdById" TEXT NOT NULL,
+    "revokedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "LeaveApproverDelegation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "CompOffCredit" (
     "id" TEXT NOT NULL,
     "orgId" TEXT NOT NULL,
@@ -229,6 +261,18 @@ CREATE INDEX "LeaveLedgerEntry_userId_leaveTypeId_effectiveDate_idx" ON "LeaveLe
 CREATE INDEX "LeaveApprovalStep_requestId_sequence_idx" ON "LeaveApprovalStep"("requestId", "sequence");
 
 -- CreateIndex
+CREATE INDEX "RestrictedHolidaySelection_orgId_userId_year_idx" ON "RestrictedHolidaySelection"("orgId", "userId", "year");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RestrictedHolidaySelection_userId_holidayId_key" ON "RestrictedHolidaySelection"("userId", "holidayId");
+
+-- CreateIndex
+CREATE INDEX "LeaveApproverDelegation_delegatorId_effectiveFrom_effective_idx" ON "LeaveApproverDelegation"("delegatorId", "effectiveFrom", "effectiveTo");
+
+-- CreateIndex
+CREATE INDEX "LeaveApproverDelegation_orgId_idx" ON "LeaveApproverDelegation"("orgId");
+
+-- CreateIndex
 CREATE INDEX "CompOffCredit_orgId_userId_status_idx" ON "CompOffCredit"("orgId", "userId", "status");
 
 -- CreateIndex
@@ -284,6 +328,24 @@ ALTER TABLE "LeaveLedgerEntry" ADD CONSTRAINT "LeaveLedgerEntry_requestId_fkey" 
 
 -- AddForeignKey
 ALTER TABLE "LeaveApprovalStep" ADD CONSTRAINT "LeaveApprovalStep_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "LeaveRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RestrictedHolidaySelection" ADD CONSTRAINT "RestrictedHolidaySelection_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organisation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RestrictedHolidaySelection" ADD CONSTRAINT "RestrictedHolidaySelection_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RestrictedHolidaySelection" ADD CONSTRAINT "RestrictedHolidaySelection_holidayId_fkey" FOREIGN KEY ("holidayId") REFERENCES "Holiday"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LeaveApproverDelegation" ADD CONSTRAINT "LeaveApproverDelegation_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organisation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LeaveApproverDelegation" ADD CONSTRAINT "LeaveApproverDelegation_delegatorId_fkey" FOREIGN KEY ("delegatorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LeaveApproverDelegation" ADD CONSTRAINT "LeaveApproverDelegation_delegateId_fkey" FOREIGN KEY ("delegateId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CompOffCredit" ADD CONSTRAINT "CompOffCredit_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organisation"("id") ON DELETE CASCADE ON UPDATE CASCADE;

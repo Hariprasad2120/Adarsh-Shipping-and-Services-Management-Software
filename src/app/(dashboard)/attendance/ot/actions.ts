@@ -147,6 +147,54 @@ export async function decideOtRecordAction(
       },
     });
 
+    // Comp-off auto-generation (spec §14): approved weekend/holiday OT
+    // work generates a CompOffCredit automatically rather than requiring
+    // HR to manually create one. sourceOtRecordId + idempotencyKey (set
+    // inside createCompOffCredit via postLedgerEntry) prevent duplicate
+    // credit if this action is somehow triggered twice for the same
+    // record. Only fires on genuine weekend/holiday work with a non-zero
+    // compOffDays value already computed on the record — never invents an
+    // entitlement the OT calculation didn't already produce.
+    if (
+      decision === "APPROVED" &&
+      (record.dayType === "HOLIDAY" || record.dayType === "WEEKEND") &&
+      record.compOffDays > 0 &&
+      session.user.orgId
+    ) {
+      try {
+        const { createCompOffCredit } = await import("@/modules/leave/compoff");
+        const existingCredit = await db.compOffCredit.findFirst({
+          where: { sourceOtRecordId: recordId },
+        });
+        if (!existingCredit) {
+          await createCompOffCredit({
+            orgId: session.user.orgId,
+            userId: record.userId,
+            earnedDate: record.date,
+            sourceType: record.dayType === "HOLIDAY" ? "HOLIDAY_WORK" : "WEEKEND_WORK",
+            sourceOtRecordId: recordId,
+            units: record.compOffDays,
+            unit: "DAY",
+            requiresApproval: false, // OT itself was just approved by an authorized approver — no second approval layer
+          });
+        }
+      } catch (compOffError) {
+        // Don't fail the OT approval itself if comp-off type isn't
+        // configured yet (org may not have set isCompOffType on a
+        // LeaveType) — log via audit instead of silently swallowing.
+        const { writeLeaveAudit } = await import("@/modules/leave/audit");
+        await writeLeaveAudit({
+          orgId: session.user.orgId,
+          userId: session.user.id,
+          action: "LEAVE_COMP_OFF_AUTO_GENERATION_FAILED",
+          details: {
+            recordId,
+            message: compOffError instanceof Error ? compOffError.message : String(compOffError),
+          },
+        });
+      }
+    }
+
     if (decision === "PENDING_MANAGER") {
       const employee = await db.user.findUnique({
         where: { id: record.userId },
@@ -192,6 +240,50 @@ export async function bulkDecideOtRecordsAction(
         approvedById: decision === "APPROVED" ? session.user.id : null,
       },
     });
+
+    // Same comp-off auto-generation as decideOtRecordAction (spec §14) —
+    // bulk approval must trigger it too, otherwise it's trivially
+    // bypassable by always using bulk-approve instead of single-approve.
+    if (decision === "APPROVED" && session.user.orgId) {
+      const orgId = session.user.orgId;
+      const approvedRecords = await db.otRecord.findMany({
+        where: { id: { in: recordIds }, dayType: { in: ["HOLIDAY", "WEEKEND"] }, compOffDays: { gt: 0 } },
+      });
+      if (approvedRecords.length > 0) {
+        const { createCompOffCredit } = await import("@/modules/leave/compoff");
+        const { writeLeaveAudit } = await import("@/modules/leave/audit");
+        const existingCredits = await db.compOffCredit.findMany({
+          where: { sourceOtRecordId: { in: approvedRecords.map((r) => r.id) } },
+          select: { sourceOtRecordId: true },
+        });
+        const alreadyCredited = new Set(existingCredits.map((c) => c.sourceOtRecordId));
+        for (const record of approvedRecords) {
+          if (alreadyCredited.has(record.id)) continue;
+          try {
+            await createCompOffCredit({
+              orgId,
+              userId: record.userId,
+              earnedDate: record.date,
+              sourceType: record.dayType === "HOLIDAY" ? "HOLIDAY_WORK" : "WEEKEND_WORK",
+              sourceOtRecordId: record.id,
+              units: record.compOffDays,
+              unit: "DAY",
+              requiresApproval: false,
+            });
+          } catch (compOffError) {
+            await writeLeaveAudit({
+              orgId,
+              userId: session.user.id,
+              action: "LEAVE_COMP_OFF_AUTO_GENERATION_FAILED",
+              details: {
+                recordId: record.id,
+                message: compOffError instanceof Error ? compOffError.message : String(compOffError),
+              },
+            });
+          }
+        }
+      }
+    }
 
     if (decision === "PENDING_MANAGER") {
       const records = await db.otRecord.findMany({

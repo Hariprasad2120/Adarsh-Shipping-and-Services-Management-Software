@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { LeaveCalculationResult } from "@/modules/leave/calculation";
 import { parsePolicyConfig } from "@/modules/leave/policy";
 import type { ApprovalRoute } from "@/modules/leave/policy-config.schema";
+import { resolveActiveApprover } from "@/modules/leave/delegation";
 
 interface PolicyVersionLike {
   configuration: unknown;
@@ -108,12 +109,21 @@ export async function buildApprovalSteps(
 
   const created = [];
   for (const stepConfig of matchedRoute.steps) {
-    const approverUserId = await resolveApprover(
+    const naturalApproverUserId = await resolveApprover(
       stepConfig.approverType,
       requesterId,
       stepConfig.roleId,
       stepConfig.userId,
     );
+    // Delegation (spec §11): if the resolved approver has an active
+    // backup-approver delegation, the step is assigned to the delegate
+    // instead. Not re-checked once the step is created — a delegation
+    // created/revoked mid-flight is instead re-resolved at decision time
+    // in request.ts (delegation reflects "who can act right now," unlike
+    // the pinned policy version).
+    const approverUserId = naturalApproverUserId
+      ? await resolveActiveApprover(naturalApproverUserId)
+      : naturalApproverUserId;
     const step = await db.leaveApprovalStep.create({
       data: {
         requestId,

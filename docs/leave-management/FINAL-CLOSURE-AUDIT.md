@@ -61,8 +61,23 @@ made and push was retried:**
 - Commit SHA: `3708ad07a367756313c8320299f0a7febb650a91`
 - `git push origin main` **succeeded this time**: `05a8714..3708ad0
   main -> main`
-- Both commits are now live on `origin/main`. `git status --short` → 0
-  lines, working tree clean.
+
+**Round 2 (transaction-ordering fix, reconciliation tool, exit handling,
+docs tracking):**
+- Discovered mid-round that `docs/leave-management/*.md` (all 9 markdown
+  docs written across this entire build — audit, research, architecture,
+  gap analysis, task file, final report, this file) were NEVER actually
+  committed, despite `git add -A` appearing to succeed earlier. Root cause:
+  `.gitignore` has a repo-wide `/docs/*` rule; `git add -A` silently
+  respects `.gitignore` unless `-f` is passed, so every `git add -A` in
+  this project quietly skipped the entire `docs/leave-management/`
+  directory. User was asked and chose to `git add -f` that directory
+  specifically, leaving the repo-wide ignore rule untouched for everything
+  else.
+- Commit SHA: `620dd9dfe703b05d83ddff354c011de61f437cad`
+- `git push origin main` succeeded: `3708ad0..620dd9d main -> main`
+- `git status --short` → 0 lines, working tree clean, all docs now
+  tracked and live on GitHub.
 
 No sensitive files (`.env`, credentials, keys, dumps) were present in the
 change set — checked via `git status --short | grep -iE` before staging.
