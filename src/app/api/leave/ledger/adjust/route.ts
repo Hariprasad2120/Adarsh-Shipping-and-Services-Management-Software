@@ -4,6 +4,7 @@ import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission, apiError } from "@/lib/rbac";
 import { postLedgerEntry } from "@/modules/leave/ledger";
 import { db } from "@/lib/db";
+import { notify } from "@/lib/notify";
 
 const BodySchema = z.object({
   userId: z.string().min(1),
@@ -57,6 +58,19 @@ export async function POST(req: NextRequest) {
       reason: parsed.data.reason,
       idempotencyKey: `manual-adjust:${session!.user.id}:${Date.now()}:${Math.random().toString(36).slice(2)}`,
       allowNegative: true,
+    });
+
+    // Notification coverage audit (§36) flagged manual adjustments as a
+    // missing lifecycle notification — the employee whose balance was
+    // touched should know, not just see it silently reflected next login.
+    await notify({
+      userId: parsed.data.userId,
+      orgId: session!.user.orgId,
+      kind: "LEAVE_BALANCE_ADJUSTED",
+      title: "Leave balance adjusted",
+      body: `Your leave balance was manually adjusted by ${parsed.data.quantity > 0 ? "+" : ""}${parsed.data.quantity} unit(s). Reason: ${parsed.data.reason}`,
+      link: "/attendance/leaves",
+      payload: { ledgerEntryId: entry.id },
     });
 
     return ok(entry, 201);

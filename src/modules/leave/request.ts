@@ -300,16 +300,24 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
 
   const finalStatus: LeaveRequestStatus = input.decision === "APPROVED" ? "APPROVED" : "REJECTED";
 
-  const updated = await db.leaveRequest.update({
-    where: { id: input.requestId },
-    data: { status: finalStatus, approverId: input.approverId },
-    include: { leaveType: true, user: { select: { id: true, name: true, orgId: true } } },
-  });
-
-  if (updated.user.orgId) {
+  // Transaction-boundary fix (§42 closure audit): the ledger entry is
+  // posted BEFORE the LeaveRequest.status flip, not after. Previously the
+  // status was written first — if postLedgerEntry then threw (a genuine
+  // DB error, not the caught PayrollLockedError case), the request was
+  // left permanently marked APPROVED with no corresponding ledger entry
+  // at all: a request that says "approved, balance consumed" while the
+  // balance was never actually touched. Posting the ledger entry first
+  // means a failure here leaves the request in its prior, still-valid
+  // PENDING_APPROVAL state — safe to retry — instead of a false-approved
+  // state with silently missing money movement. This module doesn't wrap
+  // cross-table writes in one Prisma $transaction (postLedgerEntry already
+  // owns its own transaction internally for the ledger+balance pair), so
+  // ordering is the practical mitigation available without a deeper
+  // refactor of postLedgerEntry's transaction ownership.
+  if (request.user.orgId) {
     if (finalStatus === "APPROVED" && request.paidUnits) {
       await postLedgerEntry({
-        orgId: updated.user.orgId,
+        orgId: request.user.orgId,
         userId: request.userId,
         leaveTypeId: request.leaveTypeId,
         policyVersionId: request.policyVersionId,
@@ -326,7 +334,7 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
       });
     } else if (finalStatus === "REJECTED" && request.paidUnits) {
       await postLedgerEntry({
-        orgId: updated.user.orgId,
+        orgId: request.user.orgId,
         userId: request.userId,
         leaveTypeId: request.leaveTypeId,
         policyVersionId: request.policyVersionId,
@@ -342,36 +350,48 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
         allowNegative: true,
       });
     }
+  }
 
-    if (finalStatus === "APPROVED") {
-      await applyLeaveToAttendance({
-        userId: request.userId,
-        fromDate: request.fromDate,
-        toDate: request.toDate,
-        halfDay: request.halfDay,
-      });
+  const updated = await db.leaveRequest.update({
+    where: { id: input.requestId },
+    data: { status: finalStatus, approverId: input.approverId },
+    include: { leaveType: true, user: { select: { id: true, name: true, orgId: true } } },
+  });
 
-      if (request.lopUnits && toDecimal(request.lopUnits).greaterThan(0)) {
-        try {
-          await applyLopFromLeaveRequest({
+  if (updated.user.orgId && finalStatus === "APPROVED") {
+    // Attendance/payroll side effects happen after the status flip — these
+    // are less financially critical than the ledger (attendance marking is
+    // idempotent/re-derivable, LOP has its own PayrollLockedError recovery
+    // path below), so ordering them after the authoritative ledger+status
+    // writes is acceptable; the ledger is the one write that must never be
+    // silently skipped.
+    await applyLeaveToAttendance({
+      userId: request.userId,
+      fromDate: request.fromDate,
+      toDate: request.toDate,
+      halfDay: request.halfDay,
+    });
+
+    if (request.lopUnits && toDecimal(request.lopUnits).greaterThan(0)) {
+      try {
+        await applyLopFromLeaveRequest({
+          orgId: updated.user.orgId,
+          userId: request.userId,
+          fromDate: request.fromDate,
+          lopUnits: toDecimal(request.lopUnits).toNumber(),
+          actorId: input.approverId,
+          requestId: request.id,
+        });
+      } catch (err) {
+        if (err instanceof PayrollLockedError) {
+          await writeLeaveAudit({
             orgId: updated.user.orgId,
-            userId: request.userId,
-            fromDate: request.fromDate,
-            lopUnits: toDecimal(request.lopUnits).toNumber(),
-            actorId: input.approverId,
-            requestId: request.id,
+            userId: input.approverId,
+            action: "LEAVE_LOP_BLOCKED_PAYROLL_LOCKED",
+            details: { requestId: request.id, lopUnits: request.lopUnits, message: err.message },
           });
-        } catch (err) {
-          if (err instanceof PayrollLockedError) {
-            await writeLeaveAudit({
-              orgId: updated.user.orgId,
-              userId: input.approverId,
-              action: "LEAVE_LOP_BLOCKED_PAYROLL_LOCKED",
-              details: { requestId: request.id, lopUnits: request.lopUnits, message: err.message },
-            });
-          } else {
-            throw err;
-          }
+        } else {
+          throw err;
         }
       }
     }
@@ -431,15 +451,10 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
     assertValidTransition(currentStatus, targetStatus);
   }
 
-  const updated = await db.leaveRequest.update({
-    where: { id: input.requestId },
-    data: {
-      status: targetStatus,
-      cancelledAt: targetStatus !== "CANCEL_PENDING" ? new Date() : undefined,
-      cancelReason: input.reason,
-    },
-  });
-
+  // Same transaction-boundary fix as decideLeaveRequest (§42): post the
+  // ledger reversal BEFORE flipping status, so a failure here leaves the
+  // request in its prior valid state (still APPROVED/PENDING) rather than
+  // a false-CANCELLED state with balance never actually reversed.
   const totalReserved = toDecimal(request.paidUnits ?? 0).plus(toDecimal(request.lopUnits ?? 0));
   if (targetStatus !== "CANCEL_PENDING" && totalReserved.greaterThan(0) && request.user.orgId) {
     await postLedgerEntry({
@@ -458,7 +473,18 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
       idempotencyKey: `cancel-reversal:${request.id}`,
       allowNegative: true,
     });
+  }
 
+  const updated = await db.leaveRequest.update({
+    where: { id: input.requestId },
+    data: {
+      status: targetStatus,
+      cancelledAt: targetStatus !== "CANCEL_PENDING" ? new Date() : undefined,
+      cancelReason: input.reason,
+    },
+  });
+
+  if (targetStatus !== "CANCEL_PENDING" && totalReserved.greaterThan(0) && request.user.orgId) {
     if (currentStatus === "APPROVED") {
       await removeLeaveFromAttendance({
         userId: request.userId,
