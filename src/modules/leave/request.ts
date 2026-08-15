@@ -5,6 +5,7 @@ import { getUsersWithPermission } from "@/modules/notifications/service";
 import { getActivePolicyVersion, parsePolicyConfig } from "@/modules/leave/policy";
 import { calculateLeaveRequest } from "@/modules/leave/calculation";
 import { postLedgerEntry, toDecimal, CrossOrgAccessError } from "@/modules/leave/ledger";
+import { consumeCompOffFifo, releaseCompOffFifo } from "@/modules/leave/compoff";
 import { writeLeaveAudit } from "@/modules/leave/audit";
 import { buildApprovalSteps } from "@/modules/leave/approval";
 import { isPolicyApplicableToUser, isServiceEligible } from "@/modules/leave/eligibility";
@@ -333,6 +334,17 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
   // refactor of postLedgerEntry's transaction ownership.
   if (request.user.orgId) {
     if (finalStatus === "APPROVED" && request.paidUnits) {
+      // Comp-off has no per-lot ledger tracking (balance is aggregate), so
+      // consumption against specific CompOffCredit lots must be recorded
+      // separately, FIFO by earnedDate, so expiry later expires only the
+      // unconsumed remainder of each lot instead of double-counting spent
+      // units (spec §24 comp-off-expiry review). The allocation is stored on
+      // the ledger entry so cancellation/reversal can undo the exact lots.
+      let compOffAllocation: { creditId: string; unitsApplied: Prisma.Decimal }[] = [];
+      if (request.leaveType.isCompOffType) {
+        compOffAllocation = await consumeCompOffFifo(request.user.orgId, request.userId, request.paidUnits);
+      }
+
       await postLedgerEntry({
         orgId: request.user.orgId,
         userId: request.userId,
@@ -348,6 +360,9 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
         reason: `Leave request ${request.id} approved`,
         idempotencyKey: `consume:${request.id}`,
         allowNegative: true,
+        metadata: compOffAllocation.length
+          ? { compOffAllocation: compOffAllocation.map((a) => ({ creditId: a.creditId, unitsApplied: a.unitsApplied.toString() })) }
+          : undefined,
       });
     } else if (finalStatus === "REJECTED" && request.paidUnits) {
       await postLedgerEntry({
@@ -451,7 +466,7 @@ export interface CancelLeaveRequestInput {
 export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immediate: boolean) {
   const request = await db.leaveRequest.findUniqueOrThrow({
     where: { id: input.requestId },
-    include: { user: { select: { orgId: true } } },
+    include: { user: { select: { orgId: true } }, leaveType: true },
   });
 
   const currentStatus = normalizeStatus(request.status);
@@ -503,6 +518,17 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
 
   if (targetStatus !== "CANCEL_PENDING" && totalReserved.greaterThan(0) && request.user.orgId) {
     if (currentStatus === "APPROVED") {
+      if (request.leaveType.isCompOffType) {
+        const consumeEntry = await db.leaveLedgerEntry.findUnique({
+          where: { idempotencyKey: `consume:${request.id}` },
+        });
+        const allocation = (consumeEntry?.metadata as { compOffAllocation?: { creditId: string; unitsApplied: string }[] } | null)
+          ?.compOffAllocation;
+        if (allocation?.length) {
+          await releaseCompOffFifo(allocation.map((a) => ({ creditId: a.creditId, unitsApplied: a.unitsApplied })));
+        }
+      }
+
       await removeLeaveFromAttendance({
         userId: request.userId,
         fromDate: request.fromDate,
@@ -651,6 +677,29 @@ export async function cancelLeaveRequestPartial(input: PartialCancelLeaveRequest
 
   if (reversedTotal.lessThanOrEqualTo(0)) {
     throw new Error("Nothing to reverse — the remaining period accounts for the full original reservation.");
+  }
+
+  // Partial release of the comp-off lots this request originally consumed
+  // (proportional to the trimmed edge) — same FIFO-lot rationale as full
+  // cancellation, so expiry never double-counts the trimmed-back units.
+  if (request.leaveType.isCompOffType) {
+    const consumeEntry = await db.leaveLedgerEntry.findUnique({
+      where: { idempotencyKey: `consume:${request.id}` },
+    });
+    const allocation = (consumeEntry?.metadata as { compOffAllocation?: { creditId: string; unitsApplied: string }[] } | null)
+      ?.compOffAllocation;
+    if (allocation?.length) {
+      let toRelease = reversedTotal;
+      const releaseAllocations: { creditId: string; unitsApplied: string }[] = [];
+      for (const alloc of [...allocation].reverse()) {
+        if (toRelease.lessThanOrEqualTo(0)) break;
+        const lotApplied = toDecimal(alloc.unitsApplied);
+        const release = Prisma.Decimal.min(lotApplied, toRelease);
+        releaseAllocations.push({ creditId: alloc.creditId, unitsApplied: release.toString() });
+        toRelease = toRelease.minus(release);
+      }
+      await releaseCompOffFifo(releaseAllocations.map((a) => ({ creditId: a.creditId, unitsApplied: a.unitsApplied })));
+    }
   }
 
   await db.leaveRequest.update({

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { postLedgerEntry, CrossOrgAccessError } from "@/modules/leave/ledger";
+import { Prisma } from "@/generated/prisma/client";
+import { postLedgerEntry, toDecimal, CrossOrgAccessError } from "@/modules/leave/ledger";
 
 export { CrossOrgAccessError } from "@/modules/leave/ledger";
 import { writeLeaveAudit } from "@/modules/leave/audit";
@@ -153,13 +154,71 @@ export async function rejectCompOffCredit(
 }
 
 /**
- * Expires comp-off credits past their expiresAt that haven't been consumed,
- * posting COMP_OFF_EXPIRY ledger entries. Called by the scheduler
- * (Phase 8's /api/cron/leave-expiry).
+ * Consumes approved comp-off credits FIFO (oldest earnedDate first) when a
+ * leave request against the comp-off leave type is approved. Comp-off
+ * balance is tracked at the aggregate LeaveBalance level (one ledger per
+ * request), but expiry must act per-lot — without this, expireStaleCompOffCredits
+ * would expire a credit's full original units even after some of it was
+ * already spent, double-counting the spent portion as a negative-balance
+ * expiry (found during the closure-pass comp-off-expiry review, spec §24).
+ * Returns the lots touched so a rejection/cancellation can reverse the same
+ * allocation exactly.
+ */
+export async function consumeCompOffFifo(orgId: string, userId: string, units: Prisma.Decimal | number) {
+  let remaining = toDecimal(units);
+  if (remaining.lessThanOrEqualTo(0)) return [];
+
+  const lots = await db.compOffCredit.findMany({
+    where: { orgId, userId, status: { in: ["APPROVED", "CONSUMED"] } },
+    orderBy: { earnedDate: "asc" },
+  });
+
+  const touched: { creditId: string; unitsApplied: Prisma.Decimal }[] = [];
+  for (const lot of lots) {
+    if (remaining.lessThanOrEqualTo(0)) break;
+    const available = toDecimal(lot.units).minus(toDecimal(lot.consumedUnits));
+    if (available.lessThanOrEqualTo(0)) continue;
+
+    const applied = Prisma.Decimal.min(available, remaining);
+    const newConsumed = toDecimal(lot.consumedUnits).plus(applied);
+    await db.compOffCredit.update({
+      where: { id: lot.id },
+      data: {
+        consumedUnits: newConsumed,
+        status: newConsumed.greaterThanOrEqualTo(toDecimal(lot.units)) ? "CONSUMED" : lot.status,
+      },
+    });
+    touched.push({ creditId: lot.id, unitsApplied: applied });
+    remaining = remaining.minus(applied);
+  }
+  return touched;
+}
+
+/** Reverses a prior FIFO consumption (leave rejected/cancelled) against the exact lots it was applied to. */
+export async function releaseCompOffFifo(allocations: { creditId: string; unitsApplied: Prisma.Decimal | number | string }[]) {
+  for (const alloc of allocations) {
+    const lot = await db.compOffCredit.findUnique({ where: { id: alloc.creditId } });
+    if (!lot) continue;
+    const newConsumed = toDecimal(lot.consumedUnits).minus(toDecimal(alloc.unitsApplied));
+    await db.compOffCredit.update({
+      where: { id: alloc.creditId },
+      data: {
+        consumedUnits: newConsumed.lessThan(0) ? new Prisma.Decimal(0) : newConsumed,
+        status: lot.status === "CONSUMED" ? "APPROVED" : lot.status,
+      },
+    });
+  }
+}
+
+/**
+ * Expires comp-off credits past their expiresAt that haven't been fully
+ * consumed, posting COMP_OFF_EXPIRY ledger entries for only the unconsumed
+ * remainder of each lot (units - consumedUnits), not the full original
+ * grant. Called by the scheduler (Phase 8's /api/cron/leave-expiry).
  */
 export async function expireStaleCompOffCredits(orgId: string, asOf: Date) {
   const stale = await db.compOffCredit.findMany({
-    where: { orgId, status: "APPROVED", expiresAt: { lte: asOf } },
+    where: { orgId, status: { in: ["APPROVED", "CONSUMED"] }, expiresAt: { lte: asOf } },
   });
 
   const leaveType = await getCompOffLeaveType(orgId).catch(() => null);
@@ -167,17 +226,23 @@ export async function expireStaleCompOffCredits(orgId: string, asOf: Date) {
 
   let processed = 0;
   for (const credit of stale) {
+    const remaining = toDecimal(credit.units).minus(toDecimal(credit.consumedUnits));
+    if (remaining.lessThanOrEqualTo(0)) {
+      // Fully consumed before expiry — nothing left to expire, just close out the lot.
+      await db.compOffCredit.update({ where: { id: credit.id }, data: { status: "EXPIRED" } });
+      continue;
+    }
     await postLedgerEntry({
       orgId,
       userId: credit.userId,
       leaveTypeId: leaveType.id,
       type: "COMP_OFF_EXPIRY",
-      quantity: -credit.units,
+      quantity: remaining.negated(),
       unit: credit.unit as "DAY" | "HOUR",
       effectiveDate: asOf,
       year: asOf.getFullYear(),
       source: "SCHEDULER",
-      reason: `Comp-off credit ${credit.id} expired`,
+      reason: `Comp-off credit ${credit.id} expired (${remaining.toString()} of ${credit.units.toString()} unused)`,
       idempotencyKey: `compoff-expiry:${credit.id}`,
       allowNegative: true,
     });

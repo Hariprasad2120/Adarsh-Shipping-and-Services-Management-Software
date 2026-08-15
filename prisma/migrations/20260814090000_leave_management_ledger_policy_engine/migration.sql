@@ -154,6 +154,7 @@ CREATE TABLE "CompOffCredit" (
     "sourceType" TEXT NOT NULL,
     "sourceOtRecordId" TEXT,
     "units" DECIMAL(10,4) NOT NULL,
+    "consumedUnits" DECIMAL(10,4) NOT NULL DEFAULT 0,
     "unit" TEXT NOT NULL DEFAULT 'DAY',
     "status" TEXT NOT NULL DEFAULT 'PENDING_APPROVAL',
     "expiresAt" TIMESTAMP(3),

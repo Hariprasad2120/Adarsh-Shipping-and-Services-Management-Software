@@ -1081,6 +1081,7 @@ model CompOffCredit {
   sourceType       String // WEEKEND_WORK | HOLIDAY_WORK | OVERTIME | MANUAL_GRANT
   sourceOtRecordId String?
   units            Decimal   @db.Decimal(10, 4)
+  consumedUnits    Decimal   @default(0) @db.Decimal(10, 4)
   unit             String    @default("DAY") // DAY | HOUR
   status           String    @default("PENDING_APPROVAL") // PENDING_APPROVAL | APPROVED | REJECTED | CONSUMED | EXPIRED
   expiresAt        DateTime?
