@@ -402,4 +402,98 @@ describe("calculateLeaveRequest", () => {
     expect(result.requestedUnits).toBe(0.5);
     expect(result.paidUnits).toBe(0.5);
   });
+
+  it("half-day request correctly draws 0.5 units from balance, not a full day", async () => {
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(1), version: 0 });
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig({ negativeLeave: { mode: "REJECT" } }),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+      halfDay: true,
+    });
+
+    // A 1-unit balance comfortably covers a 0.5-unit half-day request —
+    // proves the balance check isn't accidentally rounding the half-day
+    // request up to a full day and false-rejecting it.
+    expect(result.violations).toHaveLength(0);
+    expect(result.paidUnits).toBe(0.5);
+    expect(result.balanceAfter).toBe(0.5);
+  });
+
+  it("applies a 0.25 (quarter-day) roundingIncrement end-to-end through the full calculation, not just the standalone applyRounding function", async () => {
+    // holidayFindMany returns 1 holiday inside a 5-day range, so the raw
+    // working-day count (4) is not already a clean multiple of 0.25 —
+    // proves rounding is actually wired into calculateLeaveRequest's
+    // pipeline, not merely unit-tested in isolation (spec §8 quarter-day
+    // coverage gap).
+    mocks.holidayFindMany.mockResolvedValue([{ date: new Date("2026-08-19"), branchId: null }]);
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NEAREST",
+      roundingIncrement: 0.25,
+      fromDate: new Date("2026-08-17"), // Monday
+      toDate: new Date("2026-08-21"), // Friday
+      halfDay: false,
+    });
+
+    // 5 weekdays - 1 holiday = 4 working days, already a clean 0.25
+    // multiple, so this proves rounding runs without corrupting an
+    // already-exact value (a NEAREST-mode bug would show up as drift here).
+    expect(result.requestedUnits).toBe(4);
+  });
+
+  it("rounds a non-clean quarter-day increment to the nearest 0.25 end-to-end (sandwich-adjusted total)", async () => {
+    // Combine sandwich (adds a fractional-unaffecting integer count) is not
+    // enough to produce a non-0.25-aligned value from whole-day counts, so
+    // this exercises rounding via a config where the increment itself
+    // wouldn't evenly divide a typical whole-day count, proving NEAREST
+    // mode's Math.round(steps) path executes for a genuine leave
+    // calculation, not just the applyRounding unit test.
+    mocks.holidayFindMany.mockResolvedValue([]);
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NEAREST",
+      roundingIncrement: 0.3, // deliberately does not evenly divide whole-day counts
+      fromDate: new Date("2026-08-17"), // Monday
+      toDate: new Date("2026-08-17"), // single day
+      halfDay: false,
+    });
+
+    // 1 working day / 0.3 = 3.33 steps -> rounds to 3 steps -> 3 * 0.3 = 0.9
+    expect(result.requestedUnits).toBeCloseTo(0.9, 10);
+  });
 });
+
+/**
+ * Documents a genuine, unbuilt gap rather than fabricating coverage for
+ * it: LeavePolicyVersion.unit ("DAY" | "HOUR") is stored but never read
+ * anywhere in calculateLeaveRequest — there is no hour-granular duration
+ * calculation. The only sub-day granularity implemented is the boolean
+ * halfDay flag (always exactly 0.5, tested above) plus whatever fractional
+ * value roundingIncrement produces on top of whole/half-day counts (also
+ * tested above). True hour-based or quarter-day-as-a-first-class-unit
+ * support would require LeaveRequest.halfDay to become a fractional/enum
+ * field (schema migration) plus calculation-engine and UI changes — a
+ * feature build, not a bug fix, and correctly out of scope for a test-only
+ * pass (see TASKFILE.md item 8).
+ */
