@@ -15,6 +15,8 @@ model Organisation {
   slug                 String   @unique
   active               Boolean  @default(true)
   crmCallRetentionDays Int      @default(90)
+  defaultJurisdictionCountry String? // NEW — fallback jurisdiction (spec §35) for employees whose branch has no jurisdiction set, or who have no branch
+  defaultJurisdictionState   String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -214,10 +216,12 @@ model Organisation {
 }
 
 model Branch {
-  id    String @id @default(cuid())
+  id    String  @id @default(cuid())
   orgId String
   name  String
   code  String
+  jurisdictionCountry String? // NEW — for deterministic statutory-compliance lookup (spec §35): the country this branch's employees are legally covered under
+  jurisdictionState   String? // NEW — state/province within jurisdictionCountry, when the country has state-level leave law (e.g. India)
 
   org      Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   users    User[]
@@ -908,6 +912,8 @@ model LeaveRequest {
   cancelledAt             DateTime?
   cancelReason             String?
   extendedFromRequestId    String?
+  onDutyLocation           String? // NEW — for ON_DUTY classification: where the employee will be (client site, field visit, etc.)
+  onDutyReference          String? // NEW — for ON_DUTY classification: client/job/ticket reference, free text
 
   user      User      @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
   approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id])

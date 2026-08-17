@@ -26,6 +26,8 @@ const createSchema = z.object({
   toDate: z.string(),
   halfDay: z.boolean().default(false),
   notes: z.string().optional(),
+  onDutyLocation: z.string().optional(),
+  onDutyReference: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {

@@ -30,8 +30,9 @@ vi.mock("@/lib/db", () => ({
             const allowed = typeof statusFilter === "string" ? [statusFilter] : statusFilter.in ?? [];
             if (!allowed.includes(l.status)) return false;
           }
-          const expiresFilter = where.expiresAt as { lte?: Date } | undefined;
+          const expiresFilter = where.expiresAt as { lte?: Date; gt?: Date } | undefined;
           if (expiresFilter?.lte && (!l.expiresAt || l.expiresAt > expiresFilter.lte)) return false;
+          if (expiresFilter?.gt && (!l.expiresAt || l.expiresAt <= expiresFilter.gt)) return false;
           return true;
         }).sort((a, b) => a.earnedDate.getTime() - b.earnedDate.getTime()),
       ),
@@ -59,7 +60,8 @@ vi.mock("@/modules/leave/ledger", async () => {
 vi.mock("@/modules/leave/audit", () => ({ writeLeaveAudit: vi.fn() }));
 vi.mock("@/lib/notify", () => ({ notify: vi.fn() }));
 
-import { consumeCompOffFifo, releaseCompOffFifo, expireStaleCompOffCredits } from "../compoff";
+import { consumeCompOffFifo, releaseCompOffFifo, expireStaleCompOffCredits, notifyExpiringCompOffCredits } from "../compoff";
+import { notify } from "@/lib/notify";
 
 function lot(id: string, earnedDate: string, units: number, consumedUnits = 0, expiresAt: string | null = null, status = "APPROVED") {
   return {
@@ -137,5 +139,49 @@ describe("comp-off FIFO consumption and expiry (spec §24)", () => {
     await releaseCompOffFifo([{ creditId: "lot-1", unitsApplied: 5 }]);
 
     expect(lots[0].consumedUnits.toString()).toBe("0");
+  });
+});
+
+describe("notifyExpiringCompOffCredits (spec §36 notification-coverage gap)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    postedEntries.calls = [];
+    lots = [];
+  });
+
+  it("notifies for a lot expiring within the warning window", async () => {
+    lots = [lot("lot-1", "2026-01-01", 5, 0, "2026-01-10")];
+
+    const result = await notifyExpiringCompOffCredits("org-1", new Date("2026-01-05"), 7);
+
+    expect(result.notified).toBe(1);
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", kind: "COMP_OFF_EXPIRING_SOON" }),
+    );
+  });
+
+  it("does not notify for a lot expiring further out than the warning window", async () => {
+    lots = [lot("lot-1", "2026-01-01", 5, 0, "2026-02-01")];
+
+    const result = await notifyExpiringCompOffCredits("org-1", new Date("2026-01-05"), 7);
+
+    expect(result.notified).toBe(0);
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it("does not notify for a lot that has already fully expired (that's expireStaleCompOffCredits' job)", async () => {
+    lots = [lot("lot-1", "2026-01-01", 5, 0, "2026-01-01")];
+
+    const result = await notifyExpiringCompOffCredits("org-1", new Date("2026-01-05"), 7);
+
+    expect(result.notified).toBe(0);
+  });
+
+  it("does not notify for a lot that is fully consumed even if it's within the warning window", async () => {
+    lots = [lot("lot-1", "2026-01-01", 5, 5, "2026-01-10")]; // consumedUnits === units
+
+    const result = await notifyExpiringCompOffCredits("org-1", new Date("2026-01-05"), 7);
+
+    expect(result.notified).toBe(0);
   });
 });

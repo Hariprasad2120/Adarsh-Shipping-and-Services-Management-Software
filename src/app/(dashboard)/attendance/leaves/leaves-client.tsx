@@ -38,7 +38,7 @@ type CalculationPreview = {
   explanation: string[];
 };
 
-type LeaveType = { id: string; name: string; paid: boolean };
+type LeaveType = { id: string; name: string; paid: boolean; classification?: string | null };
 type Balance = { leaveType: LeaveType; balance: number };
 type LeaveRequest = {
   id: string;
@@ -88,6 +88,11 @@ export function LeavesClient({
   const [extendingId, setExtendingId] = useState<string | null>(null);
   const [extendToDate, setExtendToDate] = useState("");
   const [extending, setExtending] = useState(false);
+  const [onDutyLocation, setOnDutyLocation] = useState("");
+  const [onDutyReference, setOnDutyReference] = useState("");
+
+  const selectedLeaveType = leaveTypes.find((lt) => lt.id === leaveTypeId);
+  const isOnDuty = selectedLeaveType?.classification === "ON_DUTY";
 
   // Server-side calculation preview (spec §18) — recomputed whenever the
   // key inputs change. Submission always recalculates again server-side;
@@ -125,6 +130,10 @@ export function LeavesClient({
 
   async function submitLeave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isOnDuty && !onDutyLocation.trim()) {
+      toast.error("On-duty leave requires a location.");
+      return;
+    }
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     try {
@@ -137,6 +146,8 @@ export function LeavesClient({
           toDate: fd.get("toDate"),
           halfDay: fd.get("halfDay") === "on",
           notes: fd.get("notes") || undefined,
+          onDutyLocation: isOnDuty ? onDutyLocation.trim() : undefined,
+          onDutyReference: isOnDuty && onDutyReference.trim() ? onDutyReference.trim() : undefined,
         }),
       });
       if (!res.ok) {
@@ -150,6 +161,8 @@ export function LeavesClient({
       setToDate("");
       setHalfDay(false);
       setNotes("");
+      setOnDutyLocation("");
+      setOnDutyReference("");
       setPreview(null);
       router.refresh();
     } catch (error) {
@@ -347,6 +360,38 @@ export function LeavesClient({
                 className="flex-1"
               />
             </div>
+
+            {isOnDuty && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label htmlFor="leave-request-onduty-location" className="text-xs font-medium text-[var(--mnx-text)]">
+                    Location (required for on-duty)
+                  </label>
+                  <Input
+                    id="leave-request-onduty-location"
+                    type="text"
+                    value={onDutyLocation}
+                    onChange={(e) => setOnDutyLocation(e.target.value)}
+                    placeholder="Client site, field visit, etc."
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="leave-request-onduty-reference" className="text-xs font-medium text-[var(--mnx-text)]">
+                    Reference (optional)
+                  </label>
+                  <Input
+                    id="leave-request-onduty-reference"
+                    type="text"
+                    value={onDutyReference}
+                    onChange={(e) => setOnDutyReference(e.target.value)}
+                    placeholder="Client/job/ticket reference"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
 
             {previewLoading && (
               <p className="text-xs text-[var(--mnx-muted)]" role="status">Calculating…</p>

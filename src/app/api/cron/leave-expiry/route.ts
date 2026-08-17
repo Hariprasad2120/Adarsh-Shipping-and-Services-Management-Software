@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { requireCronSecret } from "@/lib/security";
-import { expireStaleCompOffCredits } from "@/modules/leave/compoff";
+import { expireStaleCompOffCredits, notifyExpiringCompOffCredits } from "@/modules/leave/compoff";
 import { refreshResetSchedule, runDueResets } from "@/modules/leave/reset";
+
+const COMP_OFF_EXPIRY_WARNING_DAYS = 7;
 
 /**
  * Daily job: comp-off expiry, plus carry-forward/reset processing for any
@@ -11,7 +13,10 @@ import { refreshResetSchedule, runDueResets } from "@/modules/leave/reset";
  * financial/anniversary/monthly cadence — see src/modules/leave/reset.ts).
  * refreshResetSchedule backfills nextResetDate for any balance row that
  * doesn't have one yet (new policy, new employee) before runDueResets scans
- * for due rows via the indexed nextResetDate column.
+ * for due rows via the indexed nextResetDate column. Also sends advance
+ * warnings for comp-off credits expiring within COMP_OFF_EXPIRY_WARNING_DAYS
+ * (closure-pass notification-coverage gap: this cron previously only
+ * notified AFTER forfeiting units, never before).
  */
 export async function GET(request: Request) {
   const cronError = requireCronSecret(request);
@@ -32,6 +37,7 @@ export async function GET(request: Request) {
       continue;
     }
     try {
+      const expiryWarningResult = await notifyExpiringCompOffCredits(org.id, now, COMP_OFF_EXPIRY_WARNING_DAYS);
       const compOffResult = await expireStaleCompOffCredits(org.id, now);
       await refreshResetSchedule(org.id, now);
       const resetResult = await runDueResets(org.id, now);
@@ -44,7 +50,7 @@ export async function GET(request: Request) {
           processedCount: compOffResult.processed + resetResult.processed,
         },
       });
-      results.push({ orgId: org.id, compOff: compOffResult, reset: resetResult });
+      results.push({ orgId: org.id, expiryWarnings: expiryWarningResult, compOff: compOffResult, reset: resetResult });
     } catch (error) {
       await db.leaveSchedulerRun.update({
         where: { id: schedulerRun.id },

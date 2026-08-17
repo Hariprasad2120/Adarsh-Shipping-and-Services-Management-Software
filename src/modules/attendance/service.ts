@@ -152,6 +152,7 @@ export async function getLeaveRequests(orgId: string, filters?: {
 // unchanged. See docs/leave-management/ARCHITECTURE.md §1.
 export async function createLeaveRequest(userId: string, data: {
   leaveTypeId: string; fromDate: Date; toDate: Date; halfDay: boolean; notes?: string;
+  onDutyLocation?: string; onDutyReference?: string;
 }) {
   const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { orgId: true } });
   if (!user.orgId) throw new Error("User has no organisation");
@@ -163,6 +164,8 @@ export async function createLeaveRequest(userId: string, data: {
     toDate: data.toDate,
     halfDay: data.halfDay,
     notes: data.notes,
+    onDutyLocation: data.onDutyLocation,
+    onDutyReference: data.onDutyReference,
   });
   return request;
 }

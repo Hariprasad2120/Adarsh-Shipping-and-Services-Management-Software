@@ -74,6 +74,12 @@ export interface SubmitLeaveRequestInput {
   halfDay: boolean;
   notes?: string;
   branchId?: string | null;
+  /** Only meaningful when the policy's classification is ON_DUTY — where the
+   *  employee will be (client site, field visit, etc). Ignored otherwise. */
+  onDutyLocation?: string | null;
+  /** Only meaningful when the policy's classification is ON_DUTY — client/
+   *  job/ticket reference, free text. Ignored otherwise. */
+  onDutyReference?: string | null;
 }
 
 /**
@@ -143,6 +149,10 @@ export async function submitLeaveRequest(input: SubmitLeaveRequestInput) {
     throw new Error(calculation.violations.map((v) => v.message).join(" "));
   }
 
+  if (policyVersion.classification === "ON_DUTY" && !input.onDutyLocation) {
+    throw new Error("On-duty leave requires a location (client site, field visit, etc).");
+  }
+
   const request = await db.leaveRequest.create({
     data: {
       userId: input.userId,
@@ -156,6 +166,8 @@ export async function submitLeaveRequest(input: SubmitLeaveRequestInput) {
       computedDurationUnits: calculation.requestedUnits,
       paidUnits: calculation.paidUnits,
       lopUnits: calculation.lopUnits,
+      onDutyLocation: policyVersion.classification === "ON_DUTY" ? input.onDutyLocation : null,
+      onDutyReference: policyVersion.classification === "ON_DUTY" ? input.onDutyReference : null,
     },
     include: {
       user: { select: { id: true, name: true, orgId: true } },

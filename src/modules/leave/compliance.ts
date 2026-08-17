@@ -1,6 +1,43 @@
 import { db } from "@/lib/db";
 import { parsePolicyConfig } from "@/modules/leave/policy";
 
+/**
+ * Deterministic jurisdiction assignment for an employee (spec §35): the
+ * employee's branch, if it has a jurisdiction set, else the org's default
+ * jurisdiction, else null (meaning: no jurisdiction is configured for this
+ * employee, compliance checking should be skipped rather than guessed).
+ * Deliberately NOT auto-detected from IP/geolocation — jurisdiction for
+ * statutory leave compliance is a legal/HR configuration decision, not
+ * something inferred from where a request happens to originate.
+ */
+export async function resolveEmployeeJurisdiction(
+  userId: string,
+): Promise<{ country: string; state: string | null } | null> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      orgId: true,
+      branch: { select: { jurisdictionCountry: true, jurisdictionState: true } },
+    },
+  });
+  if (!user) return null;
+
+  if (user.branch?.jurisdictionCountry) {
+    return { country: user.branch.jurisdictionCountry, state: user.branch.jurisdictionState };
+  }
+
+  if (!user.orgId) return null;
+  const org = await db.organisation.findUnique({
+    where: { id: user.orgId },
+    select: { defaultJurisdictionCountry: true, defaultJurisdictionState: true },
+  });
+  if (org?.defaultJurisdictionCountry) {
+    return { country: org.defaultJurisdictionCountry, state: org.defaultJurisdictionState };
+  }
+
+  return null;
+}
+
 export interface ComplianceCheckResult {
   templateId: string;
   statutoryName: string;

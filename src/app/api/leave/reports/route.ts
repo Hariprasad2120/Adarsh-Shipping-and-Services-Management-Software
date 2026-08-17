@@ -21,6 +21,7 @@ import {
   getPolicyAssignmentReport,
   getComplianceExceptionsReport,
   getStaleLeaveBalancesReport,
+  getEmployeeJurisdictionReport,
 } from "@/modules/leave/reports";
 
 const REPORT_TYPES = [
@@ -43,6 +44,7 @@ const REPORT_TYPES = [
   "policy-assignment",
   "compliance-exceptions",
   "stale-balances",
+  "jurisdiction-assignment",
 ] as const;
 
 /**
@@ -119,6 +121,8 @@ export async function GET(req: NextRequest) {
       }
       case "stale-balances":
         return ok(await getStaleLeaveBalancesReport(filters, year));
+      case "jurisdiction-assignment":
+        return ok(await getEmployeeJurisdictionReport(filters));
       default:
         return err("Unknown report type");
     }

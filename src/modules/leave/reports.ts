@@ -399,6 +399,50 @@ export async function getComplianceExceptionsReport(filters: ReportFilters, juri
 }
 
 /**
+ * Report 19: Employee Jurisdiction Assignment (spec §35 multi-jurisdiction
+ * support) — shows every active employee's deterministically-resolved
+ * jurisdiction (branch's jurisdiction, falling back to the org default,
+ * falling back to unassigned) and groups them, so HR can see at a glance
+ * which jurisdictions actually have employees before running compliance
+ * checks per jurisdiction, and which employees have NO jurisdiction
+ * configured at all (a real gap to close, not silently ignored).
+ */
+export async function getEmployeeJurisdictionReport(filters: ReportFilters) {
+  const { resolveEmployeeJurisdiction } = await import("@/modules/leave/compliance");
+
+  const employees = await db.user.findMany({
+    where: { orgId: filters.orgId, active: true },
+    select: { id: true, name: true, employeeNumber: true, branchId: true, branch: { select: { name: true } } },
+  });
+
+  const rows = [];
+  for (const employee of employees) {
+    const jurisdiction = await resolveEmployeeJurisdiction(employee.id);
+    rows.push({
+      userId: employee.id,
+      name: employee.name,
+      employeeNumber: employee.employeeNumber,
+      branchName: employee.branch?.name ?? null,
+      jurisdictionCountry: jurisdiction?.country ?? null,
+      jurisdictionState: jurisdiction?.state ?? null,
+      unassigned: !jurisdiction,
+    });
+  }
+
+  const byJurisdiction = new Map<string, number>();
+  for (const row of rows) {
+    const key = row.jurisdictionCountry ? `${row.jurisdictionCountry}${row.jurisdictionState ? `/${row.jurisdictionState}` : ""}` : "UNASSIGNED";
+    byJurisdiction.set(key, (byJurisdiction.get(key) ?? 0) + 1);
+  }
+
+  return {
+    employees: rows,
+    summary: [...byJurisdiction.entries()].map(([jurisdiction, count]) => ({ jurisdiction, count })),
+    unassignedCount: rows.filter((r) => r.unassigned).length,
+  };
+}
+
+/**
  * Report 19: Stale Leave Balances — employees who hold a non-zero balance
  * for a leave type they are no longer applicable to under its current
  * published policy. The complement of Report 17 (which shows who IS

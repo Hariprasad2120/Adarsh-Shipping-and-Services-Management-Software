@@ -251,3 +251,47 @@ export async function expireStaleCompOffCredits(orgId: string, asOf: Date) {
   }
   return { processed };
 }
+
+/**
+ * Advance-warning notification for comp-off credits expiring within
+ * `warningDays` (spec closure-pass notification-coverage gap: the expiry
+ * cron only notified AFTER forfeiting units, never before, so an employee
+ * had no chance to use them). NOT deduped — `notify()` has no built-in
+ * dedup mechanism in this codebase (confirmed by reading
+ * modules/notifications/service.ts), so running this daily means an
+ * employee with a credit sitting inside the warning window gets one
+ * notification per day until they use it or it expires. This matches the
+ * existing, deliberate design of processApprovalReminders (recurring
+ * reminders are acceptable for a live warning; only financial/ledger
+ * postings must never double-post) — not a bug, a repeat of the same
+ * accepted pattern.
+ */
+export async function notifyExpiringCompOffCredits(orgId: string, asOf: Date, warningDays: number) {
+  const warningThreshold = new Date(asOf.getTime() + warningDays * 24 * 60 * 60 * 1000);
+
+  const expiringSoon = await db.compOffCredit.findMany({
+    where: {
+      orgId,
+      status: { in: ["APPROVED", "CONSUMED"] },
+      expiresAt: { gt: asOf, lte: warningThreshold },
+    },
+  });
+
+  let notified = 0;
+  for (const credit of expiringSoon) {
+    const remaining = toDecimal(credit.units).minus(toDecimal(credit.consumedUnits));
+    if (remaining.lessThanOrEqualTo(0)) continue; // fully consumed already — nothing to warn about
+
+    await notify({
+      userId: credit.userId,
+      orgId,
+      kind: "COMP_OFF_EXPIRING_SOON",
+      title: "Compensatory off expiring soon",
+      body: `${remaining.toString()} unit(s) of compensatory off earned on ${credit.earnedDate.toDateString()} will expire on ${credit.expiresAt!.toDateString()} if unused.`,
+      link: "/attendance/leaves",
+      payload: { compOffCreditId: credit.id },
+    });
+    notified++;
+  }
+  return { notified };
+}

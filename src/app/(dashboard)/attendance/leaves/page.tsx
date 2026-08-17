@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requirePermission, can } from "@/lib/rbac";
 import { getLeaveRequests, getLeaveTypes, getLeaveBalances } from "@/modules/attendance/service";
 import { getNow } from "@/lib/clock";
+import { db } from "@/lib/db";
 import { LeavesClient } from "./leaves-client";
 
 type LeavesClientProps = React.ComponentProps<typeof LeavesClient>;
@@ -36,7 +37,24 @@ export default async function LeavesPage() {
   // aren't serializable across the server/client boundary, so convert to
   // plain numbers here rather than relying on the `as` casts below to
   // paper over the shape mismatch.
-  const leaveTypeRows = leaveTypes.map((lt) => ({ ...lt, defaultBalance: lt.defaultBalance.toNumber() }));
+  // Classification lives on the active LeavePolicyVersion, not LeaveType
+  // itself — fetched separately here so the on-duty-only fields (spec §21)
+  // can be shown/required in the UI without changing the shared
+  // getCachedLeaveTypes() cache shape used by other callers.
+  const activeVersionIds = leaveTypes.map((lt) => lt.activeVersionId).filter((id): id is string => Boolean(id));
+  const activeVersions = activeVersionIds.length
+    ? await db.leavePolicyVersion.findMany({
+        where: { id: { in: activeVersionIds } },
+        select: { id: true, classification: true },
+      })
+    : [];
+  const classificationByVersionId = new Map(activeVersions.map((v) => [v.id, v.classification]));
+
+  const leaveTypeRows = leaveTypes.map((lt) => ({
+    ...lt,
+    defaultBalance: lt.defaultBalance.toNumber(),
+    classification: lt.activeVersionId ? (classificationByVersionId.get(lt.activeVersionId) ?? null) : null,
+  }));
   const balanceRows = balances.map((b) => ({
     ...b,
     balance: b.balance.toNumber(),
