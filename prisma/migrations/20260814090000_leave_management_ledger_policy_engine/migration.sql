@@ -1,5 +1,3 @@
-Loaded Prisma config from prisma.config.ts.
-
 -- AlterTable
 ALTER TABLE "LeaveBalance" ADD COLUMN     "nextResetDate" DATE,
 ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -23,7 +23,7 @@ export default async function LeavePoliciesPage() {
     );
   }
 
-  const [leaveTypes, departments, branches] = await Promise.all([
+  const [leaveTypes, departments, branches, divisions, employees, roles] = await Promise.all([
     db.leaveType.findMany({
       where: { orgId: session.user.orgId! },
       include: { versions: { orderBy: { version: "desc" } } },
@@ -31,7 +31,17 @@ export default async function LeavePoliciesPage() {
     }),
     db.department.findMany({ where: { orgId: session.user.orgId! }, orderBy: { name: "asc" } }),
     db.branch.findMany({ where: { orgId: session.user.orgId! }, orderBy: { name: "asc" } }),
+    db.division.findMany({ where: { orgId: session.user.orgId! }, orderBy: { name: "asc" } }),
+    db.user.findMany({
+      where: { orgId: session.user.orgId!, active: true },
+      select: { id: true, name: true, designation: true, employmentType: true },
+      orderBy: { name: "asc" },
+    }),
+    db.role.findMany({ where: { orgId: session.user.orgId! }, orderBy: { name: "asc" } }),
   ]);
+
+  const designations = [...new Set(employees.map((e) => e.designation).filter((d): d is string => Boolean(d)))].sort();
+  const employmentTypes = [...new Set(employees.map((e) => e.employmentType).filter((t): t is string => Boolean(t)))].sort();
 
   const rows = leaveTypes.map((lt) => ({
     id: lt.id,
@@ -54,6 +64,11 @@ export default async function LeavePoliciesPage() {
       leaveTypes={rows}
       departments={departments.map((d) => ({ id: d.id, name: d.name }))}
       branches={branches.map((b) => ({ id: b.id, name: b.name }))}
+      divisions={divisions.map((d) => ({ id: d.id, name: d.name }))}
+      designations={designations}
+      employmentTypes={employmentTypes}
+      employees={employees.map((e) => ({ id: e.id, name: e.name }))}
+      roles={roles.map((r) => ({ id: r.id, name: r.name }))}
     />
   );
 }
