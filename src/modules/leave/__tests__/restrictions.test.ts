@@ -5,12 +5,14 @@ const mocks = vi.hoisted(() => ({
   employmentRecordFindUnique: vi.fn(),
   leaveRequestCount: vi.fn(),
   leaveRequestFindMany: vi.fn(),
+  workingCalendarFindUnique: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
   db: {
     employmentRecord: { findUnique: mocks.employmentRecordFindUnique },
     leaveRequest: { count: mocks.leaveRequestCount, findMany: mocks.leaveRequestFindMany },
+    workingCalendar: { findUnique: mocks.workingCalendarFindUnique },
   },
 }));
 
@@ -50,6 +52,14 @@ describe("validateRestrictions", () => {
     mocks.employmentRecordFindUnique.mockResolvedValue(null);
     mocks.leaveRequestCount.mockResolvedValue(0);
     mocks.leaveRequestFindMany.mockResolvedValue([]);
+    mocks.workingCalendarFindUnique.mockResolvedValue({
+      workStart: "09:00",
+      workEnd: "18:00",
+      timezone: "Asia/Kolkata",
+      graceMinutes: 15,
+      workingDays: "1,2,3,4,5", // Mon-Fri only, so Sat+Sun are non-working
+      breaks: [],
+    });
   });
 
   it("returns no violations for a clean request against a permissive config", async () => {
@@ -190,5 +200,110 @@ describe("validateRestrictions", () => {
       now: new Date("2026-08-14"),
     });
     expect(violations.some((v) => v.code === "CLUBBING_FORBIDDEN")).toBe(false);
+  });
+
+  it("flags FORBID_ADJACENT when the other request ends the immediately preceding day", async () => {
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { leaveTypeId: "other-lt", fromDate: new Date("2026-09-01"), toDate: new Date("2026-09-02") }, // Tue-Wed
+    ]);
+    const config = baseConfig({ allowPastDated: true });
+    config.clubbingRules = [{ otherLeaveTypeId: "other-lt", mode: "FORBID_ADJACENT" }];
+
+    const violations = await validateRestrictions({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      fromDate: new Date("2026-09-03"), // Thursday, directly follows
+      toDate: new Date("2026-09-03"),
+      config,
+      now: new Date("2026-08-14"),
+    });
+    expect(violations.some((v) => v.code === "CLUBBING_ADJACENT_FORBIDDEN")).toBe(true);
+  });
+
+  it("flags FORBID_ADJACENT across a weekend gap (Fri other-type + Mon this-type), not just a literal 1-day gap", async () => {
+    // Splitting adjacency across a weekend must not let it escape the rule
+    // — same closure-pass fix as the sandwich rule's cross-request case.
+    // Sept 12 2026 is the month's 2nd Saturday, a genuine non-working day
+    // under this org's working-day rules (1st/3rd Saturdays are working).
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { leaveTypeId: "other-lt", fromDate: new Date("2026-09-11"), toDate: new Date("2026-09-11") }, // Friday
+    ]);
+    const config = baseConfig({ allowPastDated: true });
+    config.clubbingRules = [{ otherLeaveTypeId: "other-lt", mode: "FORBID_ADJACENT" }];
+
+    const violations = await validateRestrictions({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      fromDate: new Date("2026-09-14"), // Monday — only Sat(12th)/Sun(13th) between
+      toDate: new Date("2026-09-14"),
+      config,
+      now: new Date("2026-08-14"),
+    });
+    expect(violations.some((v) => v.code === "CLUBBING_ADJACENT_FORBIDDEN")).toBe(true);
+  });
+
+  it("does not flag FORBID_ADJACENT when a real working day separates the two requests", async () => {
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { leaveTypeId: "other-lt", fromDate: new Date("2026-09-01"), toDate: new Date("2026-09-01") }, // Tuesday
+    ]);
+    const config = baseConfig({ allowPastDated: true });
+    config.clubbingRules = [{ otherLeaveTypeId: "other-lt", mode: "FORBID_ADJACENT" }];
+
+    const violations = await validateRestrictions({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      fromDate: new Date("2026-09-03"), // Thursday — Wednesday (a working day) is in between
+      toDate: new Date("2026-09-03"),
+      config,
+      now: new Date("2026-08-14"),
+    });
+    expect(violations.some((v) => v.code === "CLUBBING_ADJACENT_FORBIDDEN")).toBe(false);
+  });
+
+  it("does not flag FORBID_ADJACENT for an overlapping request (that's FORBID_COMBINE's concern)", async () => {
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { leaveTypeId: "other-lt", fromDate: new Date("2026-09-01"), toDate: new Date("2026-09-03") },
+    ]);
+    const config = baseConfig({ allowPastDated: true });
+    config.clubbingRules = [{ otherLeaveTypeId: "other-lt", mode: "FORBID_ADJACENT" }];
+
+    const violations = await validateRestrictions({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      fromDate: new Date("2026-09-02"),
+      toDate: new Date("2026-09-04"),
+      config,
+      now: new Date("2026-08-14"),
+    });
+    expect(violations.some((v) => v.code === "CLUBBING_ADJACENT_FORBIDDEN")).toBe(false);
+  });
+
+  it("checks pending requests the same as approved requests for clubbing purposes", async () => {
+    mocks.leaveRequestFindMany.mockResolvedValue([
+      { leaveTypeId: "other-lt", fromDate: new Date("2026-09-01"), toDate: new Date("2026-09-02") },
+    ]);
+    const config = baseConfig({ allowPastDated: true });
+    config.clubbingRules = [{ otherLeaveTypeId: "other-lt", mode: "FORBID_ADJACENT" }];
+
+    await validateRestrictions({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      fromDate: new Date("2026-09-03"),
+      toDate: new Date("2026-09-03"),
+      config,
+      now: new Date("2026-08-14"),
+    });
+
+    // Confirms the query itself includes both pending and approved status
+    // values (both casings, matching the legacy-lowercase compatibility
+    // used across the leave module) rather than only approved requests.
+    const queryArg = mocks.leaveRequestFindMany.mock.calls[0][0];
+    const statusIn = queryArg.where.status.in;
+    expect(statusIn).toEqual(expect.arrayContaining(["pending", "PENDING_APPROVAL", "approved", "APPROVED"]));
   });
 });

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isWorkingDate, type WorkingCalendarConfig } from "@/lib/working-hours";
 import type { LeavePolicyConfig } from "@/modules/leave/policy-config.schema";
 
 export interface RestrictionViolation {
@@ -18,6 +19,27 @@ export interface ValidateRestrictionsInput {
 
 function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function toDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * True if every calendar day strictly between `a` and `b` (exclusive) is a
+ * non-working day under the org's calendar — i.e. the two dates are only
+ * separated by a weekend/holiday, not by any real working day.
+ */
+function onlyNonWorkingDaysBetween(a: Date, b: Date, calendar: WorkingCalendarConfig): boolean {
+  const gap = daysBetween(a, b);
+  if (gap <= 1) return true; // truly adjacent, nothing between them
+  let cursor = new Date(a);
+  cursor.setDate(cursor.getDate() + 1);
+  for (let i = 1; i < gap; i++) {
+    if (isWorkingDate(toDateKey(cursor), calendar)) return false;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return true;
 }
 
 /**
@@ -146,6 +168,20 @@ export async function validateRestrictions(
       },
     });
 
+    // Only fetched when a FORBID_ADJACENT rule actually needs it — the
+    // "adjacent" check must count a request separated only by a
+    // weekend/holiday as adjacent (mirrors the sandwich rule's treatment
+    // of non-working gaps, spec closure-pass clubbing edge cases), not
+    // just a literal 1-day gap, otherwise splitting leave across a
+    // weekend trivially escapes the rule.
+    let calendar: WorkingCalendarConfig | null = null;
+    const needsCalendar = config.clubbingRules.some((rule) => rule.mode === "FORBID_ADJACENT");
+    if (needsCalendar) {
+      const record = await db.workingCalendar.findUnique({ where: { orgId: input.orgId } });
+      const { calendarFromDb } = await import("@/lib/working-hours");
+      calendar = calendarFromDb(record, []);
+    }
+
     for (const rule of config.clubbingRules) {
       const conflicting = nearbyRequests.filter((req) => req.leaveTypeId === rule.otherLeaveTypeId);
       if (conflicting.length === 0) continue;
@@ -160,11 +196,15 @@ export async function validateRestrictions(
             message: "This leave type cannot be combined with an overlapping request of another restricted type.",
           });
         }
-      } else if (rule.mode === "FORBID_ADJACENT") {
+      } else if (rule.mode === "FORBID_ADJACENT" && calendar) {
         const adjacent = conflicting.some((req) => {
-          const gapBefore = daysBetween(req.toDate, input.fromDate);
-          const gapAfter = daysBetween(input.toDate, req.fromDate);
-          return gapBefore === 1 || gapAfter === 1;
+          if (req.toDate <= input.fromDate) {
+            return onlyNonWorkingDaysBetween(req.toDate, input.fromDate, calendar!);
+          }
+          if (req.fromDate >= input.toDate) {
+            return onlyNonWorkingDaysBetween(input.toDate, req.fromDate, calendar!);
+          }
+          return false; // overlapping, not adjacent — FORBID_COMBINE's concern, not this rule's
         });
         if (adjacent) {
           violations.push({
