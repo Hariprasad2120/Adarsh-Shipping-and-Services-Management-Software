@@ -6,7 +6,7 @@ import {
 } from "@/modules/people/components/people-controls";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
 import {
@@ -85,6 +85,9 @@ export function LeavesClient({
   const [notes, setNotes] = useState("");
   const [preview, setPreview] = useState<CalculationPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [extendingId, setExtendingId] = useState<string | null>(null);
+  const [extendToDate, setExtendToDate] = useState("");
+  const [extending, setExtending] = useState(false);
 
   // Server-side calculation preview (spec §18) — recomputed whenever the
   // key inputs change. Submission always recalculates again server-side;
@@ -188,6 +191,30 @@ export function LeavesClient({
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to cancel leave request");
+    }
+  }
+
+  async function extendRequest(id: string) {
+    if (!extendToDate) return;
+    setExtending(true);
+    try {
+      const res = await fetch(`/api/leave/requests/${id}/extend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newToDate: extendToDate }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error?.message ?? body.error ?? "Failed to extend leave request");
+      }
+      toast.success("Leave request extended");
+      setExtendingId(null);
+      setExtendToDate("");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to extend leave request");
+    } finally {
+      setExtending(false);
     }
   }
 
@@ -386,31 +413,76 @@ export function LeavesClient({
                   const normalizedStatus = r.status.toLowerCase();
                   const cancellable =
                     normalizedStatus === "pending" || normalizedStatus === "approved";
+                  const extendable = normalizedStatus === "approved";
+                  const isExtending = extendingId === r.id;
                   return (
-                    <tr key={r.id}>
-                      <OperationalTableCell>{r.leaveType.name}</OperationalTableCell>
-                      <OperationalTableCell>{fmtDate(r.fromDate)}</OperationalTableCell>
-                      <OperationalTableCell>{fmtDate(r.toDate)}</OperationalTableCell>
-                      <OperationalTableCell>{r.halfDay ? "Yes" : "No"}</OperationalTableCell>
-                      <OperationalTableCell>
-                        <OperationalStatus tone={STATUS_TONE[normalizedStatus] ?? "neutral"}>
-                          {r.status}
-                        </OperationalStatus>
-                      </OperationalTableCell>
-                      <OperationalTableCell className="text-[var(--mnx-muted)]">
-                        {r.notes ?? "-"}
-                      </OperationalTableCell>
-                      <OperationalTableCell>
-                        {cancellable && (
-                          <MnxAction
-                            onClick={() => cancelRequest(r.id)}
-                            className="rounded border px-2 py-1 text-xs text-[var(--mnx-text)]"
-                          >
-                            Cancel
-                          </MnxAction>
-                        )}
-                      </OperationalTableCell>
-                    </tr>
+                    <Fragment key={r.id}>
+                      <tr>
+                        <OperationalTableCell>{r.leaveType.name}</OperationalTableCell>
+                        <OperationalTableCell>{fmtDate(r.fromDate)}</OperationalTableCell>
+                        <OperationalTableCell>{fmtDate(r.toDate)}</OperationalTableCell>
+                        <OperationalTableCell>{r.halfDay ? "Yes" : "No"}</OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalStatus tone={STATUS_TONE[normalizedStatus] ?? "neutral"}>
+                            {r.status}
+                          </OperationalStatus>
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-[var(--mnx-muted)]">
+                          {r.notes ?? "-"}
+                        </OperationalTableCell>
+                        <OperationalTableCell>
+                          <div className="flex gap-2">
+                            {extendable && (
+                              <MnxAction
+                                onClick={() => {
+                                  setExtendingId(isExtending ? null : r.id);
+                                  setExtendToDate("");
+                                }}
+                                className="rounded border px-2 py-1 text-xs text-[var(--mnx-text)]"
+                              >
+                                {isExtending ? "Close" : "Extend"}
+                              </MnxAction>
+                            )}
+                            {cancellable && (
+                              <MnxAction
+                                onClick={() => cancelRequest(r.id)}
+                                className="rounded border px-2 py-1 text-xs text-[var(--mnx-text)]"
+                              >
+                                Cancel
+                              </MnxAction>
+                            )}
+                          </div>
+                        </OperationalTableCell>
+                      </tr>
+                      {isExtending && (
+                        <tr>
+                          <OperationalTableCell colSpan={7}>
+                            <div className="flex flex-wrap items-end gap-3 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-3">
+                              <div className="space-y-1">
+                                <label htmlFor={`extend-to-${r.id}`} className="text-xs font-medium text-[var(--mnx-text)]">
+                                  New end date (current: {fmtDate(r.toDate)})
+                                </label>
+                                <Input
+                                  id={`extend-to-${r.id}`}
+                                  type="date"
+                                  min={new Date(new Date(r.toDate).getTime() + 86400000).toISOString().slice(0, 10)}
+                                  value={extendToDate}
+                                  onChange={(e) => setExtendToDate(e.target.value)}
+                                  className="w-full"
+                                />
+                              </div>
+                              <MnxAction
+                                onClick={() => extendRequest(r.id)}
+                                disabled={extending || !extendToDate}
+                                className="rounded-lg bg-[var(--mnx-info-bg)] px-4 py-1.5 text-sm text-[var(--mnx-text)] disabled:opacity-50"
+                              >
+                                Confirm extension
+                              </MnxAction>
+                            </div>
+                          </OperationalTableCell>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })
               )}
