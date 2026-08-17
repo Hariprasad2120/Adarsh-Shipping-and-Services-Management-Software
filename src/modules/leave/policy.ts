@@ -122,7 +122,22 @@ export async function publishPolicyVersion(policyVersionId: string, actorId: str
     details: { leaveTypeId: version.leaveTypeId, version: version.version },
   });
 
-  return updated;
+  // ATTENDANCE_BASED is a fully-defined config schema variant (metric +
+  // creditFrequency) that implies automatic accrual, but runMonthlyAccrual
+  // deliberately skips it (see its docstring) — a general attendance-linked
+  // accrual engine reading WorkedDays/OtRecord per metric doesn't exist yet.
+  // Publishing such a policy silently would mean it never credits anyone
+  // with no error anywhere; surface it instead of letting it be a silent
+  // trap for whoever configured it (closure-pass entitlement-model audit).
+  const config = parsePolicyConfig(version.configuration);
+  const warnings: string[] =
+    config.entitlement.model === "ATTENDANCE_BASED"
+      ? [
+          "This policy's entitlement model is ATTENDANCE_BASED. No automatic accrual is implemented for this model yet — runMonthlyAccrual only processes FIXED and EXPERIENCE_BASED policies. Balances under this policy will not increase unless credited manually via a leave grant or ledger adjustment.",
+        ]
+      : [];
+
+  return { ...updated, warnings };
 }
 
 export async function archivePolicyVersion(policyVersionId: string, actorId: string) {
