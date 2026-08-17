@@ -133,7 +133,18 @@ export async function runDueResets(orgId: string, asOf: Date) {
       });
     }
 
-    const nextYear = asOf.getUTCFullYear() + (config.reset.cadence === "MONTHLY" ? 0 : 1);
+    // The leave-year being entered is whatever year balance.nextResetDate
+    // itself falls in — NOT derived from asOf. Deriving it from asOf (the
+    // cron's "as of" timestamp) is off by one whenever asOf's year already
+    // equals the target year (the common case: a CALENDAR_YEAR reset with
+    // nextResetDate = 2027-01-01 is normally processed by a cron running
+    // ON 2027-01-01, i.e. asOf.getUTCFullYear() is ALREADY 2027, not 2026 —
+    // so "+1" for non-monthly cadences posted the carry-forward one year
+    // too late) or off by one the other way if the cron runs late into the
+    // following year. Found via real end-to-end testing against a live DB
+    // (round 17) — balanceAfterReset for the target year came back 0
+    // instead of the expected carried-forward amount.
+    const nextYear = balance.nextResetDate!.getUTCFullYear();
     if (carriedForward.greaterThan(0)) {
       await postLedgerEntry({
         orgId,
