@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
-import { requirePermission } from "@/lib/rbac";
+import { requirePermission, apiError } from "@/lib/rbac";
 import { createLeaveRequest, getLeaveRequests } from "@/modules/attendance/service";
 import { z } from "zod";
 
@@ -33,19 +33,25 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const { session, error } = await getSessionOrUnauth();
-  if (error) return error;
-  await requirePermission(session!.user.id, "attendance.leave.request");
+  try {
+    const { session, error } = await getSessionOrUnauth();
+    if (error) return error;
+    await requirePermission(session!.user.id, "attendance.leave.request");
 
-  const parsed = createSchema.safeParse(await req.json());
-  if (!parsed.success) return err("Invalid input");
+    const parsed = createSchema.safeParse(await req.json());
+    if (!parsed.success) return err("Invalid input");
 
-  const request = await createLeaveRequest(session!.user.id, {
-    ...parsed.data,
-    fromDate: new Date(parsed.data.fromDate),
-    toDate: new Date(parsed.data.toDate),
-    halfDay: parsed.data.dayPart === "HALF",
-  });
+    const request = await createLeaveRequest(session!.user.id, {
+      ...parsed.data,
+      fromDate: new Date(parsed.data.fromDate),
+      toDate: new Date(parsed.data.toDate),
+      halfDay: parsed.data.dayPart === "HALF",
+    });
 
-  return ok(request, 201);
+    return ok(request, 201);
+  } catch (error) {
+    if (error instanceof Error && error.name === "ForbiddenError") return apiError(error);
+    const message = error instanceof Error ? error.message : "Failed to submit leave request";
+    return err(message);
+  }
 }
