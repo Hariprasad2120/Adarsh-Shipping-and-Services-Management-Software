@@ -50,7 +50,7 @@ vi.mock("@/modules/leave/calculation", () => ({
       balanceReserved: days, balanceBefore: 10, balanceAfter: 10 - days,
       warnings: [], violations: [], weekendUnits: 0, holidayUnits: 0,
       sandwichUnits: 0, calendarWorkingUnits: days, eligibleUnits: days,
-      sandwichBreakdown: null, explanation: [],
+      sandwichBreakdown: null, explanation: [], partialPaySlabBreakdown: [],
     };
   }),
 }));

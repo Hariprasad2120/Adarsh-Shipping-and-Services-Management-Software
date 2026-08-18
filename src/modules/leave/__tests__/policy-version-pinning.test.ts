@@ -26,7 +26,7 @@ vi.mock("@/modules/leave/calculation", () => ({
     balanceReserved: 2, balanceBefore: 10, balanceAfter: 8,
     warnings: [], violations: [], weekendUnits: 0, holidayUnits: 0,
     sandwichUnits: 0, calendarWorkingUnits: 2, eligibleUnits: 2,
-    sandwichBreakdown: null, explanation: [],
+    sandwichBreakdown: null, explanation: [], partialPaySlabBreakdown: [],
   })),
 }));
 vi.mock("@/modules/leave/approval", () => ({ buildApprovalSteps: vi.fn(async () => []) }));

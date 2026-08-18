@@ -369,6 +369,29 @@ describe("calculateLeaveRequest", () => {
     expect(result.paidUnits).toBe(2);
     expect(result.partialPaidUnits).toBe(2);
     expect(result.lopUnits).toBe(1);
+    // Structured payroll contract (spec §17): only the genuinely-partial
+    // 50% slab appears in the breakdown — the 100%-paid days are already
+    // fully represented by paidUnits, no redundant entry needed.
+    expect(result.partialPaySlabBreakdown).toEqual([{ payPercentage: 50, units: 2 }]);
+  });
+
+  it("partialPaySlabBreakdown is empty for a fully-paid (non-partial) request", async () => {
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+    });
+
+    expect(result.partialPaySlabBreakdown).toEqual([]);
   });
 
   it("half-day request is always 0.5 units regardless of date span", async () => {

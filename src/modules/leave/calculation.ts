@@ -38,6 +38,10 @@ export interface LeaveCalculationResult {
   violations: CalculationViolation[];
   sandwichBreakdown: SandwichBreakdown | null;
   explanation: string[];
+  /** Structured payroll contract data (spec §17) — only genuinely partial
+   *  slabs (0 < payPercentage < 100), empty unless classification is
+   *  PARTIALLY_PAID. Payroll consumes this via LeavePartialPayRecord. */
+  partialPaySlabBreakdown: { payPercentage: number; units: number }[];
 }
 
 function toDateKey(date: Date): string {
@@ -305,6 +309,12 @@ async function applyBalanceSplit(
   let paidUnitsDecimal = new Prisma.Decimal(0);
   let partialPaidUnitsDecimal = new Prisma.Decimal(0);
   let lopUnitsDecimal = new Prisma.Decimal(0);
+  // Structured payroll contract (spec §17): only the slabs that are
+  // GENUINELY partial (0 < payPercentage < 100) go here — the 100%-paid
+  // and 0%-paid (LOP) slabs are already fully represented by
+  // paidUnitsDecimal/lopUnitsDecimal, Payroll doesn't need a redundant
+  // breakdown entry for those.
+  const partialPaySlabBreakdown: { payPercentage: number; units: number }[] = [];
 
   if (input.classification === "UNPAID") {
     lopUnitsDecimal = requestedUnitsDecimal;
@@ -320,9 +330,14 @@ async function applyBalanceSplit(
       const slabCapacity = Prisma.Decimal.max(0, new Prisma.Decimal(slab.uptoUnits).minus(cumulative));
       const unitsInSlab = Prisma.Decimal.min(remaining, slabCapacity);
       if (unitsInSlab.lessThanOrEqualTo(0)) continue;
-      if (slab.payPercentage >= 100) paidUnitsDecimal = paidUnitsDecimal.plus(unitsInSlab);
-      else if (slab.payPercentage <= 0) lopUnitsDecimal = lopUnitsDecimal.plus(unitsInSlab);
-      else partialPaidUnitsDecimal = partialPaidUnitsDecimal.plus(unitsInSlab);
+      if (slab.payPercentage >= 100) {
+        paidUnitsDecimal = paidUnitsDecimal.plus(unitsInSlab);
+      } else if (slab.payPercentage <= 0) {
+        lopUnitsDecimal = lopUnitsDecimal.plus(unitsInSlab);
+      } else {
+        partialPaidUnitsDecimal = partialPaidUnitsDecimal.plus(unitsInSlab);
+        partialPaySlabBreakdown.push({ payPercentage: slab.payPercentage, units: unitsInSlab.toNumber() });
+      }
       cumulative = cumulative.plus(unitsInSlab);
       remaining = remaining.minus(unitsInSlab);
     }
@@ -394,6 +409,7 @@ async function applyBalanceSplit(
     balanceBefore: balanceBefore.toNumber(),
     balanceReserved: balanceReservedDecimal.toNumber(),
     balanceAfter: balanceAfterDecimal.toNumber(),
+    partialPaySlabBreakdown,
   };
 }
 

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { writeLeaveAudit } from "@/modules/leave/audit";
 
 function firstOfMonth(date: Date): Date {
@@ -115,4 +116,101 @@ export async function reverseLopFromLeaveRequest(input: {
   });
 
   return updated;
+}
+
+export interface PartialPaySlabBreakdown {
+  payPercentage: number;
+  units: number;
+}
+
+/**
+ * Structured payroll contract for PARTIALLY_PAID leave (spec §17 closure-
+ * pass finding): calculateLeaveRequest already computes the per-slab
+ * pay-percentage breakdown (calculation.ts's partialPaySlabs application)
+ * but nothing ever persisted or emitted it — the leave side's
+ * responsibility stops at "here is the structured slab data", it does
+ * NOT calculate salary amounts (that stays Payroll's job, per spec §16).
+ * One row per request (unique on requestId), so approving the same
+ * request twice — which shouldn't happen, but defensively — is a
+ * safe upsert, not a duplicate insert. Respects the same payroll-lock
+ * protection as LOP: refuses to write into a FINALIZED/PAID month.
+ */
+export async function applyPartialPayFromLeaveRequest(input: {
+  orgId: string;
+  userId: string;
+  leaveTypeId: string;
+  fromDate: Date;
+  requestId: string;
+  actorId: string;
+  slabBreakdown: PartialPaySlabBreakdown[];
+}) {
+  if (input.slabBreakdown.length === 0) return null;
+  const totalUnits = input.slabBreakdown.reduce((sum, s) => sum + s.units, 0);
+  if (totalUnits <= 0) return null;
+
+  const payrollMonth = firstOfMonth(input.fromDate);
+
+  const batch = await db.payrollBatch.findUnique({
+    where: { orgId_month: { orgId: input.orgId, month: payrollMonth } },
+  });
+  if (batch && (batch.status === "FINALIZED" || batch.status === "PAID")) {
+    throw new PayrollLockedError(payrollMonth);
+  }
+
+  const record = await db.leavePartialPayRecord.upsert({
+    where: { requestId: input.requestId },
+    update: {
+      slabBreakdown: input.slabBreakdown as unknown as Prisma.InputJsonValue,
+      totalUnits: new Prisma.Decimal(totalUnits),
+    },
+    create: {
+      orgId: input.orgId,
+      userId: input.userId,
+      leaveTypeId: input.leaveTypeId,
+      payrollMonth,
+      requestId: input.requestId,
+      slabBreakdown: input.slabBreakdown as unknown as Prisma.InputJsonValue,
+      totalUnits: new Prisma.Decimal(totalUnits),
+      createdById: input.actorId,
+    },
+  });
+
+  await writeLeaveAudit({
+    orgId: input.orgId,
+    userId: input.actorId,
+    action: "LEAVE_PARTIAL_PAY_APPLIED",
+    details: { requestId: input.requestId, payrollMonth: payrollMonth.toISOString(), slabBreakdown: input.slabBreakdown },
+  });
+
+  return record;
+}
+
+/** Reverses a partial-pay record when its leave request is cancelled after approval. Same payroll-lock protection. */
+export async function reversePartialPayFromLeaveRequest(input: {
+  orgId: string;
+  requestId: string;
+  actorId: string;
+  fromDate: Date;
+}) {
+  const payrollMonth = firstOfMonth(input.fromDate);
+  const batch = await db.payrollBatch.findUnique({
+    where: { orgId_month: { orgId: input.orgId, month: payrollMonth } },
+  });
+  if (batch && (batch.status === "FINALIZED" || batch.status === "PAID")) {
+    throw new PayrollLockedError(payrollMonth);
+  }
+
+  const existing = await db.leavePartialPayRecord.findUnique({ where: { requestId: input.requestId } });
+  if (!existing) return null;
+
+  await db.leavePartialPayRecord.delete({ where: { requestId: input.requestId } });
+
+  await writeLeaveAudit({
+    orgId: input.orgId,
+    userId: input.actorId,
+    action: "LEAVE_PARTIAL_PAY_REVERSED",
+    details: { requestId: input.requestId, payrollMonth: payrollMonth.toISOString() },
+  });
+
+  return existing;
 }

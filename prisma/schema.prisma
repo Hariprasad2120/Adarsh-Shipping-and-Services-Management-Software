@@ -38,6 +38,7 @@ model Organisation {
   leaveSchedulerRuns     LeaveSchedulerRun[]
   leaveApproverDelegations LeaveApproverDelegation[]
   restrictedHolidaySelections RestrictedHolidaySelection[]
+  leavePartialPayRecords LeavePartialPayRecord[]
   holidays               Holiday[]
   notifications          Notification[]
   notificationActivities NotificationActivity[]
@@ -389,6 +390,7 @@ model User {
   leaveDelegationsGiven    LeaveApproverDelegation[] @relation("LeaveDelegationsGiven")
   leaveDelegationsReceived LeaveApproverDelegation[] @relation("LeaveDelegationsReceived")
   restrictedHolidaySelections RestrictedHolidaySelection[]
+  leavePartialPayRecords   LeavePartialPayRecord[]
   otEntries               OTEntry[]                  @relation("OTEmployee")
   otApprovals             OTEntry[]                  @relation("OTApprover")
   otRecords               OtRecord[]                 @relation("EmployeeOtRecords")
@@ -864,6 +866,7 @@ model LeaveType {
   versions LeavePolicyVersion[]
   ledgerEntries LeaveLedgerEntry[]
   grants   LeaveGrant[]
+  partialPayRecords LeavePartialPayRecord[]
 
   @@unique([orgId, name])
   @@unique([orgId, code])
@@ -917,6 +920,8 @@ model LeaveRequest {
   dayPart                  String?  // NEW — FULL | HALF | QUARTER, DAY-unit only. halfDay stays in sync (dayPart === "HALF") for existing readers of the boolean; QUARTER is only representable via this field.
   fromTime                 String?  // NEW — "HH:MM", HOUR-unit only
   toTime                   String?  // NEW — "HH:MM", HOUR-unit only
+  partialPaidUnits         Decimal? @db.Decimal(10, 4) // NEW — calculation.ts already computes this (PARTIALLY_PAID slabs) but it was never persisted; spec §17 payroll-contract gap
+  partialPaySlabBreakdown  Json?    // NEW — [{payPercentage, units}, ...] snapshot from calculation.ts at submission time, read back at approval to write LeavePartialPayRecord without recalculating
 
   user      User      @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
   approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id])
@@ -928,6 +933,7 @@ model LeaveRequest {
   ledgerEntries   LeaveLedgerEntry[]
   approvalSteps   LeaveApprovalStep[]
   attachments     LeaveRequestAttachment[]
+  partialPayRecord LeavePartialPayRecord?
 
   @@index([userId])
   @@index([approverId])
@@ -1591,6 +1597,38 @@ model EmployeeLop {
 
   @@unique([userId, payrollMonth])
   @@index([payrollMonth])
+}
+
+// Structured payroll contract for PARTIALLY_PAID leave (spec §17): Leave
+// Management does not calculate salary rate or amount — that stays
+// Payroll's job — but partial-pay slabs ARE a leave-policy calculation
+// (calculation.ts already computes them), so the leave side is
+// responsible for emitting a stable, structured event Payroll can consume
+// instead of Payroll having to re-derive per-slab math from raw
+// LeaveRequest rows. One row per leave-type per payroll-month per
+// employee, holding the same slab breakdown calculation.ts already
+// produces (percentage -> units), not a collapsed single number — Payroll
+// needs the per-percentage breakdown to apply different pay rates.
+model LeavePartialPayRecord {
+  id            String   @id @default(cuid())
+  orgId         String
+  userId        String
+  leaveTypeId   String
+  payrollMonth  DateTime @db.Date // first day of month
+  requestId     String   @unique // one record per leave request — idempotent by construction
+  slabBreakdown Json     // [{ payPercentage: number, units: number }, ...] — mirrors calculation.ts's partialPaySlabs application
+  totalUnits    Decimal  @db.Decimal(10, 4)
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveType LeaveType    @relation(fields: [leaveTypeId], references: [id])
+  request   LeaveRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, payrollMonth])
+  @@index([userId, payrollMonth])
 }
 
 model SystemSetting {

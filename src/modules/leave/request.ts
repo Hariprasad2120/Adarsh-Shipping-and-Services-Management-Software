@@ -11,7 +11,13 @@ import { buildApprovalSteps } from "@/modules/leave/approval";
 import { isPolicyApplicableToUser, isServiceEligible } from "@/modules/leave/eligibility";
 import { validateRestrictions } from "@/modules/leave/restrictions";
 import { applyLeaveToAttendance, removeLeaveFromAttendance } from "@/modules/leave/attendance-bridge";
-import { applyLopFromLeaveRequest, reverseLopFromLeaveRequest, PayrollLockedError } from "@/modules/leave/payroll-bridge";
+import {
+  applyLopFromLeaveRequest,
+  reverseLopFromLeaveRequest,
+  applyPartialPayFromLeaveRequest,
+  reversePartialPayFromLeaveRequest,
+  PayrollLockedError,
+} from "@/modules/leave/payroll-bridge";
 
 export type LeaveRequestStatus =
   | "DRAFT"
@@ -184,6 +190,8 @@ export async function submitLeaveRequest(input: SubmitLeaveRequestInput) {
       computedDurationUnits: calculation.requestedUnits,
       paidUnits: calculation.paidUnits,
       lopUnits: calculation.lopUnits,
+      partialPaidUnits: calculation.partialPaidUnits,
+      partialPaySlabBreakdown: calculation.partialPaySlabBreakdown.length ? calculation.partialPaySlabBreakdown : undefined,
       onDutyLocation: policyVersion.classification === "ON_DUTY" ? input.onDutyLocation : null,
       onDutyReference: policyVersion.classification === "ON_DUTY" ? input.onDutyReference : null,
     },
@@ -457,6 +465,32 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
         }
       }
     }
+
+    const slabBreakdown = request.partialPaySlabBreakdown as { payPercentage: number; units: number }[] | null;
+    if (slabBreakdown?.length) {
+      try {
+        await applyPartialPayFromLeaveRequest({
+          orgId: updated.user.orgId,
+          userId: request.userId,
+          leaveTypeId: request.leaveTypeId,
+          fromDate: request.fromDate,
+          requestId: request.id,
+          actorId: input.approverId,
+          slabBreakdown,
+        });
+      } catch (err) {
+        if (err instanceof PayrollLockedError) {
+          await writeLeaveAudit({
+            orgId: updated.user.orgId,
+            userId: input.approverId,
+            action: "LEAVE_PARTIAL_PAY_BLOCKED_PAYROLL_LOCKED",
+            details: { requestId: request.id, message: err.message },
+          });
+        } else {
+          throw err;
+        }
+      }
+    }
   }
 
   await notify({
@@ -582,6 +616,25 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
             userId: input.actorId,
             action: "LEAVE_LOP_REVERSAL_BLOCKED_PAYROLL_LOCKED",
             details: { requestId: request.id, lopUnits: request.lopUnits, message: err.message },
+          });
+        }
+      }
+
+      if ((request.partialPaySlabBreakdown as unknown[] | null)?.length) {
+        try {
+          await reversePartialPayFromLeaveRequest({
+            orgId: request.user.orgId,
+            requestId: request.id,
+            actorId: input.actorId,
+            fromDate: request.fromDate,
+          });
+        } catch (err) {
+          if (!(err instanceof PayrollLockedError)) throw err;
+          await writeLeaveAudit({
+            orgId: request.user.orgId,
+            userId: input.actorId,
+            action: "LEAVE_PARTIAL_PAY_REVERSAL_BLOCKED_PAYROLL_LOCKED",
+            details: { requestId: request.id, message: err.message },
           });
         }
       }
