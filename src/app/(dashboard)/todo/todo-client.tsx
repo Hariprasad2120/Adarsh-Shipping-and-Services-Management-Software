@@ -232,10 +232,13 @@ export function TodoClient({
 
   const stats = useMemo(() => {
     const checklistItems = tasks.flatMap((task) => task.subtasks);
+    const total = tasks.length;
+    const completed = tasks.filter((task) => task.status === "COMPLETED").length;
     return {
-      total: tasks.length,
+      total,
       pending: tasks.filter((task) => task.status === "PENDING").length,
-      completed: tasks.filter((task) => task.status === "COMPLETED").length,
+      completed,
+      overallPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
       upcomingAlerts: tasks.filter(
         (task) =>
           task.status === "PENDING"
@@ -441,6 +444,21 @@ export function TodoClient({
           detail="Scheduled reminders ahead"
         />
       </section>
+
+      {stats.total > 0 ? (
+        <section className="mnx-todo-overall-progress" aria-label="Overall task progress">
+          <div className="mnx-todo-overall-progress-header">
+            <span>Overall progress</span>
+            <b>
+              {stats.completed}/{stats.total} tasks ({stats.overallPercent}%)
+            </b>
+          </div>
+          <WorkspaceProgress
+            label={`Overall task progress: ${stats.completed} of ${stats.total} tasks completed`}
+            value={stats.overallPercent}
+          />
+        </section>
+      ) : null}
 
       <WorkspacePanel>
         <WorkspacePanelHeader
