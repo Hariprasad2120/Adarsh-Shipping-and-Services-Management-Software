@@ -18,6 +18,7 @@ import {
   reversePartialPayFromLeaveRequest,
   PayrollLockedError,
 } from "@/modules/leave/payroll-bridge";
+import { syncLeaveRequestToExternalCalendar, removeLeaveRequestFromExternalCalendar } from "@/modules/leave/calendar-sync";
 
 export type LeaveRequestStatus =
   | "DRAFT"
@@ -491,6 +492,19 @@ export async function decideLeaveRequest(input: DecideLeaveRequestInput) {
         }
       }
     }
+
+    // Best-effort outbound calendar sync (spec §37) — never blocks or
+    // throws into the approval flow; syncLeaveRequestToExternalCalendar
+    // swallows its own errors and no-ops silently for employees who
+    // haven't connected an external calendar provider.
+    await syncLeaveRequestToExternalCalendar({
+      userId: request.userId,
+      orgId: updated.user.orgId,
+      leaveRequestId: request.id,
+      leaveTypeName: request.leaveType.name,
+      fromDate: request.fromDate,
+      toDate: request.toDate,
+    });
   }
 
   await notify({
@@ -638,6 +652,12 @@ export async function cancelLeaveRequest(input: CancelLeaveRequestInput, immedia
           });
         }
       }
+
+      await removeLeaveRequestFromExternalCalendar({
+        userId: request.userId,
+        orgId: request.user.orgId,
+        leaveRequestId: request.id,
+      });
     }
   }
 

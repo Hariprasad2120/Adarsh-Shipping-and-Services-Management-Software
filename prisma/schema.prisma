@@ -922,6 +922,8 @@ model LeaveRequest {
   toTime                   String?  // NEW — "HH:MM", HOUR-unit only
   partialPaidUnits         Decimal? @db.Decimal(10, 4) // NEW — calculation.ts already computes this (PARTIALLY_PAID slabs) but it was never persisted; spec §17 payroll-contract gap
   partialPaySlabBreakdown  Json?    // NEW — [{payPercentage, units}, ...] snapshot from calculation.ts at submission time, read back at approval to write LeavePartialPayRecord without recalculating
+  externalCalendarProvider String? // NEW — spec §37 outbound calendar sync: which provider adapter (e.g. "GOOGLE") this request was synced to, if any
+  externalCalendarEventId  String? // NEW — the provider's own event id, needed to delete the event on cancellation
 
   user      User      @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
   approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id])

@@ -1,5 +1,5 @@
 // Bump this when Prisma schema changes need a fresh dev-time singleton.
-const PRISMA_CLIENT_SCHEMA_VERSION = "2026-08-18-leave-partial-pay-contract";
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-08-18-leave-external-calendar-sync";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
