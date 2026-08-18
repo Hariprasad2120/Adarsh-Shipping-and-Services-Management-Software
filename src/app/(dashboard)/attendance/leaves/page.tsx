@@ -45,15 +45,16 @@ export default async function LeavesPage() {
   const activeVersions = activeVersionIds.length
     ? await db.leavePolicyVersion.findMany({
         where: { id: { in: activeVersionIds } },
-        select: { id: true, classification: true },
+        select: { id: true, classification: true, unit: true },
       })
     : [];
-  const classificationByVersionId = new Map(activeVersions.map((v) => [v.id, v.classification]));
+  const versionById = new Map(activeVersions.map((v) => [v.id, v]));
 
   const leaveTypeRows = leaveTypes.map((lt) => ({
     ...lt,
     defaultBalance: lt.defaultBalance.toNumber(),
-    classification: lt.activeVersionId ? (classificationByVersionId.get(lt.activeVersionId) ?? null) : null,
+    classification: lt.activeVersionId ? (versionById.get(lt.activeVersionId)?.classification ?? null) : null,
+    unit: lt.activeVersionId ? (versionById.get(lt.activeVersionId)?.unit ?? null) : null,
   }));
   const balanceRows = balances.map((b) => ({
     ...b,

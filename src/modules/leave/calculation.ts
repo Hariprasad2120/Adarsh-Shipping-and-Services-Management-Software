@@ -109,11 +109,20 @@ export interface CalculateLeaveRequestInput {
   policyVersionId: string;
   config: LeavePolicyConfig;
   classification: "PAID" | "UNPAID" | "ON_DUTY" | "RESTRICTED_HOLIDAY" | "PARTIALLY_PAID";
+  /** LeavePolicyVersion.unit — "HOUR" takes an entirely different, simpler
+   *  path (fromTime/toTime, no day-counting/sandwich concept) than "DAY". */
+  unit?: "DAY" | "HOUR";
   roundingMode: string;
   roundingIncrement: number | Prisma.Decimal | null;
   fromDate: Date;
   toDate: Date;
-  halfDay: boolean;
+  /** DAY-unit only. FULL = whole working-day count; HALF = exactly 0.5;
+   *  QUARTER = exactly 0.25. Multi-day requests are always FULL — a
+   *  day-part fraction only makes sense for a single-day request. */
+  dayPart?: "FULL" | "HALF" | "QUARTER";
+  /** HOUR-unit only. "HH:MM" 24-hour, same day as fromDate. */
+  fromTime?: string;
+  toTime?: string;
   branchId?: string | null;
 }
 
@@ -131,6 +140,10 @@ export async function calculateLeaveRequest(
 
   const fromKey = toDateKey(input.fromDate);
   const toKey = toDateKey(input.toDate);
+
+  if (input.unit === "HOUR") {
+    return calculateHourlyLeaveRequest(input, fromKey, explanation, warnings, violations);
+  }
 
   const holidays = await db.holiday.findMany({
     where: {
@@ -158,7 +171,9 @@ export async function calculateLeaveRequest(
     else workingDayCount++;
   }
 
-  let requestedUnits = input.halfDay ? 0.5 : workingDayCount;
+  const dayPart = input.dayPart ?? "FULL";
+  let requestedUnits =
+    dayPart === "HALF" ? 0.5 : dayPart === "QUARTER" ? 0.25 : workingDayCount;
   explanation.push(
     `Requested range ${fromKey} to ${toKey}: ${calendarDayCount} calendar day(s), ` +
       `${workingDayCount} working day(s), ${weekendCount} weekend day(s), ${holidayCount} holiday(s).`,
@@ -168,7 +183,7 @@ export async function calculateLeaveRequest(
   let sandwichBreakdown: SandwichBreakdown | null = null;
   if (
     input.config.sandwich.enabled &&
-    !input.halfDay &&
+    dayPart === "FULL" &&
     requestedUnits > input.config.sandwich.activationThresholdUnits
   ) {
     const sandwichKeyMatches = (key: string) => {
@@ -250,16 +265,39 @@ export async function calculateLeaveRequest(
 
   requestedUnits = applyRounding(requestedUnits, input.roundingMode, input.roundingIncrement);
 
-  // ─── Balance / paid / LOP split ───────────────────────────────────────
-  // Decimal used for every operation touching the balance itself, so
-  // repeated accrual/consumption over years cannot drift the way JS float
-  // arithmetic can (e.g. 0.1 + 0.2 !== 0.3 exactly). requestedUnits and day
-  // counts above stay plain numbers — they're derived from integer
-  // date-range walks and quarter/half fractions, which are exact in
-  // IEEE-754, so converting them adds no safety, only friction. The
-  // requestedUnits value IS converted to Decimal right where it's compared
-  // against the balance, so that comparison and every downstream
-  // paid/LOP split is done in exact decimal arithmetic.
+  const split = await applyBalanceSplit(input, requestedUnits, explanation, warnings, violations);
+
+  return {
+    requestedUnits,
+    eligibleUnits: requestedUnits,
+    calendarWorkingUnits: workingDayCount,
+    weekendUnits: weekendCount,
+    holidayUnits: holidayCount,
+    sandwichUnits: sandwichBreakdown?.sandwichedUnits ?? 0,
+    ...split,
+    warnings,
+    violations,
+    sandwichBreakdown,
+    explanation,
+  };
+}
+
+/**
+ * The balance/paid/partial-pay/LOP split, shared verbatim between the
+ * DAY-unit path above and the HOUR-unit path below — this logic is unit-
+ * agnostic, it only cares about a requestedUnits number and the policy's
+ * classification/negativeLeave config, not how that number was derived.
+ * Decimal used throughout for the same reason noted at every other
+ * balance-touching call site in this module: repeated accrual/consumption
+ * over years cannot drift the way JS float arithmetic can.
+ */
+async function applyBalanceSplit(
+  input: Pick<CalculateLeaveRequestInput, "userId" | "leaveTypeId" | "fromDate" | "classification" | "config">,
+  requestedUnits: number,
+  explanation: string[],
+  warnings: CalculationWarning[],
+  violations: CalculationViolation[],
+) {
   const year = input.fromDate.getFullYear();
   const balanceBefore = await getMaterializedBalance(input.userId, input.leaveTypeId, year);
   const requestedUnitsDecimal = new Prisma.Decimal(requestedUnits);
@@ -267,9 +305,6 @@ export async function calculateLeaveRequest(
   let paidUnitsDecimal = new Prisma.Decimal(0);
   let partialPaidUnitsDecimal = new Prisma.Decimal(0);
   let lopUnitsDecimal = new Prisma.Decimal(0);
-  let paidUnits: number;
-  let partialPaidUnits: number;
-  let lopUnits: number;
 
   if (input.classification === "UNPAID") {
     lopUnitsDecimal = requestedUnitsDecimal;
@@ -352,26 +387,81 @@ export async function calculateLeaveRequest(
   const balanceReservedDecimal = paidUnitsDecimal.plus(partialPaidUnitsDecimal);
   const balanceAfterDecimal = balanceBefore.minus(balanceReservedDecimal);
 
-  paidUnits = paidUnitsDecimal.toNumber();
-  partialPaidUnits = partialPaidUnitsDecimal.toNumber();
-  lopUnits = lopUnitsDecimal.toNumber();
+  return {
+    paidUnits: paidUnitsDecimal.toNumber(),
+    partialPaidUnits: partialPaidUnitsDecimal.toNumber(),
+    lopUnits: lopUnitsDecimal.toNumber(),
+    balanceBefore: balanceBefore.toNumber(),
+    balanceReserved: balanceReservedDecimal.toNumber(),
+    balanceAfter: balanceAfterDecimal.toNumber(),
+  };
+}
+
+/**
+ * HOUR-unit calculation path (spec §8): a policy configured with
+ * unit: "HOUR" is requested via clock times (fromTime/toTime, same day as
+ * fromDate) instead of a day range. No day-counting, sandwich rule, or
+ * weekend/holiday concept applies at hour granularity — those are
+ * DAY-unit concepts. Shares the same balance/paid/LOP split as the
+ * DAY path via applyBalanceSplit.
+ */
+async function calculateHourlyLeaveRequest(
+  input: CalculateLeaveRequestInput,
+  fromKey: string,
+  explanation: string[],
+  warnings: CalculationWarning[],
+  violations: CalculationViolation[],
+): Promise<LeaveCalculationResult> {
+  if (!input.fromTime || !input.toTime) {
+    violations.push({
+      code: "MISSING_TIME_RANGE",
+      message: "This leave type is configured in hours — a start and end time are required.",
+    });
+  }
+  const toKey = toDateKey(input.toDate);
+  if (fromKey !== toKey) {
+    violations.push({
+      code: "HOUR_UNIT_MUST_BE_SAME_DAY",
+      message: "Hourly leave requests must start and end on the same day.",
+    });
+  }
+
+  let requestedUnits = 0;
+  if (input.fromTime && input.toTime) {
+    const [fromH, fromM] = input.fromTime.split(":").map(Number);
+    const [toH, toM] = input.toTime.split(":").map(Number);
+    if (
+      fromH == null || fromM == null || toH == null || toM == null ||
+      Number.isNaN(fromH) || Number.isNaN(fromM) || Number.isNaN(toH) || Number.isNaN(toM)
+    ) {
+      violations.push({ code: "INVALID_TIME_FORMAT", message: "Times must be in HH:MM format." });
+    } else {
+      const fromMinutes = fromH * 60 + fromM;
+      const toMinutes = toH * 60 + toM;
+      if (toMinutes <= fromMinutes) {
+        violations.push({ code: "INVALID_TIME_RANGE", message: "End time must be after start time." });
+      } else {
+        requestedUnits = (toMinutes - fromMinutes) / 60;
+        explanation.push(`Hourly request: ${input.fromTime}–${input.toTime} = ${requestedUnits} hour(s).`);
+      }
+    }
+  }
+
+  requestedUnits = applyRounding(requestedUnits, input.roundingMode, input.roundingIncrement);
+
+  const split = await applyBalanceSplit(input, requestedUnits, explanation, warnings, violations);
 
   return {
     requestedUnits,
     eligibleUnits: requestedUnits,
-    calendarWorkingUnits: workingDayCount,
-    weekendUnits: weekendCount,
-    holidayUnits: holidayCount,
-    sandwichUnits: sandwichBreakdown?.sandwichedUnits ?? 0,
-    paidUnits,
-    partialPaidUnits,
-    lopUnits,
-    balanceBefore: balanceBefore.toNumber(),
-    balanceReserved: balanceReservedDecimal.toNumber(),
-    balanceAfter: balanceAfterDecimal.toNumber(),
+    calendarWorkingUnits: 0,
+    weekendUnits: 0,
+    holidayUnits: 0,
+    sandwichUnits: 0,
+    ...split,
     warnings,
     violations,
-    sandwichBreakdown,
+    sandwichBreakdown: null,
     explanation,
   };
 }

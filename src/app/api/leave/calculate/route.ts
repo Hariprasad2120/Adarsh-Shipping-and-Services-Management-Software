@@ -9,6 +9,9 @@ const BodySchema = z.object({
   fromDate: z.string().transform((s) => new Date(s)),
   toDate: z.string().transform((s) => new Date(s)),
   halfDay: z.boolean().optional().default(false),
+  dayPart: z.enum(["FULL", "HALF", "QUARTER"]).optional(),
+  fromTime: z.string().optional(),
+  toTime: z.string().optional(),
 });
 
 /**
@@ -44,11 +47,14 @@ export async function POST(req: NextRequest) {
       | "ON_DUTY"
       | "RESTRICTED_HOLIDAY"
       | "PARTIALLY_PAID",
+    unit: policyVersion.unit as "DAY" | "HOUR",
     roundingMode: policyVersion.roundingMode,
     roundingIncrement: policyVersion.roundingIncrement,
     fromDate: parsed.data.fromDate,
     toDate: parsed.data.toDate,
-    halfDay: parsed.data.halfDay,
+    dayPart: parsed.data.dayPart ?? (parsed.data.halfDay ? "HALF" : "FULL"),
+    fromTime: parsed.data.fromTime,
+    toTime: parsed.data.toTime,
   });
 
   return ok(calculation);

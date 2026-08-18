@@ -78,7 +78,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"), // Monday
       toDate: new Date("2026-08-21"), // Friday
-      halfDay: false,
     });
 
     expect(result.requestedUnits).toBe(5);
@@ -99,7 +98,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-15"), // Saturday
       toDate: new Date("2026-08-17"), // Monday (Sunday 8/16 in between)
-      halfDay: false,
     });
 
     // Sat + Mon are working, Sun is not
@@ -121,7 +119,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-21"),
-      halfDay: false,
     });
 
     expect(result.requestedUnits).toBe(4); // 5 weekdays minus the 1 holiday
@@ -144,7 +141,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-21"), // Friday
       toDate: new Date("2026-08-24"), // Monday (Sat/Sun off in between under Mon-Fri calendar)
-      halfDay: false,
     });
 
     mocks.workingCalendarFindUnique.mockResolvedValue({
@@ -165,7 +161,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-21"),
       toDate: new Date("2026-08-24"),
-      halfDay: false,
     });
 
     expect(resultWithWeekendOff.sandwichBreakdown).not.toBeNull();
@@ -204,7 +199,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-24"), // Monday
       toDate: new Date("2026-08-24"),
-      halfDay: false,
     });
 
     expect(mondayResult.sandwichBreakdown).not.toBeNull();
@@ -239,7 +233,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-24"), // Monday, a week+ after the old request
       toDate: new Date("2026-08-24"),
-      halfDay: false,
     });
 
     expect(result.sandwichBreakdown).toBeNull();
@@ -263,7 +256,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-21"),
       toDate: new Date("2026-08-24"),
-      halfDay: false,
     });
 
     expect(result.sandwichBreakdown).toBeNull();
@@ -284,7 +276,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-21"), // 5 working days requested
-      halfDay: false,
     });
 
     expect(result.balanceBefore).toBe(2);
@@ -306,7 +297,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-21"),
-      halfDay: false,
     });
 
     expect(result.violations.length).toBeGreaterThan(0);
@@ -327,7 +317,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-21"),
-      halfDay: false,
     });
 
     expect(result.violations.length).toBe(0);
@@ -349,7 +338,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-21"),
-      halfDay: false,
     });
 
     expect(result.paidUnits).toBe(0);
@@ -375,7 +363,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-21"), // 5 days
-      halfDay: false,
     });
 
     // First 2 days @ 100%, next 2 days @ 50%, remaining 1 day uncovered -> LOP
@@ -396,7 +383,7 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-17"),
-      halfDay: true,
+      dayPart: "HALF",
     });
 
     expect(result.requestedUnits).toBe(0.5);
@@ -417,7 +404,7 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: null,
       fromDate: new Date("2026-08-17"),
       toDate: new Date("2026-08-17"),
-      halfDay: true,
+      dayPart: "HALF",
     });
 
     // A 1-unit balance comfortably covers a 0.5-unit half-day request —
@@ -447,7 +434,6 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: 0.25,
       fromDate: new Date("2026-08-17"), // Monday
       toDate: new Date("2026-08-21"), // Friday
-      halfDay: false,
     });
 
     // 5 weekdays - 1 holiday = 4 working days, already a clean 0.25
@@ -476,24 +462,167 @@ describe("calculateLeaveRequest", () => {
       roundingIncrement: 0.3, // deliberately does not evenly divide whole-day counts
       fromDate: new Date("2026-08-17"), // Monday
       toDate: new Date("2026-08-17"), // single day
-      halfDay: false,
     });
 
     // 1 working day / 0.3 = 3.33 steps -> rounds to 3 steps -> 3 * 0.3 = 0.9
     expect(result.requestedUnits).toBeCloseTo(0.9, 10);
   });
+
+  it("dayPart QUARTER is always exactly 0.25 units regardless of date span", async () => {
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+      dayPart: "QUARTER",
+    });
+
+    expect(result.requestedUnits).toBe(0.25);
+    expect(result.paidUnits).toBe(0.25);
+  });
+
+  it("dayPart QUARTER does not trigger the sandwich rule (matches HALF's existing exemption)", async () => {
+    mocks.workingCalendarFindUnique.mockResolvedValue({ ...WORKWEEK_MON_SAT, workingDays: "1,2,3,4,5" });
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig({
+        sandwich: { enabled: true, includeWeekends: true, includeHolidays: true, activationThresholdUnits: 0 },
+      }),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-21"), // Friday
+      toDate: new Date("2026-08-21"),
+      dayPart: "QUARTER",
+    });
+
+    expect(result.sandwichBreakdown).toBeNull();
+    expect(result.requestedUnits).toBe(0.25);
+  });
 });
 
-/**
- * Documents a genuine, unbuilt gap rather than fabricating coverage for
- * it: LeavePolicyVersion.unit ("DAY" | "HOUR") is stored but never read
- * anywhere in calculateLeaveRequest — there is no hour-granular duration
- * calculation. The only sub-day granularity implemented is the boolean
- * halfDay flag (always exactly 0.5, tested above) plus whatever fractional
- * value roundingIncrement produces on top of whole/half-day counts (also
- * tested above). True hour-based or quarter-day-as-a-first-class-unit
- * support would require LeaveRequest.halfDay to become a fractional/enum
- * field (schema migration) plus calculation-engine and UI changes — a
- * feature build, not a bug fix, and correctly out of scope for a test-only
- * pass (see TASKFILE.md item 8).
- */
+describe("calculateLeaveRequest — HOUR unit (spec §8)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.holidayFindMany.mockResolvedValue([]);
+    mocks.workingCalendarFindUnique.mockResolvedValue(WORKWEEK_MON_SAT);
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
+    mocks.leaveRequestFindMany.mockResolvedValue([]);
+  });
+
+  it("computes requestedUnits as the hour difference between fromTime and toTime", async () => {
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      unit: "HOUR",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+      fromTime: "09:00",
+      toTime: "12:30",
+    });
+
+    expect(result.violations).toHaveLength(0);
+    expect(result.requestedUnits).toBe(3.5);
+    expect(result.paidUnits).toBe(3.5);
+    // Day-counting concepts don't apply at hour granularity.
+    expect(result.calendarWorkingUnits).toBe(0);
+    expect(result.sandwichBreakdown).toBeNull();
+  });
+
+  it("rejects an hourly request spanning more than one day", async () => {
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      unit: "HOUR",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-18"),
+      fromTime: "09:00",
+      toTime: "12:00",
+    });
+
+    expect(result.violations.some((v) => v.code === "HOUR_UNIT_MUST_BE_SAME_DAY")).toBe(true);
+  });
+
+  it("rejects an hourly request where toTime is not after fromTime", async () => {
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      unit: "HOUR",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+      fromTime: "14:00",
+      toTime: "10:00",
+    });
+
+    expect(result.violations.some((v) => v.code === "INVALID_TIME_RANGE")).toBe(true);
+    expect(result.requestedUnits).toBe(0);
+  });
+
+  it("rejects an hourly request with no fromTime/toTime given", async () => {
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      unit: "HOUR",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+    });
+
+    expect(result.violations.some((v) => v.code === "MISSING_TIME_RANGE")).toBe(true);
+  });
+
+  it("applies the same balance/LOP split logic to hourly requests as day-based ones", async () => {
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(2), version: 0 });
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig({ negativeLeave: { mode: "CONVERT_EXCESS_TO_LOP" } }),
+      classification: "PAID",
+      unit: "HOUR",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-17"),
+      toDate: new Date("2026-08-17"),
+      fromTime: "09:00",
+      toTime: "14:00", // 5 hours requested, only 2 available
+    });
+
+    expect(result.paidUnits).toBe(2);
+    expect(result.lopUnits).toBe(3);
+  });
+});

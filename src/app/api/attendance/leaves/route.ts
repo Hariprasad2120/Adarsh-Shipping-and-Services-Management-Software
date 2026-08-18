@@ -24,7 +24,9 @@ const createSchema = z.object({
   leaveTypeId: z.string(),
   fromDate: z.string(),
   toDate: z.string(),
-  halfDay: z.boolean().default(false),
+  dayPart: z.enum(["FULL", "HALF", "QUARTER"]).optional(),
+  fromTime: z.string().optional(),
+  toTime: z.string().optional(),
   notes: z.string().optional(),
   onDutyLocation: z.string().optional(),
   onDutyReference: z.string().optional(),
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
     ...parsed.data,
     fromDate: new Date(parsed.data.fromDate),
     toDate: new Date(parsed.data.toDate),
+    halfDay: parsed.data.dayPart === "HALF",
   });
 
   return ok(request, 201);

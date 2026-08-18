@@ -914,6 +914,9 @@ model LeaveRequest {
   extendedFromRequestId    String?
   onDutyLocation           String? // NEW — for ON_DUTY classification: where the employee will be (client site, field visit, etc.)
   onDutyReference          String? // NEW — for ON_DUTY classification: client/job/ticket reference, free text
+  dayPart                  String?  // NEW — FULL | HALF | QUARTER, DAY-unit only. halfDay stays in sync (dayPart === "HALF") for existing readers of the boolean; QUARTER is only representable via this field.
+  fromTime                 String?  // NEW — "HH:MM", HOUR-unit only
+  toTime                   String?  // NEW — "HH:MM", HOUR-unit only
 
   user      User      @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
   approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id])

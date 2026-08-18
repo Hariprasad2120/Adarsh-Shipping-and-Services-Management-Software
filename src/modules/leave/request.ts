@@ -71,7 +71,18 @@ export interface SubmitLeaveRequestInput {
   leaveTypeId: string;
   fromDate: Date;
   toDate: Date;
+  /** Legacy boolean, still the source of truth for LeaveRequest.halfDay
+   *  (schema column, kept for backward compat with every existing caller).
+   *  When dayPart is also given, dayPart wins for calculation purposes and
+   *  halfDay is derived from it (dayPart === "HALF") when persisting. */
   halfDay: boolean;
+  /** DAY-unit policies only. FULL/HALF/QUARTER — see calculation.ts. Falls
+   *  back to halfDay ? "HALF" : "FULL" when omitted, so every existing
+   *  caller keeps working unchanged. */
+  dayPart?: "FULL" | "HALF" | "QUARTER";
+  /** HOUR-unit policies only. "HH:MM" 24-hour, same day as fromDate. */
+  fromTime?: string;
+  toTime?: string;
   notes?: string;
   branchId?: string | null;
   /** Only meaningful when the policy's classification is ON_DUTY — where the
@@ -125,6 +136,7 @@ export async function submitLeaveRequest(input: SubmitLeaveRequestInput) {
     throw new Error(restrictionViolations.map((v) => v.message).join(" "));
   }
 
+  const dayPart = input.dayPart ?? (input.halfDay ? "HALF" : "FULL");
   const calculation = await calculateLeaveRequest({
     orgId: input.orgId,
     userId: input.userId,
@@ -137,11 +149,14 @@ export async function submitLeaveRequest(input: SubmitLeaveRequestInput) {
       | "ON_DUTY"
       | "RESTRICTED_HOLIDAY"
       | "PARTIALLY_PAID",
+    unit: policyVersion.unit as "DAY" | "HOUR",
     roundingMode: policyVersion.roundingMode,
     roundingIncrement: policyVersion.roundingIncrement,
     fromDate: input.fromDate,
     toDate: input.toDate,
-    halfDay: input.halfDay,
+    dayPart,
+    fromTime: input.fromTime,
+    toTime: input.toTime,
     branchId: input.branchId,
   });
 
@@ -159,7 +174,10 @@ export async function submitLeaveRequest(input: SubmitLeaveRequestInput) {
       leaveTypeId: input.leaveTypeId,
       fromDate: input.fromDate,
       toDate: input.toDate,
-      halfDay: input.halfDay,
+      halfDay: dayPart === "HALF",
+      dayPart: policyVersion.unit === "HOUR" ? null : dayPart,
+      fromTime: policyVersion.unit === "HOUR" ? input.fromTime : null,
+      toTime: policyVersion.unit === "HOUR" ? input.toTime : null,
       status: "PENDING_APPROVAL",
       notes: input.notes,
       policyVersionId: policyVersion.id,
@@ -671,11 +689,12 @@ export async function cancelLeaveRequestPartial(input: PartialCancelLeaveRequest
       | "ON_DUTY"
       | "RESTRICTED_HOLIDAY"
       | "PARTIALLY_PAID",
+    unit: pinnedVersion.unit as "DAY" | "HOUR",
     roundingMode: pinnedVersion.roundingMode,
     roundingIncrement: pinnedVersion.roundingIncrement,
     fromDate: remainingFromDate,
     toDate: remainingToDate,
-    halfDay: false,
+    dayPart: "FULL",
   });
 
   const originalPaid = toDecimal(request.paidUnits ?? 0);

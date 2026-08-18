@@ -38,7 +38,7 @@ type CalculationPreview = {
   explanation: string[];
 };
 
-type LeaveType = { id: string; name: string; paid: boolean; classification?: string | null };
+type LeaveType = { id: string; name: string; paid: boolean; classification?: string | null; unit?: string | null };
 type Balance = { leaveType: LeaveType; balance: number };
 type LeaveRequest = {
   id: string;
@@ -81,7 +81,9 @@ export function LeavesClient({
   const [leaveTypeId, setLeaveTypeId] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [halfDay, setHalfDay] = useState(false);
+  const [dayPart, setDayPart] = useState<"FULL" | "HALF" | "QUARTER">("FULL");
+  const [fromTime, setFromTime] = useState("");
+  const [toTime, setToTime] = useState("");
   const [notes, setNotes] = useState("");
   const [preview, setPreview] = useState<CalculationPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -93,11 +95,14 @@ export function LeavesClient({
 
   const selectedLeaveType = leaveTypes.find((lt) => lt.id === leaveTypeId);
   const isOnDuty = selectedLeaveType?.classification === "ON_DUTY";
+  const isHourUnit = selectedLeaveType?.unit === "HOUR";
 
   // Server-side calculation preview (spec §18) — recomputed whenever the
   // key inputs change. Submission always recalculates again server-side;
   // this is display-only.
-  const hasCompleteInputs = Boolean(leaveTypeId && fromDate && toDate);
+  const hasCompleteInputs = isHourUnit
+    ? Boolean(leaveTypeId && fromDate && fromTime && toTime)
+    : Boolean(leaveTypeId && fromDate && toDate);
 
   useEffect(() => {
     if (!hasCompleteInputs) return;
@@ -107,7 +112,11 @@ export function LeavesClient({
     fetch("/api/leave/calculate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leaveTypeId, fromDate, toDate, halfDay }),
+      body: JSON.stringify(
+        isHourUnit
+          ? { leaveTypeId, fromDate, toDate: fromDate, fromTime, toTime }
+          : { leaveTypeId, fromDate, toDate, dayPart },
+      ),
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -122,7 +131,7 @@ export function LeavesClient({
     return () => {
       cancelled = true;
     };
-  }, [hasCompleteInputs, leaveTypeId, fromDate, toDate, halfDay]);
+  }, [hasCompleteInputs, leaveTypeId, fromDate, toDate, dayPart, fromTime, toTime, isHourUnit]);
 
   // Derived, not stateful: when inputs are incomplete there is nothing to
   // preview, regardless of what the last fetch returned.
@@ -134,6 +143,10 @@ export function LeavesClient({
       toast.error("On-duty leave requires a location.");
       return;
     }
+    if (isHourUnit && (!fromTime || !toTime)) {
+      toast.error("This leave type requires a start and end time.");
+      return;
+    }
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     try {
@@ -143,8 +156,10 @@ export function LeavesClient({
         body: JSON.stringify({
           leaveTypeId: fd.get("leaveTypeId"),
           fromDate: fd.get("fromDate"),
-          toDate: fd.get("toDate"),
-          halfDay: fd.get("halfDay") === "on",
+          toDate: isHourUnit ? fd.get("fromDate") : fd.get("toDate"),
+          dayPart: isHourUnit ? undefined : dayPart,
+          fromTime: isHourUnit ? fromTime : undefined,
+          toTime: isHourUnit ? toTime : undefined,
           notes: fd.get("notes") || undefined,
           onDutyLocation: isOnDuty ? onDutyLocation.trim() : undefined,
           onDutyReference: isOnDuty && onDutyReference.trim() ? onDutyReference.trim() : undefined,
@@ -159,7 +174,9 @@ export function LeavesClient({
       setLeaveTypeId("");
       setFromDate("");
       setToDate("");
-      setHalfDay(false);
+      setDayPart("FULL");
+      setFromTime("");
+      setToTime("");
       setNotes("");
       setOnDutyLocation("");
       setOnDutyReference("");
@@ -239,7 +256,7 @@ export function LeavesClient({
     setLeaveTypeId(demo.leaveTypeId);
     setFromDate(demo.fromDate);
     setToDate(demo.toDate);
-    setHalfDay(demo.halfDay);
+    setDayPart(demo.halfDay ? "HALF" : "FULL");
     setNotes(demo.notes);
   }
 
@@ -320,33 +337,72 @@ export function LeavesClient({
                   className="w-full"
                 />
               </div>
-              <div className="space-y-1">
-                <label htmlFor="leave-request-to" className="text-xs font-medium text-[var(--mnx-text)]">
-                  To
+              {!isHourUnit && (
+                <div className="space-y-1">
+                  <label htmlFor="leave-request-to" className="text-xs font-medium text-[var(--mnx-text)]">
+                    To
+                  </label>
+                  <Input
+                    id="leave-request-to"
+                    type="date"
+                    name="toDate"
+                    onChange={(e) => setToDate(e.target.value)}
+                    required
+                    value={toDate}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
+
+            {isHourUnit ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label htmlFor="leave-request-from-time" className="text-xs font-medium text-[var(--mnx-text)]">
+                    From time
+                  </label>
+                  <Input
+                    id="leave-request-from-time"
+                    type="time"
+                    value={fromTime}
+                    onChange={(e) => setFromTime(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="leave-request-to-time" className="text-xs font-medium text-[var(--mnx-text)]">
+                    To time
+                  </label>
+                  <Input
+                    id="leave-request-to-time"
+                    type="time"
+                    value={toTime}
+                    onChange={(e) => setToTime(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1 sm:w-64">
+                <label htmlFor="leave-request-daypart" className="text-xs font-medium text-[var(--mnx-text)]">
+                  Duration
                 </label>
-                <Input
-                  id="leave-request-to"
-                  type="date"
-                  name="toDate"
-                  onChange={(e) => setToDate(e.target.value)}
-                  required
-                  value={toDate}
-                  className="w-full"
+                <DropdownSelect
+                  id="leave-request-daypart"
+                  value={dayPart}
+                  onValueChange={(v) => setDayPart(v as "FULL" | "HALF" | "QUARTER")}
+                  options={[
+                    { value: "FULL", label: "Full day(s)" },
+                    { value: "HALF", label: "Half day" },
+                    { value: "QUARTER", label: "Quarter day" },
+                  ]}
                 />
               </div>
-            </div>
+            )}
+
             <div className="flex items-center gap-4">
-              <label htmlFor="leave-request-halfday" className="flex items-center gap-2 text-sm text-[var(--mnx-text)]">
-                <MnxInput
-                  id="leave-request-halfday"
-                  checked={halfDay}
-                  name="halfDay"
-                  onChange={(e) => setHalfDay(e.target.checked)}
-                  type="checkbox"
-                  className="rounded"
-                />{" "}
-                Half day
-              </label>
               <label htmlFor="leave-request-notes" className="sr-only">
                 Notes (optional)
               </label>
