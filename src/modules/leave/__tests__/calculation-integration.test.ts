@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   workingCalendarFindUnique: vi.fn(),
   leaveBalanceFindUnique: vi.fn(),
   leaveRequestFindMany: vi.fn(),
+  shiftAssignmentFindFirst: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -15,6 +16,7 @@ vi.mock("@/lib/db", () => ({
     workingCalendar: { findUnique: mocks.workingCalendarFindUnique },
     leaveBalance: { findUnique: mocks.leaveBalanceFindUnique },
     leaveRequest: { findMany: mocks.leaveRequestFindMany },
+    shiftAssignment: { findFirst: mocks.shiftAssignmentFindFirst },
   },
 }));
 
@@ -64,6 +66,7 @@ describe("calculateLeaveRequest", () => {
     mocks.workingCalendarFindUnique.mockResolvedValue(WORKWEEK_MON_SAT);
     mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
     mocks.leaveRequestFindMany.mockResolvedValue([]);
+    mocks.shiftAssignmentFindFirst.mockResolvedValue(null);
   });
 
   it("counts a Mon-Fri request as 5 working days with no weekend/holiday", async () => {
@@ -540,6 +543,7 @@ describe("calculateLeaveRequest — HOUR unit (spec §8)", () => {
     mocks.workingCalendarFindUnique.mockResolvedValue(WORKWEEK_MON_SAT);
     mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
     mocks.leaveRequestFindMany.mockResolvedValue([]);
+    mocks.shiftAssignmentFindFirst.mockResolvedValue(null);
   });
 
   it("computes requestedUnits as the hour difference between fromTime and toTime", async () => {
@@ -647,5 +651,110 @@ describe("calculateLeaveRequest — HOUR unit (spec §8)", () => {
 
     expect(result.paidUnits).toBe(2);
     expect(result.lopUnits).toBe(3);
+  });
+});
+
+describe("calculateLeaveRequest — multi-shift calendar resolution (spec §22)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.holidayFindMany.mockResolvedValue([]);
+    mocks.leaveBalanceFindUnique.mockResolvedValue({ balance: new Prisma.Decimal(10), version: 0 });
+    mocks.leaveRequestFindMany.mockResolvedValue([]);
+  });
+
+  it("uses the employee's active shift's workingDays instead of the org calendar when a shift is assigned", async () => {
+    // Org-wide calendar says Sunday is off; the employee's assigned shift
+    // says Sunday IS a working day for them — the shift must win. (Not
+    // using Saturday here: isWorkingDate() has a separate, deliberate
+    // org-wide 1st/3rd-Saturday-only rule that applies regardless of which
+    // calendar's workingDays is passed in — that's pre-existing, unrelated
+    // behavior this test isn't about.)
+    mocks.workingCalendarFindUnique.mockResolvedValue({ ...WORKWEEK_MON_SAT, workingDays: "1,2,3,4,5,6" });
+    mocks.shiftAssignmentFindFirst.mockResolvedValue({
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      shift: {
+        isActive: true,
+        startTime: "06:00",
+        endTime: "14:00",
+        graceAfterEndMins: 15,
+        workingDays: "0,1,2,3,4,5,6", // this shift also works Sundays
+        breakRules: [],
+      },
+    });
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-23"), // Sunday
+      toDate: new Date("2026-08-23"),
+      dayPart: "FULL",
+    });
+
+    // If the org calendar had been used, Sunday would be a weekend (0
+    // working days requested). The shift calendar counts it as working.
+    expect(result.calendarWorkingUnits).toBe(1);
+    expect(result.weekendUnits).toBe(0);
+    expect(result.requestedUnits).toBe(1);
+  });
+
+  it("falls back to the org-wide WorkingCalendar when the employee has no active shift assignment", async () => {
+    mocks.workingCalendarFindUnique.mockResolvedValue({ ...WORKWEEK_MON_SAT, workingDays: "1,2,3,4,5,6" });
+    mocks.shiftAssignmentFindFirst.mockResolvedValue(null);
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-23"), // Sunday, off under the org calendar (not in workingDays)
+      toDate: new Date("2026-08-23"),
+      dayPart: "FULL",
+    });
+
+    expect(result.calendarWorkingUnits).toBe(0);
+    expect(result.weekendUnits).toBe(1);
+  });
+
+  it("falls back to the org-wide WorkingCalendar when the assigned shift is inactive", async () => {
+    mocks.workingCalendarFindUnique.mockResolvedValue({ ...WORKWEEK_MON_SAT, workingDays: "1,2,3,4,5,6" });
+    mocks.shiftAssignmentFindFirst.mockResolvedValue({
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      shift: {
+        isActive: false, // deactivated shift — must not be applied
+        startTime: "06:00",
+        endTime: "14:00",
+        graceAfterEndMins: 15,
+        workingDays: "0,1,2,3,4,5,6",
+        breakRules: [],
+      },
+    });
+
+    const result = await calculateLeaveRequest({
+      orgId: "org-1",
+      userId: "user-1",
+      leaveTypeId: "lt-1",
+      policyVersionId: "v-1",
+      config: baseConfig(),
+      classification: "PAID",
+      roundingMode: "NONE",
+      roundingIncrement: null,
+      fromDate: new Date("2026-08-23"), // Sunday
+      toDate: new Date("2026-08-23"),
+      dayPart: "FULL",
+    });
+
+    expect(result.weekendUnits).toBe(1);
   });
 });

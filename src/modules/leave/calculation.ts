@@ -61,7 +61,52 @@ function* eachDateKey(fromKey: string, toKey: string): Generator<string> {
   }
 }
 
-async function buildCalendarConfig(orgId: string, holidayDateKeys: string[]): Promise<WorkingCalendarConfig> {
+/**
+ * Resolves the working-days calendar a leave request should be judged
+ * against (spec §22 multi-shift support). A real Shift/ShiftAssignment
+ * system already exists in Monolith (contrary to an earlier, incorrect
+ * closure-pass finding that no multi-shift infrastructure existed at
+ * all) — Shift.workingDays uses the exact same comma-separated day-number
+ * format as WorkingCalendar.workingDays, so calendarFromDb() already
+ * parses it correctly with no format translation needed. Resolution
+ * order: the employee's active ShiftAssignment covering fromDate (their
+ * actual working pattern) → the org-wide WorkingCalendar fallback (no
+ * shift assigned). A request could in principle span a shift change
+ * mid-range; using the shift active on fromDate is a deliberate, narrow
+ * simplification — the same one already implicit in every other single-
+ * calendar day-counting loop in this function (holidays, sandwich rule),
+ * not a new limitation introduced here.
+ */
+async function buildCalendarConfig(
+  orgId: string,
+  holidayDateKeys: string[],
+  userId: string,
+  fromDate: Date,
+): Promise<WorkingCalendarConfig> {
+  const activeShiftAssignment = await db.shiftAssignment.findFirst({
+    where: {
+      userId,
+      startDate: { lte: fromDate },
+      OR: [{ endDate: null }, { endDate: { gte: fromDate } }],
+    },
+    orderBy: { startDate: "desc" },
+    include: { shift: true },
+  });
+
+  if (activeShiftAssignment?.shift.isActive) {
+    return calendarFromDb(
+      {
+        workStart: activeShiftAssignment.shift.startTime,
+        workEnd: activeShiftAssignment.shift.endTime,
+        timezone: "Asia/Kolkata",
+        graceMinutes: activeShiftAssignment.shift.graceAfterEndMins,
+        workingDays: activeShiftAssignment.shift.workingDays,
+        breaks: activeShiftAssignment.shift.breakRules,
+      },
+      holidayDateKeys,
+    );
+  }
+
   const record = await db.workingCalendar.findUnique({ where: { orgId } });
   return calendarFromDb(
     record
@@ -158,7 +203,7 @@ export async function calculateLeaveRequest(
   });
   const holidayDateKeys = holidays.map((h) => toDateKey(h.date));
 
-  const calendar = await buildCalendarConfig(input.orgId, holidayDateKeys);
+  const calendar = await buildCalendarConfig(input.orgId, holidayDateKeys, input.userId, input.fromDate);
 
   const allDateKeys = [...eachDateKey(fromKey, toKey)];
   const calendarDayCount = allDateKeys.length;
