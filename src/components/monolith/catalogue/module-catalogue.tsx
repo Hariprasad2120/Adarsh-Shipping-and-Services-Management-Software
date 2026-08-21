@@ -43,14 +43,16 @@ function panelEntry(
     status: "stable",
     source,
     render: () => (
-      <Panel>
-        <WorkspacePanelHeader
-          eyebrow={`${title} production`}
-          title={`${title} operations`}
-          description={description}
-        />
-        <div className="mnx-catalogue-panel-content">Canonical module composition using shared primitives.</div>
-      </Panel>
+      <div className="mnx-catalogue-module-specimen">
+        <Panel>
+          <WorkspacePanelHeader
+            eyebrow={`${title} production`}
+            title={`${title} operations`}
+            description={description}
+          />
+          <div className="mnx-catalogue-panel-content">Canonical module composition using shared primitives.</div>
+        </Panel>
+      </div>
     ),
     themes,
     states: ["default", "responsive"],
@@ -70,21 +72,23 @@ function peopleEntry(scope: "hrms" | "attendance", title: string): CatalogueEntr
     status: "stable",
     source: "src/modules/people/components/people-workspace.tsx",
     render: () => (
-      <PeopleSection>
-        <WorkspacePanelHeader
-          eyebrow={`${title} production`}
-          title={`${title} overview`}
-          description="Shared people data composition with module-owned content."
-        />
-        <PeopleSummaryGrid className="mnx-catalogue-panel-content">
-          <PeopleSummary
-            icon={scope === "attendance" ? <CalendarCheck /> : <Users />}
-            label={scope === "attendance" ? "Present today" : "Active employees"}
-            value={scope === "attendance" ? "86" : "124"}
-            detail="Live production component"
+      <div className="mnx-catalogue-module-specimen">
+        <PeopleSection>
+          <WorkspacePanelHeader
+            eyebrow={`${title} production`}
+            title={`${title} overview`}
+            description="Shared people data composition with module-owned content."
           />
-        </PeopleSummaryGrid>
-      </PeopleSection>
+          <PeopleSummaryGrid className="mnx-catalogue-panel-content">
+            <PeopleSummary
+              icon={scope === "attendance" ? <CalendarCheck /> : <Users />}
+              label={scope === "attendance" ? "Present today" : "Active employees"}
+              value={scope === "attendance" ? "86" : "124"}
+              detail="Live production component"
+            />
+          </PeopleSummaryGrid>
+        </PeopleSection>
+      </div>
     ),
     themes,
     states: ["summary", "responsive"],
@@ -104,19 +108,21 @@ function performanceEntry(scope: CatalogueScope, title: string): CatalogueEntry 
     status: "stable",
     source: "src/modules/performance/components/performance-workspace.tsx",
     render: () => (
-      <PerformanceSection>
-        <WorkspacePanelHeader
-          eyebrow={`${title} production`}
-          title={`${title} cycle`}
-          description="Module-owned performance content composed from shared surfaces."
-        />
-        <PerformanceGrid className="mnx-catalogue-panel-content">
-          <PerformanceCard>
-            <strong>Quarterly review</strong>
-            <p>Assessment cycle is active.</p>
-          </PerformanceCard>
-        </PerformanceGrid>
-      </PerformanceSection>
+      <div className="mnx-catalogue-module-specimen">
+        <PerformanceSection>
+          <WorkspacePanelHeader
+            eyebrow={`${title} production`}
+            title={`${title} cycle`}
+            description="Module-owned performance content composed from shared surfaces."
+          />
+          <PerformanceGrid className="mnx-catalogue-panel-content">
+            <PerformanceCard>
+              <strong>Quarterly review</strong>
+              <p>Assessment cycle is active.</p>
+            </PerformanceCard>
+          </PerformanceGrid>
+        </PerformanceSection>
+      </div>
     ),
     themes,
     states: ["cycle", "responsive"],
@@ -136,14 +142,16 @@ export const moduleCatalogue: CatalogueEntry[] = [
     status: "stable",
     source: "src/modules/cha/components/workspace/cha-workspace.tsx",
     render: () => (
-      <ChaSection
-        index="01"
-        title="My Assigned Jobs"
-        description="Open or manage the jobs currently assigned to you."
-        badge="Live"
-      >
-        <div className="mnx-catalogue-module-copy"><Ship /> Production CHA content renders here.</div>
-      </ChaSection>
+      <div className="mnx-catalogue-module-specimen">
+        <ChaSection
+          index="01"
+          title="My Assigned Jobs"
+          description="Open or manage the jobs currently assigned to you."
+          badge="Live"
+        >
+          <div className="mnx-catalogue-module-copy"><Ship /> Production CHA content renders here.</div>
+        </ChaSection>
+      </div>
     ),
     themes,
     states: ["heading", "badge", "panel"],

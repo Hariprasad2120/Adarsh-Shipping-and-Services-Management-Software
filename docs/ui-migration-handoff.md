@@ -1,6 +1,533 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-14
+Last updated: 2026-08-19
+
+## 2026-08-21 Module composition responsive containment pass
+
+Stabilized the shared module-card and module-composition specimens so the
+dashboard command-center cards and the `/admin/design-system` module specimens
+stop collapsing into unreadable narrow columns at constrained widths and higher
+browser zoom levels.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so the shared dashboard
+  `mnx-module-grid` now uses intrinsic responsive columns instead of the older
+  dense 12-column layout, which lets module cards naturally fall back between
+  one, two, and more columns based on actual available width;
+- updated the shared `mnx-module-card` contract in
+  `src/styles/monolith-system.css` with container-query behavior so narrower
+  cards stack their art and content vertically, supporting stats collapse to a
+  single column, footer actions wrap, and key labels/headings are allowed to
+  wrap instead of colliding or ellipsizing away important content;
+- updated shared People and Performance specimen grids in
+  `src/styles/monolith-system.css` to use auto-fit minimum widths so embedded
+  preview cards stay readable inside catalogue/specimen containers;
+- wrapped the production module specimens in
+  `src/components/monolith/catalogue/module-catalogue.tsx` with a dedicated
+  responsive specimen container and added catalogue-owned responsive containment
+  styles so CHA section headings, People summaries, and AMS performance cards
+  adapt to embedded-card widths more like real production usage;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the responsive batch.
+
+Verification on Friday, August 21, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/components/monolith/catalogue/module-catalogue.tsx' 'src/app/(dashboard)/dashboard/_components/module-command-center.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  coverage passed, but the unchanged repository baseline still fails because
+  `design-system-catalogue.css` is missing;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/app/(dashboard)/dashboard/module-dashboard.test.ts' --reporter verbose`:
+  blocked by the repository guard that `.env.staging.local` is required for
+  guarded test execution;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed, with the existing Turbopack NFT tracing warning from `next.config.ts`
+  through `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Known limits:
+
+- runtime browser verification in this Codex session is still blocked because
+  the Browser runtime reported no available controllable browser backends even
+  though the local app server was already running at `http://localhost:3000`;
+- this pass fixes the shared grid/card/specimen containment that caused the
+  reported overlap on the module composition surfaces, but it does not claim a
+  fresh manual route-by-route responsive audit across every authenticated module
+  family in-browser for this session;
+- broader repository baselines outside this batch remain unchanged, including
+  the previously known `architecture:check` and
+  `design-system:verify` failures noted above.
+
+## 2026-08-21 Shared trial checkout design-system pattern
+
+Added a reusable Monolith checkout/trial composition pattern and registered a
+live specimen in `/admin/design-system` so subscription-style billing and
+payment flows can be built from one shared contract instead of route-local
+markup.
+
+Delivered:
+
+- added `src/components/layout/trial-checkout.tsx` with the shared checkout
+  composition primitives for the two-column shell, section headings, responsive
+  field rows, payment method cards, summary card, trial timeline, and price
+  list;
+- exported the shared checkout primitives through
+  `src/components/monolith/index.ts` so routes and the design-system catalogue
+  can consume the same production API;
+- added a live specimen to
+  `src/components/monolith/catalogue/shared-catalogue.tsx` that mirrors the
+  requested trial-checkout structure using canonical Monolith controls and
+  safe mock content;
+- added the production styling for the checkout pattern to
+  `src/styles/monolith-system.css`, including desktop/mobile layout behavior,
+  payment-option emphasis, right-rail timeline rhythm, pricing rows, and legal
+  confirmation treatment.
+
+Verification on Friday, August 21, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/components/layout/trial-checkout.tsx' 'src/components/monolith/catalogue/shared-catalogue.tsx' 'src/components/monolith/index.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged repository baseline that
+  `design-system-catalogue.css` is missing, while the design-system coverage
+  check itself passed.
+
+Current status after this pattern addition:
+
+- the requested checkout style is now available as a reusable shared Monolith
+  pattern instead of only a route-local mockup;
+- `/admin/design-system` now includes a live specimen for the pattern so future
+  payment/trial routes can reference the same production implementation;
+- no route migration status changed in this batch because this pass added
+  shared UI infrastructure rather than migrating a user-facing route.
+
+## 2026-08-21 Dashboard hero spacing and de-card pass
+
+Refined the `/dashboard` operations hero so the welcome area reads as one
+intentional workspace surface instead of an outer card containing a second
+boxed inner card.
+
+Delivered:
+
+- updated `src/app/(dashboard)/dashboard/_components/attendance-command.tsx`
+  so the hero now uses a flatter single-surface composition with a live status
+  pill, a compact insight grid for priority counts, and a more deliberate
+  `Primary pulse` plus `Action queue` layout instead of the tighter ticker-only
+  block;
+- updated `src/styles/monolith-system.css` so the dashboard page-shell removes
+  the nested inner-card treatment from the identity area, increases spacing
+  between the hero content zones, and adds responsive styling for the new
+  insight/action layouts across desktop and mobile widths.
+
+Verification on Friday, August 21, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/(dashboard)/dashboard/_components/attendance-command.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Current dashboard status after this pass:
+
+- `/dashboard` remains the composition reference route, but the hero now has
+  cleaner spacing and a flatter structure that should remove the visible
+  nested-card feel from the left identity block;
+- the action presentation is denser and easier to scan, with one featured
+  operational pulse and a clearer supporting queue rather than a mostly empty
+  scrolling window;
+- manual runtime verification in Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-19 Communication chat full-height shell alignment
+
+Adjusted the `/communication/chat` workspace shell so it fills the available
+route canvas more like the mail tab, removes the remaining chat gradients, and
+brings the left sidebar composition closer to the provided Google Chat
+reference.
+
+Delivered:
+
+- updated `src/app/(dashboard)/communication/chat/page.tsx` so the sidebar now
+  consumes its full grid column instead of keeping a narrower fixed width,
+  which removes the blank strip between the chat rail and the conversation
+  pane;
+- updated `src/styles/modules/communication-admin.css` so the chat shell now
+  uses a full-height layout contract, solid surfaces instead of gradients
+  across the shell/sidebar/header/feed/composer/context rail, and flatter
+  Google-Chat-style sidebar treatment for the shortcuts and list regions;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the chat shell batch.
+
+Verification on Wednesday, August 19, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/communication/chat/page.tsx'`:
+  completed with only the pre-existing stale `eslint-disable` warnings already
+  present in the file; no new lint errors were introduced by this batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged repository baseline that
+  `design-system-catalogue.css` is missing.
+
+Current communication chat status after the shell alignment batch:
+
+- `/communication/chat` still needs broader source cleanup to leave the
+  `NON_COMPLIANT` static-audit status, but it now uses the available vertical
+  space more like `/communication/mail` and no longer leaves the visible blank
+  gutter between the sidebar and the conversation pane;
+- the visual treatment is now flatter and closer to the reference, with the
+  gradients removed from the active chat shell surfaces;
+- manual runtime verification in Light, Night, and Violet themes is still
+  pending in this Codex session because no in-app browser target was available.
+
+## 2026-08-19 Communication chat reference-shell rework
+
+Reworked the `/communication/chat` visual shell to track the provided
+reference more closely while staying inside the approved Communication
+workspace frame, shared action/input primitives, and module-owned styling.
+
+Delivered:
+
+- updated `src/app/(dashboard)/communication/chat/page.tsx` so the chat route
+  now presents a Gmail-style left command rail with a prominent `New chat`
+  action, clearer shortcuts, more reference-aligned DM/space list treatment,
+  a denser conversation header, softer message bubble rhythm, and a rounder
+  composer/footer treatment without changing the existing chat sync, SSE,
+  polling, typing, read-state, or modal workflows;
+- updated `src/styles/modules/communication-admin.css` so the Communication
+  module owns the revised pane proportions, sidebar/header spacing, feed and
+  composer containment, selected-row emphasis, and details-panel surface
+  treatment using Monolith semantic tokens rather than route-local legacy CSS;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the chat batch.
+
+Verification on Wednesday, August 19, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/communication/chat/page.tsx'`:
+  completed with only the pre-existing stale `eslint-disable` warnings already
+  present in the chat page; no new lint errors were introduced by this batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged repository baseline that
+  `design-system-catalogue.css` is missing.
+
+Current communication chat status after the reference-shell rework:
+
+- `/communication/chat` remains `NON_COMPLIANT` in the static audit, but the
+  route now follows the requested visual reference more closely across the
+  sidebar, conversation header, feed, composer, and context panel shell;
+- the batch stayed intentionally inside the existing route so business logic,
+  Google Workspace integrations, and interaction contracts remain intact;
+- manual runtime verification in Light, Night, and Violet themes is still
+  pending in this Codex session because no in-app browser target was available.
+
+## 2026-08-19 Communication chat repair pass
+
+Stabilized the `/communication/chat` workspace after the latest alignment pass
+so active conversations resolve to real people more reliably and the three-pane
+chat shell keeps the center thread and composer visible inside the fixed-height
+workspace.
+
+Delivered:
+
+- updated `src/app/api/communication/chat/list/route.ts` so DM identity
+  resolution now uses the full active-user workspace mapping, cached Chat-space
+  links, and safer fallback labels instead of surfacing generic `Google DM` /
+  org-profile names in the sidebar;
+- updated `src/app/api/communication/chat/messages/route.ts`,
+  `src/app/api/communication/chat/sse/route.ts`, and
+  `src/app/api/communication/chat/check-new/route.ts` so sender/toast names use
+  the same real-user resolution path more consistently and avoid regressing to
+  generic Chat labels when Google returns tenant profile names;
+- updated `src/app/api/communication/chat/space/members/route.ts` so the
+  members panel resolves current-user and employee identities more accurately,
+  which also fixes current-user membership detection for space actions;
+- updated `src/app/(dashboard)/communication/chat/page.tsx` and
+  `src/styles/modules/communication-admin.css` so the grid/flex chat panes use
+  explicit `min-height` containment and safer DM fallback labels, preventing
+  the center conversation/feed/composer area from collapsing out of view in the
+  aligned workspace shell;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the chat repair batch.
+
+Verification on Wednesday, August 19, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/api/communication/chat/list/route.ts' 'src/app/api/communication/chat/messages/route.ts' 'src/app/api/communication/chat/sse/route.ts' 'src/app/api/communication/chat/check-new/route.ts' 'src/app/api/communication/chat/space/members/route.ts' 'src/app/(dashboard)/communication/chat/page.tsx'`:
+  completed with the pre-existing chat-page warnings for stale/unused
+  `eslint-disable` directives only; no new lint errors remain in the repaired
+  files;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged repository baseline that
+  `design-system-catalogue.css` is missing.
+
+Current communication chat status after the repair pass:
+
+- `/communication/chat` remains the same route family, but its DM/member/sender
+  naming is now materially more stable across sidebar rows, message feeds,
+  member drawers, and toast updates;
+- the center chat shell now has explicit layout containment for the feed and
+  composer, which should address the blank middle pane / missing type-bar issue
+  caused by the alignment pass;
+- manual runtime verification in the browser is still pending in this Codex
+  session because no in-app browser target was available.
+
+## 2026-08-19 Communication Overview command-centre rebuild
+
+Rebuilt the Communication Overview route into a denser command-centre dashboard
+that follows the approved reference hierarchy while staying inside the existing
+Monolith Communication shell, shared workspace primitives, and module-owned UI
+contracts.
+
+Delivered:
+
+- replaced the old lightweight `/communication` summary route in
+  `src/app/(dashboard)/communication/page.tsx` with a real dashboard backed by
+  live Gmail, Calendar, Google Chat, job-workspace, Drive-readiness, and
+  communication-audit data instead of static mock metrics;
+- added the module-owned
+  `src/modules/communication/components/communication-overview-dashboard.tsx`
+  composition for the new KPI band, activity tabs, upcoming meetings rail,
+  quick actions, activity-overview analytics, Drive coverage, and operational
+  alerts panels;
+- extended `src/styles/modules/communication-admin.css` with Communication-owned
+  overview layout/styling hooks for the new command-centre grid, cards, tabs,
+  activity rows, health ring, analytics tiles, and alert layouts using existing
+  Monolith tokens and theme semantics;
+- updated `src/app/(dashboard)/communication/mail/page.tsx` and
+  `src/modules/communication/components/mail-workspace.tsx` so Overview email
+  rows can deep-link into a specific Gmail thread via `threadId` without
+  dropping users at the top of the inbox;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the overview batch.
+
+Verification on Wednesday, August 19, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/communication/page.tsx' 'src/app/(dashboard)/communication/mail/page.tsx' 'src/modules/communication/components/communication-overview-dashboard.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged repository baseline that
+  `design-system-catalogue.css` is missing.
+
+Current Communication Overview status after the regenerated audit:
+
+- `/communication` remains `COMPLIANT` in the static audit after the dashboard
+-level rebuild;
+- no new shared design-system primitive was introduced in this batch, so the
+  work stayed within module-owned Communication compositions rather than adding
+  new catalogue entries;
+- the route now surfaces real workspace connection, inbox, meetings, chat,
+  Drive-readiness, and alert data while leaving unsupported quota/storage
+  percentages out of the UI;
+- manual browser verification in Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-19 Communication chat interface alignment pass
+
+Refined the Communication chat workspace so the chat tab reads closer to the
+provided team-chat reference while still preserving the existing Google Chat
+sync, polling, SSE, DM, job-space, and space-management behavior.
+
+Delivered:
+
+- updated `src/app/(dashboard)/communication/chat/page.tsx` so the three-pane
+  chat shell now uses clearer design-system action treatment in the chat header
+  and job-context actions, adds explicit workspace data hooks for the sidebar,
+  header, feed, composer, and context rail, and aligns the search and status
+  controls more closely to the requested reference layout;
+- updated `src/styles/modules/communication-admin.css` with module-owned chat
+  composition styling for the three-column workspace, softened sidebar/header
+  gradients, denser search and tab treatment, a more structured message-feed
+  canvas, a roomier composer, and a cleaner right-context rail using Monolith
+  semantic tokens;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the chat batch.
+
+Verification on Wednesday, August 19, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/communication/chat/page.tsx' 'src/styles/modules/communication-admin.css'`:
+  completed with existing/harmless warnings in the chat page for now-unused
+  `eslint-disable` directives and the known stylesheet-config warning that the
+  CSS file is ignored by the current ESLint configuration;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the unchanged repository baseline that
+  `design-system-catalogue.css` is missing.
+
+Current communication chat status after the regenerated audit:
+
+- `/communication/chat` remains `NON_COMPLIANT` in the static audit, but the
+  flagged visual utility count dropped from 729 to 713 and direct
+  button-styled links dropped from 6 to 3;
+- the route still needs a deeper follow-up pass to move more of the remaining
+  route-local composition into clearer design-system or module-owned shared
+  contracts;
+- manual browser verification in Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-18 Communication mail Gmail-style workspace rebuild
+
+Rebuilt the Communication mail experience into a module-owned Gmail-style
+workspace so the route now reads and behaves like a modern mailbox instead of
+the previous route-local split pane implementation.
+
+Delivered:
+
+- replaced the oversized route-local mail page with the thin
+  `src/app/(dashboard)/communication/mail/page.tsx` wrapper that now delegates
+  to the module-owned `CommunicationMailWorkspace` in
+  `src/modules/communication/components/mail-workspace.tsx`;
+- rebuilt the mail UI into a Gmail-inspired three-pane workspace with a
+  rounded search header, compose sheet, folder rail, category tabs, threaded
+  message list, reading pane, inline reply flow, attachment handling, label
+  management, and keyboard shortcuts aligned to familiar Gmail patterns;
+- extended the Gmail integration layer in `src/lib/google-gmail-client.ts` so
+  the mailbox can fetch fuller thread sets, create drafts, send multipart mail
+  with attachments, manage labels, and download attachments cleanly through the
+  app APIs;
+- added `src/app/api/communication/mail/draft/route.ts` and
+  `src/app/api/communication/mail/attachment/route.ts`, and updated
+  `src/app/api/communication/mail/send/route.ts` to support Gmail-style draft,
+  send, and attachment workflows from the rebuilt workspace;
+- expanded `src/styles/modules/communication-admin.css` with the
+  `mnx-gmail-*` component styles needed for the new module-owned mailbox
+  composition;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the mail batch.
+
+Verification on Tuesday, August 18, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/lib/google-gmail-client.ts' 'src/modules/communication/components/mail-workspace.tsx' 'src/app/(dashboard)/communication/mail/page.tsx' 'src/app/api/communication/mail/draft/route.ts' 'src/app/api/communication/mail/attachment/route.ts' 'src/app/api/communication/mail/send/route.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and now classifies `/communication/mail` as `COMPLIANT`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit for the new mail workspace owner;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the pre-existing Leave module baseline in
+  `src/modules/leave/**`, unrelated to this communication mail batch.
+
+Current communication status after the regenerated audit:
+
+- `/communication/mail` is now classified as `COMPLIANT` in the route audit;
+- the mail workspace is now owned by
+  `src/modules/communication/components/mail-workspace.tsx`, with route
+  composition reduced to a business-layout wrapper;
+- manual browser verification in Light, Night, and Violet themes is still
+  pending in this Codex session;
+- the ownership audit still surfaces some route-local raw HTML usage inside the
+  new workspace composition, which should be treated as a follow-up refinement
+  pass rather than a blocker to the route migration result.
+
+## 2026-08-18 Communication lighter-route cleanup
+
+Cleaned up the smaller Communication routes so the family now has a clearer
+split between the lightweight pages that already fit the shared Monolith
+workspace contracts and the heavier mail/chat/job-collaboration pages that
+still need dedicated migration passes.
+
+Delivered:
+
+- updated `src/app/(dashboard)/communication/page.tsx` so the overview route
+  now uses canonical link-action treatment for the mailbox shortcut and no
+  longer keeps a route-local record card wrapper for upcoming meetings;
+- updated `src/app/(dashboard)/communication/meetings/page.tsx` so the
+  upcoming meeting register now uses the shared record container contract
+  without the flagged raw `article` wrapper;
+- updated `src/app/(dashboard)/communication/search/page.tsx` so the job
+  result action now uses canonical `ButtonLink` treatment and all three result
+  lists no longer rely on flagged raw record wrappers;
+- updated `src/app/(dashboard)/communication/drive/page.tsx` so the back
+  navigation uses the canonical link-action contract instead of route-local
+  button styling;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the communication
+  batch.
+
+Verification on Tuesday, August 18, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/communication/page.tsx' 'src/app/(dashboard)/communication/meetings/page.tsx' 'src/app/(dashboard)/communication/search/page.tsx' 'src/app/(dashboard)/communication/drive/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the pre-existing Leave module baseline in
+  `src/modules/leave/**`, unrelated to this communication batch.
+
+Current communication status after the regenerated audit:
+
+- `/communication`, `/communication/meetings`, and `/communication/search` are
+  now classified as `COMPLIANT`;
+- `/communication/drive` and `/communication/job-spaces` remain
+  `NON_COMPLIANT` because the static audit still sees styled link surfaces that
+  need a more explicit canonical action/composition pass;
+- `/communication/mail` and `/communication/chat` remain the heaviest
+  non-compliant routes and should be handled in dedicated follow-up batches;
+- `/communication/error` remains `PARTIAL` in the static audit even though it
+  routes through `CommunicationErrorState`, so that audit rule likely needs a
+  closer look during a later route-state cleanup pass.
 
 ## 2026-08-14 Shared navbar command search
 
