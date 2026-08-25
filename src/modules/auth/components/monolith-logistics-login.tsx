@@ -408,175 +408,177 @@ export function MonolithLogisticsLogin() {
         </aside>
 
         <section className={styles.formPanel} aria-labelledby="login-title">
-          <div className={`${styles.mobileBrand} ${styles.brand}`}>
-            <span className={styles.brandMark} aria-hidden="true">
-              <i />
-              <i />
-            </span>
-            <strong>MONOLITH</strong>
-          </div>
-
-          <div className={styles.accountIcon} aria-hidden="true">
-            <span />
-            <i />
-          </div>
-
-          <header className={styles.heading}>
-            <p>SECURE OPERATIONS ACCESS</p>
-            <h1 id="login-title">Welcome back!</h1>
-            <span>Enter your login details</span>
-          </header>
-
-          <form
-            className={styles.loginForm}
-            method="post"
-            onSubmit={handleSubmit}
-            noValidate
-          >
-            <label className={styles.field}>
-              <span>Email</span>
-              <span className={styles.inputWrap}>
-                <input
-                  ref={emailInputRef}
-                  type="email"
-                  name="email"
-                  autoComplete="username"
-                  inputMode="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  disabled={busy}
-                  aria-invalid={Boolean(message && !email.includes("@"))}
-                  aria-describedby={message ? "login-message" : undefined}
-                  onFocus={() => {
-                    target.current = { x: 0.7, y: -0.12 };
-                    setMood("happy");
-                    setPetMessage("I found your route!");
-                  }}
-                  onBlur={() => setMood("idle")}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setEmail(value);
-                    setMood(value ? "happy" : "idle");
-                    setPetMessage(
-                      value.length > 12
-                        ? "Route almost identified…"
-                        : value
-                          ? "Reading your route…"
-                          : "Tap me!",
-                    );
-                    resetSubmitState();
-                  }}
-                />
-                {email.includes("@") ? (
-                  <b className={styles.valid} aria-label="Email entered">
-                    ✓
-                  </b>
-                ) : null}
+          <div className={styles.formInner}>
+            <div className={`${styles.mobileBrand} ${styles.brand}`}>
+              <span className={styles.brandMark} aria-hidden="true">
+                <i />
+                <i />
               </span>
-            </label>
+              <strong>MONOLITH</strong>
+            </div>
 
-            <label className={styles.field}>
-              <span>Password</span>
-              <span className={styles.inputWrap}>
-                <input
-                  ref={passwordInputRef}
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  autoComplete="current-password"
-                  placeholder="Enter your password"
-                  value={password}
-                  disabled={busy}
-                  aria-invalid={Boolean(message && !password)}
-                  aria-describedby={message ? "login-message" : undefined}
-                  onFocus={() => {
-                    passwordFocusedRef.current = true;
-                    target.current = { x: -0.8, y: -0.08 };
-                    setMood("shy");
-                    setPetMessage("I won’t peek. Promise.");
-                  }}
-                  onBlur={() => {
-                    passwordFocusedRef.current = false;
-                    target.current = { x: 0, y: 0 };
-                    setMood("idle");
-                  }}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    resetSubmitState();
-                  }}
-                />
-                <button
-                  className={styles.visibility}
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  disabled={busy}
-                >
-                  {showPassword ? "●" : "◉"}
-                </button>
-              </span>
-            </label>
+            <div className={styles.accountIcon} aria-hidden="true">
+              <span />
+              <i />
+            </div>
 
-            <div className={styles.options}>
-              <label className={styles.remember}>
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(event) => setRemember(event.target.checked)}
-                  disabled={busy}
-                />
-                <span>Remember me</span>
+            <header className={styles.heading}>
+              <p>SECURE OPERATIONS ACCESS</p>
+              <h1 id="login-title">Welcome back!</h1>
+              <span>Enter your login details</span>
+            </header>
+
+            <form
+              className={styles.loginForm}
+              method="post"
+              onSubmit={handleSubmit}
+              noValidate
+            >
+              <label className={styles.field}>
+                <span>Email</span>
+                <span className={styles.inputWrap}>
+                  <input
+                    ref={emailInputRef}
+                    type="email"
+                    name="email"
+                    autoComplete="username"
+                    inputMode="email"
+                    placeholder="name@company.com"
+                    value={email}
+                    disabled={busy}
+                    aria-invalid={Boolean(message && !email.includes("@"))}
+                    aria-describedby={message ? "login-message" : undefined}
+                    onFocus={() => {
+                      target.current = { x: 0.7, y: -0.12 };
+                      setMood("happy");
+                      setPetMessage("I found your route!");
+                    }}
+                    onBlur={() => setMood("idle")}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEmail(value);
+                      setMood(value ? "happy" : "idle");
+                      setPetMessage(
+                        value.length > 12
+                          ? "Route almost identified…"
+                          : value
+                            ? "Reading your route…"
+                            : "Tap me!",
+                      );
+                      resetSubmitState();
+                    }}
+                  />
+                  {email.includes("@") ? (
+                    <b className={styles.valid} aria-label="Email entered">
+                      ✓
+                    </b>
+                  ) : null}
+                </span>
               </label>
-              <a href="/forgot-password" className={styles.textButton}>
-                Forgot password?
-              </a>
-            </div>
 
-            <p id="login-message" className={styles.formMessage} role="alert">
-              {message}
-            </p>
+              <label className={styles.field}>
+                <span>Password</span>
+                <span className={styles.inputWrap}>
+                  <input
+                    ref={passwordInputRef}
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    disabled={busy}
+                    aria-invalid={Boolean(message && !password)}
+                    aria-describedby={message ? "login-message" : undefined}
+                    onFocus={() => {
+                      passwordFocusedRef.current = true;
+                      target.current = { x: -0.8, y: -0.08 };
+                      setMood("shy");
+                      setPetMessage("I won’t peek. Promise.");
+                    }}
+                    onBlur={() => {
+                      passwordFocusedRef.current = false;
+                      target.current = { x: 0, y: 0 };
+                      setMood("idle");
+                    }}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      resetSubmitState();
+                    }}
+                  />
+                  <button
+                    className={styles.visibility}
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    disabled={busy}
+                  >
+                    {showPassword ? "●" : "◉"}
+                  </button>
+                </span>
+              </label>
 
-            <button
-              className={styles.loginButton}
-              type="submit"
-              disabled={busy}
-            >
-              {submitState === "loading" ? (
-                <>
-                  <i className={styles.spinner} /> Verifying route…
-                </>
-              ) : submitState === "success" ? (
-                <>Access granted ✓</>
-              ) : (
-                <>
-                  Log in <span>→</span>
-                </>
-              )}
-            </button>
+              <div className={styles.options}>
+                <label className={styles.remember}>
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(event) => setRemember(event.target.checked)}
+                    disabled={busy}
+                  />
+                  <span>Remember me</span>
+                </label>
+                <a href="/forgot-password" className={styles.textButton}>
+                  Forgot password?
+                </a>
+              </div>
 
-            <div className={styles.divider}>
-              <span>or</span>
-            </div>
+              <p id="login-message" className={styles.formMessage} role="alert">
+                {message}
+              </p>
 
-            <button
-              className={styles.ssoButton}
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                void signIn("google", {
-                  callbackUrl: getSafeCallbackUrl(email.trim()),
-                })
-              }
-            >
-              <span>◎</span> Log in with SSO
-            </button>
+              <button
+                className={styles.loginButton}
+                type="submit"
+                disabled={busy}
+              >
+                {submitState === "loading" ? (
+                  <>
+                    <i className={styles.spinner} /> Verifying route…
+                  </>
+                ) : submitState === "success" ? (
+                  <>Access granted ✓</>
+                ) : (
+                  <>
+                    Log in <span>→</span>
+                  </>
+                )}
+              </button>
 
-            <p className={styles.signup}>
-              Don’t have access?
-              <a href="/request-access" className={styles.textButton}>
-                Request access
-              </a>
-            </p>
-          </form>
+              <div className={styles.divider}>
+                <span>or</span>
+              </div>
+
+              <button
+                className={styles.ssoButton}
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  void signIn("google", {
+                    callbackUrl: getSafeCallbackUrl(email.trim()),
+                  })
+                }
+              >
+                <span>◎</span> Log in with SSO
+              </button>
+
+              <p className={styles.signup}>
+                Don’t have access?
+                <a href="/request-access" className={styles.textButton}>
+                  Request access
+                </a>
+              </p>
+            </form>
+          </div>
         </section>
       </section>
     </main>
