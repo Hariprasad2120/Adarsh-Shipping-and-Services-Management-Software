@@ -1,10 +1,13 @@
 {
   "weights": {
-    "landedCost": 0.42,
-    "completeness": 0.2,
-    "validity": 0.08,
-    "responseSpeed": 0.08,
-    "historicalReliability": 0.22
+    "landedBuyCost": 0.28,
+    "completeness": 0.18,
+    "validity": 0.1,
+    "responseTime": 0.1,
+    "operationalReliability": 0.12,
+    "historicalCompetitiveness": 0.1,
+    "bookingHistory": 0.07,
+    "dataConfidence": 0.05
   },
   "mixedSelectionPenalty": 0.04,
   "minimumConfidence": 0.55
