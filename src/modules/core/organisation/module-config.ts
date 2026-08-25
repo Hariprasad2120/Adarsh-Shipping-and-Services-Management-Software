@@ -1,6 +1,7 @@
 export const TOGGLEABLE_MODULE_SECTION_IDS = [
   "product-catalogue",
   "hrms",
+  "payroll",
   "attendance",
   "ams",
   "lms",
@@ -45,7 +46,8 @@ export type FeatureControlItem = {
 
 export const MODULE_CONTROL_ITEMS: readonly ModuleControlItem[] = [
   { id: "product-catalogue", label: "Product Catalogue", description: "Interactive catalogue and technical manual pages." },
-  { id: "hrms", label: "HRMS", description: "Employees, onboarding, letters, payroll, and people operations." },
+  { id: "hrms", label: "HRMS", description: "Employees, onboarding, letters, and people operations." },
+  { id: "payroll", label: "Payroll", description: "Standalone payroll operations, pay runs, compliance, payments, and payroll reporting." },
   { id: "attendance", label: "Attendance", description: "Punching, leaves, OT, timesheets, and attendance reports." },
   { id: "ams", label: "AMS", description: "Appraisals, cycles, criteria, increments, and performance workflows." },
   { id: "lms", label: "LMS", description: "Courses, learning progress, assignments, and reporting." },
@@ -78,6 +80,7 @@ const MANAGED_ROUTE_PREFIXES: Array<{ prefix: string; sectionId: ToggleableModul
   { prefix: "/product-catalogue", sectionId: "product-catalogue" },
   { prefix: "/hrms/recruit", sectionId: "recruit" },
   { prefix: "/hrms", sectionId: "hrms" },
+  { prefix: "/payroll", sectionId: "payroll" },
   { prefix: "/attendance", sectionId: "attendance" },
   { prefix: "/ams", sectionId: "ams" },
   { prefix: "/lms", sectionId: "lms" },
@@ -102,6 +105,10 @@ export function isSectionEnabled(
   if (!enabledModuleIds) return true;
 
   const enabledSet = enabledModuleIds instanceof Set ? enabledModuleIds : new Set(enabledModuleIds);
+  // Migration-safe default: existing org module-control records predate the
+  // standalone Payroll section, so do not hide the module simply because the
+  // new section id has not been persisted yet.
+  if (sectionId === "payroll" && !enabledSet.has("payroll")) return true;
   return enabledSet.has(sectionId);
 }
 

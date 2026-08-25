@@ -550,6 +550,9 @@ export async function createPayrollBatchAction(monthDate: Date): Promise<ActionR
 
     const batch = await accService.createPayrollBatch(orgId, session.user.id, monthDate);
     revalidatePath("/hrms/payroll");
+    revalidatePath("/payroll");
+    revalidatePath("/payroll/pay-runs");
+    revalidatePath("/payroll/payments");
     return { ok: true, data: batch };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create payroll batch" };
@@ -568,6 +571,10 @@ export async function finalizePayrollBatchAction(batchId: string): Promise<Actio
 
     const batch = await accService.finalizePayrollBatch(orgId, batchId, session.user.id);
     revalidatePath("/hrms/payroll");
+    revalidatePath("/payroll");
+    revalidatePath("/payroll/pay-runs");
+    revalidatePath("/payroll/payments");
+    revalidatePath("/payroll/payslips");
     revalidatePath("/accounting/journal-entries");
     return { ok: true, data: batch };
   } catch (err: any) {
@@ -587,6 +594,10 @@ export async function payPayrollBatchAction(batchId: string): Promise<ActionResp
 
     const batch = await accService.payPayrollBatch(orgId, batchId, session.user.id);
     revalidatePath("/hrms/payroll");
+    revalidatePath("/payroll");
+    revalidatePath("/payroll/pay-runs");
+    revalidatePath("/payroll/payments");
+    revalidatePath("/payroll/payslips");
     revalidatePath("/accounting/journal-entries");
     return { ok: true, data: batch };
   } catch (err: any) {

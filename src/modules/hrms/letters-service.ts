@@ -7,6 +7,12 @@ import { promisify } from "util";
 import { createNotification } from "@/modules/notifications/service";
 import { createTextPdfBuffer } from "@/lib/document-preview";
 import {
+  assertDocumentAutomationAvailable,
+  hasExternalDocumentAutomation,
+  runExternalDocumentAutomation,
+} from "@/lib/document-automation";
+import { getAppUrl } from "@/lib/app-url";
+import {
   getBundledDocxTemplateFiles,
   importDocxTemplateFile,
   saveEditorHtmlAsDocx,
@@ -80,14 +86,21 @@ async function runTemplateDocumentCompilation({
   fs.writeFileSync(tempJsonPath, JSON.stringify(buildJson, null, 2));
 
   try {
-    const psScript = path.join(rootDir, "scripts/generate-document-from-template.ps1");
-    const { stdout, stderr } = await execAsync(
-      `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -jsonPath "${tempJsonPath}"`
-    );
+    let psResult: { pdfHash: string };
+    if (hasExternalDocumentAutomation()) {
+      psResult = await runExternalDocumentAutomation("generate-document-from-template", buildJson);
+    } else {
+      assertDocumentAutomationAvailable("HR letter compilation");
+      const psScript = path.join(rootDir, "scripts/generate-document-from-template.ps1");
+      const { stdout, stderr } = await execAsync(
+        `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -jsonPath "${tempJsonPath}"`
+      );
 
-    if (stderr?.trim()) console.error("PowerShell warnings/stderr:", stderr);
-    const psResult = JSON.parse(stdout.trim());
-    if (!psResult.ok) throw new Error(psResult.error || "PowerShell execution failed");
+      if (stderr?.trim()) console.error("PowerShell warnings/stderr:", stderr);
+      const parsed = JSON.parse(stdout.trim());
+      if (!parsed.ok) throw new Error(parsed.error || "PowerShell execution failed");
+      psResult = parsed;
+    }
 
     fs.unlinkSync(tempJsonPath);
 
@@ -811,7 +824,7 @@ async function compileAndIssueDocument(request: any, orgId: string, operatorId: 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + settings.letterValidityDaysDefault);
 
-    const verificationUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verify/${request.id}`;
+    const verificationUrl = `${getAppUrl()}/verify/${request.id}`;
 
     await db.emailQueue.create({
       data: {

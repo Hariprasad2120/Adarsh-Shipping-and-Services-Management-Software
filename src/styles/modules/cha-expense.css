@@ -45,14 +45,12 @@
 
 .mnx-cha-metrics {
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 0;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 16%, var(--mnx-border));
-  border-radius: calc(var(--mn-radius-panel) + 0.15rem);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--mnx-accent) 7%, transparent), transparent 48%),
-    color-mix(in srgb, var(--mnx-card) 92%, transparent);
-  box-shadow: var(--mnx-shadow);
+  gap: var(--mn-space-4);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .mnx-cha-metrics > * {
@@ -61,13 +59,7 @@
 }
 
 .mnx-cha-metrics > *::after {
-  content: "";
-  position: absolute;
-  top: 1rem;
-  right: 0;
-  bottom: 1rem;
-  width: 1px;
-  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-border));
+  display: none;
 }
 
 .mnx-cha-metrics > *:last-child::after {
@@ -853,7 +845,6 @@
   flex: 0 1 300px;
   display: flex;
   align-items: center;
-  margin-right: auto;
 }
 
 .mnx-cha-actions-search > svg {
@@ -1078,7 +1069,7 @@
 
 .mnx-cha-section-block .mnx-table-card > header,
 .mnx-cha-section-block .mnx-operational-table-header {
-  align-items: start;
+  align-items: center;
 }
 
 .mnx-cha-section-block .mnx-table-card > header h3,

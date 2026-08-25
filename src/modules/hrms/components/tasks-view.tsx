@@ -144,10 +144,10 @@ export function TasksView() {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-[var(--mnx-text)]">
-                TASK CHECKLISTS
+                Assignment board
               </h1>
               <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
-                Assign work checklist tasks and coordinate delivery schedules
+                Create tasks, assign owners, and monitor pending versus completed checklist work.
               </p>
             </div>
           </div>

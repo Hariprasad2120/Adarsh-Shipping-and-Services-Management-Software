@@ -10,15 +10,15 @@ datasource db {
 // ─── Organisation Structure ───────────────────────────────────────────────────
 
 model Organisation {
-  id                   String   @id @default(cuid())
-  name                 String
-  slug                 String   @unique
-  active               Boolean  @default(true)
-  crmCallRetentionDays Int      @default(90)
+  id                         String   @id @default(cuid())
+  name                       String
+  slug                       String   @unique
+  active                     Boolean  @default(true)
+  crmCallRetentionDays       Int      @default(90)
   defaultJurisdictionCountry String? // NEW — fallback jurisdiction (spec §35) for employees whose branch has no jurisdiction set, or who have no branch
   defaultJurisdictionState   String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
   branches    Branch[]
   departments Department[]
@@ -26,28 +26,28 @@ model Organisation {
   roles       Role[]
   users       User[]
 
-  appraisalCycles        AppraisalCycle[]
-  appraisalSchedules     AppraisalSchedule[]
-  appraisalCriteria      AppraisalCriterion[]
-  appraisalSelfTemplate  AppraisalSelfTemplate?
-  appraisalSettings      OrgAppraisalSettings?
-  leaveTypes             LeaveType[]
-  leaveLedgerEntries     LeaveLedgerEntry[]
-  compOffCredits         CompOffCredit[]
-  leaveGrants            LeaveGrant[]
-  leaveSchedulerRuns     LeaveSchedulerRun[]
-  leaveApproverDelegations LeaveApproverDelegation[]
+  appraisalCycles             AppraisalCycle[]
+  appraisalSchedules          AppraisalSchedule[]
+  appraisalCriteria           AppraisalCriterion[]
+  appraisalSelfTemplate       AppraisalSelfTemplate?
+  appraisalSettings           OrgAppraisalSettings?
+  leaveTypes                  LeaveType[]
+  leaveLedgerEntries          LeaveLedgerEntry[]
+  compOffCredits              CompOffCredit[]
+  leaveGrants                 LeaveGrant[]
+  leaveSchedulerRuns          LeaveSchedulerRun[]
+  leaveApproverDelegations    LeaveApproverDelegation[]
   restrictedHolidaySelections RestrictedHolidaySelection[]
-  leavePartialPayRecords LeavePartialPayRecord[]
-  holidays               Holiday[]
-  notifications          Notification[]
-  notificationActivities NotificationActivity[]
-  todoTasks              TodoTask[]
-  announcements          Announcement[]
-  employeeProfileFields  EmployeeProfileField[]
-  employeeInvitations    EmployeeInvitation[]
-  workReportSettings     WorkReportSettings?
-  workReportFields       WorkReportField[]
+  leavePartialPayRecords      LeavePartialPayRecord[]
+  holidays                    Holiday[]
+  notifications               Notification[]
+  notificationActivities      NotificationActivity[]
+  todoTasks                   TodoTask[]
+  announcements               Announcement[]
+  employeeProfileFields       EmployeeProfileField[]
+  employeeInvitations         EmployeeInvitation[]
+  workReportSettings          WorkReportSettings?
+  workReportFields            WorkReportField[]
 
   crmApprovalLogs       CrmApprovalLog[]
   crmWorkTimeLogs       CrmWorkTimeLog[]
@@ -217,10 +217,10 @@ model Organisation {
 }
 
 model Branch {
-  id    String  @id @default(cuid())
-  orgId String
-  name  String
-  code  String
+  id                  String  @id @default(cuid())
+  orgId               String
+  name                String
+  code                String
   jurisdictionCountry String? // NEW — for deterministic statutory-compliance lookup (spec §35): the country this branch's employees are legally covered under
   jurisdictionState   String? // NEW — state/province within jurisdictionCountry, when the country has state-level leave law (e.g. India)
 
@@ -378,27 +378,27 @@ model User {
   todoTasks               TodoTask[]
 
   // Attendance & OT
-  punches                 AttendancePunch[]
-  punchEvents             AttendancePunchEvent[]
-  leaveBalances           LeaveBalance[]
-  leaveRequests           LeaveRequest[]             @relation("LeaveRequester")
-  leaveApprovals          LeaveRequest[]             @relation("LeaveApprover")
-  leaveLedgerEntries       LeaveLedgerEntry[]
-  leaveOverrides           EmployeeLeaveOverride[]
-  compOffCredits           CompOffCredit[]
-  leaveGrants              LeaveGrant[]
-  leaveDelegationsGiven    LeaveApproverDelegation[] @relation("LeaveDelegationsGiven")
-  leaveDelegationsReceived LeaveApproverDelegation[] @relation("LeaveDelegationsReceived")
+  punches                     AttendancePunch[]
+  punchEvents                 AttendancePunchEvent[]
+  leaveBalances               LeaveBalance[]
+  leaveRequests               LeaveRequest[]               @relation("LeaveRequester")
+  leaveApprovals              LeaveRequest[]               @relation("LeaveApprover")
+  leaveLedgerEntries          LeaveLedgerEntry[]
+  leaveOverrides              EmployeeLeaveOverride[]
+  compOffCredits              CompOffCredit[]
+  leaveGrants                 LeaveGrant[]
+  leaveDelegationsGiven       LeaveApproverDelegation[]    @relation("LeaveDelegationsGiven")
+  leaveDelegationsReceived    LeaveApproverDelegation[]    @relation("LeaveDelegationsReceived")
   restrictedHolidaySelections RestrictedHolidaySelection[]
-  leavePartialPayRecords   LeavePartialPayRecord[]
-  otEntries               OTEntry[]                  @relation("OTEmployee")
-  otApprovals             OTEntry[]                  @relation("OTApprover")
-  otRecords               OtRecord[]                 @relation("EmployeeOtRecords")
-  approvedOts             OtRecord[]                 @relation("OtApprovedBy")
-  regularizations         AttendanceRegularization[] @relation("RegularizationEmployee")
-  approvedRegularizations AttendanceRegularization[] @relation("RegularizationApprover")
-  lopRecords              EmployeeLop[]              @relation("EmployeeLopRecords")
-  triggeredSyncs          BiometricSyncLog[]         @relation("TriggeredSyncs")
+  leavePartialPayRecords      LeavePartialPayRecord[]
+  otEntries                   OTEntry[]                    @relation("OTEmployee")
+  otApprovals                 OTEntry[]                    @relation("OTApprover")
+  otRecords                   OtRecord[]                   @relation("EmployeeOtRecords")
+  approvedOts                 OtRecord[]                   @relation("OtApprovedBy")
+  regularizations             AttendanceRegularization[]   @relation("RegularizationEmployee")
+  approvedRegularizations     AttendanceRegularization[]   @relation("RegularizationApprover")
+  lopRecords                  EmployeeLop[]                @relation("EmployeeLopRecords")
+  triggeredSyncs              BiometricSyncLog[]           @relation("TriggeredSyncs")
 
   // AMS
   appraisals           Appraisal[]                 @relation("AppraisalEmployee")
@@ -860,12 +860,12 @@ model LeaveType {
   activeVersionId String? // NEW — points at the currently published LeavePolicyVersion
   isCompOffType   Boolean @default(false) // NEW — marks the org's comp-off-consumption leave type
 
-  org      Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  balances LeaveBalance[]
-  requests LeaveRequest[]
-  versions LeavePolicyVersion[]
-  ledgerEntries LeaveLedgerEntry[]
-  grants   LeaveGrant[]
+  org               Organisation            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  balances          LeaveBalance[]
+  requests          LeaveRequest[]
+  versions          LeavePolicyVersion[]
+  ledgerEntries     LeaveLedgerEntry[]
+  grants            LeaveGrant[]
   partialPayRecords LeavePartialPayRecord[]
 
   @@unique([orgId, name])
@@ -899,42 +899,42 @@ model LeaveRequest {
   toDate      DateTime @db.Date
   halfDay     Boolean  @default(false)
   status      String   @default("pending") // pending | approved | rejected | cancelled |
-                                            // draft | submitted | pending_approval | cancel_pending |
-                                            // extension_pending | withdrawn | expired
+  // draft | submitted | pending_approval | cancel_pending |
+  // extension_pending | withdrawn | expired
   approverId  String?
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // NEW fields — additive, all nullable/defaulted so existing rows remain valid
-  policyVersionId        String?
-  computedDurationUnits   Decimal? @db.Decimal(10, 4)
-  paidUnits               Decimal? @db.Decimal(10, 4)
-  lopUnits                Decimal? @db.Decimal(10, 4)
-  currentApprovalStepId   String?
-  cancelledAt             DateTime?
+  policyVersionId          String?
+  computedDurationUnits    Decimal?  @db.Decimal(10, 4)
+  paidUnits                Decimal?  @db.Decimal(10, 4)
+  lopUnits                 Decimal?  @db.Decimal(10, 4)
+  currentApprovalStepId    String?
+  cancelledAt              DateTime?
   cancelReason             String?
   extendedFromRequestId    String?
   onDutyLocation           String? // NEW — for ON_DUTY classification: where the employee will be (client site, field visit, etc.)
   onDutyReference          String? // NEW — for ON_DUTY classification: client/job/ticket reference, free text
-  dayPart                  String?  // NEW — FULL | HALF | QUARTER, DAY-unit only. halfDay stays in sync (dayPart === "HALF") for existing readers of the boolean; QUARTER is only representable via this field.
-  fromTime                 String?  // NEW — "HH:MM", HOUR-unit only
-  toTime                   String?  // NEW — "HH:MM", HOUR-unit only
-  partialPaidUnits         Decimal? @db.Decimal(10, 4) // NEW — calculation.ts already computes this (PARTIALLY_PAID slabs) but it was never persisted; spec §17 payroll-contract gap
-  partialPaySlabBreakdown  Json?    // NEW — [{payPercentage, units}, ...] snapshot from calculation.ts at submission time, read back at approval to write LeavePartialPayRecord without recalculating
+  dayPart                  String? // NEW — FULL | HALF | QUARTER, DAY-unit only. halfDay stays in sync (dayPart === "HALF") for existing readers of the boolean; QUARTER is only representable via this field.
+  fromTime                 String? // NEW — "HH:MM", HOUR-unit only
+  toTime                   String? // NEW — "HH:MM", HOUR-unit only
+  partialPaidUnits         Decimal?  @db.Decimal(10, 4) // NEW — calculation.ts already computes this (PARTIALLY_PAID slabs) but it was never persisted; spec §17 payroll-contract gap
+  partialPaySlabBreakdown  Json? // NEW — [{payPercentage, units}, ...] snapshot from calculation.ts at submission time, read back at approval to write LeavePartialPayRecord without recalculating
   externalCalendarProvider String? // NEW — spec §37 outbound calendar sync: which provider adapter (e.g. "GOOGLE") this request was synced to, if any
   externalCalendarEventId  String? // NEW — the provider's own event id, needed to delete the event on cancellation
 
-  user      User      @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
-  approver  User?     @relation("LeaveApprover", fields: [approverId], references: [id])
-  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id])
-  policyVersion    LeavePolicyVersion? @relation(fields: [policyVersionId], references: [id])
-  extendedFrom     LeaveRequest?       @relation("LeaveExtension", fields: [extendedFromRequestId], references: [id])
-  extensions       LeaveRequest[]      @relation("LeaveExtension")
+  user          User                @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
+  approver      User?               @relation("LeaveApprover", fields: [approverId], references: [id])
+  leaveType     LeaveType           @relation(fields: [leaveTypeId], references: [id])
+  policyVersion LeavePolicyVersion? @relation(fields: [policyVersionId], references: [id])
+  extendedFrom  LeaveRequest?       @relation("LeaveExtension", fields: [extendedFromRequestId], references: [id])
+  extensions    LeaveRequest[]      @relation("LeaveExtension")
 
-  ledgerEntries   LeaveLedgerEntry[]
-  approvalSteps   LeaveApprovalStep[]
-  attachments     LeaveRequestAttachment[]
+  ledgerEntries    LeaveLedgerEntry[]
+  approvalSteps    LeaveApprovalStep[]
+  attachments      LeaveRequestAttachment[]
   partialPayRecord LeavePartialPayRecord?
 
   @@index([userId])
@@ -1007,14 +1007,14 @@ model LeaveLedgerEntry {
   leaveTypeId     String
   policyVersionId String?
   type            String // OPENING_BALANCE | ACCRUAL | MANUAL_CREDIT | MANUAL_DEBIT | LEAVE_RESERVED |
-                          // LEAVE_CONSUMED | LEAVE_RELEASED | CARRY_FORWARD | CARRY_FORWARD_EXPIRY |
-                          // ENCASHMENT | RESET | COMP_OFF_CREDIT | COMP_OFF_EXPIRY | ADJUSTMENT |
-                          // CANCELLATION_REVERSAL | POLICY_MIGRATION | IMPORT | LOP_CONVERSION
-  quantity        Decimal @db.Decimal(10, 4) // signed: positive = credit, negative = debit
-  unit            String @default("DAY") // DAY | HOUR
+  // LEAVE_CONSUMED | LEAVE_RELEASED | CARRY_FORWARD | CARRY_FORWARD_EXPIRY |
+  // ENCASHMENT | RESET | COMP_OFF_CREDIT | COMP_OFF_EXPIRY | ADJUSTMENT |
+  // CANCELLATION_REVERSAL | POLICY_MIGRATION | IMPORT | LOP_CONVERSION
+  quantity        Decimal  @db.Decimal(10, 4) // signed: positive = credit, negative = debit
+  unit            String   @default("DAY") // DAY | HOUR
   effectiveDate   DateTime @db.Date
-  balanceBefore   Decimal @db.Decimal(10, 4)
-  balanceAfter    Decimal @db.Decimal(10, 4)
+  balanceBefore   Decimal  @db.Decimal(10, 4)
+  balanceAfter    Decimal  @db.Decimal(10, 4)
   requestId       String?
   source          String // SYSTEM | SCHEDULER | ADMIN | EMPLOYEE | IMPORT
   actorId         String?
@@ -1051,16 +1051,16 @@ model LeaveApprovalStep {
 }
 
 model RestrictedHolidaySelection {
-  id          String   @id @default(cuid())
-  orgId       String
-  userId      String
-  holidayId   String
-  leaveTypeId String // the RESTRICTED_HOLIDAY-classified policy this selection consumes
-  year        Int
-  status      String   @default("SELECTED") // SELECTED | APPROVED | REJECTED | CANCELLED
-  approvedById String?
+  id            String   @id @default(cuid())
+  orgId         String
+  userId        String
+  holidayId     String
+  leaveTypeId   String // the RESTRICTED_HOLIDAY-classified policy this selection consumes
+  year          Int
+  status        String   @default("SELECTED") // SELECTED | APPROVED | REJECTED | CANCELLED
+  approvedById  String?
   ledgerEntryId String?
-  createdAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
 
   org     Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1071,16 +1071,16 @@ model RestrictedHolidaySelection {
 }
 
 model LeaveApproverDelegation {
-  id             String    @id @default(cuid())
-  orgId          String
-  delegatorId    String // the approver being covered for
-  delegateId     String // who approvals are delegated to
-  effectiveFrom  DateTime  @db.Date
-  effectiveTo    DateTime? @db.Date // null = open-ended until revoked
-  reason         String?
-  createdById    String
-  revokedAt      DateTime?
-  createdAt      DateTime  @default(now())
+  id            String    @id @default(cuid())
+  orgId         String
+  delegatorId   String // the approver being covered for
+  delegateId    String // who approvals are delegated to
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date // null = open-ended until revoked
+  reason        String?
+  createdById   String
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
 
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   delegator User         @relation("LeaveDelegationsGiven", fields: [delegatorId], references: [id], onDelete: Cascade)
@@ -1114,19 +1114,19 @@ model CompOffCredit {
 }
 
 model LeaveGrant {
-  id          String    @id @default(cuid())
-  orgId       String
-  userId      String
-  leaveTypeId String
-  amount      Decimal  @db.Decimal(10, 4)
-  effectiveDate DateTime @db.Date
-  expiryDate  DateTime?
-  reason      String
-  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED | POSTED
-  grantedById String
-  approvedById String?
+  id            String    @id @default(cuid())
+  orgId         String
+  userId        String
+  leaveTypeId   String
+  amount        Decimal   @db.Decimal(10, 4)
+  effectiveDate DateTime  @db.Date
+  expiryDate    DateTime?
+  reason        String
+  status        String    @default("PENDING") // PENDING | APPROVED | REJECTED | POSTED
+  grantedById   String
+  approvedById  String?
   ledgerEntryId String?
-  createdAt   DateTime  @default(now())
+  createdAt     DateTime  @default(now())
 
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1149,15 +1149,15 @@ model LeaveRequestAttachment {
 }
 
 model LeaveSchedulerRun {
-  id           String    @id @default(cuid())
-  orgId        String
-  jobType      String // ACCRUAL | CARRY_FORWARD_EXPIRY | RESET | COMP_OFF_EXPIRY
-  runKey       String    @unique // idempotency key for the whole run, e.g. "accrual:2026-08-01"
-  status       String    @default("RUNNING") // RUNNING | COMPLETED | FAILED
-  startedAt    DateTime  @default(now())
-  completedAt  DateTime?
-  processedCount Int     @default(0)
-  errorCount     Int     @default(0)
+  id             String    @id @default(cuid())
+  orgId          String
+  jobType        String // ACCRUAL | CARRY_FORWARD_EXPIRY | RESET | COMP_OFF_EXPIRY
+  runKey         String    @unique // idempotency key for the whole run, e.g. "accrual:2026-08-01"
+  status         String    @default("RUNNING") // RUNNING | COMPLETED | FAILED
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  processedCount Int       @default(0)
+  errorCount     Int       @default(0)
   errorDetails   Json?
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
@@ -1181,7 +1181,7 @@ model LeaveComplianceTemplate {
   sourceUrl            String?
   verifiedDate         DateTime  @db.Date
   version              Int       @default(1)
-  status                String   @default("DRAFT") // DRAFT | VERIFIED | PUBLISHED | SUPERSEDED
+  status               String    @default("DRAFT") // DRAFT | VERIFIED | PUBLISHED | SUPERSEDED
   notes                String?
   createdAt            DateTime  @default(now())
 
@@ -1196,8 +1196,8 @@ model Holiday {
   name        String
   holidayType String   @default("COMPANY") // COMPANY | NATIONAL | RESTRICTED | WEEKEND
 
-  org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branch Branch?      @relation(fields: [branchId], references: [id])
+  org                  Organisation                 @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch               Branch?                      @relation(fields: [branchId], references: [id])
   restrictedSelections RestrictedHolidaySelection[]
 
   @@index([orgId, date])
@@ -1618,7 +1618,7 @@ model LeavePartialPayRecord {
   leaveTypeId   String
   payrollMonth  DateTime @db.Date // first day of month
   requestId     String   @unique // one record per leave request — idempotent by construction
-  slabBreakdown Json     // [{ payPercentage: number, units: number }, ...] — mirrors calculation.ts's partialPaySlabs application
+  slabBreakdown Json // [{ payPercentage: number, units: number }, ...] — mirrors calculation.ts's partialPaySlabs application
   totalUnits    Decimal  @db.Decimal(10, 4)
   createdById   String?
   createdAt     DateTime @default(now())
@@ -2232,6 +2232,11 @@ model CrmAccount {
   remarks                String?
   billingAddressDetails  Json?
   shippingAddressDetails Json?
+
+  // Field-tracking geolocation (optional; powers customer geofencing & visit detection)
+  geoLatitude          Float?
+  geoLongitude         Float?
+  geoVisitRadiusMeters Int?
 
   createdById String
   updatedById String
@@ -2985,6 +2990,381 @@ model SalaryRevisionLetter {
   effectiveDate DateTime @db.Date
   createdAt     DateTime @default(now())
   user          User     @relation("EmployeeSalaryLetters", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Payroll Phase 7: configurable salary components (Earnings / Deductions /
+// Benefits / Reimbursements), replacing the payrollMeta.breakup heuristic
+// with admin-configurable rows. See
+// docs/payroll/MONOLITH_PAYROLL_INTEGRATION_MAP.md, section 4.
+model SalaryComponent {
+  id               String   @id @default(cuid())
+  orgId            String
+  category         String // EARNING | DEDUCTION | BENEFIT | REIMBURSEMENT
+  name             String
+  componentType    String // Zoho "earning type" label, e.g. Basic, House Rent Allowance, Custom Allowance
+  calculationType  String // FIXED_FLAT | FIXED_PERCENT | VARIABLE_FLAT | VARIABLE_PERCENT
+  percentOfBasic   Float? // used when calculationType is *_PERCENT
+  considerForEpf   Boolean  @default(false)
+  considerForEsi   Boolean  @default(false)
+  includeInCtc     Boolean  @default(true)
+  taxable          Boolean  @default(true)
+  fbpEligible      Boolean  @default(false) // Phase 12: Flexible Benefit Plan eligibility (Reimbursement components only)
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  templateComponents SalaryTemplateComponent[]
+
+  @@unique([orgId, category, name])
+  @@index([orgId, category])
+}
+
+// Payroll Phase 8: reusable salary structures composed of Phase 7 components,
+// assignable to employees to fill EmploymentRecord's compensation columns.
+model SalaryTemplate {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  components SalaryTemplateComponent[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+// Payroll Phase 31: tax payment challans, associated against TDS liability
+// months (computed live in Phase 30, not a stored liability row — the
+// association references the liability month directly).
+// docs/payroll/ZOHO_PAYROLL_REFERENCE_MANIFEST.md, pages 00021/00126.
+model PayrollTaxChallan {
+  id            String   @id @default(cuid())
+  orgId         String
+  challanNumber String
+  amount        Float
+  paymentDate   DateTime @db.Date
+  reference     String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  associations PayrollTaxChallanAssociation[]
+
+  @@unique([orgId, challanNumber])
+  @@index([orgId])
+}
+
+model PayrollTaxChallanAssociation {
+  id            String   @id @default(cuid())
+  challanId     String
+  liabilityMonth DateTime @db.Date
+  amount        Float
+  createdAt     DateTime @default(now())
+
+  challan PayrollTaxChallan @relation(fields: [challanId], references: [id], onDelete: Cascade)
+
+  @@index([challanId])
+}
+
+// Payroll Phase 26: statutory engine. EPF fields are modeled from the real
+// captured settings_statutory-details EPF page
+// (docs/payroll/ZOHO_PAYROLL_REFERENCE_MANIFEST.md, page 00108) — not
+// guessed. One row per org (effective-dated versions can be added later by
+// relaxing the unique constraint; v1 is "current configuration only").
+// Professional Tax: state-specific monthly slabs. No default values are
+// seeded — PT varies by state and changes periodically by state
+// notification, so org must enter their own correct slabs. Looked up by the
+// employee's branch jurisdictionState (existing field).
+model PayrollStatutoryPtSlab {
+  id            String   @id @default(cuid())
+  orgId         String
+  state         String
+  minGross      Float
+  maxGross      Float? // null = no upper bound
+  monthlyAmount Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orgId, state])
+}
+
+// Labour Welfare Fund: state-specific flat contribution. Simplified to a
+// monthly amount only — real LWF cycles (e.g. half-yearly in some states)
+// aren't modeled; org enters the correct pro-rated monthly equivalent.
+model PayrollStatutoryLwfConfig {
+  id             String   @id @default(cuid())
+  orgId          String
+  state          String
+  enabled        Boolean  @default(true)
+  employeeAmount Float
+  employerAmount Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([orgId, state])
+}
+
+// Statutory Bonus (Payment of Bonus Act, 1965 — central law, safe to
+// default unlike PT/LWF). Paid as an annual off-cycle batch, not a monthly
+// payroll line.
+model PayrollStatutoryBonusConfig {
+  id                    String   @id @default(cuid())
+  orgId                 String   @unique
+  enabled               Boolean  @default(false)
+  percent               Float    @default(8.33)
+  eligibilityWageCeiling Float   @default(21000)
+  calculationWageCeiling Float   @default(7000)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// Annual income-tax slabs (old/new regime), keyed by fiscal year so a new
+// year's Budget change doesn't require a code change. Seeded with current
+// known law on first read; org can edit/add rows for future years.
+model PayrollStatutoryTaxSlab {
+  id          String   @id @default(cuid())
+  orgId       String
+  fiscalYear  String
+  regime      String // OLD | NEW
+  minIncome   Float
+  maxIncome   Float? // null = no upper bound
+  ratePercent Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orgId, fiscalYear, regime])
+}
+
+model PayrollStatutoryTaxRegimeConfig {
+  id                String   @id @default(cuid())
+  orgId             String
+  fiscalYear        String
+  regime            String // OLD | NEW
+  standardDeduction Float
+  rebateThreshold   Float // taxable income at/below which s.87A zeroes tax
+  cessPercent       Float    @default(4)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([orgId, fiscalYear, regime])
+}
+
+// Form 16/24Q filing status — a manual-tracking stub, not a real government
+// e-filing integration (that needs GSP API credentials and DSC-signing
+// infrastructure this repo/org doesn't have). Org files externally and
+// records the outcome here.
+model PayrollForm16Filing {
+  id             String    @id @default(cuid())
+  orgId          String
+  employeeId     String
+  fiscalYear     String
+  status         String    @default("NOT_FILED") // NOT_FILED | GENERATED | FILED
+  generatedAt    DateTime?
+  filedAt        DateTime?
+  acknowledgementNumber String?
+  filedById      String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([orgId, employeeId, fiscalYear])
+  @@index([orgId, fiscalYear])
+}
+
+// Scoped payroll automation: fixed set of real payroll lifecycle triggers
+// wired to real existing actions (notification, to-do task) — not a
+// generic workflow engine. See PayrollAutomationLog for execution history.
+model PayrollAutomationRule {
+  id          String   @id @default(cuid())
+  orgId       String
+  trigger     String // LOAN_FULLY_REPAID | SALARY_REVISION_APPROVED | NEW_PAYROLL_EMPLOYEE | PAYROLL_RUN_OVERDUE
+  enabled     Boolean  @default(true)
+  actionType  String // NOTIFY_MANAGER | NOTIFY_HR | CREATE_TODO
+  actionConfig Json? // action-specific extras, e.g. { "dueInDays": 3 }
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs PayrollAutomationLog[]
+
+  @@index([orgId, trigger, enabled])
+}
+
+model PayrollAutomationLog {
+  id           String   @id @default(cuid())
+  ruleId       String
+  orgId        String
+  triggeredAt  DateTime @default(now())
+  subjectType  String // EMPLOYEE | LOAN | SALARY_REVISION | PAYROLL_BATCH
+  subjectId    String
+  outcome      String // EXECUTED | SKIPPED | FAILED
+  detail       String?
+
+  rule PayrollAutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, triggeredAt])
+  @@index([ruleId, triggeredAt])
+}
+
+model PayrollStatutoryEpfConfig {
+  id                          String   @id @default(cuid())
+  orgId                       String   @unique
+  enabled                     Boolean  @default(true)
+  epfNumber                   String?
+  deductionCycle              String   @default("MONTHLY")
+  employeeContributionPercent Float    @default(12)
+  employerContributionPercent Float    @default(12)
+  restrictToWageCeiling       Boolean  @default(true)
+  wageCeiling                 Float    @default(15000)
+  includeEmployerPfInCtc      Boolean  @default(true)
+  includeEdliInCtc            Boolean  @default(true)
+  includeAdminChargesInCtc    Boolean  @default(true)
+  allowEmployeeOverride       Boolean  @default(false)
+  prorateRestrictedWage       Boolean  @default(true)
+  considerLopForApplicability Boolean  @default(false)
+  eligibleForAbry             Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+// ESI: nationally uniform statutory rates (not state-varying like PT/LWF),
+// so safe defaults can be shipped — same reasoning as EPF. Disabled by
+// default since ESI applicability depends on employee headcount (>=10 in
+// most states), which orgs must confirm themselves.
+model PayrollStatutoryEsiConfig {
+  id                          String   @id @default(cuid())
+  orgId                       String   @unique
+  enabled                     Boolean  @default(false)
+  employeeContributionPercent Float    @default(0.75)
+  employerContributionPercent Float    @default(3.25)
+  wageCeiling                 Float    @default(21000)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+// Payroll Phase 24-25: IT declaration / proof of investment. The captured
+// Zoho reference shows an empty/not-yet-enabled state with no field-level
+// detail, so this uses a generic category/description/amount line shape
+// instead of guessing specific tax-section fields
+// (docs/payroll/ZOHO_PAYROLL_REFERENCE_MANIFEST.md, page 00003).
+model EmployeeInvestmentDeclaration {
+  id          String    @id @default(cuid())
+  orgId       String
+  employeeId  String
+  fiscalYear  String // e.g. "2026-27"
+  taxRegime   String? // OLD | NEW
+  status      String    @default("DRAFT") // DRAFT | SUBMITTED
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lines EmployeeInvestmentDeclarationLine[]
+
+  @@unique([orgId, employeeId, fiscalYear])
+}
+
+model EmployeeInvestmentDeclarationLine {
+  id             String   @id @default(cuid())
+  declarationId  String
+  category       String
+  description    String?
+  declaredAmount Float
+  approvedAmount Float?
+  status         String   @default("PENDING") // PENDING | APPROVED | REJECTED | PARTIALLY_APPROVED
+  reviewNotes    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  declaration EmployeeInvestmentDeclaration @relation(fields: [declarationId], references: [id], onDelete: Cascade)
+
+  @@index([declarationId])
+}
+
+// Payroll Phase 22: employee loans. v1 scope is CRUD + repayment tracking;
+// automatic EMI deduction inside the regular pay-run calculation engine is a
+// documented near-term gap (docs/payroll/MONOLITH_PAYROLL_INTEGRATION_MAP.md).
+model PayrollLoan {
+  id              String   @id @default(cuid())
+  orgId           String
+  employeeId      String
+  loanNumber      String
+  loanName        String
+  principalAmount Float
+  emiAmount       Float
+  disbursedAt     DateTime @db.Date
+  status          String   @default("OPEN") // OPEN | CLOSED
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  repayments PayrollLoanRepayment[]
+
+  @@unique([orgId, loanNumber])
+  @@index([orgId, employeeId])
+}
+
+model PayrollLoanRepayment {
+  id            String   @id @default(cuid())
+  loanId        String
+  amount        Float
+  repaymentDate DateTime @db.Date
+  mode          String   @default("MANUAL") // MANUAL | PAYROLL_DEDUCTION
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  loan PayrollLoan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId])
+}
+
+// Payroll Phase 11: organisation TDS deductor profile (PAN/TAN and deductor
+// details for Form 24Q/Form 16 filing). Distinct from Accounting's GST-focused
+// AccountingTaxRegistration — this is genuinely payroll-owned data with no
+// existing canonical home in this repository.
+model PayrollOrganisationTaxProfile {
+  id                  String   @id @default(cuid())
+  orgId               String   @unique
+  pan                 String?
+  tan                 String?
+  tdsCircleAoCode     String?
+  taxPaymentFrequency String?
+  deductorType        String? // EMPLOYEE | NON_EMPLOYEE
+  deductorName        String?
+  deductorFatherName  String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// Payroll Phase 9: single organisation-wide pay schedule. Zoho supports one
+// schedule per org (docs/payroll/ZOHO_PAYROLL_REFERENCE_MANIFEST.md, page
+// 00102) — no per-employee schedules unless a real need surfaces.
+model PayrollScheduleSettings {
+  id             String   @id @default(cuid())
+  orgId          String   @unique
+  payFrequency   String   @default("MONTHLY") // MONTHLY (only frequency captured in the reference)
+  workingDays    String[] // e.g. ["MON","TUE","WED","THU","FRI","SAT"]
+  payDayOfMonth  Int      @default(1)
+  firstPayPeriod DateTime @db.Date
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SalaryTemplateComponent {
+  id                String @id @default(cuid())
+  templateId        String
+  salaryComponentId String
+  monthlyAmount     Float  @default(0)
+  sortOrder         Int    @default(0)
+
+  template        SalaryTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  salaryComponent SalaryComponent @relation(fields: [salaryComponentId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, salaryComponentId])
+  @@index([templateId])
 }
 
 model Course {
@@ -5998,6 +6378,19 @@ model AccountingSettings {
   defaultRoundOffAccountId                String?
   defaultSalaryExpenseAccountId           String?
   defaultSalaryPayableAccountId           String?
+  // Payroll Phase 32: statutory liability accounts. Optional — falls back to
+  // defaultSalaryPayableAccountId when unset so posting keeps working before
+  // an org configures these.
+  epfPayableAccountId                     String?
+  esiPayableAccountId                     String?
+  professionalTaxPayableAccountId         String?
+  tdsPayableAccountId                     String?
+  // Payroll loan EMI recovery: credited when an employee's payroll-deducted
+  // EMI is posted (reduces the Employee Loan Receivable asset). Optional —
+  // falls back to defaultSalaryPayableAccountId when unset.
+  employeeLoanReceivableAccountId         String?
+  lwfPayableAccountId                     String?
+  bonusPayableAccountId                   String?
   defaultDepreciationExpenseAccountId     String?
   defaultAccumulatedDepreciationAccountId String?
 
@@ -6029,6 +6422,7 @@ model PayrollBatch {
   id               String   @id @default(cuid())
   orgId            String
   month            DateTime @db.Date
+  type             String   @default("REGULAR") // REGULAR | OFF_CYCLE | TERMINATION | BULK_TERMINATION (Phase 20-21)
   status           String   @default("DRAFT") // DRAFT | FINALIZED | PAID
   totalAmount      Decimal  @default(0.0) @db.Decimal(18, 4)
   journalEntryId   String?
@@ -6042,7 +6436,7 @@ model PayrollBatch {
   journalEntry   JournalEntry?             @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
   sourceSnapshot AccountingSourceSnapshot? @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
 
-  @@unique([orgId, month])
+  @@unique([orgId, month, type])
   @@unique([orgId, sourceRunId, sourceRunVersion])
   @@index([orgId])
   @@index([sourceSnapshotId])
@@ -9945,25 +10339,31 @@ model GoogleChatUserLink {
 }
 
 model GoogleChatSpace {
-  id                  String    @id @default(cuid())
-  orgId               String?
-  spaceResourceName   String    @unique
-  displayName         String?
-  spaceType           String    @default("SPACE")
-  botMember           Boolean   @default(true)
-  linkedByUserId      String?
-  linkedRecordType    String?
-  linkedRecordId      String?
-  linkedRecordLabel   String?
-  notificationProfile Json?
-  quietHoursStart     String?
-  quietHoursEnd       String?
-  timezone            String    @default("Asia/Kolkata")
-  threadKeys          Json?
-  linkStatus          String    @default("active")
-  lastVerifiedAt      DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                      String    @id @default(cuid())
+  orgId                   String?
+  spaceResourceName       String    @unique
+  displayName             String?
+  spaceType               String    @default("SPACE")
+  botMember               Boolean   @default(true)
+  linkedByUserId          String?
+  linkedRecordType        String?
+  linkedRecordId          String?
+  linkedRecordLabel       String?
+  // DM-only: the other participant's raw Google identity, cached alongside
+  // the resolved name so a fresh listSpaces() call can serve straight from
+  // this row (participantUserId/GoogleUserId/Email) with zero network calls
+  // when the cache is still fresh — see listSpaces() in google-chat-client.ts.
+  participantGoogleUserId String?
+  participantEmail        String?
+  notificationProfile     Json?
+  quietHoursStart         String?
+  quietHoursEnd           String?
+  timezone                String    @default("Asia/Kolkata")
+  threadKeys              Json?
+  linkStatus              String    @default("active")
+  lastVerifiedAt          DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   org           Organisation?            @relation(fields: [orgId], references: [id], onDelete: SetNull)
   subscriptions GoogleChatSubscription[]
@@ -10055,6 +10455,33 @@ model GoogleChatLinkToken {
 
   @@index([expiresAt])
   @@index([googleUserId])
+}
+
+// In-app-only typing signal for Google Chat DMs/spaces — Chat's REST API has no
+// typing-state push, so this only reflects typing between two users of this
+// app's own chat UI, not the native Google Chat client. Rows are ephemeral;
+// a row is "active" while updatedAt is within the last few seconds.
+model ChatTypingState {
+  id                String   @id @default(cuid())
+  spaceResourceName String
+  userId            String
+  updatedAt         DateTime @updatedAt
+
+  @@unique([spaceResourceName, userId])
+  @@index([spaceResourceName, updatedAt])
+}
+
+// In-app-only presence heartbeat — same constraint as ChatTypingState: Google
+// Chat's API exposes no presence for third-party consumers, so this only
+// reflects activity within this app's own chat UI, not native Google Chat.
+// A single row per user (not per-space) updated on a client heartbeat while
+// the chat page is open/focused. Status is derived from staleness of
+// lastSeenAt, not stored directly (active < 30s, idle < 5min, else offline).
+model UserPresenceState {
+  userId     String   @id
+  lastSeenAt DateTime @updatedAt
+
+  @@index([lastSeenAt])
 }
 
 // ─── Filing Workflow Blueprint Models ────────────────────────────────────────
@@ -10571,6 +10998,141 @@ model TrackingAlert {
 
   @@index([orgId, alertType])
   @@index([userId, resolvedAt])
+}
+
+// ─── Location & Field Tracking (Geofences, Visits, Exceptions, Policy) ──────────
+
+model LocationTrackingPolicy {
+  id                          String   @id @default(cuid())
+  orgId                       String
+  scopeType                   String // ORG | BRANCH | DEPARTMENT | DESIGNATION | EMPLOYEE
+  scopeId                     String? // null when scopeType = ORG
+  trackingEnabled             Boolean  @default(true)
+  normalIntervalMinutes       Int      @default(5)
+  movingIntervalMinutes       Int      @default(1)
+  stationaryIntervalMinutes   Int      @default(5)
+  liveSalesIntervalSeconds    Int      @default(30)
+  visitIntervalMinutes        Int      @default(3)
+  staleThresholdMinutes       Int      @default(10)
+  offlineThresholdMinutes     Int      @default(30)
+  consecutiveFailureLimit     Int      @default(5)
+  autoCheckoutOnFailure       Boolean  @default(false)
+  retentionDaysDetailedPoints Int? // null = no auto-purge configured
+  isActive                    Boolean  @default(true)
+  createdById                 String
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@unique([orgId, scopeType, scopeId])
+  @@index([orgId, isActive])
+}
+
+model LocationGeofence {
+  id                   String    @id @default(cuid())
+  orgId                String
+  name                 String
+  type                 String // OFFICE | BRANCH | WAREHOUSE | PORT | CFS | CUSTOMER | TEMP_WORKSITE | SALES_TERRITORY | RESTRICTED_ZONE
+  shape                String    @default("CIRCLE") // CIRCLE | POLYGON
+  centerLat            Float?
+  centerLng            Float?
+  radiusMeters         Float?
+  polygon              Json? // Array<{ lat, lng }> when shape = POLYGON
+  address              String?
+  crmAccountId         String? // set when type = CUSTOMER, links to CrmAccount
+  isActive             Boolean   @default(true)
+  activeFrom           DateTime?
+  activeTo             DateTime?
+  scope                Json? // { departmentIds?, branchIds?, designationIds?, employeeIds?, teamIds? } — null/empty = applies org-wide
+  notifyOnEnter        Boolean   @default(true)
+  notifyOnExit         Boolean   @default(true)
+  dwellMinutesForVisit Int       @default(3) // auto visit-detection dwell threshold when type = CUSTOMER
+  exitCooldownSeconds  Int       @default(60) // hysteresis: minimum time inside/outside before re-firing an event
+  createdById          String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  events LocationGeofenceEvent[]
+  visits CustomerVisit[]
+
+  @@index([orgId, type, isActive])
+  @@index([orgId, crmAccountId])
+}
+
+model LocationGeofenceEvent {
+  id                String   @id @default(cuid())
+  orgId             String
+  geofenceId        String
+  userId            String
+  trackingSessionId String?
+  eventType         String // ENTERED | EXITED
+  latitude          Float
+  longitude         Float
+  occurredAt        DateTime
+  source            String   @default("HEARTBEAT") // HEARTBEAT | CHECK_IN | CHECK_OUT | MANUAL
+  createdAt         DateTime @default(now())
+
+  geofence LocationGeofence @relation(fields: [geofenceId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, geofenceId, occurredAt])
+  @@index([userId, occurredAt])
+}
+
+model CustomerVisit {
+  id                 String    @id @default(cuid())
+  orgId              String
+  userId             String
+  crmAccountId       String
+  geofenceId         String?
+  trackingSessionId  String?
+  onDutyRequestId    String?
+  visitType          String    @default("UNPLANNED") // PLANNED | UNPLANNED
+  status             String    @default("DETECTED") // DETECTED | CONFIRMED | IN_PROGRESS | COMPLETED | DISMISSED
+  locationConfidence String    @default("MEDIUM") // LOW | MEDIUM | HIGH
+  arrivalAt          DateTime?
+  startAt            DateTime?
+  endAt              DateTime?
+  departureAt        DateTime?
+  durationMinutes    Int?
+  purpose            String?
+  contactPerson      String?
+  notes              String?
+  outcome            String?
+  followUpAt         DateTime?
+  attachmentUrls     Json? // string[]
+  createdById        String? // who confirmed / logged this visit (may differ from userId for manager-logged visits)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  geofence LocationGeofence? @relation(fields: [geofenceId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, userId, arrivalAt])
+  @@index([orgId, crmAccountId, arrivalAt])
+  @@index([orgId, status])
+}
+
+model LocationException {
+  id                       String    @id @default(cuid())
+  orgId                    String
+  userId                   String
+  exceptionType            String // GPS_UNAVAILABLE | GPS_STALE | PERMISSION_DENIED | OUTSIDE_GEOFENCE | ROUTE_DEVIATION | IMPOSSIBLE_MOVEMENT | TRACKING_INTERRUPTED | UNEXPECTED_DEVICE | MISSED_VISIT | UNPLANNED_STOP | TERRITORY_BREACH
+  status                   String    @default("OPEN") // OPEN | UNDER_REVIEW | EXPLANATION_REQUESTED | RESOLVED | DISMISSED
+  severity                 String    @default("MEDIUM") // LOW | MEDIUM | HIGH
+  relatedTrackingSessionId String?
+  relatedGeofenceId        String?
+  relatedVisitId           String?
+  description              String?
+  evidence                 Json? // { lat?, lng?, speedKmh?, accuracy?, ... } supporting signals, never an accusation
+  employeeExplanation      String?
+  employeeAttachmentUrl    String?
+  reviewerId               String?
+  reviewedAt               DateTime?
+  resolution               String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  @@index([orgId, status])
+  @@index([orgId, exceptionType])
+  @@index([userId, createdAt])
 }
 
 model FuelReimbursementPolicy {

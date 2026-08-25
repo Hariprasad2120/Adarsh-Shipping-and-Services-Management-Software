@@ -24,6 +24,7 @@ import {defaultQuoteValues,incoterms,locations,pdfTemplates,projects,salesperson
 import { calculateFinalTotal, calculateLineItemAmount } from "@/modules/crm/components/quotes/lib/quote-calculations";
 import type {
   QuoteFormValues,
+  QuotePricingTrace,
   QuoteStatus,
   QuoteTemplateOption,
   ComboboxOption,
@@ -35,6 +36,7 @@ import { ButtonLink } from "@/components/ui/button";
 
 import { useRouter } from "next/navigation";
 import { saveQuoteAction } from "@/modules/crm/actions";
+import { isQuotePricingGovernanceBlocked } from "@/modules/crm/services/quote-pricing-governance.service";
 
 export function NewQuotePage({
   initialData,
@@ -98,6 +100,15 @@ export function NewQuotePage({
       }),
     [adjustment, discountType, discountValue, lineItems, location, placeOfSupply],
   );
+  const pricingTrace = workflowContext?.pricingTrace ?? null;
+  const pricingGovernanceBlocked = isQuotePricingGovernanceBlocked(pricingTrace);
+
+  function getPricingTraceVariant(trace: QuotePricingTrace | null) {
+    if (!trace) return "neutral" as const;
+    if (trace.status === "CURRENT") return "success" as const;
+    if (trace.status === "UNLINKED") return "neutral" as const;
+    return "warning" as const;
+  }
 
   useEffect(() => {
     if (selectedCustomer && selectedCustomer.gstin) {
@@ -218,6 +229,14 @@ export function NewQuotePage({
   }
 
   async function handlePersist(status: QuoteStatus) {
+    if (pricingGovernanceBlocked) {
+      toast.error(
+        pricingTrace?.message ||
+          "Refresh the linked pricing worksheet before saving this quotation.",
+      );
+      return;
+    }
+
     const isValid = await form.trigger();
     if (!isValid) {
       toast.error("Please correct the highlighted fields before continuing.");
@@ -354,6 +373,25 @@ export function NewQuotePage({
                 )
                 .join(" and ")}{" "}
               rates are still pending. You can still save or submit this partial quotation.
+            </p>
+          </div>
+        </CrmPanel>
+      ) : null}
+
+      {pricingTrace ? (
+        <CrmPanel
+          className={
+            pricingGovernanceBlocked
+              ? "border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/25 p-4"
+              : "p-4"
+          }
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <CrmStatus variant={getPricingTraceVariant(pricingTrace)}>
+              Pricing {pricingTrace.status.toLowerCase()}
+            </CrmStatus>
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              {pricingTrace.message}
             </p>
           </div>
         </CrmPanel>

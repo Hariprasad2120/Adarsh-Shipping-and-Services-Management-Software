@@ -240,6 +240,13 @@ const PERMISSIONS = [
   { key: "hrms.letters.audit", label: "Audit all letters and changes", group: "HRMS" },
   { key: "hrms.letters.settings", label: "Configure letter templates and rules", group: "HRMS" },
 
+  // Location & Field Tracking
+  { key: "hrms.tracking.admin", label: "View team/org location tracking (Overview, Tracker, Live Sales)", group: "HRMS" },
+  { key: "hrms.tracking.geofence.manage", label: "Create and edit geofences and tracking policies", group: "HRMS" },
+  { key: "hrms.tracking.exceptions.review", label: "Review and resolve location tracking exceptions", group: "HRMS" },
+  { key: "hrms.tracking.visits.manage", label: "Log, confirm and manage customer visits", group: "HRMS" },
+  { key: "hrms.tracking.export", label: "Export location tracking data and reports", group: "HRMS" },
+
   // Recruit Module
   { key: "recruit.view", label: "Access Recruit module", group: "Recruit" },
   { key: "recruit.dashboard.view", label: "View Recruit employer dashboard", group: "Recruit" },
@@ -308,6 +315,8 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "cha.expense.pay", "cha.audit.view", "cha.customer.read", "cha.customer.manage",
     // HR Letters
     "hrms.letters.view_all", "hrms.letters.mgmt_approve",
+    // Location & Field Tracking
+    "hrms.tracking.admin", "hrms.tracking.exceptions.review", "hrms.tracking.visits.manage", "hrms.tracking.export",
   ],
   HR: [
     "hrms.employee.read", "hrms.employee.create", "hrms.employee.edit",
@@ -325,6 +334,9 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "attendance.punch.manage", "attendance.leave.approve", "attendance.leave.manage",
     "attendance.ot.approve", "attendance.holidays.manage", "attendance.reports.view",
     "attendance.timesheet.manage",
+    // Location & Field Tracking
+    "hrms.tracking.admin", "hrms.tracking.geofence.manage", "hrms.tracking.exceptions.review",
+    "hrms.tracking.visits.manage", "hrms.tracking.export",
     "ams.appraisal.assign_reviewers", "ams.appraisal.force_reviewer",
     "ams.appraisal.review", "ams.meeting.confirm", "ams.meeting.minutes",
     "ams.appraisal.view_all",
@@ -359,6 +371,7 @@ const SYSTEM_ROLES: Record<string, string[]> = {
     "hrms.helpdesk.read", "hrms.workreport.approve", "hrms.travel.approve",
     "attendance.leave.approve", "attendance.ot.approve", "attendance.reports.view",
     "attendance.timesheet.view",
+    "hrms.tracking.admin", "hrms.tracking.visits.manage",
     "ams.appraisal.review", "ams.meeting.minutes",
     "crm.access", "crm.dashboard.read", "crm.lead.read", "crm.lead.create",
     "crm.contact.manage", "crm.account.manage", "crm.deal.manage", "crm.activity.manage",

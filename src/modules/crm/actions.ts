@@ -11,16 +11,38 @@ import * as driveClient from "@/lib/google-drive-client";
 import { fetchGstPortalDetails } from "./gst-portal";
 import { routeQualifiedEnquiry } from "./services/service-enquiry-routing.service";
 import { getQuoteEnquiryNumber } from "./service-enquiry-reference";
+import { getAttachment, getThread, listThreads, sendEmail } from "@/lib/google-gmail-client";
 import {
+  createAgentRateLineRecord,
   createRatesSignature,
   diffDepartmentRates,
+  getDepartmentCharges,
+  getCanonicalChargeOptions,
+  getCurrentFinalizedBuyRateVersion,
   getRateWorkflowSnapshot,
   getVersionedQuoteNumber,
   mergeDepartmentRates,
+  normalizeDepartmentChargesInput,
   normalizeDepartmentRates,
+  suggestCanonicalCharge,
+  type RateComparisonSelectionMode,
   type CrmRateDepartment,
 } from "./rate-workflow";
 import type { QuoteWorkflowContext } from "./components/quotes/lib/types";
+import { parseAgentRateReply } from "./services/rate-response-parser.service";
+import { buildAgentRecommendationProfiles } from "./services/agent-recommendation.service";
+import { buildBestRateRecommendation } from "./services/best-rate-recommendation.service";
+import { buildFinalizedBuyRateVersion } from "./services/finalized-buy-rate.service";
+import { buildPricingSnapshot } from "./services/pricing-snapshot.service";
+import { buildRateComparisonWorkspace } from "./services/rate-comparison.service";
+import {
+  buildQuotePricingTrace,
+  isQuotePricingGovernanceBlocked,
+} from "./services/quote-pricing-governance.service";
+import {
+  getStandardRateReferenceForLine,
+  type StandardRateSignal,
+} from "./services/standard-buy-rates.service";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -63,6 +85,91 @@ type QuoteLinkedLead = {
     assignedManagerId?: string | null;
   }>;
 };
+
+function splitEmailList(value: string | null | undefined) {
+  if (!value) {
+    return [] as string[];
+  }
+
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function dedupeEmails(values: string[]) {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+
+  for (const value of values) {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    deduped.push(value.trim());
+  }
+
+  return deduped;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function textToHtml(value: string) {
+  return escapeHtml(value).replace(/\r?\n/g, "<br />");
+}
+
+function getRateRequestRecipientName(vendor: {
+  contactName: string | null;
+  name: string;
+}) {
+  return vendor.contactName?.trim() || vendor.name;
+}
+
+function extractFirstEmailAddress(value: string | null | undefined) {
+  if (!value) return null;
+  const match = value.match(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
+  return match ? match[1].toLowerCase() : value.trim().toLowerCase() || null;
+}
+
+function normalizeSubjectForMatch(value: string | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function resolveCanonicalChargeDetails(
+  workflow: ReturnType<typeof getRateWorkflowSnapshot>,
+  originalDescription: string,
+  canonicalChargeCode?: string,
+) {
+  const options = getCanonicalChargeOptions(workflow);
+  const normalizedCode = canonicalChargeCode?.trim().toUpperCase() || "";
+  const exactMatch = options.find((option) => option.code === normalizedCode);
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const suggested = suggestCanonicalCharge(workflow, originalDescription);
+  if (suggested) {
+    return {
+      code: suggested.code,
+      name: suggested.name,
+    };
+  }
+
+  const fallbackCode = normalizedCode || "UNMAPPED_CHARGE";
+  return {
+    code: fallbackCode,
+    name: originalDescription.trim() || fallbackCode,
+  };
+}
 
 function parseCustomerAddressDetails(
   formData: FormData,
@@ -1128,9 +1235,26 @@ export async function saveEnquiryRatesAction(
 
     const currentEnquiry = (lead.enquiryDetails as any) || {};
     const workflow = getRateWorkflowSnapshot(currentEnquiry);
+    const nextDepartmentCharges = normalizeDepartmentChargesInput({
+      department,
+      input: ratesData,
+      existingCharges: getDepartmentCharges(workflow, department),
+    });
+    const nextFreightCharges =
+      department === "FREIGHT_FORWARDING"
+        ? nextDepartmentCharges
+        : workflow.freightCharges;
+    const nextCustomsCharges =
+      department === "CUSTOMS_CLEARANCE"
+        ? nextDepartmentCharges
+        : workflow.customsCharges;
     const normalizedDepartmentRates = normalizeDepartmentRates(
       department,
-      ratesData,
+      mergeDepartmentRates({
+        ...workflow,
+        freightCharges: nextFreightCharges,
+        customsCharges: nextCustomsCharges,
+      }),
     );
     const nextFreightRates: Record<string, number> =
       department === "FREIGHT_FORWARDING"
@@ -1144,13 +1268,28 @@ export async function saveEnquiryRatesAction(
       ...workflow,
       freightRates: nextFreightRates,
       customsRates: nextCustomsRates,
+      freightCharges: nextFreightCharges,
+      customsCharges: nextCustomsCharges,
     });
     const nowIso = new Date().toISOString();
+    const submittedFreight = nextFreightCharges.some((entry) => Number(entry.amount) > 0);
+    const submittedCustoms = nextCustomsCharges.some((entry) => Number(entry.amount) > 0);
+    const commercialStatus =
+      submittedFreight && submittedCustoms
+        ? "RATES_RECEIVED"
+        : submittedFreight || submittedCustoms
+          ? "PARTIALLY_RECEIVED"
+          : "READY_FOR_RATE_REQUEST";
     const updatedEnquiry = {
       ...currentEnquiry,
       rates: mergedRates,
       rateWorkflow: {
         ...(currentEnquiry.rateWorkflow || {}),
+        commercialStatus,
+        chargeContext: workflow.chargeContext,
+        costingLocked: true,
+        freightCharges: nextFreightCharges,
+        customsCharges: nextCustomsCharges,
         freightRates: nextFreightRates,
         customsRates: nextCustomsRates,
         freightSubmittedAt:
@@ -1185,6 +1324,9 @@ export async function saveEnquiryRatesAction(
       data: {
         pricingSnapshot: {
           department,
+          commercialStatus,
+          chargeContext: workflow.chargeContext,
+          charges: nextDepartmentCharges,
           rates: normalizedDepartmentRates,
           mergedRates,
           updatedAt: nowIso,
@@ -1204,10 +1346,12 @@ export async function saveEnquiryRatesAction(
       eventType: "RATES_UPDATED",
       description:
         department === "FREIGHT_FORWARDING"
-          ? "Freight forwarding rates updated for enquiry."
-          : "Customs clearance rates updated for enquiry.",
+          ? "Freight forwarding commercial charges updated for enquiry."
+          : "Customs clearance commercial charges updated for enquiry.",
       details: {
         department,
+        commercialStatus,
+        charges: nextDepartmentCharges,
         rates: normalizedDepartmentRates,
       } as any,
       createdById: session.user.id,
@@ -1220,6 +1364,1818 @@ export async function saveEnquiryRatesAction(
     return { ok: true, data: updatedLead };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save enquiry rates" };
+  }
+}
+
+export async function listRateRequestRecipientsAction(leadId?: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const [vendors, user, currentLead, historicalLeadsRaw] = await Promise.all([
+      db.crmVendor.findMany({
+        where: {
+          orgId,
+          status: "ACTIVE",
+          email: { not: null },
+        },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          contactName: true,
+          email: true,
+          services: true,
+          status: true,
+        },
+      }),
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          manager: { select: { id: true, name: true, email: true } },
+          tl: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      leadId
+        ? db.crmLead.findFirst({
+            where: { id: leadId, orgId },
+            select: {
+              id: true,
+              enquiryDetails: true,
+            },
+          })
+        : Promise.resolve(null),
+      leadId
+        ? db.crmLead.findMany({
+            where: {
+              orgId,
+              id: { not: leadId },
+            },
+            select: {
+              id: true,
+              status: true,
+              isConverted: true,
+              createdAt: true,
+              enquiryDetails: true,
+              serviceEnquiries: {
+                select: {
+                  status: true,
+                  serviceType: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 250,
+          })
+        : Promise.resolve([]),
+    ]);
+    const historicalLeads = historicalLeadsRaw.filter((lead) => Boolean(lead.enquiryDetails));
+    const recommendationProfiles =
+      currentLead?.enquiryDetails
+        ? buildAgentRecommendationProfiles({
+            currentEnquiryDetails: currentLead.enquiryDetails,
+            vendors,
+            historicalLeads: historicalLeads.map((lead) => ({
+              ...lead,
+              createdAt: lead.createdAt.toISOString(),
+            })),
+          })
+        : new Map();
+    const rankedRecipients = vendors
+      .map((vendor) => ({
+        id: vendor.id,
+        name: vendor.name,
+        contactName: vendor.contactName,
+        email: vendor.email,
+        services: vendor.services,
+        status: vendor.status,
+        recommendation: recommendationProfiles.get(vendor.id) || null,
+      }))
+      .sort((left, right) => {
+        const leftRank = left.recommendation?.rank ?? Number.MAX_SAFE_INTEGER;
+        const rightRank = right.recommendation?.rank ?? Number.MAX_SAFE_INTEGER;
+        if (leftRank !== rightRank) {
+          return leftRank - rightRank;
+        }
+        return left.name.localeCompare(right.name);
+      });
+
+    return {
+      ok: true,
+      data: {
+        recipients: rankedRecipients,
+        reportingCc: dedupeEmails([
+          user?.manager?.email?.trim() || "",
+          user?.tl?.email?.trim() || "",
+        ]),
+        reportingContacts: [
+          user?.manager
+            ? {
+                id: user.manager.id,
+                name: user.manager.name,
+                email: user.manager.email,
+                role: "Manager",
+              }
+            : null,
+          user?.tl
+            ? {
+                id: user.tl.id,
+                name: user.tl.name,
+                email: user.tl.email,
+                role: "TL",
+              }
+            : null,
+        ].filter(Boolean),
+        sender: {
+          id: user?.id ?? session.user.id,
+          name: user?.name ?? session.user.name ?? "Current user",
+          email: user?.email ?? session.user.email ?? "",
+        },
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to load rate-request recipients" };
+  }
+}
+
+export async function sendEnquiryRateRequestsAction(
+  leadId: string,
+  payload: {
+    vendorIds: string[];
+    subject: string;
+    body: string;
+    notes?: string;
+    cc?: string;
+  },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const vendorIds = Array.isArray(payload.vendorIds)
+      ? payload.vendorIds.map((entry) => entry.trim()).filter(Boolean)
+      : [];
+    const subject = payload.subject.trim();
+    const body = payload.body;
+    const notes = payload.notes?.trim() || null;
+
+    if (vendorIds.length === 0) {
+      return { ok: false, error: "Choose at least one agent recipient." };
+    }
+    if (!subject) {
+      return { ok: false, error: "Email subject is required." };
+    }
+    if (!body.trim()) {
+      return { ok: false, error: "Email body is required." };
+    }
+
+    const [lead, vendors, user] = await Promise.all([
+      db.crmLead.findFirst({
+        where: { id: leadId, orgId },
+        select: {
+          id: true,
+          enquiryRef: true,
+          enquiryDetails: true,
+        },
+      }),
+      db.crmVendor.findMany({
+        where: {
+          id: { in: vendorIds },
+          orgId,
+        },
+        select: {
+          id: true,
+          name: true,
+          contactName: true,
+          email: true,
+        },
+      }),
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          manager: { select: { email: true } },
+          tl: { select: { email: true } },
+        },
+      }),
+    ]);
+
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const validVendors = vendors.filter((vendor) => vendor.email?.trim());
+    if (validVendors.length !== vendorIds.length) {
+      return {
+        ok: false,
+        error: "One or more selected agents are missing an email address.",
+      };
+    }
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    const baseCc = dedupeEmails([
+      user?.manager?.email?.trim() || "",
+      user?.tl?.email?.trim() || "",
+      ...splitEmailList(payload.cc),
+    ]);
+    const sentAt = new Date().toISOString();
+    const rateRequests = [...workflow.rateRequests];
+
+    for (const vendor of validVendors) {
+      const recipientName = getRateRequestRecipientName(vendor);
+      const resolvedBody = body.replaceAll("{{recipientName}}", recipientName);
+      const result = await sendEmail({
+        userId: session.user.id,
+        to: vendor.email!,
+        cc: baseCc.length > 0 ? baseCc.join(", ") : undefined,
+        subject,
+        body: textToHtml(resolvedBody),
+        textBody: resolvedBody,
+      });
+
+      rateRequests.unshift({
+        id: `${vendor.id}:${Date.now().toString(36)}:${rateRequests.length + 1}`,
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        recipientName,
+        recipientEmail: vendor.email!,
+        ccEmails: baseCc,
+        subject,
+        body: resolvedBody,
+        notes,
+        sentAt,
+        sentById: session.user.id,
+        messageId: typeof result.id === "string" ? result.id : null,
+        threadId: typeof result.threadId === "string" ? result.threadId : null,
+        deliveryState: "SENT",
+        bounce: false,
+        opened: false,
+        firstOpenAt: null,
+        lastOpenAt: null,
+        replyStatus: "PENDING",
+        replyTimestamp: null,
+        replyMessageId: null,
+        replyFromEmail: null,
+        responseThreadSubject: null,
+        lastSyncedAt: null,
+        replyNotifiedAt: null,
+      });
+    }
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: leadId },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "AWAITING_AGENT_RATES",
+            chargeContext: workflow.chargeContext,
+            costingLocked: true,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests,
+          },
+        } as any,
+      },
+    });
+
+    await db.crmServiceEnquiry.updateMany({
+      where: { orgId, leadId },
+      data: {
+        status: "RATES_REQUESTED",
+        updatedById: session.user.id,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: leadId,
+      eventType: "RATE_REQUEST_SENT",
+      description: `Sent rate requests to ${validVendors.length} agent${validVendors.length === 1 ? "" : "s"}.`,
+      details: {
+        recipients: validVendors.map((vendor) => ({
+          id: vendor.id,
+          name: vendor.name,
+          email: vendor.email,
+        })),
+        ccEmails: baseCc,
+        subject,
+        notes,
+        sentAt,
+        enquiryRef: lead.enquiryRef,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    await db.communicationAuditEvent.create({
+      data: {
+        orgId,
+        userId: session.user.id,
+        action: "SEND_EMAIL",
+        details: `CRM rate request sent for ${lead.enquiryRef || lead.id} to ${validVendors.map((vendor) => vendor.email).join(", ")}`,
+      },
+    });
+
+    revalidatePath(`/crm/leads/${leadId}`);
+    revalidatePath(`/crm/enquiries/${leadId}`);
+    revalidatePath("/crm/freight-forwarding");
+    revalidatePath("/crm/customs-clearance");
+
+    return {
+      ok: true,
+      data: {
+        sentCount: validVendors.length,
+        ccEmails: baseCc,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to send rate requests" };
+  }
+}
+
+export async function syncEnquiryRateRequestResponsesAction(
+  leadId: string,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryRef: true,
+        enquiryDetails: true,
+        ownerId: true,
+        owner: {
+          select: {
+            id: true,
+            managerId: true,
+          },
+        },
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    if (workflow.rateRequests.length === 0) {
+      return { ok: true, data: { updatedCount: 0, repliedCount: 0, bouncedCount: 0 } };
+    }
+
+    const selfEmail = extractFirstEmailAddress(session.user.email ?? "");
+    const enquiryRef = lead.enquiryRef?.trim() || null;
+    let updatedCount = 0;
+
+    const nextRequests = await Promise.all(
+      workflow.rateRequests.map(async (request) => {
+        const searchTerms = [
+          request.threadId ? null : request.recipientEmail,
+          request.threadId ? null : enquiryRef,
+          request.threadId ? null : request.subject,
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        let resolvedThreadId = request.threadId;
+        if (!resolvedThreadId && searchTerms) {
+          const threadSearch = await listThreads({
+            userId: session.user.id,
+            query: searchTerms,
+            maxResults: 10,
+          });
+
+          const matchingThread = threadSearch.threads.find((thread) => {
+            const subjectMatch = normalizeSubjectForMatch(thread.subject).includes(
+              normalizeSubjectForMatch(request.subject),
+            );
+            const enquiryMatch = enquiryRef
+              ? normalizeSubjectForMatch(thread.subject).includes(
+                  normalizeSubjectForMatch(enquiryRef),
+                ) || normalizeSubjectForMatch(thread.snippet).includes(normalizeSubjectForMatch(enquiryRef))
+              : false;
+            const fromMatch =
+              extractFirstEmailAddress(thread.from) ===
+              extractFirstEmailAddress(request.recipientEmail);
+            return fromMatch || enquiryMatch || subjectMatch;
+          });
+
+          resolvedThreadId = matchingThread?.id || null;
+        }
+
+        if (!resolvedThreadId) {
+          return request;
+        }
+
+        const thread = await getThread(session.user.id, resolvedThreadId);
+        const sentAt = new Date(request.sentAt);
+        const inboundMessages = thread.messages.filter((message) => {
+          const senderEmail = extractFirstEmailAddress(message.from);
+          const messageDate = new Date(message.date);
+          const afterSend =
+            !Number.isNaN(sentAt.getTime()) &&
+            !Number.isNaN(messageDate.getTime()) &&
+            messageDate.getTime() >= sentAt.getTime();
+          return Boolean(senderEmail) && senderEmail !== selfEmail && afterSend;
+        });
+
+        const bounceMessage =
+          inboundMessages.find((message) => {
+            const senderRaw = message.from.toLowerCase();
+            const subjectRaw = message.subject.toLowerCase();
+            return (
+              senderRaw.includes("mailer-daemon") ||
+              senderRaw.includes("postmaster") ||
+              subjectRaw.includes("undeliver") ||
+              subjectRaw.includes("delivery status notification") ||
+              subjectRaw.includes("failure")
+            );
+          }) || null;
+
+        const replyMessage =
+          inboundMessages
+            .filter((message) => message.id !== request.messageId)
+            .sort(
+              (left, right) =>
+                new Date(right.date).getTime() - new Date(left.date).getTime(),
+            )[0] || null;
+
+        const deliveryState = bounceMessage
+          ? "BOUNCED"
+          : replyMessage
+            ? "REPLIED"
+            : "DELIVERED";
+        const replyStatus = bounceMessage
+          ? "BOUNCED"
+          : replyMessage
+            ? "REPLIED"
+            : "PENDING";
+        const replyTimestamp = bounceMessage
+          ? bounceMessage.date || request.replyTimestamp
+          : replyMessage
+            ? replyMessage.date || request.replyTimestamp
+            : request.replyTimestamp;
+        const replyMessageId = bounceMessage
+          ? bounceMessage.id
+          : replyMessage
+            ? replyMessage.id
+            : request.replyMessageId;
+        const replyFromEmail = bounceMessage
+          ? extractFirstEmailAddress(bounceMessage.from)
+          : replyMessage
+            ? extractFirstEmailAddress(replyMessage.from)
+            : request.replyFromEmail;
+
+        const nextRequest = {
+          ...request,
+          threadId: resolvedThreadId,
+          deliveryState,
+          bounce: Boolean(bounceMessage),
+          replyStatus,
+          replyTimestamp,
+          replyMessageId,
+          replyFromEmail,
+          responseThreadSubject: thread.subject || request.responseThreadSubject,
+          lastSyncedAt: new Date().toISOString(),
+        };
+
+        const changed =
+          nextRequest.threadId !== request.threadId ||
+          nextRequest.deliveryState !== request.deliveryState ||
+          nextRequest.replyStatus !== request.replyStatus ||
+          nextRequest.replyMessageId !== request.replyMessageId ||
+          nextRequest.replyTimestamp !== request.replyTimestamp ||
+          nextRequest.replyFromEmail !== request.replyFromEmail ||
+          nextRequest.responseThreadSubject !== request.responseThreadSubject;
+
+        if (changed) {
+          updatedCount += 1;
+        }
+
+        return nextRequest;
+      }),
+    );
+
+    const replyRecipients = new Set<string>();
+    if (lead.ownerId) replyRecipients.add(lead.ownerId);
+    if (lead.owner?.managerId) replyRecipients.add(lead.owner.managerId);
+
+    const requestsNeedingNotification = nextRequests.filter((request, index) => {
+      const previous = workflow.rateRequests[index];
+      return (
+        request.replyStatus === "REPLIED" &&
+        request.replyMessageId &&
+        request.replyMessageId !== previous.replyMessageId &&
+        !request.replyNotifiedAt
+      );
+    });
+
+    const nowIso = new Date().toISOString();
+    const notifiedRequests = new Set(requestsNeedingNotification.map((request) => request.id));
+    const finalRequests = nextRequests.map((request) =>
+      notifiedRequests.has(request.id)
+        ? {
+            ...request,
+            replyNotifiedAt: nowIso,
+          }
+        : request,
+    );
+
+    for (const request of requestsNeedingNotification) {
+      for (const userId of replyRecipients) {
+        await db.notification.create({
+          data: {
+            orgId,
+            userId,
+            kind: "CRM_AGENT_RATE_REPLY_RECEIVED",
+            title: `${request.vendorName} replied to ${lead.enquiryRef || "this enquiry"}`,
+            body: `${request.replyFromEmail || request.recipientEmail} replied to the rate request.`,
+            link: request.threadId
+              ? `/communication/mail?threadId=${encodeURIComponent(request.threadId)}`
+              : `/crm/enquiries/${lead.id}`,
+            payload: {
+              leadId: lead.id,
+              enquiryRef: lead.enquiryRef,
+              vendorId: request.vendorId,
+              vendorName: request.vendorName,
+              threadId: request.threadId,
+              replyMessageId: request.replyMessageId,
+            } as any,
+            source: "crm.rate-request-replies",
+            priority: "normal",
+          },
+        });
+      }
+    }
+
+    const repliedRequestCount = finalRequests.filter(
+      (request) => request.replyStatus === "REPLIED",
+    ).length;
+    const terminalRequestCount = finalRequests.filter(
+      (request) => request.replyStatus === "REPLIED" || request.replyStatus === "BOUNCED",
+    ).length;
+
+    const nextCommercialStatus =
+      repliedRequestCount === 0
+        ? "AWAITING_AGENT_RATES"
+        : terminalRequestCount >= finalRequests.length
+          ? "RATES_RECEIVED"
+          : "PARTIALLY_RECEIVED";
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: nextCommercialStatus,
+            chargeContext: workflow.chargeContext,
+            costingLocked: true,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: finalRequests,
+          },
+        } as any,
+      },
+    });
+
+    if (requestsNeedingNotification.length > 0) {
+      await crmService.addTimelineEvent(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: lead.id,
+        eventType: "RATE_REPLY_RECEIVED",
+        description: `${requestsNeedingNotification.length} agent reply${requestsNeedingNotification.length === 1 ? "" : "ies"} detected for the enquiry.`,
+        details: {
+          replies: requestsNeedingNotification.map((request) => ({
+            id: request.id,
+            vendorName: request.vendorName,
+            replyFromEmail: request.replyFromEmail,
+            replyTimestamp: request.replyTimestamp,
+            threadId: request.threadId,
+          })),
+        } as any,
+        createdById: session.user.id,
+      });
+    }
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        updatedCount,
+        repliedCount: finalRequests.filter((request) => request.replyStatus === "REPLIED").length,
+        bouncedCount: finalRequests.filter((request) => request.replyStatus === "BOUNCED").length,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to sync rate request responses" };
+  }
+}
+
+export async function parseEnquiryAgentResponseDraftAction(
+  leadId: string,
+  requestId: string,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    const request = workflow.rateRequests.find((entry) => entry.id === requestId);
+    if (!request) {
+      return { ok: false, error: "Agent request not found for this enquiry." };
+    }
+    if (!request.threadId) {
+      return { ok: false, error: "This request does not have a linked Gmail thread yet." };
+    }
+
+    const thread = await getThread(session.user.id, request.threadId);
+    const selfEmail = extractFirstEmailAddress(session.user.email ?? "");
+    const sentAt = new Date(request.sentAt);
+    const inboundMessages = thread.messages.filter((message) => {
+      const senderEmail = extractFirstEmailAddress(message.from);
+      const messageDate = new Date(message.date);
+      const afterSend =
+        !Number.isNaN(sentAt.getTime()) &&
+        !Number.isNaN(messageDate.getTime()) &&
+        messageDate.getTime() >= sentAt.getTime();
+      return Boolean(senderEmail) && senderEmail !== selfEmail && afterSend;
+    });
+
+    const latestReply =
+      inboundMessages
+        .filter((message) => {
+          const senderRaw = message.from.toLowerCase();
+          const subjectRaw = message.subject.toLowerCase();
+          return !(
+            senderRaw.includes("mailer-daemon") ||
+            senderRaw.includes("postmaster") ||
+            subjectRaw.includes("undeliver") ||
+            subjectRaw.includes("delivery status notification") ||
+            subjectRaw.includes("failure")
+          );
+        })
+        .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())[0] ||
+      null;
+
+    if (!latestReply) {
+      return {
+        ok: false,
+        error: "No non-bounce reply message was found in the linked thread yet.",
+      };
+    }
+
+    const replyAttachments = await Promise.all(
+      (latestReply.attachments || [])
+        .filter((attachment) => !attachment.isInline)
+        .map(async (attachment) => ({
+          id: attachment.id,
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          content: await getAttachment({
+            userId: session.user.id,
+            messageId: latestReply.id,
+            attachmentId: attachment.id,
+          }),
+        })),
+    );
+
+    const parsedDraft = await parseAgentRateReply({
+      workflow,
+      receivedAt: latestReply.date || request.replyTimestamp || new Date().toISOString(),
+      messageId: latestReply.id,
+      threadId: request.threadId,
+      vendorName: request.vendorName,
+      messageSubject: latestReply.subject || thread.subject || request.subject,
+      emailText: latestReply.bodyText || "",
+      emailHtml: latestReply.bodyHtml || "",
+      attachments: replyAttachments,
+    });
+
+    return {
+      ok: true,
+      data: parsedDraft,
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to parse the agent reply draft" };
+  }
+}
+
+export async function saveEnquiryAgentResponseAction(
+  leadId: string,
+  payload: {
+    requestId: string;
+    receivedAt: string;
+    currency: string;
+    validity?: string;
+    carrier?: string;
+    routing?: string;
+    transit?: string;
+    remarks?: string;
+    lines: Array<{
+      id?: string;
+      originalDescription: string;
+      canonicalChargeCode?: string;
+      amount: number | string;
+      amountSourceText?: string;
+      amountMissing?: boolean;
+      currency?: string;
+      unit?: string;
+      quantityBasis?: string;
+      quantityText?: string;
+      containerText?: string;
+      minimumCharge?: string;
+      taxText?: string;
+      freeDaysText?: string;
+      inclusionStatus?: "INCLUDED" | "EXCLUDED" | "UNSPECIFIED";
+      notes?: string;
+      confidenceScore?: number;
+      confidenceLabel?: "HIGH" | "MEDIUM" | "LOW";
+      reviewStatus?: "MANUAL" | "REVIEW_REQUIRED" | "AUTO_MAPPED";
+      missingFields?: string[];
+      standardRateReference?: {
+        id: string;
+        canonicalChargeCode: string;
+        canonicalChargeName: string;
+        currency: string;
+        unit: string;
+        rate: number;
+        effectiveFrom?: string | null;
+        effectiveTo?: string | null;
+        branch?: string | null;
+        revision?: string | null;
+        containerType?: string | null;
+        sourceDocument: string;
+        sourceExcerpt: string;
+        appliedReason: "STANDARD_CHARGES_APPLICABLE" | "AS_AGREED";
+        explicitAgentOverride: boolean;
+      };
+      evidence?: Array<{
+        field: string;
+        sourceType: "EMAIL_TEXT" | "EMAIL_HTML" | "ATTACHMENT";
+        sourceName: string;
+        excerpt: string;
+        confidenceScore: number;
+      }>;
+      saveAlias?: boolean;
+    }>;
+    standardRateSignal?: StandardRateSignal;
+    parserStatus?: "MANUAL" | "AI_REVIEW_REQUIRED" | "AUTO_MAPPED";
+    parserModel?: string;
+    parserRunAt?: string;
+    overallConfidence?: number;
+    sources?: Array<{
+      id: string;
+      name: string;
+      kind: "EMAIL_TEXT" | "EMAIL_HTML" | "ATTACHMENT";
+      mimeType: string;
+    }>;
+    warnings?: string[];
+  },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryRef: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    const request = workflow.rateRequests.find((entry) => entry.id === payload.requestId);
+    if (!request) {
+      return { ok: false, error: "Agent request not found for this enquiry." };
+    }
+
+    const receivedAt = payload.receivedAt?.trim();
+    const baseCurrency = payload.currency?.trim() || "INR";
+    if (!receivedAt) {
+      return { ok: false, error: "Received date is required." };
+    }
+
+    const normalizedLines = (Array.isArray(payload.lines) ? payload.lines : [])
+      .map((line) => {
+        const originalDescription = line.originalDescription?.trim() || "";
+        if (!originalDescription) return null;
+
+        const canonical = resolveCanonicalChargeDetails(
+          workflow,
+          originalDescription,
+          line.canonicalChargeCode,
+        );
+        const standardReference =
+          (line.standardRateReference
+            ? {
+                id: line.standardRateReference.id,
+                canonicalChargeCode: line.standardRateReference.canonicalChargeCode,
+                canonicalChargeName: line.standardRateReference.canonicalChargeName,
+                currency: line.standardRateReference.currency,
+                unit: line.standardRateReference.unit,
+                rate: line.standardRateReference.rate,
+                effectiveFrom: line.standardRateReference.effectiveFrom ?? null,
+                effectiveTo: line.standardRateReference.effectiveTo ?? null,
+                branch: line.standardRateReference.branch ?? null,
+                revision: line.standardRateReference.revision ?? null,
+                containerType: line.standardRateReference.containerType ?? null,
+                sourceDocument: line.standardRateReference.sourceDocument,
+                sourceExcerpt: line.standardRateReference.sourceExcerpt,
+                appliedReason: line.standardRateReference.appliedReason,
+                explicitAgentOverride: line.standardRateReference.explicitAgentOverride,
+              }
+            : null) ||
+          (payload.standardRateSignal
+            ? (() => {
+                const matched = getStandardRateReferenceForLine({
+                  workflow,
+                  canonicalChargeCode: canonical.code,
+                  containerText: line.containerText?.trim() || line.quantityText?.trim() || null,
+                  asOfDate: receivedAt,
+                });
+                if (!matched) return null;
+                return {
+                  id: matched.id,
+                  canonicalChargeCode: matched.canonicalChargeCode,
+                  canonicalChargeName: matched.canonicalChargeName,
+                  currency: matched.currency,
+                  unit: matched.unit,
+                  rate: matched.rate,
+                  effectiveFrom: matched.effectiveFrom ?? null,
+                  effectiveTo: matched.effectiveTo ?? null,
+                  branch: matched.branch ?? null,
+                  revision: matched.revision ?? null,
+                  containerType: matched.containerType ?? null,
+                  sourceDocument: matched.sourceDocument,
+                  sourceExcerpt: matched.sourceExcerpt,
+                  appliedReason: payload.standardRateSignal,
+                  explicitAgentOverride: !(line.amountMissing === true || Number(line.amount) <= 0),
+                };
+              })()
+            : null);
+
+        return createAgentRateLineRecord({
+          id: line.id,
+          canonicalChargeCode: canonical.code,
+          canonicalChargeName: canonical.name,
+          originalDescription,
+          amount: Number(line.amount) || 0,
+          amountSourceText: line.amountSourceText?.trim() || null,
+          amountMissing: line.amountMissing === true,
+          currency: line.currency?.trim() || baseCurrency,
+          unit: line.unit?.trim() || "Shipment",
+          quantityBasis: line.quantityBasis?.trim() || "Per shipment",
+          quantityText: line.quantityText?.trim() || null,
+          containerText: line.containerText?.trim() || null,
+          minimumCharge: line.minimumCharge?.trim() || null,
+          taxText: line.taxText?.trim() || null,
+          freeDaysText: line.freeDaysText?.trim() || null,
+          inclusionStatus: line.inclusionStatus || "UNSPECIFIED",
+          notes: line.notes?.trim() || null,
+          confidenceScore:
+            typeof line.confidenceScore === "number" && Number.isFinite(line.confidenceScore)
+              ? line.confidenceScore
+              : null,
+          confidenceLabel: line.confidenceLabel || null,
+          reviewStatus: line.reviewStatus || "MANUAL",
+          missingFields: Array.isArray(line.missingFields) ? line.missingFields : [],
+          standardRateReference: standardReference,
+          evidence: Array.isArray(line.evidence) ? line.evidence : [],
+        });
+      })
+      .filter(Boolean);
+
+    if (normalizedLines.length === 0) {
+      return { ok: false, error: "Add at least one rate line before saving." };
+    }
+
+    const aliasRecords = (Array.isArray(payload.lines) ? payload.lines : [])
+      .filter((line) => line.saveAlias && line.originalDescription?.trim())
+      .map((line) => {
+        const canonical = resolveCanonicalChargeDetails(
+          workflow,
+          line.originalDescription,
+          line.canonicalChargeCode,
+        );
+        const externalName = line.originalDescription.trim();
+        return {
+          id: `alias:${canonical.code}:${externalName.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`,
+          externalName,
+          canonicalCode: canonical.code,
+          canonicalName: canonical.name,
+          confirmedAt: new Date().toISOString(),
+          confirmedById: session.user.id,
+        };
+      });
+
+    const aliasMap = new Map(
+      workflow.chargeAliases.map((alias) => [`${alias.externalName.toLowerCase()}::${alias.canonicalCode}`, alias]),
+    );
+    for (const alias of aliasRecords) {
+      aliasMap.set(`${alias.externalName.toLowerCase()}::${alias.canonicalCode}`, alias);
+    }
+
+    const responseId = `response:${request.id}`;
+    const existingResponses = workflow.rateResponses.filter(
+      (response) => response.id !== responseId,
+    );
+    const nowIso = new Date().toISOString();
+    const nextResponse = {
+      id: responseId,
+      requestId: request.id,
+      vendorId: request.vendorId,
+      vendorName: request.vendorName,
+      messageId: request.replyMessageId || request.messageId,
+      threadId: request.threadId,
+      receivedAt,
+      currency: baseCurrency,
+      validity: payload.validity?.trim() || null,
+      carrier: payload.carrier?.trim() || null,
+      routing: payload.routing?.trim() || null,
+      transit: payload.transit?.trim() || null,
+      remarks: payload.remarks?.trim() || null,
+      standardRateSignal: payload.standardRateSignal || null,
+      parserStatus: payload.parserStatus || "MANUAL",
+      parserModel: payload.parserModel?.trim() || null,
+      parserRunAt: payload.parserRunAt?.trim() || nowIso,
+      overallConfidence:
+        typeof payload.overallConfidence === "number" && Number.isFinite(payload.overallConfidence)
+          ? payload.overallConfidence
+          : null,
+      sources: Array.isArray(payload.sources) ? payload.sources : [],
+      warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+      lines: normalizedLines,
+      createdById: session.user.id,
+      updatedAt: nowIso,
+    };
+
+    const finalRequests = workflow.rateRequests.map((entry) =>
+      entry.id === request.id
+        ? {
+            ...entry,
+            deliveryState: entry.deliveryState === "BOUNCED" ? "BOUNCED" : "REPLIED",
+            replyStatus: entry.replyStatus === "BOUNCED" ? "BOUNCED" : "REPLIED",
+            replyTimestamp: entry.replyTimestamp || receivedAt,
+          }
+        : entry,
+    );
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "RATE_COMPARISON",
+            chargeContext: workflow.chargeContext,
+            costingLocked: true,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: finalRequests,
+            rateResponses: [nextResponse, ...existingResponses],
+            chargeAliases: Array.from(aliasMap.values()).sort((left, right) =>
+              left.externalName.localeCompare(right.externalName),
+            ),
+          },
+        } as any,
+      },
+    });
+
+    await db.crmServiceEnquiry.updateMany({
+      where: { orgId, leadId },
+      data: {
+        status: "RATES_RECEIVED",
+        updatedById: session.user.id,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATE_RESPONSE_CAPTURED",
+      description: `Structured agent rate response saved for ${request.vendorName}.`,
+      details: {
+        requestId: request.id,
+        vendorId: request.vendorId,
+        vendorName: request.vendorName,
+        responseId,
+        lineCount: normalizedLines.length,
+        aliasCount: aliasRecords.length,
+        receivedAt,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        responseId,
+        lineCount: normalizedLines.length,
+        aliasCount: aliasRecords.length,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save structured rate response" };
+  }
+}
+
+export async function saveEnquiryRateComparisonSelectionAction(
+  leadId: string,
+  payload: {
+    mode: RateComparisonSelectionMode;
+    selectedResponseId?: string | null;
+    chargeSelections?: Array<{
+      chargeCode: string;
+      responseId: string;
+      lineId?: string | null;
+    }>;
+  },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryRef: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    const validResponseIds = new Set(workflow.rateResponses.map((response) => response.id));
+    const validChargeCodes = new Set(
+      [...workflow.freightCharges, ...workflow.customsCharges].map((charge) => charge.code),
+    );
+    const nowIso = new Date().toISOString();
+
+    const normalizedSelections = (Array.isArray(payload.chargeSelections) ? payload.chargeSelections : [])
+      .map((entry) => ({
+        chargeCode: entry.chargeCode.trim().toUpperCase(),
+        responseId: entry.responseId.trim(),
+        lineId: entry.lineId?.trim() || null,
+      }))
+      .filter(
+        (entry) =>
+          entry.chargeCode &&
+          entry.responseId &&
+          validChargeCodes.has(entry.chargeCode) &&
+          validResponseIds.has(entry.responseId),
+      );
+
+    const selectedResponseId =
+      typeof payload.selectedResponseId === "string" &&
+      payload.selectedResponseId.trim() &&
+      validResponseIds.has(payload.selectedResponseId.trim())
+        ? payload.selectedResponseId.trim()
+        : null;
+
+    const comparisonSelection = {
+      mode: payload.mode === "ENTIRE_AGENT" ? "ENTIRE_AGENT" : "PER_CHARGE",
+      selectedResponseId,
+      chargeSelections:
+        payload.mode === "PER_CHARGE"
+          ? normalizedSelections
+          : [],
+      savedAt: nowIso,
+      savedById: session.user.id,
+    };
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "RATE_COMPARISON",
+            chargeContext: workflow.chargeContext,
+            costingLocked: true,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: workflow.rateRequests,
+            rateResponses: workflow.rateResponses,
+            chargeAliases: workflow.chargeAliases,
+            comparisonSelection,
+          },
+        } as any,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATE_RESPONSE_CAPTURED",
+      description:
+        payload.mode === "ENTIRE_AGENT"
+          ? "Saved an entire-agent comparison selection for the enquiry."
+          : "Saved a per-charge comparison selection for the enquiry.",
+      details: {
+        mode: comparisonSelection.mode,
+        selectedResponseId: comparisonSelection.selectedResponseId,
+        selectedChargeCount: comparisonSelection.chargeSelections.length,
+        savedAt: nowIso,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        mode: comparisonSelection.mode,
+        selectedResponseId: comparisonSelection.selectedResponseId,
+        selectedChargeCount: comparisonSelection.chargeSelections.length,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save rate comparison selection" };
+  }
+}
+
+export async function generateEnquiryBestRateRecommendationAction(
+  leadId: string,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    if (workflow.rateResponses.length === 0) {
+      return { ok: false, error: "Save at least one structured rate response first." };
+    }
+
+    const respondingVendorIds = Array.from(
+      new Set(
+        workflow.rateResponses
+          .map((response) => response.vendorId)
+          .filter((vendorId): vendorId is string => Boolean(vendorId)),
+      ),
+    );
+    const [vendors, historicalLeadsRaw] = await Promise.all([
+      db.crmVendor.findMany({
+        where: {
+          orgId,
+          id: { in: respondingVendorIds },
+        },
+        select: {
+          id: true,
+          name: true,
+          services: true,
+        },
+      }),
+      db.crmLead.findMany({
+        where: {
+          orgId,
+          id: { not: leadId },
+        },
+        select: {
+          id: true,
+          status: true,
+          isConverted: true,
+          createdAt: true,
+          enquiryDetails: true,
+          serviceEnquiries: {
+            select: {
+              status: true,
+              serviceType: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 250,
+      }),
+    ]);
+
+    const recommendationProfiles = buildAgentRecommendationProfiles({
+      currentEnquiryDetails: lead.enquiryDetails,
+      vendors,
+      historicalLeads: historicalLeadsRaw
+        .filter((entry) => Boolean(entry.enquiryDetails))
+        .map((entry) => ({
+          ...entry,
+          createdAt: entry.createdAt.toISOString(),
+        })),
+    });
+    const recommendation = buildBestRateRecommendation({
+      workspace: buildRateComparisonWorkspace({
+        workflow,
+        enquiryDetails: lead.enquiryDetails,
+      }),
+      profileByVendorId: recommendationProfiles,
+    });
+
+    if (!recommendation) {
+      return {
+        ok: false,
+        error:
+          "No complete recommendation is available yet. Review missing mandatory charges or invalid response lines first.",
+      };
+    }
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "RATE_COMPARISON",
+            chargeContext: workflow.chargeContext,
+            costingLocked: true,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: workflow.rateRequests,
+            rateResponses: workflow.rateResponses,
+            chargeAliases: workflow.chargeAliases,
+            comparisonSelection: workflow.comparisonSelection,
+            rateRecommendation: recommendation,
+          },
+        } as any,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATE_RESPONSE_CAPTURED",
+      description: "Generated a best-rate recommendation for the enquiry.",
+      details: {
+        recommendedMode: recommendation.recommendedMode,
+        recommendedResponseId: recommendation.recommendedResponseId,
+        recommendedChargeCount: recommendation.recommendedChargeSelections.length,
+        confidenceScore: recommendation.confidenceScore,
+        strategy: recommendation.strategy,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        recommendedMode: recommendation.recommendedMode,
+        recommendedResponseId: recommendation.recommendedResponseId,
+        recommendedChargeCount: recommendation.recommendedChargeSelections.length,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to generate the best-rate recommendation" };
+  }
+}
+
+export async function saveEnquiryRateRecommendationDecisionAction(
+  leadId: string,
+  payload: {
+    decision: "ACCEPT" | "OVERRIDE";
+    selectedMode?: RateComparisonSelectionMode | null;
+    selectedResponseId?: string | null;
+    chargeSelections?: Array<{
+      chargeCode: string;
+      responseId: string;
+      lineId?: string | null;
+    }>;
+    overrideReasons?: string[];
+    overrideNote?: string | null;
+  },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    if (!workflow.rateRecommendation) {
+      return { ok: false, error: "Generate a best-rate recommendation first." };
+    }
+
+    const validResponseIds = new Set(workflow.rateResponses.map((response) => response.id));
+    const validChargeCodes = new Set(
+      [...workflow.freightCharges, ...workflow.customsCharges].map((charge) => charge.code),
+    );
+    const nowIso = new Date().toISOString();
+
+    let selectedMode: RateComparisonSelectionMode;
+    let selectedResponseId: string | null;
+    let selectedChargeSelections: Array<{
+      chargeCode: string;
+      responseId: string;
+      lineId: string | null;
+    }>;
+
+    if (payload.decision === "ACCEPT") {
+      selectedMode = workflow.rateRecommendation.recommendedMode;
+      selectedResponseId = workflow.rateRecommendation.recommendedResponseId;
+      selectedChargeSelections = workflow.rateRecommendation.recommendedChargeSelections;
+    } else {
+      selectedMode = payload.selectedMode === "ENTIRE_AGENT" ? "ENTIRE_AGENT" : "PER_CHARGE";
+      selectedResponseId =
+        typeof payload.selectedResponseId === "string" &&
+        payload.selectedResponseId.trim() &&
+        validResponseIds.has(payload.selectedResponseId.trim())
+          ? payload.selectedResponseId.trim()
+          : null;
+      selectedChargeSelections = (Array.isArray(payload.chargeSelections) ? payload.chargeSelections : [])
+        .map((entry) => ({
+          chargeCode: entry.chargeCode.trim().toUpperCase(),
+          responseId: entry.responseId.trim(),
+          lineId: entry.lineId?.trim() || null,
+        }))
+        .filter(
+          (entry) =>
+            entry.chargeCode &&
+            entry.responseId &&
+            validChargeCodes.has(entry.chargeCode) &&
+            validResponseIds.has(entry.responseId),
+        );
+
+      if (selectedMode === "ENTIRE_AGENT" && !selectedResponseId) {
+        return { ok: false, error: "Choose an entire-agent selection before overriding." };
+      }
+      if (selectedMode === "PER_CHARGE" && selectedChargeSelections.length === 0) {
+        return { ok: false, error: "Choose at least one charge selection before overriding." };
+      }
+    }
+
+    const nextRecommendation = {
+      ...workflow.rateRecommendation,
+      decision: {
+        status: payload.decision === "ACCEPT" ? "ACCEPTED" : "OVERRIDDEN",
+        decidedAt: nowIso,
+        decidedById: session.user.id,
+        selectedMode,
+        selectedResponseId: selectedMode === "ENTIRE_AGENT" ? selectedResponseId : null,
+        selectedChargeSelections: selectedMode === "PER_CHARGE" ? selectedChargeSelections : [],
+        overrideReasons:
+          payload.decision === "OVERRIDE"
+            ? (Array.isArray(payload.overrideReasons) ? payload.overrideReasons : [])
+                .map((entry) => entry.trim())
+                .filter(Boolean)
+            : [],
+        overrideNote:
+          payload.decision === "OVERRIDE" &&
+          typeof payload.overrideNote === "string" &&
+          payload.overrideNote.trim()
+            ? payload.overrideNote.trim()
+            : null,
+      },
+    };
+
+    const comparisonSelection = {
+      mode: selectedMode,
+      selectedResponseId: selectedMode === "ENTIRE_AGENT" ? selectedResponseId : null,
+      chargeSelections: selectedMode === "PER_CHARGE" ? selectedChargeSelections : [],
+      savedAt: nowIso,
+      savedById: session.user.id,
+    };
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "RATE_COMPARISON",
+            chargeContext: workflow.chargeContext,
+            costingLocked: true,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: workflow.rateRequests,
+            rateResponses: workflow.rateResponses,
+            chargeAliases: workflow.chargeAliases,
+            comparisonSelection,
+            rateRecommendation: nextRecommendation,
+          },
+        } as any,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATE_RESPONSE_CAPTURED",
+      description:
+        payload.decision === "ACCEPT"
+          ? "Accepted the best-rate recommendation."
+          : "Overrode the best-rate recommendation.",
+      details: {
+        selectedMode,
+        selectedResponseId: comparisonSelection.selectedResponseId,
+        selectedChargeCount: comparisonSelection.chargeSelections.length,
+        overrideReasons: nextRecommendation.decision.overrideReasons,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        decision: nextRecommendation.decision.status,
+        selectedMode,
+        selectedResponseId: comparisonSelection.selectedResponseId,
+        selectedChargeCount: comparisonSelection.chargeSelections.length,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save the recommendation decision" };
+  }
+}
+
+export async function finalizeEnquiryBuyRatesAction(
+  leadId: string,
+  payload?: {
+    notes?: string | null;
+  },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    const finalizedVersion = buildFinalizedBuyRateVersion({
+      workflow,
+      enquiryDetails: lead.enquiryDetails,
+      createdById: session.user.id,
+      notes: payload?.notes,
+    });
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+    const finalizedBuyRateVersions = [
+      ...workflow.finalizedBuyRateVersions,
+      finalizedVersion,
+    ];
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "RATE_FINALIZED",
+            chargeContext: workflow.chargeContext,
+            costingLocked: false,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: workflow.rateRequests,
+            rateResponses: workflow.rateResponses,
+            chargeAliases: workflow.chargeAliases,
+            comparisonSelection: workflow.comparisonSelection,
+            rateRecommendation: workflow.rateRecommendation,
+            finalizedBuyRateVersions,
+            currentFinalizedBuyRateVersionId: finalizedVersion.id,
+          },
+        } as any,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATE_RESPONSE_CAPTURED",
+      description: `Finalized buy-rate snapshot ${finalizedVersion.versionLabel}.`,
+      details: {
+        versionId: finalizedVersion.id,
+        versionLabel: finalizedVersion.versionLabel,
+        versionNumber: finalizedVersion.versionNumber,
+        selectedMode: finalizedVersion.selectedMode,
+        selectedResponseId: finalizedVersion.selectedResponseId,
+        selectedChargeCount: finalizedVersion.selectedChargeSelections.length,
+        totalInBaseCurrency: finalizedVersion.totalInBaseCurrency,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        versionId: finalizedVersion.id,
+        versionLabel: finalizedVersion.versionLabel,
+        versionNumber: finalizedVersion.versionNumber,
+        lineCount: finalizedVersion.lines.length,
+        totalInBaseCurrency: finalizedVersion.totalInBaseCurrency,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to finalize buy rates" };
+  }
+}
+
+export async function saveEnquiryPricingSnapshotAction(
+  leadId: string,
+  payload?: {
+    notes?: string | null;
+    lines?: Array<{
+      finalizedLineId: string;
+      quantity?: number | null;
+      sellAmount?: number | null;
+      included?: boolean | null;
+      notes?: string | null;
+    }>;
+  },
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const lead = await db.crmLead.findFirst({
+      where: { id: leadId, orgId },
+      select: {
+        id: true,
+        enquiryDetails: true,
+      },
+    });
+    if (!lead) return { ok: false, error: "Lead not found" };
+
+    const workflow = getRateWorkflowSnapshot(lead.enquiryDetails);
+    const pricingSnapshot = buildPricingSnapshot({
+      workflow,
+      updatedById: session.user.id,
+      notes: payload?.notes,
+      lines: payload?.lines,
+    });
+
+    const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const currentWorkflow = (currentEnquiry.rateWorkflow as any) || {};
+
+    await db.crmLead.update({
+      where: { id: lead.id },
+      data: {
+        enquiryDetails: {
+          ...currentEnquiry,
+          rateWorkflow: {
+            ...currentWorkflow,
+            commercialStatus: "PRICING",
+            chargeContext: workflow.chargeContext,
+            costingLocked: false,
+            freightCharges: workflow.freightCharges,
+            customsCharges: workflow.customsCharges,
+            freightRates: workflow.freightRates,
+            customsRates: workflow.customsRates,
+            freightSubmittedAt: workflow.freightSubmittedAt,
+            customsSubmittedAt: workflow.customsSubmittedAt,
+            freightSubmittedById: workflow.freightSubmittedById,
+            customsSubmittedById: workflow.customsSubmittedById,
+            latestQuoteId: workflow.latestQuoteId,
+            latestQuoteVersion: workflow.latestQuoteVersion,
+            quoteBaseNumber: workflow.quoteBaseNumber,
+            lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+            lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+            rateRequests: workflow.rateRequests,
+            rateResponses: workflow.rateResponses,
+            chargeAliases: workflow.chargeAliases,
+            comparisonSelection: workflow.comparisonSelection,
+            rateRecommendation: workflow.rateRecommendation,
+            finalizedBuyRateVersions: workflow.finalizedBuyRateVersions,
+            currentFinalizedBuyRateVersionId: workflow.currentFinalizedBuyRateVersionId,
+            pricingSnapshot,
+          },
+        } as any,
+      },
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "RATES_UPDATED",
+      description: `Saved pricing worksheet from ${pricingSnapshot.basedOnFinalizedVersionLabel}.`,
+      details: {
+        pricingSnapshotId: pricingSnapshot.id,
+        basedOnFinalizedVersionId: pricingSnapshot.basedOnFinalizedVersionId,
+        basedOnFinalizedVersionLabel: pricingSnapshot.basedOnFinalizedVersionLabel,
+        sellAmount: pricingSnapshot.totals.sellAmount,
+        buyAmount: pricingSnapshot.totals.buyAmount,
+        marginAmount: pricingSnapshot.totals.marginAmount,
+        marginPercent: pricingSnapshot.totals.marginPercent,
+        includedLineCount: pricingSnapshot.totals.includedLineCount,
+      } as any,
+      createdById: session.user.id,
+    });
+
+    revalidatePath(`/crm/leads/${lead.id}`);
+    revalidatePath(`/crm/enquiries/${lead.id}`);
+
+    return {
+      ok: true,
+      data: {
+        pricingSnapshotId: pricingSnapshot.id,
+        basedOnFinalizedVersionId: pricingSnapshot.basedOnFinalizedVersionId,
+        includedLineCount: pricingSnapshot.totals.includedLineCount,
+        buyAmount: pricingSnapshot.totals.buyAmount,
+        sellAmount: pricingSnapshot.totals.sellAmount,
+        marginAmount: pricingSnapshot.totals.marginAmount,
+        marginPercent: pricingSnapshot.totals.marginPercent,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to save pricing worksheet" };
   }
 }
 
@@ -3313,6 +5269,9 @@ export async function saveQuoteAction(
       matchedLead?.enquiryDetails
         ? getRateWorkflowSnapshot(matchedLead.enquiryDetails)
         : null;
+    const currentFinalizedVersion = workflow
+      ? getCurrentFinalizedBuyRateVersion(workflow)
+      : null;
     const includedDepartments =
       workflowContext?.includedDepartments && workflowContext.includedDepartments.length > 0
         ? workflowContext.includedDepartments
@@ -3433,6 +5392,20 @@ export async function saveQuoteAction(
         currentDepartmentRates.CUSTOMS_CLEARANCE,
       ),
     };
+    const pricingTrace = buildQuotePricingTrace({
+      workflowContext,
+      linkedLeadEnquiryDetails: matchedLead?.enquiryDetails,
+      checkedAt: now.toISOString(),
+    });
+
+    if (matchedLeadId && currentFinalizedVersion && isQuotePricingGovernanceBlocked(pricingTrace)) {
+      return {
+        ok: false,
+        error:
+          pricingTrace.message ||
+          "Refresh the pricing worksheet before creating or submitting this quotation.",
+      };
+    }
 
     data.sourceQuotationSnapshot = {
       mode: workflowContext?.mode || "combined",
@@ -3440,6 +5413,28 @@ export async function saveQuoteAction(
       baseQuoteNumber,
       includedDepartments,
       pendingDepartments: workflowContext?.pendingDepartments || [],
+      pricingSnapshotId: workflow?.pricingSnapshot?.id || workflowContext?.pricingSnapshotId || null,
+      pricingSnapshotVersionLabel:
+        workflow?.pricingSnapshot?.basedOnFinalizedVersionLabel ||
+        workflowContext?.pricingSnapshotVersionLabel ||
+        null,
+      pricingSellTotal:
+        workflow?.pricingSnapshot?.totals.sellAmount ??
+        workflowContext?.pricingSellTotal ??
+        null,
+      pricingBuyTotal:
+        workflow?.pricingSnapshot?.totals.buyAmount ??
+        workflowContext?.pricingBuyTotal ??
+        null,
+      pricingMarginAmount:
+        workflow?.pricingSnapshot?.totals.marginAmount ??
+        workflowContext?.pricingMarginAmount ??
+        null,
+      pricingMarginPercent:
+        workflow?.pricingSnapshot?.totals.marginPercent ??
+        workflowContext?.pricingMarginPercent ??
+        null,
+      pricingTrace,
       departmentRates: currentDepartmentRates,
       rateDiff,
       sourceQuoteId: quoteId || null,

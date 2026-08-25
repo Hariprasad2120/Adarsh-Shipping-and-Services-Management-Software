@@ -17,6 +17,7 @@ export type GmailThreadHeader = {
 export type GmailMessage = {
   id: string;
   threadId: string;
+  draftId?: string;
   from: string;
   to: string;
   cc?: string;
@@ -26,7 +27,15 @@ export type GmailMessage = {
   bodyHtml: string;
   bodyText: string;
   labelIds: string[];
-  attachments?: { id: string; name: string; mimeType: string; size: number }[];
+  attachments?: {
+    id: string;
+    name: string;
+    mimeType: string;
+    size: number;
+    contentId?: string;
+    disposition?: string;
+    isInline?: boolean;
+  }[];
   listUnsubscribe?: string;
 };
 
@@ -35,6 +44,74 @@ export type GmailThreadDetails = {
   id: string;
   subject: string;
   messages: GmailMessage[];
+};
+
+type GmailApiHeader = {
+  name: string;
+  value: string;
+};
+
+type GmailApiPart = {
+  mimeType?: string;
+  filename?: string;
+  headers?: GmailApiHeader[];
+  body?: {
+    data?: string;
+    attachmentId?: string;
+    size?: number;
+  };
+  parts?: GmailApiPart[];
+};
+
+type GmailApiMessage = {
+  id: string;
+  threadId: string;
+  snippet?: string;
+  labelIds?: string[];
+  payload?: GmailApiPart;
+};
+
+type GmailApiThread = {
+  id: string;
+  snippet: string;
+  historyId: string;
+};
+
+type GmailApiThreadResponse = {
+  messages?: GmailApiMessage[];
+};
+
+type GmailApiDraft = {
+  id: string;
+  message?: {
+    id?: string;
+    threadId?: string;
+  };
+};
+
+type GmailApiDraftListResponse = {
+  drafts?: GmailApiDraft[];
+  nextPageToken?: string;
+};
+
+type GmailSendResponse = {
+  id: string;
+  threadId: string;
+  labelIds?: string[];
+};
+
+type GmailLabel = {
+  id: string;
+  name: string;
+  type: "system" | "user";
+  messagesTotal?: number;
+  messagesUnread?: number;
+  threadsTotal?: number;
+  threadsUnread?: number;
+};
+
+type GmailLabelsResponse = {
+  labels?: GmailLabel[];
 };
 
 type GmailDraftAttachment = {
@@ -46,8 +123,9 @@ type GmailDraftAttachment = {
 type GmailMessageAttachment = GmailDraftAttachment;
 
 function buildRawMessage(params: {
-  to: string;
+  to?: string;
   cc?: string;
+  bcc?: string;
   subject: string;
   body: string;
   textBody?: string;
@@ -61,8 +139,9 @@ function buildRawMessage(params: {
   if (attachments.length === 0) {
     const altBoundary = `alt_${Date.now().toString(36)}`;
     const headers = [
-      `To: ${params.to}`,
+      params.to ? `To: ${params.to}` : null,
       params.cc ? `Cc: ${params.cc}` : null,
+      params.bcc ? `Bcc: ${params.bcc}` : null,
       `Subject: ${params.subject}`,
       "MIME-Version: 1.0",
       `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
@@ -93,8 +172,9 @@ function buildRawMessage(params: {
   const mixedBoundary = `mixed_${Date.now().toString(36)}`;
   const altBoundary = `alt_${Date.now().toString(36)}`;
   const headers = [
-    `To: ${params.to}`,
+    params.to ? `To: ${params.to}` : null,
     params.cc ? `Cc: ${params.cc}` : null,
+    params.bcc ? `Bcc: ${params.bcc}` : null,
     `Subject: ${params.subject}`,
     params.threadId ? `In-Reply-To: ${params.threadId}` : null,
     params.threadId ? `References: ${params.threadId}` : null,
@@ -147,11 +227,11 @@ function parseHeaders(headers: { name: string; value: string }[]): Record<string
 }
 
 // Recursively parse MIME parts to extract HTML and Plain Text
-function extractBody(payload: any): { html: string; text: string } {
+function extractBody(payload?: GmailApiPart): { html: string; text: string } {
   let html = "";
   let text = "";
 
-  function traverse(part: any) {
+  function traverse(part: GmailApiPart) {
     if (part.mimeType === "text/html" && part.body?.data) {
       html += Buffer.from(part.body.data, "base64url").toString("utf8");
     } else if (part.mimeType === "text/plain" && part.body?.data) {
@@ -193,7 +273,7 @@ export async function listThreads(params: {
   }
 
   const data = (await res.json()) as {
-    threads?: { id: string; snippet: string; historyId: string }[];
+    threads?: GmailApiThread[];
     nextPageToken?: string;
   };
 
@@ -203,14 +283,14 @@ export async function listThreads(params: {
 
   // Fetch minimal header info for each thread in parallel
   const threads = await Promise.all(
-    data.threads.slice(0, 15).map(async (t) => {
+    data.threads.map(async (t) => {
       try {
         const threadRes = await fetch(`${GMAIL_API_BASE}/threads/${t.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=To`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!threadRes.ok) return null;
         
-        const threadData = await threadRes.json();
+        const threadData = (await threadRes.json()) as GmailApiThreadResponse;
         const firstMsg = threadData.messages?.[0];
         if (!firstMsg) return null;
 
@@ -254,19 +334,40 @@ export async function getThread(userId: string, threadId: string): Promise<Gmail
     throw new Error(`Gmail getThread failed: ${err}`);
   }
 
-  const data = await res.json();
-  const messages = (data.messages || []).map((msg: any) => {
+  const data = (await res.json()) as GmailApiThreadResponse;
+  const threadMessages = data.messages || [];
+  const hasDraftMessages = threadMessages.some((msg) => (msg.labelIds || []).includes("DRAFT"));
+  const draftIdByMessageId = hasDraftMessages
+    ? await listDraftIdsByMessageId(token, threadId)
+    : new Map<string, string>();
+  const messages = threadMessages.map((msg) => {
     const headers = parseHeaders(msg.payload?.headers || []);
     const { html, text } = extractBody(msg.payload);
 
-    const attachments: { id: string; name: string; mimeType: string; size: number }[] = [];
-    function findAttachments(part: any) {
+    const attachments: {
+      id: string;
+      name: string;
+      mimeType: string;
+      size: number;
+      contentId?: string;
+      disposition?: string;
+      isInline?: boolean;
+    }[] = [];
+    function findAttachments(part: GmailApiPart) {
       if (part.filename && part.body?.attachmentId) {
+        const partHeaders = parseHeaders(part.headers || []);
+        const disposition = partHeaders["content-disposition"] || "";
+        const contentId = partHeaders["content-id"]?.replace(/[<>]/g, "");
         attachments.push({
           id: part.body.attachmentId,
           name: part.filename,
-          mimeType: part.mimeType,
-          size: part.body.size || 0
+          mimeType: part.mimeType || "application/octet-stream",
+          size: part.body.size || 0,
+          contentId,
+          disposition,
+          isInline:
+            disposition.toLowerCase().includes("inline") ||
+            Boolean(contentId),
         });
       }
       if (part.parts) {
@@ -282,6 +383,7 @@ export async function getThread(userId: string, threadId: string): Promise<Gmail
     return {
       id: msg.id,
       threadId: msg.threadId,
+      draftId: draftIdByMessageId.get(msg.id),
       from: headers["from"] || "Unknown",
       to: headers["to"] || "Unknown",
       cc: headers["cc"],
@@ -305,21 +407,55 @@ export async function getThread(userId: string, threadId: string): Promise<Gmail
   };
 }
 
+async function listDraftIdsByMessageId(token: string, threadId: string): Promise<Map<string, string>> {
+  const draftIdByMessageId = new Map<string, string>();
+  let pageToken: string | undefined;
+
+  do {
+    const url = new URL(`${GMAIL_API_BASE}/drafts`);
+    url.searchParams.set("maxResults", "100");
+    if (pageToken) {
+      url.searchParams.set("pageToken", pageToken);
+    }
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gmail listDrafts failed: ${err}`);
+    }
+
+    const data = (await res.json()) as GmailApiDraftListResponse;
+    for (const draft of data.drafts || []) {
+      const messageId = draft.message?.id;
+      if (!messageId || draft.message?.threadId !== threadId) continue;
+      draftIdByMessageId.set(messageId, draft.id);
+    }
+
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return draftIdByMessageId;
+}
+
 // Compose and send a new email (RFC 2822 format)
 export async function sendEmail(params: {
   userId: string;
   to: string;
   cc?: string;
+  bcc?: string;
   subject: string;
   body: string;
   textBody?: string;
   threadId?: string;
   attachments?: GmailMessageAttachment[];
-}): Promise<any> {
+}): Promise<GmailSendResponse> {
   const token = await getValidAccessToken(params.userId);
   const raw = buildRawMessage(params);
 
-  const body: any = { raw };
+  const body: Record<string, string> = { raw };
   if (params.threadId) {
     body.threadId = params.threadId;
   }
@@ -343,8 +479,9 @@ export async function sendEmail(params: {
 
 export async function createDraft(params: {
   userId: string;
-  to: string;
+  to?: string;
   cc?: string;
+  bcc?: string;
   subject: string;
   body: string;
   textBody?: string;
@@ -371,13 +508,34 @@ export async function createDraft(params: {
   return res.json();
 }
 
+export async function sendDraft(params: { userId: string; draftId: string }): Promise<GmailSendResponse> {
+  const token = await getValidAccessToken(params.userId);
+  const res = await fetch(`${GMAIL_API_BASE}/drafts/send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id: params.draftId,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gmail sendDraft failed: ${err}`);
+  }
+
+  return res.json();
+}
+
 // Modify thread labels (e.g. Star, Archive, Mark Read/Unread)
 export async function modifyThreadLabels(params: {
   userId: string;
   threadId: string;
   addLabelIds: string[];
   removeLabelIds: string[];
-}): Promise<any> {
+}): Promise<GmailSendResponse> {
   const token = await getValidAccessToken(params.userId);
 
   const res = await fetch(`${GMAIL_API_BASE}/threads/${params.threadId}/modify`, {
@@ -424,7 +582,7 @@ export async function getAttachment(params: {
 }
 
 // List user labels
-export async function listLabels(userId: string): Promise<any> {
+export async function listLabels(userId: string): Promise<GmailLabelsResponse> {
   const token = await getValidAccessToken(userId);
   const res = await fetch(`${GMAIL_API_BASE}/labels`, {
     headers: { Authorization: `Bearer ${token}` }
@@ -437,7 +595,7 @@ export async function listLabels(userId: string): Promise<any> {
 }
 
 // Create a new user label
-export async function createLabel(userId: string, name: string): Promise<any> {
+export async function createLabel(userId: string, name: string): Promise<GmailLabel> {
   const token = await getValidAccessToken(userId);
   const res = await fetch(`${GMAIL_API_BASE}/labels`, {
     method: "POST",
@@ -459,7 +617,7 @@ export async function createLabel(userId: string, name: string): Promise<any> {
 }
 
 // Delete a user label
-export async function deleteLabel(userId: string, labelId: string): Promise<any> {
+export async function deleteLabel(userId: string, labelId: string): Promise<true> {
   const token = await getValidAccessToken(userId);
   const res = await fetch(`${GMAIL_API_BASE}/labels/${labelId}`, {
     method: "DELETE",

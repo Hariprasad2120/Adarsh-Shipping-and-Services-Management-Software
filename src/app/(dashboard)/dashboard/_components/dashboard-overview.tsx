@@ -11,7 +11,6 @@ import {
   MonolithSpecLabel,
 } from "@/components/ui/foundation";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
@@ -114,8 +113,8 @@ export function DashboardOverview({
         description="Company signals, assigned work, weekly rhythm, and the fastest route into active work."
       />
 
-      <section className="mnx-dashboard-spotlight">
-        <Card className="mnx-dashboard-spotlight-hero">
+      <section className="mnx-dashboard-brief">
+        <section className="mnx-dashboard-brief-main">
           <header className="mnx-panel-heading">
             <div>
               <MonolithSpecLabel>FOCUS MODE</MonolithSpecLabel>
@@ -124,24 +123,24 @@ export function DashboardOverview({
             <span className="mnx-user-email">{sessionUser.email}</span>
           </header>
 
-          <p className="mnx-feed-intro">
+          <p className="mnx-dashboard-brief-copy">
             Welcome back, {profile.name || sessionUser.name}. Your workspace is now organized around
             the next action, the latest company movement, and the quickest launch paths into your live modules.
           </p>
 
-          <div className="mnx-dashboard-spotlight-status">
+          <div className="mnx-dashboard-brief-status">
             <span>{profile.attendanceStatus.replaceAll("_", " ").toLowerCase()}</span>
             <span>{data.recentTasks.length} active tasks</span>
             <span>{data.announcements.length} company updates</span>
           </div>
 
-          <div className="mnx-dashboard-spotlight-grid">
-            <article className="mnx-dashboard-spotlight-card">
+          <div className="mnx-dashboard-brief-grid">
+            <article className="mnx-dashboard-brief-item">
               <span>Primary focus</span>
               <strong>{nextTask?.title || "Your queue is clear"}</strong>
               <p>{nextTask ? `Due ${formatDate(nextTask.dueDate)}` : "No task is currently demanding attention."}</p>
             </article>
-            <article className="mnx-dashboard-spotlight-card">
+            <article className="mnx-dashboard-brief-item">
               <span>Calendar watch</span>
               <strong>{nextHoliday?.name || "No holiday scheduled"}</strong>
               <p>
@@ -150,16 +149,16 @@ export function DashboardOverview({
                   : "Your next company calendar update will appear here."}
               </p>
             </article>
-            <article className="mnx-dashboard-spotlight-card">
+            <article className="mnx-dashboard-brief-item">
               <span>Weekly rhythm</span>
               <strong>{scheduleRange}</strong>
               <p>Use this week&apos;s operating rhythm to plan attendance, handoffs, and follow-ups.</p>
             </article>
           </div>
-        </Card>
+        </section>
 
-        <div className="mnx-dashboard-spotlight-stack">
-          <Card className="mnx-dashboard-spotlight-panel">
+        <aside className="mnx-dashboard-brief-side">
+          <section className="mnx-dashboard-brief-panel">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>QUICK LAUNCH</MonolithSpecLabel>
@@ -177,9 +176,9 @@ export function DashboardOverview({
                 </Link>
               ))}
             </div>
-          </Card>
+          </section>
 
-          <Card className="mnx-dashboard-spotlight-panel">
+          <section className="mnx-dashboard-brief-panel">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>LIVE SIGNAL</MonolithSpecLabel>
@@ -209,11 +208,11 @@ export function DashboardOverview({
                 </div>
               </article>
             </div>
-          </Card>
-        </div>
+          </section>
+        </aside>
       </section>
 
-      <section className="mnx-dashboard-metrics" aria-label="Workspace metrics">
+      <section className="mnx-dashboard-metrics mnx-dashboard-metrics-inline" aria-label="Workspace metrics">
         {metrics.map((metric) => (
           <article className="mnx-metric-card" key={metric.label}>
             <header>
@@ -225,8 +224,8 @@ export function DashboardOverview({
         ))}
       </section>
 
-      <section className="mnx-dashboard-grid">
-        <Card className="mnx-feed-panel">
+      <section className="mnx-dashboard-grid mnx-dashboard-grid-refined">
+        <section className="mnx-feed-panel">
           <header className="mnx-panel-heading">
             <div>
               <MonolithSpecLabel>MY COMMAND FEED</MonolithSpecLabel>
@@ -276,9 +275,9 @@ export function DashboardOverview({
               )}
             </article>
           </div>
-        </Card>
+        </section>
 
-        <Card className="mnx-task-panel">
+        <section className="mnx-task-panel">
           <header className="mnx-panel-heading">
             <div>
               <MonolithSpecLabel>OPEN WORK</MonolithSpecLabel>
@@ -311,9 +310,9 @@ export function DashboardOverview({
           <Link className="mnx-text-link" href="/todo">
             Open task workspace <ArrowUpRight size={14} />
           </Link>
-        </Card>
+        </section>
 
-        <Card className="mnx-schedule-panel">
+        <section className="mnx-schedule-panel">
           <header className="mnx-panel-heading">
             <div>
               <MonolithSpecLabel>WEEKLY RHYTHM</MonolithSpecLabel>
@@ -337,9 +336,9 @@ export function DashboardOverview({
               </article>
             ))}
           </div>
-        </Card>
+        </section>
 
-        <Card className="mnx-holiday-panel">
+        <section className="mnx-holiday-panel">
           <header className="mnx-panel-heading">
             <div>
               <MonolithSpecLabel>UP NEXT</MonolithSpecLabel>
@@ -366,7 +365,7 @@ export function DashboardOverview({
               <p>The company calendar has no upcoming entry.</p>
             </MonolithEmptyState>
           )}
-        </Card>
+        </section>
       </section>
     </div>
   );

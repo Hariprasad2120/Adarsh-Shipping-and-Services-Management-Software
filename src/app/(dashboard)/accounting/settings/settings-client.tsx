@@ -59,6 +59,13 @@ const mappingSections = [
     fields: [
       ["defaultSalaryExpenseAccountId", "Salary expense account", ["EXPENSE"]],
       ["defaultSalaryPayableAccountId", "Salary payable account", ["PAYABLE"]],
+      ["epfPayableAccountId", "EPF payable account (optional)", ["PAYABLE"]],
+      ["esiPayableAccountId", "ESI payable account (optional)", ["PAYABLE"]],
+      ["professionalTaxPayableAccountId", "Professional Tax payable account (optional)", ["PAYABLE"]],
+      ["tdsPayableAccountId", "TDS payable account (optional)", ["PAYABLE"]],
+      ["employeeLoanReceivableAccountId", "Employee loan receivable account (optional)", ["RECEIVABLE"]],
+      ["lwfPayableAccountId", "LWF payable account (optional)", ["PAYABLE"]],
+      ["bonusPayableAccountId", "Statutory Bonus payable account (optional)", ["PAYABLE"]],
     ],
   },
   {
@@ -104,6 +111,15 @@ export function SettingsClient({
       initialSettings?.defaultSalaryExpenseAccountId || "",
     defaultSalaryPayableAccountId:
       initialSettings?.defaultSalaryPayableAccountId || "",
+    epfPayableAccountId: initialSettings?.epfPayableAccountId || "",
+    esiPayableAccountId: initialSettings?.esiPayableAccountId || "",
+    professionalTaxPayableAccountId:
+      initialSettings?.professionalTaxPayableAccountId || "",
+    tdsPayableAccountId: initialSettings?.tdsPayableAccountId || "",
+    employeeLoanReceivableAccountId:
+      initialSettings?.employeeLoanReceivableAccountId || "",
+    lwfPayableAccountId: initialSettings?.lwfPayableAccountId || "",
+    bonusPayableAccountId: initialSettings?.bonusPayableAccountId || "",
     defaultDepreciationExpenseAccountId:
       initialSettings?.defaultDepreciationExpenseAccountId || "",
     defaultAccumulatedDepreciationAccountId:

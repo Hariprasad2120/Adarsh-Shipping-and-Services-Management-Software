@@ -146,10 +146,10 @@ export function TravelView() {
             </div>
             <div>
               <h1 className="text-lg font-black text-[var(--mnx-muted)] uppercase tracking-widest">
-                TRAVEL & EXPENSES
+                Trip desk
               </h1>
               <p className="text-xs text-[var(--mnx-muted)] font-bold mt-0.5 uppercase tracking-wider">
-                Request trips clearances and submit reimbursement expense bills
+                Raise travel requests, manage approved trips, and file reimbursement bills
               </p>
             </div>
           </div>

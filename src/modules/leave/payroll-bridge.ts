@@ -35,7 +35,7 @@ export async function applyLopFromLeaveRequest(input: {
   const payrollMonth = firstOfMonth(input.fromDate);
 
   const batch = await db.payrollBatch.findUnique({
-    where: { orgId_month: { orgId: input.orgId, month: payrollMonth } },
+    where: { orgId_month_type: { orgId: input.orgId, month: payrollMonth, type: "REGULAR" } },
   });
   if (batch && (batch.status === "FINALIZED" || batch.status === "PAID")) {
     throw new PayrollLockedError(payrollMonth);
@@ -89,7 +89,7 @@ export async function reverseLopFromLeaveRequest(input: {
 
   const payrollMonth = firstOfMonth(input.fromDate);
   const batch = await db.payrollBatch.findUnique({
-    where: { orgId_month: { orgId: input.orgId, month: payrollMonth } },
+    where: { orgId_month_type: { orgId: input.orgId, month: payrollMonth, type: "REGULAR" } },
   });
   if (batch && (batch.status === "FINALIZED" || batch.status === "PAID")) {
     throw new PayrollLockedError(payrollMonth);
@@ -151,7 +151,7 @@ export async function applyPartialPayFromLeaveRequest(input: {
   const payrollMonth = firstOfMonth(input.fromDate);
 
   const batch = await db.payrollBatch.findUnique({
-    where: { orgId_month: { orgId: input.orgId, month: payrollMonth } },
+    where: { orgId_month_type: { orgId: input.orgId, month: payrollMonth, type: "REGULAR" } },
   });
   if (batch && (batch.status === "FINALIZED" || batch.status === "PAID")) {
     throw new PayrollLockedError(payrollMonth);
@@ -194,7 +194,7 @@ export async function reversePartialPayFromLeaveRequest(input: {
 }) {
   const payrollMonth = firstOfMonth(input.fromDate);
   const batch = await db.payrollBatch.findUnique({
-    where: { orgId_month: { orgId: input.orgId, month: payrollMonth } },
+    where: { orgId_month_type: { orgId: input.orgId, month: payrollMonth, type: "REGULAR" } },
   });
   if (batch && (batch.status === "FINALIZED" || batch.status === "PAID")) {
     throw new PayrollLockedError(payrollMonth);

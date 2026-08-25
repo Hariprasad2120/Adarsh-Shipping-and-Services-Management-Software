@@ -3,7 +3,10 @@
 import { Building2, Sparkles, Users2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { MonolithPage } from "@/components/ui/foundation";
-import { WorkspaceLoadingState } from "@/components/feedback/workspace-states";
+import {
+  WorkspaceErrorState,
+  WorkspaceLoadingState,
+} from "@/components/feedback/workspace-states";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { AttendanceCommand } from "./_components/attendance-command";
@@ -38,6 +41,14 @@ type OrganizationPayload = {
   departments: unknown[];
   branches: unknown[];
   employees: unknown[];
+};
+
+type ApiEnvelope<T> = {
+  ok?: boolean;
+  data?: T;
+  error?: {
+    message?: string;
+  } | string;
 };
 
 const tabs: {
@@ -85,11 +96,41 @@ function toUserProfile(raw: ProfilePayload): UserProfile {
 }
 
 async function readApiResponse<T>(response: Response) {
-  const payload = await response.json();
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error?.message || "The dashboard could not be updated.");
+  const payload = (await response.json().catch(() => null)) as
+    | ApiEnvelope<T>
+    | T
+    | null;
+
+  if (!response.ok) {
+    const message =
+      payload &&
+      typeof payload === "object" &&
+      "error" in payload &&
+      payload.error
+        ? typeof payload.error === "string"
+          ? payload.error
+          : payload.error.message
+        : undefined;
+    throw new Error(message || "The dashboard could not be updated.");
   }
-  return payload.data as T;
+
+  if (payload && typeof payload === "object" && "ok" in payload) {
+    if (!payload.ok) {
+      const message =
+        typeof payload.error === "string"
+          ? payload.error
+          : payload.error?.message;
+      throw new Error(message || "The dashboard could not be updated.");
+    }
+
+    if (!("data" in payload)) {
+      throw new Error("The dashboard response did not include data.");
+    }
+
+    return payload.data as T;
+  }
+
+  return payload as T;
 }
 
 export function HrmsPortalClient({
@@ -102,9 +143,11 @@ export function HrmsPortalClient({
   const [profile, setProfile] = useState(initialProfile);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [reportees, setReportees] = useState<ReporteeSummary[] | null>(null);
+  const [teamError, setTeamError] = useState<string | null>(null);
   const [widgets, setWidgets] = useState(initialWidgetsData);
   const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
   const [organization, setOrganization] = useState<OrganizationPayload | null>(null);
+  const [organizationError, setOrganizationError] = useState<string | null>(null);
   const organizationRequestRef = useRef(false);
   const teamRequestRef = useRef(false);
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
@@ -113,10 +156,19 @@ export function HrmsPortalClient({
     if (activeTab !== "team" || reportees || teamRequestRef.current) return;
     let active = true;
     teamRequestRef.current = true;
+    setTeamError(null);
     void fetch("/api/hrms/team/reportees")
       .then((response) => readApiResponse<ReporteeSummary[]>(response))
       .then((payload) => {
         if (active) setReportees(payload);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setTeamError(
+          error instanceof Error
+            ? error.message
+            : "The team workspace could not be loaded.",
+        );
       })
       .finally(() => {
         teamRequestRef.current = false;
@@ -130,10 +182,19 @@ export function HrmsPortalClient({
     if (activeTab !== "organization" || organization || organizationRequestRef.current) return;
     let active = true;
     organizationRequestRef.current = true;
+    setOrganizationError(null);
     void fetch("/api/dashboard/organization")
       .then((response) => readApiResponse<OrganizationPayload>(response))
       .then((payload) => {
         if (active) setOrganization(payload);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setOrganizationError(
+          error instanceof Error
+            ? error.message
+            : "The organization workspace could not be loaded.",
+        );
       })
       .finally(() => {
         organizationRequestRef.current = false;
@@ -234,10 +295,16 @@ export function HrmsPortalClient({
           />
         ) : null}
         {activeTab === "team" && reportees ? <DashboardTeam reportees={reportees} /> : null}
-        {activeTab === "team" && !reportees ? (
+        {activeTab === "team" && !reportees && !teamError ? (
           <WorkspaceLoadingState
             title="Loading team"
             description="Preparing reportees and live attendance."
+          />
+        ) : null}
+        {activeTab === "team" && teamError ? (
+          <WorkspaceErrorState
+            title="Team workspace unavailable"
+            description={teamError}
           />
         ) : null}
         {activeTab === "organization" && organization ? (
@@ -248,10 +315,16 @@ export function HrmsPortalClient({
             branches={organization.branches}
           />
         ) : null}
-        {activeTab === "organization" && !organization ? (
+        {activeTab === "organization" && !organization && !organizationError ? (
           <WorkspaceLoadingState
             title="Loading organization"
             description="Preparing the employee directory and organization structure."
+          />
+        ) : null}
+        {activeTab === "organization" && organizationError ? (
+          <WorkspaceErrorState
+            title="Organization workspace unavailable"
+            description={organizationError}
           />
         ) : null}
       </div>

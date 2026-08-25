@@ -35,6 +35,7 @@ const GOOGLE_AUTH_SCOPES = [
   "https://www.googleapis.com/auth/gmail.modify",
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/directory.readonly",
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/calendar.events",
   "https://www.googleapis.com/auth/tasks",
@@ -42,6 +43,7 @@ const GOOGLE_AUTH_SCOPES = [
   "https://www.googleapis.com/auth/chat.spaces.readonly",
   "https://www.googleapis.com/auth/chat.memberships.readonly",
   "https://www.googleapis.com/auth/chat.messages",
+  "https://www.googleapis.com/auth/chat.users.readstate",
 ];
 
 if (GOOGLE_CHAT_DELETE_AUTH_MODE === "user_oauth") {

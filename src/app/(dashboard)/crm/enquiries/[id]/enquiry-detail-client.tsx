@@ -31,7 +31,7 @@ import { ServiceRateWorkflowPanel } from "@/modules/crm/components/service-enqui
 import {
   ArrowLeft,
   Clock,
-  RefreshCcw,
+
   Edit2,
   Save,
   Mail,
@@ -182,12 +182,6 @@ export function EnquiryDetailClient({
   // Manual Paste parsing states
   const [pasteText, setPasteText] = useState("");
   const [isParsingPaste, setIsParsingPaste] = useState(false);
-  const quoteHref = serviceType
-    ? `/crm/quotes/new?leadId=${lead.id}&mode=${
-        serviceType === "FREIGHT_FORWARDING" ? "freight-only" : "customs-only"
-      }&department=${serviceType}`
-    : `/crm/quotes/new?leadId=${lead.id}&mode=combined`;
-
   // Handle Mark as Follow-up status update
   const handleMarkAsFollowUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -385,67 +379,136 @@ export function EnquiryDetailClient({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <CrmActionLink href={backHref}>
-          <ArrowLeft className="size-4" />
-          <span>{backLabel}</span>
-        </CrmActionLink>
-
-        <CrmActionLink href={quoteHref} primary>
-          <RefreshCcw className="size-4" />
-          <span>Convert as Quote</span>
-        </CrmActionLink>
-      </div>
-
-      {/* ─── STATUS CONTROL & ASSIGNMENT PANEL ─── */}
-      <CrmPanel className="mnx-crm-panel-surface p-4 md:p-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <CrmStatus variant="accent">{lead.enquiryRef || "GEN-ENQ"}</CrmStatus>
-              <CrmStatus variant={lead.status === "FOLLOW_UP" ? "warning" : "success"}>
-                {lead.status === "FOLLOW_UP" ? "Follow Up Active" : "Interested Enquiry"}
-              </CrmStatus>
+      <CrmSection
+        eyebrow="Demand record"
+        title="Enquiry detail"
+        description="Review the enquiry, complete the next operational step, and only then unlock the following commercial stage."
+        actions={
+          <CrmActionLink href={backHref}>
+            <ArrowLeft className="size-4" />
+            <span>{backLabel}</span>
+          </CrmActionLink>
+        }
+      >
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+          <div className="min-w-0 space-y-5">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <CrmStatus variant="accent">{lead.enquiryRef || "GEN-ENQ"}</CrmStatus>
+                <CrmStatus variant={lead.status === "FOLLOW_UP" ? "warning" : "success"}>
+                  {lead.status === "FOLLOW_UP" ? "Follow Up Active" : "Interested Enquiry"}
+                </CrmStatus>
+                {serviceType ? (
+                  <CrmStatus variant="neutral">
+                    {serviceType === "FREIGHT_FORWARDING"
+                      ? "Freight Forwarding"
+                      : "Customs Clearance"}
+                  </CrmStatus>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-[clamp(1.6rem,2.2vw,2.2rem)] font-semibold leading-tight text-[var(--mnx-text-strong)]">
+                  {lead.firstName ? `${lead.firstName} ` : ""}
+                  {lead.lastName}
+                </h2>
+                <p className="max-w-3xl text-sm leading-6 text-[var(--mnx-text-muted)]">
+                  {company || "Direct client"} · {email || "Email pending"} ·{" "}
+                  {mobile || phone || "Phone pending"}
+                </p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <h2 className="text-2xl font-normal leading-tight text-[var(--mnx-text-strong)]">
-                {lead.firstName ? `${lead.firstName} ` : ""}
-                {lead.lastName}
-              </h2>
-              <p className="text-sm text-[var(--mnx-text-muted)]">
-                Current owner:{" "}
-                <span className="font-normal text-[var(--mnx-text-strong)]">
-                  {lead.owner?.name || "Unassigned"}
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface-soft)] px-4 py-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+                  Current owner
                 </span>
-                {" · "}
-                {lead.owner?.email || "No email available"}
-              </p>
+                <strong className="mt-2 block text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  {lead.owner?.name || "Unassigned"}
+                </strong>
+                <span className="mt-1 block text-xs text-[var(--mnx-text-muted)]">
+                  {lead.owner?.email || "No email available"}
+                </span>
+              </div>
+              <div className="rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface-soft)] px-4 py-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+                  Qualified on
+                </span>
+                <strong className="mt-2 block text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  {new Date(lead.updatedAt).toLocaleDateString("en-IN")}
+                </strong>
+                <span className="mt-1 block text-xs text-[var(--mnx-text-muted)]">
+                  {lead.source || "Direct source"}
+                </span>
+              </div>
+              <div className="rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface-soft)] px-4 py-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+                  Cargo mode
+                </span>
+                <strong className="mt-2 block text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  {enquiryType}
+                </strong>
+                <span className="mt-1 block text-xs text-[var(--mnx-text-muted)]">
+                  {commodity || "Commodity pending"}
+                </span>
+              </div>
+              <div className="rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface-soft)] px-4 py-3">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+                  Next action
+                </span>
+                <strong className="mt-2 block text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  {lead.status === "FOLLOW_UP" ? "Close follow up" : "Send rate request"}
+                </strong>
+                <span className="mt-1 block text-xs text-[var(--mnx-text-muted)]">
+                  Workflow stays progressive from this step onward.
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {lead.status === "INTERESTED" ? (
-              <CrmButton
-                onClick={() => setIsMarkingFollowUp(true)}
-                variant="secondary"
-                size="compact"
-                className="gap-2"
-              >
-                <Clock className="size-4" />
-                <span>Schedule Follow Up</span>
-              </CrmButton>
+          <div className="grid gap-3">
+            {lead.isFutureFollowUp && lead.followUpReminderDate ? (
+              <div className="rounded-[var(--mn-radius-control)] border border-[var(--mnx-warning)]/25 bg-[var(--mnx-warning-bg)]/35 px-4 py-4">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-warning)]">
+                  Follow-up alarm
+                </span>
+                <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  <Clock className="size-4 text-[var(--mnx-warning)]" />
+                  <span>{new Date(lead.followUpReminderDate).toLocaleString("en-IN")}</span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-[var(--mnx-text-muted)]">
+                  A reminder is active for this enquiry. Clear it by completing the follow-up outcome.
+                </p>
+              </div>
             ) : null}
 
-            {lead.status === "FOLLOW_UP" && isManager ? (
-              <CrmPanel className="px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface-soft)] px-4 py-4">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+                Action lane
+              </span>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {lead.status === "INTERESTED" ? (
+                  <CrmButton
+                    onClick={() => setIsMarkingFollowUp(true)}
+                    variant="secondary"
+                    size="compact"
+                    className="gap-2"
+                  >
+                    <Clock className="size-4" />
+                    <span>Schedule Follow Up</span>
+                  </CrmButton>
+                ) : null}
+              </div>
+
+              {lead.status === "FOLLOW_UP" && isManager ? (
+                <div className="mt-4 grid gap-3">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                     Assign owner
                   </span>
                   <NativeSelect
                     value={selectedOwnerId}
                     onChange={(e) => setSelectedOwnerId(e.target.value)}
-                    className="min-w-[12rem]"
+                    className="min-w-0"
                   >
                     <option value="">Unassigned</option>
                     {users.map((u) => (
@@ -460,14 +523,18 @@ export function EnquiryDetailClient({
                     variant="secondary"
                     size="compact"
                   >
-                    {isAssigning ? "Saving..." : "Apply"}
+                    {isAssigning ? "Saving..." : "Apply owner"}
                   </CrmButton>
                 </div>
-              </CrmPanel>
-            ) : null}
+              ) : (
+                <p className="mt-3 text-xs leading-5 text-[var(--mnx-text-muted)]">
+                  Commercial controls open further down the page only as each prior step is completed.
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </CrmPanel>
+      </CrmSection>
 
       {/* Mark as Follow Up Popup / Expandable Area */}
       {isMarkingFollowUp ? (
@@ -523,33 +590,29 @@ export function EnquiryDetailClient({
         </CrmPanel>
       ) : null}
 
-      {/* Split detail grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column details (Cargo, Rates, Simulation) */}
-        <div className="lg:col-span-2 space-y-6">
-          <CrmSection
-            eyebrow="Demand record"
-            title="Enquiry and cargo details"
-            description="Review the qualified enquiry context, route, consignee contact, and shipment intent."
-            actions={
-              <CrmButton
-                onClick={() => setIsEditingCargoDetails(!isEditingCargoDetails)}
-                variant="secondary"
-                size="compact"
-                className="gap-1.5"
-              >
-                {isEditingCargoDetails ? (
-                  <X className="size-3.5" />
-                ) : (
-                  <Edit2 className="size-3.5" />
-                )}
-                <span>{isEditingCargoDetails ? "Cancel" : "Edit Details"}</span>
-              </CrmButton>
-            }
+      <CrmSection
+        eyebrow="Qualified enquiry"
+        title="Enquiry and cargo details"
+        description="Use the full page width to review client, contact, route, and shipment intent before moving into commercial work."
+        actions={
+          <CrmButton
+            onClick={() => setIsEditingCargoDetails(!isEditingCargoDetails)}
+            variant="secondary"
+            size="compact"
+            className="gap-1.5"
           >
-
             {isEditingCargoDetails ? (
-              <form onSubmit={handleSaveCargoDetails} className="space-y-4">
+              <X className="size-3.5" />
+            ) : (
+              <Edit2 className="size-3.5" />
+            )}
+            <span>{isEditingCargoDetails ? "Cancel" : "Edit Details"}</span>
+          </CrmButton>
+        }
+      >
+
+        {isEditingCargoDetails ? (
+          <form onSubmit={handleSaveCargoDetails} className="space-y-5">
                 {/* Contact Sub-Grid */}
                 <div className="space-y-3">
                   <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-sans border-b border-[var(--mnx-border)]/20 pb-1">
@@ -766,9 +829,9 @@ export function EnquiryDetailClient({
                     <span>{isSubmitting ? "Saving..." : "Save Details"}</span>
                   </CrmButton>
                 </div>
-              </form>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+          </form>
+        ) : (
+          <div className="grid grid-cols-1 gap-x-8 gap-y-5 lg:grid-cols-2 xl:grid-cols-3">
                 <div className="space-y-1">
                   <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                     Client Name
@@ -810,9 +873,10 @@ export function EnquiryDetailClient({
                   </span>
                 </div>
 
-                <div className="md:col-span-2 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border-t border-[var(--mnx-border)]/30 pt-4 lg:col-span-2 xl:col-span-3">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
                   <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Cargo Mode
                     </span>
                     <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
@@ -830,7 +894,7 @@ export function EnquiryDetailClient({
                   </div>
 
                   {enquiryType === "Sea" ? (
-                    <div className="md:col-span-2 space-y-1">
+                    <div className="space-y-1 md:col-span-2 xl:col-span-2">
                       <span className="text-[11px] font-normal text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
                         Routing (Sea POL ➔ POD)
                       </span>
@@ -839,7 +903,7 @@ export function EnquiryDetailClient({
                       </span>
                     </div>
                   ) : (
-                    <div className="md:col-span-2 space-y-1">
+                    <div className="space-y-1 md:col-span-2 xl:col-span-2">
                       <span className="text-[11px] font-normal text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
                         Routing (Air AOL ➔ AOD)
                       </span>
@@ -850,7 +914,7 @@ export function EnquiryDetailClient({
                   )}
 
                   <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Shipment Planning
                     </span>
                     <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -858,7 +922,7 @@ export function EnquiryDetailClient({
                     </span>
                   </div>
                   <div className="space-y-1">
-                  <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-[var(--mnx-muted)] uppercase tracking-wider block">
                       Purpose of Cargo
                     </span>
                     <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
@@ -867,12 +931,14 @@ export function EnquiryDetailClient({
                   </div>
                 </div>
               </div>
-            )}
-          </CrmSection>
+            </div>
+        )}
+      </CrmSection>
 
-          {/* Perishable Cargo Card (displays always if lead.isPerishable is true, or provides toggle) */}
-          {lead.isPerishable && (
-            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 mnx-shadow-panel space-y-4 mnx-crm-panel-surface mnx-tone-warning">
+      {/* Perishable Cargo Card (displays always if lead.isPerishable is true, or provides toggle) */}
+      {lead.isPerishable && (
+        <div className="rounded-xl border border-[var(--mnx-accent)]/40 bg-[var(--mnx-surface)] p-6 mnx-crm-panel-surface mnx-tone-warning">
+          <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
                   <span className="size-8 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center text-base">
@@ -1017,24 +1083,16 @@ export function EnquiryDetailClient({
                   </div>
                 </div>
               )}
-            </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          <CrmSection
-            eyebrow="Commercial worksheet"
-            title="Rates and costing worksheet"
-            description="Capture the current working estimate for this enquiry before conversion."
-            actions={<CrmStatus variant="accent">Worksheet calculator</CrmStatus>}
-          >
-            <ServiceRateWorkflowPanel lead={lead} serviceType={serviceType} />
-          </CrmSection>
-
-          {false && (
-            <CrmSection
-              eyebrow="Automation checks"
-              title="Inbound email rate parser and simulator"
-              description="Verify automatic pricing extraction by pasting pricing feedback or simulating agent inbound email replies."
-            >
+      {false && (
+        <CrmSection
+          eyebrow="Automation checks"
+          title="Inbound email rate parser and simulator"
+          description="Verify automatic pricing extraction by pasting pricing feedback or simulating agent inbound email replies."
+        >
 
             {/* Paste box tool */}
             <div className="space-y-3">
@@ -1123,87 +1181,72 @@ export function EnquiryDetailClient({
                 </div>
               </form>
             </div>
-            </CrmSection>
-          )}
-        </div>
+        </CrmSection>
+      )}
 
-        {/* Right column details (Timeline, Activities, Notes) */}
-        <div className="space-y-6 col-span-1">
-          {/* Follow-up Reminder Details Card */}
-          {lead.isFutureFollowUp && lead.followUpReminderDate && (
-            <CrmPanel className="space-y-3 border-[var(--mnx-warning)]/25 bg-[var(--mnx-warning-bg)]/35">
-              <span className="text-[10px] font-bold text-[var(--mnx-warning)] uppercase tracking-widest block font-sans">
-                Follow-up Alarm
-              </span>
-              <div className="flex items-center gap-2 text-[var(--mnx-text-strong)]">
-                <Clock className="size-4.5 text-[var(--mnx-warning)] shrink-0" />
-                <span className="font-bold text-sm mnx-numeric">
-                  {new Date(lead.followUpReminderDate).toLocaleString("en-IN")}
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--mnx-muted)] italic">
-                A sales reminder is active. Mark the lead interested or
-                converted to clear active follow-up directives.
-              </p>
-            </CrmPanel>
-          )}
+      <CrmSection
+        eyebrow="Shared context"
+        title="Notes, activity, audit, and calls"
+        description="Keep secondary information in one full-width section so the primary workflow stays readable."
+      >
+        <CrmTabs className="flex-wrap gap-2 border-none bg-transparent p-0">
+          <CrmButton
+            onClick={() => setActiveTab("OVERVIEW")}
+            variant={activeTab === "OVERVIEW" ? "primary" : "secondary"}
+            size="compact"
+            role="tab"
+            aria-selected={activeTab === "OVERVIEW"}
+          >
+            Summary
+          </CrmButton>
+          <CrmButton
+            onClick={() => setActiveTab("NOTES")}
+            variant={activeTab === "NOTES" ? "primary" : "secondary"}
+            size="compact"
+            role="tab"
+            aria-selected={activeTab === "NOTES"}
+          >
+            Notes ({notes.length})
+          </CrmButton>
+          <CrmButton
+            onClick={() => setActiveTab("ACTIVITIES")}
+            variant={activeTab === "ACTIVITIES" ? "primary" : "secondary"}
+            size="compact"
+            role="tab"
+            aria-selected={activeTab === "ACTIVITIES"}
+          >
+            Tasks ({activities.length})
+          </CrmButton>
+          <CrmButton
+            onClick={() => setActiveTab("TIMELINE")}
+            variant={activeTab === "TIMELINE" ? "primary" : "secondary"}
+            size="compact"
+            role="tab"
+            aria-selected={activeTab === "TIMELINE"}
+          >
+            Audit
+          </CrmButton>
+          <CrmButton
+            onClick={() => setActiveTab("TIME_TRACKER")}
+            variant={activeTab === "TIME_TRACKER" ? "primary" : "secondary"}
+            size="compact"
+            role="tab"
+            aria-selected={activeTab === "TIME_TRACKER"}
+          >
+            Time Tracker ({workTimeLogs.length})
+          </CrmButton>
+          <CrmButton
+            onClick={() => setActiveTab("CALLS")}
+            variant={activeTab === "CALLS" ? "primary" : "secondary"}
+            size="compact"
+            role="tab"
+            aria-selected={activeTab === "CALLS"}
+          >
+            Calls ({calls.length})
+          </CrmButton>
+        </CrmTabs>
 
-          {/* Related lists tabs container */}
-          <CrmPanel className="space-y-4 bg-[var(--mnx-card)] p-4 md:p-5">
-            {/* Nav pills */}
-            <CrmTabs className="flex-wrap overflow-visible rounded-none border-x-0 border-t-0 bg-transparent p-0 pb-3">
-              <CrmButton
-                onClick={() => setActiveTab("OVERVIEW")}
-                variant={activeTab === "OVERVIEW" ? "primary" : "secondary"}
-                size="compact"
-                className="shrink-0 font-normal"
-              >
-                Summary
-              </CrmButton>
-              <CrmButton
-                onClick={() => setActiveTab("NOTES")}
-                variant={activeTab === "NOTES" ? "primary" : "secondary"}
-                size="compact"
-                className="shrink-0 font-normal"
-              >
-                Notes ({notes.length})
-              </CrmButton>
-              <CrmButton
-                onClick={() => setActiveTab("ACTIVITIES")}
-                variant={activeTab === "ACTIVITIES" ? "primary" : "secondary"}
-                size="compact"
-                className="shrink-0 font-normal"
-              >
-                Tasks ({activities.length})
-              </CrmButton>
-              <CrmButton
-                onClick={() => setActiveTab("TIMELINE")}
-                variant={activeTab === "TIMELINE" ? "primary" : "secondary"}
-                size="compact"
-                className="shrink-0 font-normal"
-              >
-                Audit
-              </CrmButton>
-              <CrmButton
-                onClick={() => setActiveTab("TIME_TRACKER")}
-                variant={activeTab === "TIME_TRACKER" ? "primary" : "secondary"}
-                size="compact"
-                className="shrink-0 font-normal"
-              >
-                Time Tracker ({workTimeLogs.length})
-              </CrmButton>
-              <CrmButton
-                onClick={() => setActiveTab("CALLS")}
-                variant={activeTab === "CALLS" ? "primary" : "secondary"}
-                size="compact"
-                className="shrink-0 font-normal"
-              >
-                Calls ({calls.length})
-              </CrmButton>
-            </CrmTabs>
-
-            {/* Content areas */}
-            <div className="space-y-3 px-1 text-xs">
+        <div className="space-y-3 px-1 text-xs">
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-3">
                   <div className="rounded-xl border border-[var(--mnx-border)]/30 bg-[var(--mnx-surface)]/50 p-3.5 space-y-2">
@@ -1639,10 +1682,17 @@ export function EnquiryDetailClient({
                   )}
                 </div>
               )}
-            </div>
-          </CrmPanel>
         </div>
-      </div>
+      </CrmSection>
+
+      <CrmSection
+        eyebrow="Commercial worksheet"
+        title="Commercial workflow"
+        description="The worksheet now unlocks stage by stage so users see only the next action instead of the whole process at once."
+        actions={<CrmStatus variant="accent">Worksheet calculator</CrmStatus>}
+      >
+        <ServiceRateWorkflowPanel lead={lead} serviceType={serviceType} />
+      </CrmSection>
     </div>
   );
 }

@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { listMemberships, createMembership, deleteMembership } from "@/lib/google-chat-client";
+import {
+  listMemberships,
+  createMembership,
+  deleteMembership,
+  isCurrentGoogleChatUser,
+} from "@/lib/google-chat-client";
+
+type ChatMembership = Awaited<ReturnType<typeof listMemberships>>["memberships"][number];
+type ResolvedUser = {
+  id: string;
+  name: string;
+  email: string;
+  designation: string | null;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 // GET /api/communication/chat/space/members?spaceId=spaces/XXX - List members
 export async function GET(req: NextRequest) {
@@ -20,10 +37,12 @@ export async function GET(req: NextRequest) {
   try {
     const data = await listMemberships(spaceId, session.user.id);
     const memberships = data.memberships || [];
+    const sessionName = session.user.name?.trim() || "You";
 
     // Query database employees to resolve user profiles
     const connections = await db.googleWorkspaceConnection.findMany({
       select: {
+        googleEmail: true,
         googleUserId: true,
         user: {
           select: {
@@ -36,14 +55,28 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    const userMap = new Map<string, any>();
+    const userMap = new Map<string, ResolvedUser>();
+    const userByEmail = new Map<string, ResolvedUser>();
     for (const conn of connections) {
       if (conn.googleUserId && conn.user) {
         userMap.set(conn.googleUserId, conn.user);
       }
+      if (conn.googleEmail && conn.user) {
+        userByEmail.set(conn.googleEmail.toLowerCase(), conn.user);
+      }
+      if (conn.user?.email) {
+        userByEmail.set(conn.user.email.toLowerCase(), conn.user);
+      }
     }
 
-    const resolvedMemberships = memberships.map((m: any) => {
+    const myConnection = await db.googleWorkspaceConnection.findUnique({
+      where: { userId: session.user.id },
+      select: { googleUserId: true, googleEmail: true },
+    });
+    const myGoogleUserId = myConnection?.googleUserId ?? null;
+    const myGoogleEmail = myConnection?.googleEmail?.toLowerCase() ?? session.user.email?.toLowerCase() ?? null;
+
+    const resolvedMemberships = memberships.map((m: ChatMembership) => {
       const memberName = m.member?.name || "";
       const googleUserIdMatch = memberName.match(/^users\/([a-zA-Z0-9_-]+)$/);
       const googleUserId = googleUserIdMatch ? googleUserIdMatch[1] : null;
@@ -52,25 +85,44 @@ export async function GET(req: NextRequest) {
       if (googleUserId) {
         employee = userMap.get(googleUserId);
       }
+      if (!employee && m.member?.email) {
+        employee = userByEmail.get(m.member.email.toLowerCase()) ?? null;
+      }
+
+      const isCurrentUser = Boolean(
+        isCurrentGoogleChatUser({
+          memberName,
+          memberEmail: m.member?.email || null,
+          googleUserId: myGoogleUserId,
+          googleEmail: myGoogleEmail,
+          userEmail: session.user.email ?? null,
+        }) ||
+        employee?.id === session.user.id,
+      );
+
+      const rawDisplayName = m.member?.displayName?.trim();
+      const displayName = isCurrentUser
+        ? sessionName
+        : employee?.name || rawDisplayName || "Chat Member";
 
       return {
         name: m.name, // e.g. spaces/XXX/members/YYY
         role: m.role || "ROLE_MEMBER",
         member: {
           name: memberName,
-          displayName: employee?.name || m.member?.displayName || "Google User",
-          email: employee?.email || "",
-          designation: employee?.designation || "Staff",
-          employeeId: employee?.id || null,
+          displayName,
+          email: employee?.email || m.member?.email || "",
+          designation: isCurrentUser ? (employee?.designation || "You") : (employee?.designation || "Staff"),
+          employeeId: isCurrentUser ? "current-user" : (employee?.id || null),
           googleUserId: googleUserId
         }
       };
     });
 
     return NextResponse.json({ memberships: resolvedMemberships });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[SpaceMembersAPI] Error listing members:", err);
-    return NextResponse.json({ error: err.message || "Failed to list members" }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(err, "Failed to list members") }, { status: 500 });
   }
 }
 
@@ -115,9 +167,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[SpaceMembersAPI] Error adding member:", err);
-    return NextResponse.json({ error: err.message || "Failed to add member" }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(err, "Failed to add member") }, { status: 500 });
   }
 }
 
@@ -144,8 +196,8 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[SpaceMembersAPI] Error removing member:", err);
-    return NextResponse.json({ error: err.message || "Failed to remove member" }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(err, "Failed to remove member") }, { status: 500 });
   }
 }

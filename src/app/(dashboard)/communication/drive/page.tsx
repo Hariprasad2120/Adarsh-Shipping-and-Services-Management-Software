@@ -9,6 +9,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import Link from "next/link";
+import { ButtonLink } from "@/components/ui/button";
 import JobSelector from "./JobSelector";
 import SyncDriveButton from "./SyncDriveButton";
 import { CommunicationEmptyTableRow, CommunicationField, CommunicationPanel, CommunicationPanelHeader, CommunicationTable } from "@/modules/communication/components/workspace/communication-workspace";
@@ -99,13 +100,13 @@ export default async function JobDrivePortal({
             description="Google Drive files inherit the access and folder structure configured for this job."
             actions={
               selectedFolderId ? (
-                <Link
+                <ButtonLink
                   href={`/communication/drive?jobId=${selectedJobId}`}
-                  className="mnx-button mnx-button-secondary"
+                  variant="inverse"
                 >
                   <ArrowLeft aria-hidden="true" />
                   Back to folders
-                </Link>
+                </ButtonLink>
               ) : null
             }
           />

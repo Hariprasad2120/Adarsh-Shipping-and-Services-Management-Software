@@ -6,7 +6,6 @@ import {
   CrmInput,
   CrmPanel,
   CrmSection,
-  CrmSelect,
   CrmStatus,
   CrmTable,
   CrmTextarea,
@@ -14,7 +13,7 @@ import {
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   BellRing,
@@ -47,7 +46,6 @@ import { ApprovalActionBar, ApprovalLogList, type ApprovalCaps, type ApprovalLog
 import type { ApprovalStatus } from "@/modules/crm/approval-workflow";
 import { toast } from "sonner";
 import { deleteInvoiceAction } from "@/modules/crm/actions";
-import { actionSubmitForApproval } from "@/modules/crm/approval-actions";
 import { getStateCodeForLocation } from "@/modules/crm/components/quotes/lib/gst-states";
 import { useCollapsiblePanel } from "@/modules/core/hooks/use-collapsible-panel";
 import { QuoteMoreActionsMenu } from "@/modules/crm/components/quotes/QuoteMoreActionsMenu";
@@ -136,6 +134,13 @@ function departmentLabel(value: "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE") {
   return value === "FREIGHT_FORWARDING"
     ? "Freight Forwarding"
     : "Customs Clearance";
+}
+
+function getPricingTraceVariant(status?: "CURRENT" | "STALE" | "MISSING" | "UNLINKED" | null) {
+  if (status === "CURRENT") return "success" as const;
+  if (status === "UNLINKED") return "neutral" as const;
+  if (status === "STALE" || status === "MISSING") return "warning" as const;
+  return "neutral" as const;
 }
 
 type DepartmentView = "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE";
@@ -387,6 +392,7 @@ export function QuoteDetailsPage({
   const notifications = approvalFlow?.notifications ?? [];
   const includedDepartments = quote.workflowContext?.includedDepartments ?? [];
   const pendingDepartments = quote.workflowContext?.pendingDepartments ?? [];
+  const pricingTrace = quote.workflowContext?.pricingTrace ?? null;
   const inferredDepartments = Array.from(
     new Set(
       quote.items
@@ -945,6 +951,35 @@ export function QuoteDetailsPage({
                 description="Review approval ownership, timing, and downstream operational conversion status."
               >
                 <div className="space-y-4">
+                  {pricingTrace ? (
+                    <CrmPanel
+                      className={
+                        pricingTrace.status === "STALE" || pricingTrace.status === "MISSING"
+                          ? "border-[var(--mnx-warning)]/35 bg-[var(--mnx-warning-bg)]/35 p-4"
+                          : "p-4"
+                      }
+                    >
+                      <div className="flex flex-wrap items-center gap-3">
+                        <CrmStatus variant={getPricingTraceVariant(pricingTrace.status)}>
+                          Pricing {pricingTrace.status.toLowerCase()}
+                        </CrmStatus>
+                        {pricingTrace.snapshotVersionLabel ? (
+                          <CrmStatus variant="accent">
+                            Quote source {pricingTrace.snapshotVersionLabel}
+                          </CrmStatus>
+                        ) : null}
+                        {pricingTrace.currentFinalizedVersionLabel ? (
+                          <CrmStatus variant="neutral">
+                            Enquiry source {pricingTrace.currentFinalizedVersionLabel}
+                          </CrmStatus>
+                        ) : null}
+                      </div>
+                      <p className="mt-3 text-sm text-[var(--mnx-text-muted)]">
+                        {pricingTrace.message}
+                      </p>
+                    </CrmPanel>
+                  ) : null}
+
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <DetailPair
                       label="Approval status"
@@ -1087,6 +1122,13 @@ export function QuoteDetailsPage({
                     [
                       "Latest actor",
                       quote.approvalLogs?.[0]?.actor.name || "-",
+                    ],
+                    [
+                      "Pricing trace",
+                      pricingTrace?.status
+                        ? pricingTrace.status.charAt(0) +
+                          pricingTrace.status.slice(1).toLowerCase()
+                        : "Not recorded",
                     ],
                   ]}
                 />
@@ -1620,9 +1662,10 @@ export function QuoteDetailsPage({
                       )}
                     >
                       {pdfPanelCollapsed ? (
-                        <button
+                        <CrmButton
                           type="button"
                           onClick={togglePdfPanel}
+                          variant="secondary"
                           className="flex h-full min-h-[240px] flex-1 items-center justify-center py-4"
                           aria-label="Show PDF preview"
                           title="Show PDF preview"
@@ -1630,7 +1673,7 @@ export function QuoteDetailsPage({
                           <span className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)] [writing-mode:vertical-rl]">
                             PDF Preview
                           </span>
-                        </button>
+                        </CrmButton>
                       ) : selectedDepartmentState === "available" &&
                         selectedDepartmentQuote ? (
                         <div className="flex-1 overflow-y-auto p-4">

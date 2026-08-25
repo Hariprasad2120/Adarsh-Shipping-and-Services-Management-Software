@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Volume2, VolumeOff, ChevronDown, Cpu } from "lucide-react";
@@ -8,6 +8,7 @@ import { useMonaChat } from "@/modules/mona/components/mona-provider";
 import { MonaAvatar } from "@/modules/mona/components/mona-avatar";
 import { MonaMessage } from "@/modules/mona/components/mona-message";
 import { MonaInput } from "@/modules/mona/components/mona-input";
+import { DevelopmentBuildWatermark } from "@/components/feedback/development-build-watermark";
 
 /**
  * The main Mona chat widget — FAB + expandable panel.
@@ -40,11 +41,12 @@ export function MonaChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
-
-  // Portal needs document.body — only available after mount
-  useEffect(() => setMounted(true), []);
+  const portalTarget = useSyncExternalStore(
+    () => () => undefined,
+    () => document.body,
+    () => null,
+  );
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -92,7 +94,7 @@ export function MonaChat() {
   );
 
   // Don't render until mounted (SSR safety for portal)
-  if (!mounted) return null;
+  if (!portalTarget) return null;
 
   return createPortal(
     <>
@@ -107,20 +109,23 @@ export function MonaChat() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
           >
-            {/* Tooltip bubble */}
-            <AnimatePresence>
-              {showTooltip && (
-                <motion.div
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  className="mnx-floating-surface mnx-floating-tooltip absolute bottom-full right-0 mb-3 whitespace-nowrap px-4 py-2 text-[12px] font-medium"
-                >
-                  👋 Hi! I&apos;m <strong>Mona</strong>, your AI companion
-                  <div className="mnx-floating-tooltip-arrow absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-r border-b" />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="mnx-mona-floating-stack">
+              <AnimatePresence>
+                {showTooltip && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="mnx-floating-surface mnx-floating-tooltip relative whitespace-nowrap px-4 py-2 text-[12px] font-medium"
+                  >
+                    👋 Hi! I&apos;m <strong>Mona</strong>, your AI companion
+                    <div className="mnx-floating-tooltip-arrow absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-r border-b" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <DevelopmentBuildWatermark />
+            </div>
 
             <button
               type="button"
@@ -336,6 +341,6 @@ export function MonaChat() {
         )}
       </AnimatePresence>
     </>,
-    document.body,
+    portalTarget,
   );
 }

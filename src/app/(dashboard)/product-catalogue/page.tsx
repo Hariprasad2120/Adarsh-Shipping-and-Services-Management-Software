@@ -336,15 +336,24 @@ export default function ProductCataloguePage() {
                 <Button
                   key={stage.stageId}
                   variant={activeStage.stageId === stage.stageId ? "default" : "inverse"}
-                  className={activeStage.stageId === stage.stageId ? "is-active" : ""}
+                  className={[
+                    "mnx-catalogue-stage-button",
+                    activeStage.stageId === stage.stageId ? "is-active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   onClick={() => setActiveStageId(stage.stageId)}
                 >
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <span>
+                  <span className="mnx-catalogue-stage-button-index">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="mnx-catalogue-stage-button-copy">
                     <b>{stage.stageName}</b>
                     <small>{stage.durationLabel}</small>
                   </span>
-                  <DynamicIcon name={stage.iconName} size={15} />
+                  <span className="mnx-catalogue-stage-button-icon" aria-hidden="true">
+                    <DynamicIcon name={stage.iconName} size={15} />
+                  </span>
                 </Button>
               ))}
             </nav>

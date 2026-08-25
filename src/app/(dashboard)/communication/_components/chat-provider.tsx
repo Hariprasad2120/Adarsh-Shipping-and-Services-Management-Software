@@ -53,8 +53,12 @@ export function useChatContext(): ChatContextValue {
 
 const BAD_NAMES = new Set([
   "Adarsh Operations", "adarsh operations", "ADARSH OPERATIONS",
-  "Google Chat DM", "Google User",
+  "Google Chat DM", "Google User", "Direct message", "Chat Member",
 ]);
+
+function isBadName(value?: string | null): boolean {
+  return !value || BAD_NAMES.has(value.trim());
+}
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -92,6 +96,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = localStorage.getItem("monolith_chat_desktop_notif");
       if (stored === "true") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDesktopNotifEnabledState(true);
         desktopNotifRef.current = true;
       }
@@ -159,7 +164,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       // Restore basic fields immediately — page can start fetching messages
       activeSpaceIdRef.current = spaceId;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedSpaceId(spaceId);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedSpaceType(type);
 
       // Resolve richer objects from loaded data
@@ -175,6 +182,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         // For DMs, resolve employee name if possible
         if (type === "DM") {
           const emp = employees.find((e: any) =>
+            e.id === matchSpace.employeeId ||
+            e.id === matchSpace.participantUserId ||
+            e.email?.toLowerCase() === matchSpace.participantEmail?.toLowerCase?.() ||
             e.name.toLowerCase() === matchSpace.displayName?.toLowerCase()
           );
           if (emp) {
@@ -209,15 +219,59 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       // Detect brand-new DM spaces (someone messaged us from a new conversation)
       const prevNames = new Set(googleSpacesRef.current.map((s: any) => s.name));
+      const nextSpaces = data.googleSpaces || [];
 
       setJobs(data.jobs || []);
       setEmployees(data.employees || []);
-      setGoogleSpaces(data.googleSpaces || []);
+      setGoogleSpaces(nextSpaces);
 
-      for (const space of (data.googleSpaces || [])) {
+      const newDmSpaces = nextSpaces.filter((space: any) =>
+        space.spaceType === "DIRECT_MESSAGE" && !prevNames.has(space.name)
+      );
+
+      for (const space of newDmSpaces) {
         if (space.spaceType === "DIRECT_MESSAGE" && !prevNames.has(space.name)) {
           setUnreadCounts(prev => ({ ...prev, [space.name]: (prev[space.name] || 0) + 1 }));
           setSpaceLastActivity(prev => ({ ...prev, [space.name]: Date.now() }));
+        }
+      }
+
+      if (newDmSpaces.length > 0) {
+        const detailsRes = await fetch(`/api/communication/chat/check-new?spaces=${newDmSpaces.map((space: any) => space.name).join(",")}`);
+        if (detailsRes.ok) {
+          const details = await detailsRes.json();
+          for (const item of (details.results || [])) {
+            if (!item || item.isMe || !item.latestMessageName) continue;
+            if (notifiedMsgsRef.current.has(item.latestMessageName)) continue;
+
+            notifiedMsgsRef.current.add(item.latestMessageName);
+            lastKnownMsgRef.current[item.spaceId] = item.latestMessageName;
+
+            const matchingSpace = nextSpaces.find((space: any) => space.name === item.spaceId);
+            const matchingEmployee = data.employees?.find((employee: any) =>
+              employee.id === matchingSpace?.employeeId ||
+              employee.id === matchingSpace?.participantUserId ||
+              employee.email?.toLowerCase() === matchingSpace?.participantEmail?.toLowerCase?.()
+            );
+            const resolvedSpaceName =
+              matchingEmployee?.name ||
+              (!isBadName(matchingSpace?.displayName)
+                ? matchingSpace.displayName
+                : item.senderDisplayName) ||
+              "Unknown user";
+
+            setPendingToasts(prev => [
+              ...prev.slice(-4),
+              {
+                id: item.latestMessageName,
+                sender: item.senderDisplayName || resolvedSpaceName,
+                snippet: item.snippet || "New message",
+                spaceId: item.spaceId,
+                spaceName: resolvedSpaceName,
+                time: Date.now(),
+              },
+            ]);
+          }
         }
       }
     } catch {}
@@ -240,9 +294,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // 30s spaces refresh — keeps DM list current even when on other pages
+  // 5s spaces refresh — keeps brand-new DMs visible quickly across modules
   useEffect(() => {
-    const t = setInterval(refreshSpaces, 30000);
+    const t = setInterval(refreshSpaces, 5000);
     return () => clearInterval(t);
   }, [refreshSpaces]);
 

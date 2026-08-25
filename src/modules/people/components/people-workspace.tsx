@@ -97,9 +97,9 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
   },
   "/hrms/helpdesk": {
     eyebrow: "People services",
-    title: "HR help desk",
+    title: "HR and IT service desk",
     description:
-      "Raise and track confidential HR questions through the shared service workflow.",
+      "Run employee-facing HR and workplace-tech support through one guided internal service desk.",
     icon: HelpCircle,
   },
   "/hrms/incentives": {
@@ -146,9 +146,9 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
   },
   "/hrms/payroll": {
     eyebrow: "Compensation",
-    title: "Payroll batches",
+    title: "Payroll operations",
     description:
-      "Prepare payroll periods, validate employee pay, and monitor processing outcomes.",
+      "Review live payroll inputs, approve period runs, and hand off immutable snapshots to Accounting.",
     icon: ReceiptIndianRupee,
   },
   "/hrms/reimbursement": {
@@ -416,9 +416,15 @@ export function PeopleWorkspaceFrame({ children }: { children: ReactNode }) {
   const Icon = meta.icon;
   const normalizedPath = normalizePathname(pathname);
   const hideFrameHeader = normalizedPath === "/hrms/letters";
+  const workspaceRoute =
+    normalizedPath === "/hrms/work-reports" ? "work-reports" : undefined;
 
   return (
-    <WorkspacePage className="mnx-people-page" data-people-workspace="true">
+    <WorkspacePage
+      className="mnx-people-page"
+      data-people-route={workspaceRoute}
+      data-people-workspace="true"
+    >
       {hideFrameHeader ? null : (
         <WorkspacePageHeader
           className="mnx-people-page-header"

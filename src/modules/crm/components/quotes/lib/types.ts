@@ -43,6 +43,28 @@ export type QuoteApprovalFlowState = {
   auditTrail?: QuoteApprovalAuditEntry[];
 };
 
+export type QuotePricingFreshnessStatus =
+  | "CURRENT"
+  | "STALE"
+  | "MISSING"
+  | "UNLINKED";
+
+export type QuotePricingTrace = {
+  status: QuotePricingFreshnessStatus;
+  snapshotId?: string | null;
+  snapshotVersionLabel?: string | null;
+  sellTotal?: number | null;
+  buyTotal?: number | null;
+  marginAmount?: number | null;
+  marginPercent?: number | null;
+  currentSnapshotId?: string | null;
+  currentSnapshotVersionLabel?: string | null;
+  currentFinalizedVersionId?: string | null;
+  currentFinalizedVersionLabel?: string | null;
+  message?: string | null;
+  checkedAt?: string | null;
+};
+
 export type QuoteConversionState = {
   createdAt?: string | null;
   createdById?: string | null;
@@ -66,6 +88,13 @@ export type QuoteWorkflowContext = {
   latestQuoteVersion?: number | null;
   quoteBaseNumber?: string | null;
   recreateRequired?: boolean;
+  pricingSnapshotId?: string | null;
+  pricingSnapshotVersionLabel?: string | null;
+  pricingSellTotal?: number | null;
+  pricingBuyTotal?: number | null;
+  pricingMarginAmount?: number | null;
+  pricingMarginPercent?: number | null;
+  pricingTrace?: QuotePricingTrace | null;
   approvalFlow?: QuoteApprovalFlowState | null;
   conversion?: QuoteConversionState | null;
 };

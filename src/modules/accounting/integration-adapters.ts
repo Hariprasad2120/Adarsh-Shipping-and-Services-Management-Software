@@ -550,6 +550,10 @@ export type ApprovedPayrollRunInput = {
   approvedAt: Date | string;
   eventId: string;
   correlationId: string;
+  // Phase 20-21: REGULAR (default) | OFF_CYCLE | TERMINATION | BULK_TERMINATION.
+  // Keeps regular and off-cycle/termination runs from colliding on the
+  // PayrollBatch(orgId, month, type) unique constraint.
+  payrollType?: string;
   lines: Array<{
     employeeId?: string | null;
     componentCode: string;
@@ -639,7 +643,9 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
       return existing;
     }
     const existingCompatibilityBatch = await tx.payrollBatch.findUnique({
-      where: { orgId_month: { orgId: input.orgId, month: start } },
+      where: {
+        orgId_month_type: { orgId: input.orgId, month: start, type: input.payrollType ?? "REGULAR" },
+      },
       select: {
         id: true,
         status: true,
@@ -688,6 +694,7 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
       data: {
         orgId: input.orgId,
         month: start,
+        type: input.payrollType ?? "REGULAR",
         status: "APPROVED_HRMS",
         totalAmount: totals.debit,
         sourceSnapshotId: snapshot.id,

@@ -4,11 +4,12 @@ import {
   CrmButton,
   CrmDialog,
   CrmInput,
+  CrmSelect,
   CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
 import Link from "next/link";
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import {
   ArchiveRestore,
   CheckCircle,
@@ -59,6 +60,10 @@ type QuoteManagerOption = { id: string; name: string };
 type QuoteWorkflowContextLike = {
   includedDepartments?: Array<"FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE">;
   pendingDepartments?: Array<"FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE">;
+  pricingTrace?: {
+    status?: "CURRENT" | "STALE" | "MISSING" | "UNLINKED";
+    message?: string | null;
+  } | null;
   approvalFlow?: {
     selectedManagerId?: string | null;
   } | null;
@@ -297,10 +302,8 @@ export function ApprovalActionBar({
   onExternalSubmitDialogClose,
 }: ApprovalActionBarProps) {
   const [dialog, setDialog] = useState<DialogState>(null);
-
-  useEffect(() => {
-    if (externalSubmitDialogOpen) setDialog({ type: "submit" });
-  }, [externalSubmitDialogOpen]);
+  const activeDialog =
+    externalSubmitDialogOpen && dialog === null ? ({ type: "submit" } as const) : dialog;
 
   function closeDialog() {
     setDialog(null);
@@ -327,6 +330,9 @@ export function ApprovalActionBar({
   const quoteConversion = workflowContext?.conversion ?? null;
   const includedDepartments = workflowContext?.includedDepartments ?? [];
   const pendingDepartments = workflowContext?.pendingDepartments ?? [];
+  const pricingTrace = workflowContext?.pricingTrace ?? null;
+  const pricingGovernanceBlocked =
+    pricingTrace?.status === "STALE" || pricingTrace?.status === "MISSING";
   const handoffDepartments = Array.from(
     new Set([...includedDepartments, ...pendingDepartments]),
   );
@@ -386,10 +392,17 @@ export function ApprovalActionBar({
             />
           ) : null}
 
+          {pricingGovernanceBlocked ? (
+            <div className="w-full rounded-xl border border-[var(--mnx-warning)]/35 bg-[var(--mnx-warning-bg)]/35 px-4 py-3 text-sm text-[var(--mnx-warning)]">
+              {pricingTrace?.message ||
+                "Approval is blocked until the quotation is recreated from the current pricing worksheet."}
+            </div>
+          ) : null}
+
           {showDraftActions && caps.canSubmit ? (
             <CrmButton
               onClick={() => setDialog({ type: "submit" })}
-              disabled={isPending}
+              disabled={isPending || pricingGovernanceBlocked}
               className={`${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`}
             >
               <Send size={14} />
@@ -401,7 +414,7 @@ export function ApprovalActionBar({
             <>
               <CrmButton
                 onClick={() => setDialog({ type: "approve" })}
-                disabled={isPending}
+                disabled={isPending || pricingGovernanceBlocked}
                 className={`${actionClass} bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)]`}
               >
                 <UserCheck size={14} />
@@ -422,7 +435,7 @@ export function ApprovalActionBar({
             <>
               <CrmButton
                 onClick={() => setDialog({ type: "customer-approve" })}
-                disabled={isPending}
+                disabled={isPending || pricingGovernanceBlocked}
                 className={`${actionClass} bg-[var(--mnx-success)] text-[var(--mnx-text-strong)]`}
               >
                 <ClipboardCheck size={14} />
@@ -475,7 +488,7 @@ export function ApprovalActionBar({
           ) : null}
         </div>
 
-        {dialog?.type === "booking" ? (
+        {activeDialog?.type === "booking" ? (
           <CrmDialog
             open
             onClose={() => setDialog(null)}
@@ -533,7 +546,7 @@ export function ApprovalActionBar({
           </CrmDialog>
         ) : null}
 
-        {dialog?.type === "submit" ? (
+        {activeDialog?.type === "submit" ? (
           <CrmDialog
             open
             onClose={closeDialog}
@@ -568,10 +581,9 @@ export function ApprovalActionBar({
                 <span className="text-xs font-semibold uppercase tracking-wide text-[var(--mnx-text-muted)]">
                   Approving manager
                 </span>
-                <select
+                <CrmSelect
                   value={selectedManagerId}
                   onChange={(event) => setSelectedManagerId(event.target.value)}
-                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm text-[var(--mnx-text-strong)]"
                 >
                   <option value="">Select manager</option>
                   {managerOptions.map((manager) => (
@@ -579,7 +591,7 @@ export function ApprovalActionBar({
                       {manager.name}
                     </option>
                   ))}
-                </select>
+                </CrmSelect>
               </label>
               <p className="text-sm text-[var(--mnx-text-muted)]">
                 The selected manager will receive the approval request and must
@@ -589,7 +601,7 @@ export function ApprovalActionBar({
           </CrmDialog>
         ) : null}
 
-        {dialog?.type === "approve" ? (
+        {activeDialog?.type === "approve" ? (
           <NoteDialog
             title="Approve Quotation"
             placeholder="Add manager remarks (optional)"
@@ -605,7 +617,7 @@ export function ApprovalActionBar({
           />
         ) : null}
 
-        {dialog?.type === "rework" ? (
+        {activeDialog?.type === "rework" ? (
           <NoteDialog
             title="Reject Back To Draft"
             placeholder="Explain what needs to be changed"
@@ -622,7 +634,7 @@ export function ApprovalActionBar({
           />
         ) : null}
 
-        {dialog?.type === "customer-approve" ? (
+        {activeDialog?.type === "customer-approve" ? (
           <NoteDialog
             title="Record Customer Approval"
             placeholder="Add customer remarks (optional)"
@@ -645,7 +657,7 @@ export function ApprovalActionBar({
           />
         ) : null}
 
-        {dialog?.type === "customer-reject" ? (
+        {activeDialog?.type === "customer-reject" ? (
           <NoteDialog
             title="Record Customer Rejection"
             placeholder="Record the customer rejection reason"
@@ -801,7 +813,7 @@ export function ApprovalActionBar({
           ))}
       </div>
 
-      {dialog?.type === "rework" ? (
+      {activeDialog?.type === "rework" ? (
         <NoteDialog
           title="Request Rework"
           placeholder="Describe what needs to change"
@@ -815,7 +827,7 @@ export function ApprovalActionBar({
         />
       ) : null}
 
-      {dialog?.type === "restore" ? (
+      {activeDialog?.type === "restore" ? (
         <NoteDialog
           title="Restore To Draft"
           placeholder="Add a restore note (optional)"

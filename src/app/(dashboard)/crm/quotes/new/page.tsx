@@ -11,6 +11,7 @@ import {
   type CrmQuoteWorkflowMode,
 } from "@/modules/crm/rate-workflow";
 import type { QuoteWorkflowContext } from "@/modules/crm/components/quotes/lib/types";
+import { buildQuotePricingTrace } from "@/modules/crm/services/quote-pricing-governance.service";
 
 interface SearchParams {
   leadId?: string;
@@ -198,7 +199,18 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
         latestQuoteVersion: workflow.latestQuoteVersion,
         quoteBaseNumber: baseQuoteNumber,
         recreateRequired: mode === "newly-added-only",
+        pricingSnapshotId: workflow.pricingSnapshot?.id ?? null,
+        pricingSnapshotVersionLabel:
+          workflow.pricingSnapshot?.basedOnFinalizedVersionLabel ?? null,
+        pricingSellTotal: workflow.pricingSnapshot?.totals.sellAmount ?? null,
+        pricingBuyTotal: workflow.pricingSnapshot?.totals.buyAmount ?? null,
+        pricingMarginAmount: workflow.pricingSnapshot?.totals.marginAmount ?? null,
+        pricingMarginPercent: workflow.pricingSnapshot?.totals.marginPercent ?? null,
       };
+      workflowContext.pricingTrace = buildQuotePricingTrace({
+        workflowContext,
+        linkedLeadEnquiryDetails: lead.enquiryDetails,
+      });
 
       initialData = {
         customerId,

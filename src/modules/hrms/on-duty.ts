@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { createNotification } from "@/modules/notifications/service";
 import { getUsersWithPermission } from "@/modules/notifications/service";
+import { evaluateGeofencesForPoint } from "@/modules/hrms/location-tracking";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -406,6 +407,10 @@ export async function recordLocationHeartbeat(
   source: string = "HOURLY"
 ) {
   const now = await getNow();
+  // Capture time comes from the device, not the server clock — an offline-queued point synced
+  // late must keep its real GPS timestamp so route ordering/dwell-timing/distance calc stay correct.
+  const parsedCapturedAt = location.timestamp ? new Date(location.timestamp) : null;
+  const capturedAt = parsedCapturedAt && !Number.isNaN(parsedCapturedAt.getTime()) ? parsedCapturedAt : now;
 
   // Find active tracking session
   const trackingSession = await db.locationTrackingSession.findFirst({
@@ -462,7 +467,7 @@ export async function recordLocationHeartbeat(
       altitude: location.altitude,
       speed: location.speed,
       bearing: location.bearing,
-      timestamp: now,
+      timestamp: capturedAt,
       batteryLevel: location.batteryLevel,
       deviceId: location.deviceId,
       networkStatus: location.networkStatus,
@@ -470,6 +475,22 @@ export async function recordLocationHeartbeat(
       isMocked: location.isMocked ?? false,
     },
   });
+
+  // Geofence entry/exit + customer-visit detection runs off every accepted point.
+  // Failure here must never block heartbeat recording, so it's isolated.
+  try {
+    await evaluateGeofencesForPoint({
+      orgId,
+      userId,
+      trackingSessionId: trackingSession.id,
+      latitude: location.lat,
+      longitude: location.lng,
+      occurredAt: capturedAt,
+      source,
+    });
+  } catch (geofenceError) {
+    console.error("geofence evaluation error:", geofenceError);
+  }
 
   return { recorded: true, pointId: point.id };
 }

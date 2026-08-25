@@ -247,9 +247,10 @@ export function InterestedModal({
     <CrmDialog
       open
       onClose={onClose}
+      className="mnx-crm-enquiry-dialog"
       title="In-Call Enquiry Form"
       description="Capture the enquiry details discussed during the call and convert the lead into an active enquiry."
-      size="wide"
+      size="workspace"
       footer={
         <>
           <Button
@@ -278,10 +279,10 @@ export function InterestedModal({
       <form
         id="interested-enquiry-form"
         onSubmit={handleSave}
-        className="flex min-h-0 flex-col"
+        className="mnx-crm-enquiry-form"
       >
         {/* Modal Navigation Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-3 border-b border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] px-6 py-4">
+        <div className="mnx-crm-enquiry-tabs flex flex-wrap items-center justify-center gap-3 border-b border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] px-6 py-4">
           <Button
             type="button"
             onClick={() => setActiveTab("Sea")}
@@ -310,8 +311,8 @@ export function InterestedModal({
           </Button>
         </div>
 
-        <div className="space-y-5 pt-6">
-            <div className="space-y-3 rounded-xl border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/35 p-4">
+        <div className="mnx-crm-enquiry-body space-y-5 pt-6">
+            <div className="mnx-crm-enquiry-card space-y-3 rounded-xl border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/35 p-4">
               <div className="space-y-1">
                 <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--mnx-text-strong)]">
                   Scope of Work
@@ -359,7 +360,7 @@ export function InterestedModal({
             </div>
 
             {/* Toggles Panel */}
-            <div className="grid grid-cols-1 gap-4 rounded-xl bg-[var(--mnx-surface)]/35 p-4 md:grid-cols-2">
+            <div className="mnx-crm-enquiry-card grid grid-cols-1 gap-4 rounded-xl bg-[var(--mnx-surface)]/35 p-4 md:grid-cols-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <span className="text-[11px] font-bold text-[var(--mnx-text-strong)] uppercase tracking-wider block">
@@ -412,7 +413,7 @@ export function InterestedModal({
             </div>
 
             {isFutureFollowUp && (
-              <div className="p-4 rounded-xl bg-[var(--mnx-accent)]/5 border border-[var(--mnx-accent)]/20 space-y-2 animate-in fade-in duration-200 mb-2">
+              <div className="mnx-crm-enquiry-card p-4 rounded-xl bg-[var(--mnx-accent)]/5 border border-[var(--mnx-accent)]/20 space-y-2 animate-in fade-in duration-200 mb-2">
                 <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide">
                   Reminder Date & Time *
                 </label>
@@ -429,22 +430,6 @@ export function InterestedModal({
             {activeTab === "Sea" ? (
               // SEA ENQUIRY FORM FIELDS
               <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">
-                      Direction
-                    </label>
-                    <NativeSelect
-                      value={airType}
-                      onChange={(e) => setAirType(e.target.value as "Import" | "Export")}
-                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-[var(--mnx-text-strong)] focus:outline-none focus:border-[var(--mnx-accent)]"
-                    >
-                      <option value="Import">Import</option>
-                      <option value="Export">Export</option>
-                    </NativeSelect>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-wide mb-1">

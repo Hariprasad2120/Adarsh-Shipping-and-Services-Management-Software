@@ -14,6 +14,7 @@ import {
   mapQuoteApprovalStatusToListStatus,
 } from "@/modules/crm/approval-workflow";
 import { loadQuoteDetailRecord } from "@/modules/crm/quote-loader";
+import { buildQuotePricingTrace } from "@/modules/crm/services/quote-pricing-governance.service";
 
 function getQuoteRootId(record: {
   id: string;
@@ -84,6 +85,7 @@ export default async function CrmQuoteDetailsPage({
       sourceQuotationNumber: true,
       sourceQuotationVersion: true,
       sourceQuotationSnapshot: true,
+      crmLeadId: true,
       reworkNote: true,
       slaDeadline: true,
       invoiceNumber: true,
@@ -159,6 +161,31 @@ export default async function CrmQuoteDetailsPage({
       createdBy: entry.owner?.name || null,
     })),
   };
+
+  const linkedLeadId =
+    dbQuote.crmLeadId ||
+    (quote.workflowContext &&
+    typeof (quote.workflowContext as Record<string, unknown>).leadId === "string"
+      ? ((quote.workflowContext as Record<string, unknown>).leadId as string)
+      : null);
+  if (linkedLeadId) {
+    const linkedLead = await db.crmLead.findFirst({
+      where: { id: linkedLeadId, orgId },
+      select: { enquiryDetails: true },
+    });
+
+    quote.workflowContext = {
+      ...(quote.workflowContext || {
+        mode: "combined",
+        includedDepartments: [],
+        pendingDepartments: [],
+      }),
+      pricingTrace: buildQuotePricingTrace({
+        workflowContext: quote.workflowContext,
+        linkedLeadEnquiryDetails: linkedLead?.enquiryDetails,
+      }),
+    };
+  }
 
   const [canSubmit, canApprove, canSend, canManage, canAdminRestore] =
     await Promise.all([

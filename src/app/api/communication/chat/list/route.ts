@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listSpaces } from "@/lib/google-chat-client";
@@ -7,7 +7,28 @@ import {
   normalizeJobWorkspaceProfile,
 } from "@/lib/job-workspace-profile";
 
-export async function GET(req: NextRequest) {
+type GoogleChatSpace = Awaited<ReturnType<typeof listSpaces>>[number];
+const GENERIC_DM_NAMES = new Set([
+  "Adarsh Operations",
+  "adarsh operations",
+  "ADARSH OPERATIONS",
+  "Adarsh Shipping",
+  "adarsh shipping",
+  "Google Chat DM",
+  "Google User",
+  "Direct message",
+  "Chat Member",
+]);
+
+function isGenericDmName(value?: string | null) {
+  return !value || GENERIC_DM_NAMES.has(value.trim());
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+export async function GET() {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,12 +69,11 @@ export async function GET(req: NextRequest) {
       spaceUrl: normalizeJobWorkspaceProfile(job.workspaceProfile)?.googleSpaceUrl
     }));
 
-    // 2. Fetch other active Employees for direct messaging mapping
-    const employees = await db.user.findMany({
+    // 2. Fetch active employees for identity resolution, then derive the DM picker list.
+    const allEmployees = await db.user.findMany({
       where: {
         orgId,
         active: true,
-        id: { not: session.user.id }
       },
       select: {
         id: true,
@@ -72,32 +92,30 @@ export async function GET(req: NextRequest) {
       }
     });
 
+    const employees = allEmployees.filter((employee) => employee.id !== session.user.id);
+
+    const employeesById = new Map(allEmployees.map((employee) => [employee.id, employee]));
+    const employeesByGoogleId = new Map(
+      allEmployees
+        .filter((employee) => employee.workspaceConnection?.googleUserId)
+        .map((employee) => [employee.workspaceConnection!.googleUserId!, employee]),
+    );
+    const employeesByEmail = new Map<string, (typeof allEmployees)[number]>();
+    for (const employee of allEmployees) {
+      if (employee.email) {
+        employeesByEmail.set(employee.email.toLowerCase(), employee);
+      }
+      if (employee.workspaceConnection?.googleEmail) {
+        employeesByEmail.set(employee.workspaceConnection.googleEmail.toLowerCase(), employee);
+      }
+    }
+
     // 3. Fetch real Google Chat spaces of the user
-    let googleSpaces: any[] = [];
+    let googleSpaces: GoogleChatSpace[] = [];
     try {
       googleSpaces = await listSpaces(session.user.id);
     } catch (err) {
       console.error("[ChatListAPI] Error listing Google Chat spaces:", err);
-    }
-
-    // 4. Resolve DM display names by cross-referencing with employees
-    // Build employee lookup by email for matching
-    const employeeByEmail = new Map<string, { id: string; name: string }>();
-    for (const emp of employees) {
-      if (emp.email) {
-        employeeByEmail.set(emp.email.toLowerCase(), { id: emp.id, name: emp.name });
-      }
-      if (emp.workspaceConnection?.googleEmail) {
-        employeeByEmail.set(emp.workspaceConnection.googleEmail.toLowerCase(), { id: emp.id, name: emp.name });
-      }
-    }
-
-    // Build employee lookup by Google User ID
-    const employeeByGoogleId = new Map<string, { id: string; name: string }>();
-    for (const emp of employees) {
-      if (emp.workspaceConnection?.googleUserId) {
-        employeeByGoogleId.set(emp.workspaceConnection.googleUserId, { id: emp.id, name: emp.name });
-      }
     }
 
     // For DM spaces with "Adarsh Operations" display name, try to resolve from GoogleChatSpace cache
@@ -117,29 +135,75 @@ export async function GET(req: NextRequest) {
     // Track which employees have existing DM spaces
     const employeesWithDMs = new Set<string>();
 
-    const resolvedSpaces = googleSpaces.map(space => {
+    const resolvedSpaces = googleSpaces.map((space) => {
       if (space.spaceType !== "DIRECT_MESSAGE") return space;
 
-      const badNames = ["Adarsh Operations", "adarsh operations", "Google Chat DM", "Google User"];
-      const needsResolution = !space.displayName || badNames.includes(space.displayName);
+      if (space.participantUserId) {
+        const emp = employeesById.get(space.participantUserId);
+        if (emp) {
+          employeesWithDMs.add(emp.id);
+          return { ...space, displayName: emp.name, employeeId: emp.id };
+        }
+      }
+
+      if (space.participantGoogleUserId) {
+        const emp = employeesByGoogleId.get(space.participantGoogleUserId);
+        if (emp) {
+          employeesWithDMs.add(emp.id);
+          return { ...space, displayName: emp.name, employeeId: emp.id };
+        }
+      }
+
+      if (space.participantEmail) {
+        const emp = employeesByEmail.get(space.participantEmail.toLowerCase());
+        if (emp) {
+          employeesWithDMs.add(emp.id);
+          return { ...space, displayName: emp.name, employeeId: emp.id };
+        }
+      }
+
+      const needsResolution = isGenericDmName(space.displayName);
 
       if (needsResolution) {
-        // Try cache
+        // Try cached linked user first.
         const cached = cacheMap.get(space.name);
         if (cached?.linkedRecordId && cached.linkedRecordType === "User") {
-          const emp = employees.find(e => e.id === cached.linkedRecordId);
+          const emp = employeesById.get(cached.linkedRecordId);
           if (emp) {
             employeesWithDMs.add(emp.id);
             return { ...space, displayName: emp.name, employeeId: emp.id };
           }
         }
-        if (cached?.displayName && !badNames.includes(cached.displayName)) {
+
+        if (cached?.linkedRecordId) {
+          const emp =
+            employeesByGoogleId.get(cached.linkedRecordId) ??
+            employeesByEmail.get(cached.linkedRecordId.toLowerCase());
+          if (emp) {
+            employeesWithDMs.add(emp.id);
+            return { ...space, displayName: emp.name, employeeId: emp.id };
+          }
+        }
+
+        if (cached?.displayName && !isGenericDmName(cached.displayName)) {
+          const matchedEmp = allEmployees.find((employee) =>
+            employee.name.toLowerCase() === cached.displayName!.toLowerCase(),
+          );
+          if (matchedEmp && matchedEmp.id !== session.user.id) {
+            employeesWithDMs.add(matchedEmp.id);
+            return { ...space, displayName: matchedEmp.name, employeeId: matchedEmp.id };
+          }
           return { ...space, displayName: cached.displayName };
         }
+
+        return {
+          ...space,
+          displayName: undefined,
+        };
       } else {
-        // displayName is good — check if it matches an employee
-        const matchedEmp = employees.find(e => 
-          e.name.toLowerCase() === space.displayName?.toLowerCase()
+        // displayName is already resolved by Google/our sync path — preserve it.
+        const matchedEmp = employees.find((employee) =>
+          employee.name.toLowerCase() === space.displayName!.toLowerCase(),
         );
         if (matchedEmp) {
           employeesWithDMs.add(matchedEmp.id);
@@ -156,8 +220,8 @@ export async function GET(req: NextRequest) {
       googleSpaces: resolvedSpaces,
       employeesWithDMs: Array.from(employeesWithDMs)
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[ChatListAPI] Error listing chat channels:", err);
-    return NextResponse.json({ error: err.message || "Failed to list channels" }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(err, "Failed to list channels") }, { status: 500 });
   }
 }

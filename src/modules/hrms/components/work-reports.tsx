@@ -536,11 +536,11 @@ export function WorkReportsView({
           </p>
         </div>
 
-        <div className="flex w-full items-center gap-3 sm:w-auto">
+        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[minmax(16rem,1fr)_auto] sm:items-center">
           <NativeSelect
             value={filter}
             onChange={(event) => setFilter(event.target.value as ReportFilter)}
-            className="rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-1.5 text-xs font-bold outline-none"
+            className="min-w-0 w-full rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-1.5 text-xs font-bold outline-none"
           >
             {canViewAll ? (
               <option value="all">All organisation reports</option>
@@ -555,7 +555,8 @@ export function WorkReportsView({
             <MnxAction
               type="button"
               onClick={openCreateDialog}
-              className="ml-auto flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--mnx-accent)] px-3 py-1.5 text-[11.5px] font-bold text-[var(--mnx-text)] shadow-sm transition-colors hover:bg-[var(--mnx-accent-text)] sm:ml-0"
+              variant="primary"
+              className="justify-self-start whitespace-nowrap"
             >
               <Plus className="size-3.5" />
               Add report

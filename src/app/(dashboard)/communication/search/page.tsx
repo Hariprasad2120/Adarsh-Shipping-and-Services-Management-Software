@@ -10,7 +10,7 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/button";
 import { CommunicationButton, CommunicationInput, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
 import { WorkspaceState } from "@/components/layout/workspace";
 
@@ -124,18 +124,19 @@ export default function UnifiedSearchPortal() {
             empty="No matching jobs."
           >
             {results.jobs.map((job) => (
-              <article key={job.id} className="mnx-communication-record">
+              <div key={job.id} className="mnx-communication-record">
                 <div>
                   <strong>{job.jobNumber}</strong>
                   <small>{job.title}</small>
                 </div>
-                <Link
+                <ButtonLink
                   href={`/cha/jobs/${job.id}`}
-                  className="mnx-communication-record-link"
+                  variant="inverse"
+                  size="sm"
                 >
                   Open <ArrowRight aria-hidden="true" />
-                </Link>
-              </article>
+                </ButtonLink>
+              </div>
             ))}
           </ResultPanel>
 
@@ -146,7 +147,7 @@ export default function UnifiedSearchPortal() {
             empty="No matching email."
           >
             {results.emails.map((email) => (
-              <article key={email.id} className="mnx-communication-record">
+              <div key={email.id} className="mnx-communication-record">
                 <div>
                   <strong>{email.subject}</strong>
                   <small>
@@ -159,9 +160,9 @@ export default function UnifiedSearchPortal() {
                   rel="noopener noreferrer"
                   className="mnx-communication-record-link"
                 >
-                  Open <ExternalLink aria-hidden="true" />
-                </a>
-              </article>
+                    Open <ExternalLink aria-hidden="true" />
+                  </a>
+              </div>
             ))}
           </ResultPanel>
 
@@ -172,7 +173,7 @@ export default function UnifiedSearchPortal() {
             empty="No matching files."
           >
             {results.files.map((file) => (
-              <article key={file.id} className="mnx-communication-record">
+              <div key={file.id} className="mnx-communication-record">
                 <div>
                   <strong>{file.name}</strong>
                   <small>{file.mimeType.split(".").pop()}</small>
@@ -187,7 +188,7 @@ export default function UnifiedSearchPortal() {
                     View <ExternalLink aria-hidden="true" />
                   </a>
                 ) : null}
-              </article>
+              </div>
             ))}
           </ResultPanel>
         </div>

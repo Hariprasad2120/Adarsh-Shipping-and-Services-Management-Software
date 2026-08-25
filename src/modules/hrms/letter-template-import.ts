@@ -3,6 +3,11 @@ import * as path from "path";
 import { promisify } from "util";
 import { exec } from "child_process";
 import { LetterFieldSchema, ImportedLetterTemplate } from "@/modules/hrms/letter-template-types";
+import {
+  assertDocumentAutomationAvailable,
+  hasExternalDocumentAutomation,
+  runExternalDocumentAutomation,
+} from "@/lib/document-automation";
 
 const execAsync = promisify(exec);
 
@@ -171,6 +176,16 @@ function rewriteHtmlAssetPaths(html: string, targetFolder: string) {
 }
 
 async function readDocxTemplate(docxPath: string) {
+  if (hasExternalDocumentAutomation()) {
+    return runExternalDocumentAutomation<{
+      text: string;
+      html: string;
+      assetsDir: string | null;
+      tempRoot: string | null;
+    }>("read-docx-template", { docxPath });
+  }
+
+  assertDocumentAutomationAvailable("HR DOCX template import");
   const psScript = path.join(process.cwd(), "scripts", "read-docx-template.ps1");
   const { stdout, stderr } = await execAsync(
     `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -docxPath "${docxPath}"`
@@ -183,7 +198,6 @@ async function readDocxTemplate(docxPath: string) {
     throw new Error(parsed.error || "Failed to read DOCX template");
   }
   return parsed as {
-    ok: true;
     text: string;
     html: string;
     assetsDir: string | null;
@@ -198,16 +212,24 @@ export async function saveEditorHtmlAsDocx(html: string, outputDocxPath: string)
   fs.writeFileSync(tempHtmlPath, wrapHtmlDocument(html), "utf8");
 
   try {
-    const psScript = path.join(process.cwd(), "scripts", "save-html-as-docx.ps1");
-    const { stdout, stderr } = await execAsync(
-      `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -htmlPath "${tempHtmlPath}" -outputDocx "${outputDocxPath}"`
-    );
-    if (stderr?.trim()) {
-      console.warn(stderr);
-    }
-    const parsed = JSON.parse(stdout.trim());
-    if (!parsed.ok) {
-      throw new Error(parsed.error || "Failed to save HTML as DOCX");
+    if (hasExternalDocumentAutomation()) {
+      await runExternalDocumentAutomation("save-html-as-docx", {
+        htmlPath: tempHtmlPath,
+        outputDocx: outputDocxPath,
+      });
+    } else {
+      assertDocumentAutomationAvailable("HR HTML-to-DOCX conversion");
+      const psScript = path.join(process.cwd(), "scripts", "save-html-as-docx.ps1");
+      const { stdout, stderr } = await execAsync(
+        `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -htmlPath "${tempHtmlPath}" -outputDocx "${outputDocxPath}"`
+      );
+      if (stderr?.trim()) {
+        console.warn(stderr);
+      }
+      const parsed = JSON.parse(stdout.trim());
+      if (!parsed.ok) {
+        throw new Error(parsed.error || "Failed to save HTML as DOCX");
+      }
     }
   } finally {
     if (fs.existsSync(tempHtmlPath)) {

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Briefcase, Mail, Phone, Users } from "lucide-react";
+import { Briefcase, Mail, Phone, Plus, Users } from "lucide-react";
 import {
+  CrmActionLink,
   CrmConfigurationState,
   CrmPermissionState,
 } from "@/modules/crm/components/workspace/crm-workspace";
@@ -17,6 +17,7 @@ import {
   OperationalTableHead,
 } from "@/components/data-display/operational-data-table";
 import { OperationalLinkedRow } from "@/components/data-display/operational-linked-row";
+import { WorkspaceState } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { listLeads } from "@/modules/crm/service";
@@ -110,150 +111,145 @@ export default async function CrmLeadsPage({
   ];
 
   return (
-    <div className="space-y-6">
-      <OperationalDataTable>
-        <LeadRegisterToolbar
-          displayedCount={displayedLeads.length}
-          leadStatuses={leadStatuses}
-          search={search}
-          status={status}
-          tab={tab}
-          tabCounts={{
-            unopened: unopenedLeads.length,
-            not_interested: notInterestedLeads.length,
-            unreachable: unreachableLeads.length,
-          }}
-          totalCount={leads.length}
-        />
+    <OperationalDataTable>
+      <LeadRegisterToolbar
+        displayedCount={displayedLeads.length}
+        leadStatuses={leadStatuses}
+        search={search}
+        status={status}
+        tab={tab}
+        tabCounts={{
+          unopened: unopenedLeads.length,
+          not_interested: notInterestedLeads.length,
+          unreachable: unreachableLeads.length,
+        }}
+        totalCount={leads.length}
+      />
 
-        {displayedLeads.length === 0 ? (
-          <OperationalDataTableWrap>
-            <OperationalTable>
-              <tbody>
-                <OperationalTableEmpty colSpan={6}>
-                  <div className="flex flex-col items-center justify-center gap-4 p-14 text-center">
-                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--mnx-soft)] text-[var(--mnx-muted)]">
-                      <Users className="size-6" />
+      {displayedLeads.length === 0 ? (
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <tbody>
+              <OperationalTableEmpty colSpan={6}>
+                <WorkspaceState
+                  variant="empty"
+                  eyebrow="Demand qualification"
+                  title={
+                    tab === "unopened"
+                      ? "No active leads found"
+                      : tab === "not_interested"
+                        ? "No uninterested leads found"
+                        : "No unreachable leads found"
+                  }
+                  description={
+                    tab === "unopened"
+                      ? "Either refine your filters or create a fresh lead record to get started with validation."
+                      : tab === "not_interested"
+                        ? "Leads marked as Not Interested will show up here."
+                        : "Leads marked as Not Picked or Unreachable will appear here during their 2-hour cooldown window."
+                  }
+                  icon={<Users aria-hidden="true" />}
+                  action={
+                    tab === "unopened" ? (
+                      <CrmActionLink href="/crm/leads/new" primary>
+                        <Plus size={16} />
+                        <span>Create Lead</span>
+                      </CrmActionLink>
+                    ) : null
+                  }
+                />
+              </OperationalTableEmpty>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      ) : (
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Lead Name</OperationalTableHead>
+                <OperationalTableHead>Company</OperationalTableHead>
+                <OperationalTableHead>Contact Info</OperationalTableHead>
+                <OperationalTableHead>Source</OperationalTableHead>
+                <OperationalTableHead>
+                  {tab === "unreachable" ? "Timer Window" : "Lead Status"}
+                </OperationalTableHead>
+                <OperationalTableHead>Owner</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {displayedLeads.map((lead) => (
+                <OperationalLinkedRow
+                  key={lead.id}
+                  href={`/crm/leads/${lead.id}`}
+                  ariaLabel={`Open lead ${lead.firstName ? `${lead.firstName} ${lead.lastName}` : lead.lastName}`}
+                >
+                  <OperationalPrimaryCell
+                    primary={`${lead.firstName ? `${lead.firstName} ` : ""}${lead.lastName}`}
+                    secondary={lead.designation}
+                  />
+                  <OperationalTableCell>
+                    <div className="mnx-crm-leads-company">
+                      <Briefcase size={14} />
+                      <span>{lead.company}</span>
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-sm mnx-text-primary">
-                        {tab === "unopened"
-                          ? "No active leads found"
-                          : tab === "not_interested"
-                            ? "No uninterested leads found"
-                            : "No unreachable leads found"}
-                      </p>
-                      <p className="mx-auto max-w-sm text-xs mnx-text-muted">
-                        {tab === "unopened"
-                          ? "Either refine your filters or create a fresh lead record to get started with validation."
-                          : tab === "not_interested"
-                            ? "Leads marked as Not Interested will show up here."
-                            : "Leads marked as Not Picked or Unreachable will appear here during their 2-hour cooldown window."}
-                      </p>
-                    </div>
-                    {tab === "unopened" ? (
-                      <Link
-                        href="/crm/leads/new"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--mnx-accent)] hover:underline"
-                      >
-                        <span>Onboard a new lead</span>
-                        <ArrowRight className="size-3.5" />
-                      </Link>
-                    ) : null}
-                  </div>
-                </OperationalTableEmpty>
-              </tbody>
-            </OperationalTable>
-          </OperationalDataTableWrap>
-        ) : (
-          <OperationalDataTableWrap>
-            <OperationalTable>
-              <thead>
-                <tr>
-                  <OperationalTableHead>Lead Name</OperationalTableHead>
-                  <OperationalTableHead>Company</OperationalTableHead>
-                  <OperationalTableHead>Contact Info</OperationalTableHead>
-                  <OperationalTableHead>Source</OperationalTableHead>
-                  <OperationalTableHead>
-                    {tab === "unreachable" ? "Timer Window" : "Lead Status"}
-                  </OperationalTableHead>
-                  <OperationalTableHead>Owner</OperationalTableHead>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedLeads.map((lead) => (
-                  <OperationalLinkedRow
-                    key={lead.id}
-                    href={`/crm/leads/${lead.id}`}
-                    ariaLabel={`Open lead ${lead.firstName ? `${lead.firstName} ${lead.lastName}` : lead.lastName}`}
-                  >
-                    <OperationalPrimaryCell
-                      primary={`${lead.firstName ? `${lead.firstName} ` : ""}${lead.lastName}`}
-                      secondary={lead.designation}
-                    />
-                    <OperationalTableCell>
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase className="size-3.5 text-[var(--mnx-muted)]" />
-                        <span>{lead.company}</span>
+                  </OperationalTableCell>
+                  <OperationalTableCell className="mnx-crm-leads-contact">
+                    {lead.email ? (
+                      <div className="mnx-crm-leads-contact-item">
+                        <Mail size={14} />
+                        <span>{lead.email}</span>
                       </div>
-                    </OperationalTableCell>
-                    <OperationalTableCell className="space-y-1">
-                      {lead.email ? (
-                        <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)]">
-                          <Mail className="size-3.5" />
-                          <span className="truncate">{lead.email}</span>
-                        </div>
-                      ) : null}
-                      {lead.phone ? (
-                        <div className="flex items-center gap-1.5 text-xs text-[var(--mnx-muted)]">
-                          <Phone className="size-3.5" />
-                          <span>{lead.phone}</span>
-                        </div>
-                      ) : null}
-                    </OperationalTableCell>
-                    <OperationalTableCell className="text-xs uppercase">
-                      {lead.source || "Cold Call"}
-                    </OperationalTableCell>
-                    <OperationalTableCell>
-                      {tab === "unreachable" ? (
-                        <div className="space-y-1">
-                          <OperationalStatus tone="warning">
-                            {lead.status.replace("_", " ")}
-                          </OperationalStatus>
-                          <span className="block text-[11px] font-mono mnx-numeric text-[var(--mnx-warning)]">
-                            {formatTimer(lead.updatedAt)}
-                          </span>
-                        </div>
-                      ) : (
-                        <OperationalStatus
-                          tone={
-                            lead.status === "QUALIFIED"
-                              ? "success"
-                              : lead.status === "LOST" ||
-                                  lead.status === "NOT_INTERESTED"
-                                ? "danger"
-                                : lead.status === "NEW"
-                                  ? "info"
-                                  : "warning"
-                          }
-                        >
+                    ) : null}
+                    {lead.phone ? (
+                      <div className="mnx-crm-leads-contact-item">
+                        <Phone size={14} />
+                        <span>{lead.phone}</span>
+                      </div>
+                    ) : null}
+                  </OperationalTableCell>
+                  <OperationalTableCell className="mnx-crm-leads-source">
+                    {lead.source || "Cold Call"}
+                  </OperationalTableCell>
+                  <OperationalTableCell>
+                    {tab === "unreachable" ? (
+                      <div className="mnx-crm-leads-timer">
+                        <OperationalStatus tone="warning">
                           {lead.status.replace("_", " ")}
                         </OperationalStatus>
-                      )}
-                    </OperationalTableCell>
-                    <OperationalTableCell className="text-xs">
-                      {lead.owner.name}
-                    </OperationalTableCell>
-                  </OperationalLinkedRow>
-                ))}
-              </tbody>
-            </OperationalTable>
-          </OperationalDataTableWrap>
-        )}
-        <OperationalDataTableFooter
-          summary={`Showing ${displayedLeads.length === 0 ? "0" : `1-${displayedLeads.length}`} of ${displayedLeads.length} leads`}
-        />
-      </OperationalDataTable>
-    </div>
+                        <span className="mnx-crm-leads-timer-value">
+                          {formatTimer(lead.updatedAt)}
+                        </span>
+                      </div>
+                    ) : (
+                      <OperationalStatus
+                        tone={
+                          lead.status === "QUALIFIED"
+                            ? "success"
+                            : lead.status === "LOST" ||
+                                lead.status === "NOT_INTERESTED"
+                              ? "danger"
+                              : lead.status === "NEW"
+                                ? "info"
+                                : "warning"
+                        }
+                      >
+                        {lead.status.replace("_", " ")}
+                      </OperationalStatus>
+                    )}
+                  </OperationalTableCell>
+                  <OperationalTableCell className="mnx-crm-leads-owner">
+                    {lead.owner.name}
+                  </OperationalTableCell>
+                </OperationalLinkedRow>
+              ))}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      )}
+      <OperationalDataTableFooter
+        summary={`Showing ${displayedLeads.length === 0 ? "0" : `1-${displayedLeads.length}`} of ${displayedLeads.length} leads`}
+      />
+    </OperationalDataTable>
   );
 }

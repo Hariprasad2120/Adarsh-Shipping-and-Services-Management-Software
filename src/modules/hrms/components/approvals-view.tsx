@@ -416,12 +416,12 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-[var(--mnx-text)]">
-                Approvals Central Inbox
+                Action queue
               </h1>
               <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
                 {isAdmin
-                  ? "Review organisation-wide employee, attendance, travel, and reporting requests."
-                  : "Review and action your team’s pending employee, attendance, travel, and reporting requests."}
+                  ? "Review live approval queues, record decisions, and refresh organisation-wide requests."
+                  : "Work through your routed approvals, record decisions, and refresh your team queue."}
               </p>
             </div>
           </div>

@@ -3,7 +3,12 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
-import { listMemberships } from "@/lib/google-chat-client";
+import {
+  listMemberships,
+  resolveGoogleWorkspacePerson,
+  isCurrentGoogleChatUser,
+  getSpaceReadState,
+} from "@/lib/google-chat-client";
 
 const CHAT_API_BASE = "https://chat.googleapis.com/v1";
 
@@ -15,6 +20,9 @@ const ORG_PROFILE_NAMES = new Set([
   "Adarsh Shipping",
   "adarsh shipping",
   "Google User",
+  "Google Chat DM",
+  "Direct message",
+  "Chat Member",
 ]);
 
 /**
@@ -36,6 +44,8 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const activeSpaceId = url.searchParams.get("spaceId") || "";
   const dmPartnerHint = url.searchParams.get("dmPartnerName") || null;
+  const dmPartnerUserId = url.searchParams.get("dmPartnerUserId") || null;
+  const dmPartnerEmail = url.searchParams.get("dmPartnerEmail") || null;
 
   // Track the latest message we've seen to detect new ones
   let lastMessageName: string | null = null;
@@ -91,7 +101,14 @@ export async function GET(req: NextRequest) {
             if (latestName && latestName !== lastMessageName) {
               // Reverse to chronological order (oldest → newest) for display
               const chronological = [...messages].reverse();
-              const enriched = await enrichMessages(chronological, userId, activeSpaceId, dmPartnerHint);
+              const enriched = await enrichMessages(
+                chronological,
+                userId,
+                activeSpaceId,
+                dmPartnerHint,
+                dmPartnerUserId,
+                dmPartnerEmail,
+              );
               send("message:new", {
                 spaceId: activeSpaceId,
                 messages: enriched,
@@ -145,13 +162,51 @@ export async function GET(req: NextRequest) {
         send("ping", { timestamp: new Date().toISOString() });
       }
 
+      // Poll the DM partner's in-app typing signal + real Chat spaceReadState.
+      // Only meaningful for the active DM space; only emits on change.
+      let lastTypingState = false;
+      let lastReadTimeSent: string | null = null;
+      async function pollPresence() {
+        if (isAborted || !activeSpaceId || !dmPartnerUserId) return;
+
+        try {
+          const typingRow = await db.chatTypingState.findUnique({
+            where: {
+              spaceResourceName_userId: {
+                spaceResourceName: activeSpaceId,
+                userId: dmPartnerUserId,
+              },
+            },
+          });
+          const typing = typingRow ? Date.now() - typingRow.updatedAt.getTime() < 4000 : false;
+          if (typing !== lastTypingState) {
+            lastTypingState = typing;
+            send("typing", { typing });
+          }
+        } catch {
+          // Non-critical
+        }
+
+        try {
+          const { lastReadTime } = await getSpaceReadState(activeSpaceId, dmPartnerUserId);
+          if (lastReadTime && lastReadTime !== lastReadTimeSent) {
+            lastReadTimeSent = lastReadTime;
+            send("read-state", { lastReadTime });
+          }
+        } catch {
+          // Non-critical — partner may not have their own Workspace connection
+        }
+      }
+
       // Initial poll
       await pollMessages();
       await pollSpaces();
+      await pollPresence();
 
       // Set up intervals
       const msgInterval = setInterval(pollMessages, 3000);
       const spaceInterval = setInterval(pollSpaces, 60000);
+      const presenceInterval = setInterval(pollPresence, 2000);
       const heartbeatInterval = setInterval(heartbeat, 15000);
 
       // Clean up when connection closes
@@ -159,6 +214,7 @@ export async function GET(req: NextRequest) {
         isAborted = true;
         clearInterval(msgInterval);
         clearInterval(spaceInterval);
+        clearInterval(presenceInterval);
         clearInterval(heartbeatInterval);
         try { controller.close(); } catch { /* already closed */ }
       });
@@ -179,7 +235,14 @@ export async function GET(req: NextRequest) {
  * Enrich messages with resolved sender display names from the database.
  * Uses membership-based email lookup to handle the "Adarsh Operations" org profile name.
  */
-async function enrichMessages(messages: any[], userId: string, spaceId: string, dmPartnerHint?: string | null): Promise<any[]> {
+async function enrichMessages(
+  messages: any[],
+  userId: string,
+  spaceId: string,
+  dmPartnerHint?: string | null,
+  dmPartnerUserId?: string | null,
+  dmPartnerEmail?: string | null,
+): Promise<any[]> {
   // Build lookup maps from GoogleWorkspaceConnection
   const connections = await db.googleWorkspaceConnection.findMany({
     select: {
@@ -200,7 +263,7 @@ async function enrichMessages(messages: any[], userId: string, spaceId: string, 
   // Current user's connection
   const myConnection = await db.googleWorkspaceConnection.findUnique({
     where: { userId },
-    select: { googleUserId: true }
+    select: { googleUserId: true, googleEmail: true }
   });
   const myGoogleUserId = myConnection?.googleUserId;
 
@@ -208,6 +271,22 @@ async function enrichMessages(messages: any[], userId: string, spaceId: string, 
   // For DM spaces: identify the partner once, use for all non-me messages
   let spaceType: string | null = null;
   let dmPartnerName: string | null = null;
+
+  if (!dmPartnerName && dmPartnerUserId) {
+    const localPartner = await db.user.findUnique({
+      where: { id: dmPartnerUserId },
+      select: { name: true, email: true },
+    });
+    if (localPartner?.name) {
+      dmPartnerName = localPartner.name;
+    } else if (localPartner?.email) {
+      dmPartnerName = byEmail.get(localPartner.email.toLowerCase()) || null;
+    }
+  }
+
+  if (!dmPartnerName && dmPartnerEmail) {
+    dmPartnerName = byEmail.get(dmPartnerEmail.toLowerCase()) || null;
+  }
 
   try {
     const token = await getValidAccessToken(userId);
@@ -223,12 +302,27 @@ async function enrichMessages(messages: any[], userId: string, spaceId: string, 
   if (spaceType === "DIRECT_MESSAGE") {
     try {
       const membersData = await listMemberships(spaceId, userId);
-      const otherMember = membersData.memberships?.find(
-        (m) => m.member && m.member.name !== `users/${myGoogleUserId}`
+      const otherMember = membersData.memberships?.find((m) =>
+        m.member
+          ? !isCurrentGoogleChatUser({
+              memberName: m.member.name,
+              memberEmail: m.member.email,
+              googleUserId: myGoogleUserId,
+              googleEmail: myConnection?.googleEmail ?? null,
+            })
+          : false,
       );
       if (otherMember?.member) {
         const otherId = otherMember.member.name?.replace("users/", "");
-        if (otherId && byGoogleId.has(otherId)) {
+        const resolved = await resolveGoogleWorkspacePerson({
+          actorUserId: userId,
+          googleUserId: otherId,
+          email: otherMember.member.email || null,
+          displayName: otherMember.member.displayName || null,
+        });
+        if (resolved.name) {
+          dmPartnerName = resolved.name;
+        } else if (otherId && byGoogleId.has(otherId)) {
           dmPartnerName = byGoogleId.get(otherId)!;
         } else if (otherMember.member.email) {
           const email = otherMember.member.email.toLowerCase();
@@ -243,12 +337,12 @@ async function enrichMessages(messages: any[], userId: string, spaceId: string, 
     } catch { /* non-critical */ }
 
     // Fallback: use frontend-supplied hint
-    if (!dmPartnerName && dmPartnerHint) {
+    if (!dmPartnerName && dmPartnerHint && !ORG_PROFILE_NAMES.has(dmPartnerHint)) {
       dmPartnerName = dmPartnerHint;
     }
   }
 
-  return messages.map((msg: any) => {
+  return Promise.all(messages.map(async (msg: any) => {
     const senderName = msg.sender?.name || "";
     const match = senderName.match(/^users\/([a-zA-Z0-9_-]+)$/);
     const googleId = match ? match[1] : null;
@@ -267,11 +361,17 @@ async function enrichMessages(messages: any[], userId: string, spaceId: string, 
       // DM: non-me message = partner
       displayName = dmPartnerName;
     } else {
-      const raw = msg.sender?.displayName || "";
+      const resolvedSender = await resolveGoogleWorkspacePerson({
+        actorUserId: userId,
+        googleUserId: googleId,
+        email: msg.sender?.email || null,
+        displayName: msg.sender?.displayName || null,
+      });
+      const raw = resolvedSender.name || msg.sender?.displayName || "";
       if (raw && !ORG_PROFILE_NAMES.has(raw)) {
         displayName = raw;
       } else {
-        displayName = "Chat Member";
+        displayName = dmPartnerName || "Teammate";
       }
     }
 
@@ -280,5 +380,5 @@ async function enrichMessages(messages: any[], userId: string, spaceId: string, 
       isMe,
       sender: { ...msg.sender, displayName }
     };
-  });
+  }));
 }

@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { db } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 
 const ALGORITHM = "aes-256-gcm";
 const ENCRYPTION_KEY = process.env.GOOGLE_TOKEN_ENCRYPTION_KEY
@@ -8,7 +9,7 @@ const ENCRYPTION_KEY = process.env.GOOGLE_TOKEN_ENCRYPTION_KEY
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET!;
-const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${process.env.NEXTAUTH_URL}/api/communication/oauth/callback`;
+const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${getAppUrl()}/api/communication/oauth/callback`;
 const WORKSPACE_DOMAIN = process.env.GOOGLE_WORKSPACE_DOMAIN || "adarshshipping.in";
 const GOOGLE_CHAT_DELETE_AUTH_MODE =
   (process.env.GOOGLE_CHAT_DELETE_AUTH_MODE ?? "admin_oauth").toLowerCase();
@@ -61,6 +62,7 @@ export function getAuthorizationUrl(state: string): string {
     "https://www.googleapis.com/auth/chat.messages",
     "https://www.googleapis.com/auth/chat.messages.create",
     "https://www.googleapis.com/auth/chat.messages.readonly",
+    "https://www.googleapis.com/auth/chat.users.readstate",
 
     // Drive — full read/write/create/delete files and folders
     "https://www.googleapis.com/auth/drive",

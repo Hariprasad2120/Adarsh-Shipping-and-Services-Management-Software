@@ -3,14 +3,19 @@
 import type { CarbonIconType } from "@carbon/icons-react";
 import {
   ArrowRight,
+  Bell,
   Calendar,
+  CheckCircle2,
   Check,
   CircleDot,
+  CreditCard,
   Info,
+  IndianRupee,
   ListFilter,
   MoreHorizontal,
   PackageSearch,
   Plus,
+  RotateCcw,
   Search,
   Settings,
   Ship,
@@ -47,6 +52,17 @@ import {
   OperationalTableHead,
   OperationalVisibleRecords,
   Textarea,
+  TrialCheckoutFieldRow,
+  TrialCheckoutHeader,
+  TrialCheckoutLayout,
+  TrialCheckoutMain,
+  TrialCheckoutPaymentOption,
+  TrialCheckoutPriceList,
+  TrialCheckoutSection,
+  TrialCheckoutSidebar,
+  TrialCheckoutSummaryCard,
+  TrialCheckoutTimeline,
+  DevelopmentBuildWatermark,
   WorkspaceAction,
   WorkspaceAlert,
   WorkspaceBadge,
@@ -71,6 +87,192 @@ const SearchCommandCalendarIcon = Calendar as unknown as CarbonIconType;
 const SearchCommandShipIcon = Ship as unknown as CarbonIconType;
 
 export const sharedCatalogue: CatalogueEntry[] = [
+  {
+    id: "trial-checkout-pattern",
+    component: "TrialCheckoutLayout",
+    displayName: "Trial checkout pattern",
+    category: "Forms & commerce",
+    scope: "shared",
+    description: "Reusable checkout composition for subscription trials, payment setup, and right-rail price confirmation.",
+    status: "stable",
+    source: "src/components/layout/trial-checkout.tsx",
+    render: () => (
+      <TrialCheckoutLayout>
+        <TrialCheckoutMain>
+          <TrialCheckoutHeader
+            eyebrow="Commerce pattern"
+            title="Try Premium plan free for 30 days"
+            description="Use one canonical trial checkout composition with shared fields, payment options, and a right-rail confirmation summary."
+          />
+
+          <TrialCheckoutSection index="1." title="Billing address">
+            <WorkspaceField htmlFor="catalogue-checkout-name" label="Full name">
+              <Input id="catalogue-checkout-name" defaultValue="Purushothaman V" />
+            </WorkspaceField>
+
+            <WorkspaceField htmlFor="catalogue-checkout-country" label="Country">
+              <NativeSelect id="catalogue-checkout-country" defaultValue="india">
+                <option value="india">India</option>
+                <option value="uae">United Arab Emirates</option>
+                <option value="singapore">Singapore</option>
+              </NativeSelect>
+            </WorkspaceField>
+
+            <WorkspaceField htmlFor="catalogue-checkout-address1" label="Address line 1">
+              <Input id="catalogue-checkout-address1" defaultValue="No 12/9" />
+            </WorkspaceField>
+
+            <WorkspaceField htmlFor="catalogue-checkout-address2" label="Address line 2">
+              <Input id="catalogue-checkout-address2" defaultValue="" />
+            </WorkspaceField>
+
+            <TrialCheckoutFieldRow>
+              <WorkspaceField htmlFor="catalogue-checkout-city" label="City">
+                <Input id="catalogue-checkout-city" defaultValue="Chennai" />
+              </WorkspaceField>
+              <WorkspaceField htmlFor="catalogue-checkout-state" label="State / region">
+                <NativeSelect id="catalogue-checkout-state" defaultValue="tamil-nadu">
+                  <option value="tamil-nadu">Tamil Nadu</option>
+                  <option value="maharashtra">Maharashtra</option>
+                  <option value="karnataka">Karnataka</option>
+                </NativeSelect>
+              </WorkspaceField>
+              <WorkspaceField htmlFor="catalogue-checkout-postal" label="ZIP / postal code">
+                <Input id="catalogue-checkout-postal" defaultValue="600129" />
+              </WorkspaceField>
+            </TrialCheckoutFieldRow>
+          </TrialCheckoutSection>
+
+          <TrialCheckoutSection index="2." title="Payment method">
+            <TrialCheckoutPaymentOption
+              checked
+              title="UPI"
+              control={<Input aria-label="UPI selected" checked readOnly type="radio" />}
+              logos={(
+                <div className="mnx-trial-checkout-logo-strip">
+                  <span>GPay</span>
+                </div>
+              )}
+            >
+              <TrialCheckoutFieldRow>
+                <WorkspaceField htmlFor="catalogue-checkout-dob" label="Date of birth">
+                  <Input id="catalogue-checkout-dob" defaultValue="2008-08-21" type="date" />
+                </WorkspaceField>
+                <WorkspaceField htmlFor="catalogue-checkout-pan" label="PAN">
+                  <Input id="catalogue-checkout-pan" defaultValue="" placeholder="ABCDE1234F" />
+                </WorkspaceField>
+                <WorkspaceField htmlFor="catalogue-checkout-phone" label="Phone number">
+                  <Input id="catalogue-checkout-phone" defaultValue="" placeholder="Add" />
+                </WorkspaceField>
+              </TrialCheckoutFieldRow>
+            </TrialCheckoutPaymentOption>
+
+            <TrialCheckoutPaymentOption
+              title="Credit or debit card [India]"
+              control={<Input aria-label="Card option" type="radio" />}
+              logos={(
+                <div className="mnx-trial-checkout-logo-strip">
+                  <span>MC</span>
+                  <span>VISA</span>
+                  <span>UPI</span>
+                </div>
+              )}
+            />
+
+            <TrialCheckoutPaymentOption
+              title="PayPal"
+              control={<Input aria-label="PayPal option" type="radio" />}
+              logos={(
+                <div className="mnx-trial-checkout-logo-strip">
+                  <span>PayPal</span>
+                </div>
+              )}
+            />
+          </TrialCheckoutSection>
+        </TrialCheckoutMain>
+
+        <TrialCheckoutSidebar>
+          <TrialCheckoutSummaryCard>
+            <TrialCheckoutTimeline
+              items={[
+                {
+                  id: "today",
+                  title: "Today",
+                  description: "Free trial starts - explore all features of the Premium plan.",
+                  icon: <CheckCircle2 size={16} />,
+                  markerTone: "strong",
+                },
+                {
+                  id: "day-15",
+                  title: "Day 15",
+                  description: "We'll send you an email reminder.",
+                  icon: <Bell size={16} />,
+                  markerTone: "muted",
+                },
+                {
+                  id: "day-30",
+                  title: "Day 30",
+                  description: "Your subscription will begin on September 21, 2026 if not canceled.",
+                  icon: <CreditCard size={16} />,
+                  markerTone: "muted",
+                },
+                {
+                  id: "refund",
+                  title: "Refund policy",
+                  description: "You can request a full refund within 14 days after you've been charged.",
+                  icon: <RotateCcw size={16} />,
+                  markerTone: "muted",
+                },
+              ]}
+            />
+
+            <TrialCheckoutPriceList
+              rows={[
+                {
+                  label: "Due today",
+                  value: (
+                    <span className="mnx-trial-checkout-currency">
+                      <IndianRupee size={15} />
+                      0.00
+                    </span>
+                  ),
+                  tone: "accent",
+                },
+                {
+                  label: "Due Sep 21, 2026",
+                  value: (
+                    <span className="mnx-trial-checkout-price-stack">
+                      <span>₹59,401.20 / year</span>
+                      <small>Including tax ₹9,061.20</small>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+
+            <label className="mnx-trial-checkout-agreement">
+              <Input defaultChecked type="checkbox" />
+              <span>
+                I&apos;m signing up for 30-day free trial. I agree that if I do not cancel during the trial period, I&apos;ll be charged ₹59,401.20 / year (tax included) and each year after. I can cancel anytime before renewal in my account settings.
+              </span>
+            </label>
+
+            <Button className="mnx-trial-checkout-submit">
+              Start 30-day free trial
+            </Button>
+
+            <p className="mnx-trial-checkout-legal">
+              By completing your purchase, you agree to our Terms of Use and Privacy Policy.
+            </p>
+          </TrialCheckoutSummaryCard>
+        </TrialCheckoutSidebar>
+      </TrialCheckoutLayout>
+    ),
+    themes,
+    states: ["billing form", "payment options", "trial timeline", "price confirmation"],
+    interactive: true,
+    accessibility: "The layout preserves native field controls, grouped payment options, and visible price/timeline text that does not rely on icon-only meaning.",
+  },
   {
     id: "monolith-theme-picker",
     component: "MonolithThemePicker",
@@ -462,6 +664,36 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["accent", "success", "warning", "danger", "neutral"],
     interactive: false,
     accessibility: "Status meaning is present in text and not color alone.",
+  },
+  {
+    id: "development-build-watermark",
+    component: "DevelopmentBuildWatermark",
+    displayName: "Development build watermark",
+    category: "Status & feedback",
+    scope: "shared",
+    description: "Floating development-build label for the shared Mona launcher, with multiple approved visual directions rendered from one production component.",
+    status: "beta",
+    source: "src/components/feedback/development-build-watermark.tsx",
+    render: () => (
+      <div className="mnx-build-watermark-showcase">
+        <div className="mnx-build-watermark-showcase-card">
+          <strong>Option A · Glass chip</strong>
+          <DevelopmentBuildWatermark variant="glass-chip" />
+        </div>
+        <div className="mnx-build-watermark-showcase-card">
+          <strong>Option B · Signal bar</strong>
+          <DevelopmentBuildWatermark variant="signal-bar" />
+        </div>
+        <div className="mnx-build-watermark-showcase-card">
+          <strong>Option C · Stacked card</strong>
+          <DevelopmentBuildWatermark variant="stacked-card" />
+        </div>
+      </div>
+    ),
+    themes,
+    states: ["glass chip", "signal bar", "stacked card"],
+    interactive: false,
+    accessibility: "The warning title, version label, and build label are plain text, so the build state is readable in every supported theme without relying on color alone.",
   },
   {
     id: "workspace-feedback",

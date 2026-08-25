@@ -140,7 +140,7 @@ export default async function MeetingsPortal() {
         ) : (
           <div className="mnx-communication-record-list">
             {meetings.map((meeting) => (
-              <article key={meeting.id} className="mnx-communication-record">
+              <div key={meeting.id} className="mnx-communication-record">
                 <div>
                   <strong>{meeting.summary}</strong>
                   <small>
@@ -166,7 +166,7 @@ export default async function MeetingsPortal() {
                     Join
                   </a>
                 ) : null}
-              </article>
+              </div>
             ))}
           </div>
         )}

@@ -18,6 +18,7 @@ import { getValidAccessToken } from "@/lib/workspace-oauth";
 import { sendEmail as sendGmailEmail } from "@/lib/google-gmail-client";
 import { sendEmail as sendProviderEmail } from "@/lib/email";
 import { queueChecklistMainCustomerEmail } from "./checklist-email-automation";
+import { getAppUrl } from "@/lib/app-url";
 
 const DEFAULT_CHA_EXPENSE_CATEGORIES = [
   "Customs Duty",
@@ -1520,7 +1521,7 @@ async function queueChecklistMainAutomationForJob(params: {
   const delayMinutes = await getChecklistCustomerApprovalDelayMinutesForJob(params.orgId, params.job.jobTypeId);
   const queuedAt = await getNow();
   const approvalVisibleAt = new Date(queuedAt.getTime() + delayMinutes * 60_000);
-  const checklistUrlBase = process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? null;
+  const checklistUrlBase = getAppUrl();
   const checklistUrl = checklistUrlBase ? `${checklistUrlBase}/cha/jobs/${params.job.id}` : null;
   const queueResult = await queueChecklistMainCustomerEmail({
     actorId: params.actorId,

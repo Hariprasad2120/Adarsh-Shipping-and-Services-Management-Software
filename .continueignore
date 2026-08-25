@@ -1,0 +1,16 @@
+.git
+.next
+node_modules
+coverage
+out
+build
+.vercel
+.monolith-staging
+uploads
+public/import-output
+import-output
+artifacts
+scrap
+brain
+graphify-out
+OLD UI code

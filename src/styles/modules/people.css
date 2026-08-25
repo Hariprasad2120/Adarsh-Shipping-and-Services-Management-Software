@@ -60,6 +60,10 @@
   gap: var(--mn-layout-workspace-stack-gap);
 }
 
+.mnx-people-page[data-people-route="work-reports"] > .mnx-people-content {
+  border-top: 0;
+}
+
 .mnx-people-content > :where(div, section, form) {
   min-width: 0;
 }
@@ -143,6 +147,387 @@
 .mnx-people-section-header {
   padding: var(--mn-space-5);
   border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-hrms-command-centre {
+  overflow: visible;
+}
+
+.mnx-hrms-command-grid,
+.mnx-hrms-lane-grid,
+.mnx-hrms-priority-metrics,
+.mnx-hrms-lane-links {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-hrms-command-grid {
+  grid-template-columns: minmax(0, 1.8fr) minmax(18rem, 1fr);
+  padding: var(--mn-space-5);
+}
+
+.mnx-hrms-command-primary {
+  align-content: start;
+}
+
+.mnx-hrms-command-rail {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-hrms-priority-card,
+.mnx-hrms-lane-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 90%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-accent) 4%, transparent), transparent 55%),
+    color-mix(in srgb, var(--mnx-surface) 92%, transparent);
+  box-shadow: var(--mn-shadow-sm);
+}
+
+.mnx-hrms-priority-top,
+.mnx-hrms-lane-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-hrms-priority-top > div,
+.mnx-hrms-lane-top > div {
+  display: grid;
+  gap: var(--mn-space-2);
+  min-width: 0;
+}
+
+.mnx-hrms-priority-top p,
+.mnx-hrms-priority-copy,
+.mnx-hrms-lane-top p,
+.mnx-hrms-lane-link small {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: 1.5;
+}
+
+.mnx-hrms-priority-top p {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-hrms-priority-top strong,
+.mnx-hrms-lane-top strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mnx-hrms-priority-top > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.25rem;
+  min-height: 3.25rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border));
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-text-strong);
+  font-size: clamp(1.2rem, 1rem + 0.8vw, 1.7rem);
+  font-weight: 650;
+  line-height: 1;
+}
+
+.mnx-hrms-priority-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-hrms-priority-metrics > div {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-3);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 82%, transparent);
+}
+
+.mnx-hrms-priority-metrics span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mnx-hrms-priority-metrics strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.mnx-hrms-priority-action {
+  width: fit-content;
+}
+
+.mnx-hrms-lane-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--mn-space-5);
+}
+
+.mnx-hrms-lane-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mnx-hrms-lane-link {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 86%, transparent);
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 74%, transparent);
+  color: var(--mnx-text);
+  text-decoration: none;
+  transition:
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background-color var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-hrms-lane-link:hover,
+.mnx-hrms-lane-link:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 8%, var(--mnx-surface));
+  outline: none;
+}
+
+.mnx-hrms-lane-link span {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-label-size);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mnx-attendance-command-centre {
+  overflow: visible;
+}
+
+.mnx-attendance-command-grid,
+.mnx-attendance-lane-grid,
+.mnx-attendance-watch-grid,
+.mnx-attendance-check-grid,
+.mnx-attendance-priority-metrics,
+.mnx-attendance-lane-links {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-attendance-command-grid {
+  grid-template-columns: minmax(0, 1.75fr) minmax(18rem, 1fr);
+  padding: var(--mn-space-5);
+}
+
+.mnx-attendance-command-primary {
+  align-content: start;
+}
+
+.mnx-attendance-command-rail {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-attendance-priority-card,
+.mnx-attendance-lane-card,
+.mnx-attendance-watch-card,
+.mnx-attendance-check-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 90%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-accent) 4%, transparent), transparent 55%),
+    color-mix(in srgb, var(--mnx-surface) 92%, transparent);
+  box-shadow: var(--mn-shadow-sm);
+}
+
+.mnx-attendance-priority-top,
+.mnx-attendance-lane-top,
+.mnx-attendance-watch-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-attendance-priority-top > div,
+.mnx-attendance-lane-top > div,
+.mnx-attendance-watch-card-head > div {
+  display: grid;
+  gap: var(--mn-space-2);
+  min-width: 0;
+}
+
+.mnx-attendance-priority-top p,
+.mnx-attendance-priority-copy,
+.mnx-attendance-lane-top p,
+.mnx-attendance-lane-link small,
+.mnx-attendance-watch-card-head p,
+.mnx-attendance-check-card p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: 1.5;
+}
+
+.mnx-attendance-priority-top p {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-attendance-priority-top strong,
+.mnx-attendance-lane-top strong,
+.mnx-attendance-watch-card-head strong,
+.mnx-attendance-check-card strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mnx-attendance-priority-top > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4rem;
+  min-height: 3.25rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border));
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-text-strong);
+  font-size: clamp(1rem, 0.95rem + 0.9vw, 1.55rem);
+  font-weight: 650;
+  line-height: 1;
+  text-align: center;
+}
+
+.mnx-attendance-priority-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-attendance-priority-metrics > div {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-3);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 82%, transparent);
+}
+
+.mnx-attendance-priority-metrics span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mnx-attendance-priority-metrics strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.mnx-attendance-priority-action {
+  width: fit-content;
+}
+
+.mnx-attendance-lane-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--mn-space-5);
+}
+
+.mnx-attendance-lane-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mnx-attendance-lane-link {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 86%, transparent);
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 74%, transparent);
+  color: var(--mnx-text);
+  text-decoration: none;
+  transition:
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background-color var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-attendance-lane-link:hover,
+.mnx-attendance-lane-link:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 8%, var(--mnx-surface));
+  outline: none;
+}
+
+.mnx-attendance-lane-link span {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-label-size);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mnx-attendance-watch-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--mn-space-5);
+}
+
+.mnx-attendance-watch-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.mnx-attendance-watch-card-head {
+  padding: var(--mn-space-4) var(--mn-space-4) 0;
+}
+
+.mnx-attendance-watch-table {
+  margin-top: calc(var(--mn-space-1) * -1);
+}
+
+.mnx-attendance-watch-table .mnx-table-wrap {
+  border-top: 0;
+}
+
+.mnx-attendance-check-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--mn-space-5);
+}
+
+.mnx-attendance-check-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.mnx-attendance-check-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-accent);
+}
+
+.mnx-attendance-check-icon svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .mnx-people-link-grid {
@@ -250,6 +635,992 @@
   width: min(70rem, 100%);
   height: min(49rem, 88dvh);
   border-radius: 18px;
+}
+
+.mnx-org-structure-workspace {
+  display: grid;
+  gap: var(--mn-layout-workspace-stack-gap);
+}
+
+.mnx-org-structure-alert {
+  margin-top: calc(var(--mn-space-2) * -1);
+}
+
+.mnx-org-structure-workspace .mnx-section-heading {
+  align-items: end;
+}
+
+.mnx-org-structure-workspace .mnx-section-heading p {
+  max-width: 60rem;
+}
+
+.mnx-org-structure-heading-actions,
+.mnx-org-structure-panel-actions,
+.mnx-org-structure-dialog-footer,
+.mnx-org-structure-blueprint-actions,
+.mnx-org-structure-card-actions,
+.mnx-org-structure-branch-card-actions,
+.mnx-org-structure-division-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-org-structure-heading-actions {
+  justify-content: flex-end;
+}
+
+.mnx-org-structure-heading-actions .mnx-button,
+.mnx-org-structure-panel-actions .mnx-button,
+.mnx-org-structure-card-actions .mnx-button,
+.mnx-org-structure-branch-card-actions .mnx-button,
+.mnx-org-structure-division-actions .mnx-button,
+.mnx-org-structure-blueprint-actions .mnx-button {
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mnx-org-structure-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(18rem, 0.95fr);
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-org-structure-primary,
+.mnx-org-structure-aside {
+  min-width: 0;
+}
+
+.mnx-org-structure-aside {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-org-structure-aside-panel {
+  overflow: hidden;
+}
+
+.mnx-org-structure-toolbar {
+  gap: var(--mn-space-4);
+}
+
+.mnx-org-structure-search {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+  min-width: min(100%, 26rem);
+  flex: 1 1 22rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface) 84%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
+
+.mnx-org-structure-search > svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-org-structure-search .mnx-field-control {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-org-structure-toolbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mn-space-3);
+  flex: 1 1 16rem;
+}
+
+.mnx-org-structure-toolbar-field {
+  min-width: min(100%, 12rem);
+}
+
+.mnx-org-structure-stack,
+.mnx-org-structure-branch-grid,
+.mnx-org-structure-blueprint,
+.mnx-org-structure-health-list,
+.mnx-org-structure-dialog-form {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-org-structure-stack,
+.mnx-org-structure-branch-grid {
+  padding: var(--mn-space-5);
+}
+
+.mnx-org-structure-card,
+.mnx-org-structure-branch-card,
+.mnx-org-structure-empty-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 92%, transparent);
+  border-radius: calc(var(--mn-radius-panel) - 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 76%, transparent);
+}
+
+.mnx-org-structure-card.is-active {
+  border-color: color-mix(in srgb, var(--mnx-accent) 55%, var(--mnx-border));
+  box-shadow: var(--mn-shadow-accent-soft);
+}
+
+.mnx-org-structure-card-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mn-space-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mnx-org-structure-card-actions,
+.mnx-org-structure-branch-card-actions {
+  padding-top: var(--mn-space-1);
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+}
+
+.mnx-org-structure-card-copy,
+.mnx-org-structure-branch-card-copy,
+.mnx-org-structure-empty-card,
+.mnx-org-structure-inline-empty > div,
+.mnx-org-structure-blueprint-hero > div,
+.mnx-org-structure-blueprint-step > div,
+.mnx-org-structure-health-row {
+  min-width: 0;
+}
+
+.mnx-org-structure-card-title-row,
+.mnx-org-structure-card-badges,
+.mnx-org-structure-blueprint-hero,
+.mnx-org-structure-health-row-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-org-structure-card-title-row strong,
+.mnx-org-structure-branch-card-copy strong,
+.mnx-org-structure-empty-card strong,
+.mnx-org-structure-inline-empty strong,
+.mnx-org-structure-blueprint-hero strong,
+.mnx-org-structure-blueprint-step strong,
+.mnx-org-structure-health-row strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.mnx-org-structure-card-title-row span,
+.mnx-org-structure-branch-card-copy span,
+.mnx-org-structure-blueprint-code {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 26%, var(--mnx-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-accent-text);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mnx-org-structure-card-copy {
+  display: grid;
+  gap: var(--mn-space-2);
+}
+
+.mnx-org-structure-card-copy p,
+.mnx-org-structure-branch-card-copy p,
+.mnx-org-structure-empty-card p,
+.mnx-org-structure-inline-empty p,
+.mnx-org-structure-blueprint-hero p,
+.mnx-org-structure-blueprint-step p,
+.mnx-org-structure-health-row p,
+.mnx-org-structure-delete-copy p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: 1.5;
+}
+
+.mnx-org-structure-card-badges > svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--mnx-text-muted);
+  margin-top: 0.15rem;
+}
+
+.mnx-org-structure-division-list,
+.mnx-org-structure-blueprint-list {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-org-structure-inline-empty,
+.mnx-org-structure-division-item,
+.mnx-org-structure-blueprint-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 86%, transparent);
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface) 74%, transparent);
+}
+
+.mnx-org-structure-division-item {
+  align-items: center;
+}
+
+.mnx-org-structure-inline-empty > svg,
+.mnx-org-structure-blueprint-step > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) - 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
+  color: var(--mnx-accent-text);
+}
+
+.mnx-org-structure-inline-empty > svg {
+  width: 1rem;
+  height: 1rem;
+  padding: 0.5rem;
+  box-sizing: content-box;
+}
+
+.mnx-org-structure-blueprint {
+  padding: var(--mn-space-5);
+}
+
+.mnx-org-structure-blueprint-hero {
+  padding-bottom: var(--mn-space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+}
+
+.mnx-org-structure-blueprint-step {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.mnx-org-structure-blueprint-step > span {
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+}
+
+.mnx-org-structure-branch-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mnx-org-structure-branch-card-copy {
+  display: grid;
+  gap: var(--mn-space-2);
+}
+
+.mnx-org-structure-health-list,
+.mnx-org-structure-delete-copy {
+  padding: var(--mn-space-5);
+}
+
+.mnx-org-structure-health-row {
+  padding: var(--mn-space-4);
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-org-structure-health-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.mnx-org-structure-empty-card {
+  place-items: start;
+  text-align: left;
+}
+
+.mnx-org-structure-dialog-form .mnx-field {
+  gap: var(--mn-space-2);
+}
+
+.mnx-org-structure-dialog-footer {
+  justify-content: flex-end;
+}
+
+.mnx-org-structure-tabs {
+  margin-top: calc(var(--mn-space-2) * -1);
+}
+
+.mnx-org-visual-explorer {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-org-visual-toolbar {
+  gap: var(--mn-space-4);
+}
+
+.mnx-org-visual-search {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+  min-width: min(100%, 26rem);
+  flex: 1 1 22rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface) 84%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
+
+.mnx-org-visual-search > svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-org-visual-search .mnx-field-control {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-org-visual-toolbar-fields {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mn-space-3);
+  flex: 1 1 16rem;
+}
+
+.mnx-org-visual-toolbar-field {
+  min-width: min(100%, 12rem);
+}
+
+.mnx-org-visual-company-card,
+.mnx-org-visual-node,
+.mnx-org-visual-spotlight,
+.mnx-org-visual-step,
+.mnx-org-person-card,
+.mnx-org-visual-empty {
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 90%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-accent) 4%, transparent), transparent 62%),
+    color-mix(in srgb, var(--mnx-surface) 92%, transparent);
+  box-shadow: var(--mn-shadow-sm);
+}
+
+.mnx-org-visual-company-card,
+.mnx-org-visual-node,
+.mnx-org-visual-spotlight,
+.mnx-org-person-card,
+.mnx-org-visual-empty {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+}
+
+.mnx-org-visual-company-card {
+  grid-template-columns: minmax(0, 1.2fr) auto;
+  align-items: start;
+  gap: var(--mn-space-4);
+}
+
+.mnx-org-visual-company-copy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  min-width: 0;
+}
+
+.mnx-org-visual-company-icon,
+.mnx-org-visual-empty > span,
+.mnx-org-person-avatar,
+.mnx-org-visual-step > span {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
+  color: var(--mnx-accent-text);
+}
+
+.mnx-org-person-avatar {
+  border-radius: 999px;
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+}
+
+.mnx-org-visual-company-icon svg,
+.mnx-org-visual-empty > span svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.mnx-org-visual-company-copy > div,
+.mnx-org-visual-node,
+.mnx-org-visual-spotlight,
+.mnx-org-visual-step > div,
+.mnx-org-person-copy,
+.mnx-org-visual-empty > div {
+  min-width: 0;
+}
+
+.mnx-org-visual-company-copy strong,
+.mnx-org-visual-lane-header strong,
+.mnx-org-visual-node strong,
+.mnx-org-visual-spotlight strong,
+.mnx-org-visual-step strong,
+.mnx-org-person-copy strong,
+.mnx-org-visual-empty strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mnx-org-visual-company-copy p,
+.mnx-org-visual-node p,
+.mnx-org-visual-spotlight p,
+.mnx-org-visual-step p,
+.mnx-org-person-copy p,
+.mnx-org-person-copy small,
+.mnx-org-visual-empty p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: 1.5;
+}
+
+.mnx-org-visual-company-metrics,
+.mnx-org-visual-inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mn-space-2);
+}
+
+.mnx-org-visual-grid,
+.mnx-org-employee-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(18rem, 0.9fr);
+  gap: var(--mn-space-4);
+  align-items: start;
+}
+
+.mnx-org-employee-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-org-visual-lane,
+.mnx-org-visual-focus,
+.mnx-org-visual-focus-stack,
+.mnx-org-visual-division-stack,
+.mnx-org-visual-list {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-org-visual-lane-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-org-visual-lane-header > div {
+  display: grid;
+  gap: var(--mn-space-1);
+  min-width: 0;
+}
+
+.mnx-org-visual-lane-header span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-org-visual-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-accent-text);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mnx-org-visual-node-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-org-visual-node-button,
+.mnx-org-person-card {
+  width: 100%;
+  padding: var(--mn-space-4);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    box-shadow var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-org-visual-node-button:hover,
+.mnx-org-visual-node-button:focus-visible,
+.mnx-org-person-card:hover,
+.mnx-org-person-card:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-accent) 46%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 8%, var(--mnx-surface));
+  outline: none;
+}
+
+.mnx-org-visual-node-button.is-active,
+.mnx-org-person-card.is-active {
+  border-color: color-mix(in srgb, var(--mnx-accent) 54%, var(--mnx-border));
+  box-shadow: var(--mn-shadow-accent-soft);
+}
+
+.mnx-org-person-card {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.mnx-org-person-card > svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-org-person-card.is-static {
+  cursor: default;
+}
+
+.mnx-org-person-card.is-static:hover,
+.mnx-org-person-card.is-static:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-border) 90%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-accent) 4%, transparent), transparent 62%),
+    color-mix(in srgb, var(--mnx-surface) 92%, transparent);
+  box-shadow: var(--mn-shadow-sm);
+}
+
+.mnx-org-visual-step {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-3);
+}
+
+.mnx-org-visual-step > span {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+}
+
+.mnx-org-visual-empty {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.mnx-dashboard-org-explorer .mnx-people-section-header {
+  padding-inline: 0;
+  padding-top: 0;
+}
+
+.mnx-dashboard-org-explorer .mnx-people-toolbar {
+  padding-inline: 0;
+}
+
+.mnx-ownership-workspace {
+  display: grid;
+  gap: var(--mn-layout-workspace-stack-gap);
+}
+
+.mnx-ownership-alert {
+  margin-top: calc(var(--mn-space-2) * -1);
+}
+
+.mnx-ownership-workspace .mnx-section-heading {
+  align-items: end;
+}
+
+.mnx-ownership-workspace .mnx-section-heading p {
+  max-width: 62rem;
+}
+
+.mnx-ownership-tabs {
+  justify-content: stretch;
+}
+
+.mnx-ownership-tab {
+  display: grid;
+  align-content: center;
+  min-height: 4.25rem;
+  padding: 0.95rem 1rem;
+  transition:
+    background var(--mn-motion-fast),
+    border-color var(--mn-motion-fast),
+    color var(--mn-motion-fast),
+    box-shadow var(--mn-motion-fast);
+}
+
+.mnx-ownership-tab:hover,
+.mnx-ownership-tab:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-accent) 52%, var(--mnx-border));
+  color: var(--mnx-text-strong);
+  outline: none;
+}
+
+.mnx-ownership-tab.is-active {
+  border-color: color-mix(in srgb, var(--mnx-accent) 58%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 14%, var(--mnx-surface));
+  color: var(--mnx-accent-text);
+  box-shadow: var(--mn-shadow-accent-soft);
+}
+
+.mnx-ownership-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-ownership-primary,
+.mnx-ownership-aside {
+  min-width: 0;
+}
+
+.mnx-ownership-aside {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-ownership-side-panel {
+  overflow: hidden;
+}
+
+.mnx-ownership-overview-grid,
+.mnx-ownership-exception-grid,
+.mnx-ownership-card-stack,
+.mnx-ownership-form,
+.mnx-ownership-watch-list,
+.mnx-ownership-exception-list {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-ownership-overview-grid,
+.mnx-ownership-exception-grid,
+.mnx-ownership-card-stack {
+  padding: var(--mn-space-5);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-ownership-overview-grid,
+.mnx-ownership-exception-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-ownership-overview-card,
+.mnx-ownership-exception-card,
+.mnx-ownership-card,
+.mnx-ownership-empty-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 90%, transparent);
+  border-radius: calc(var(--mn-radius-panel) - 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 78%, transparent);
+}
+
+.mnx-ownership-overview-card-top,
+.mnx-ownership-exception-card-top,
+.mnx-ownership-card-hero,
+.mnx-ownership-selection-toolbar,
+.mnx-ownership-watch-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-ownership-overview-card-top > span,
+.mnx-ownership-empty-card > svg {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
+  color: var(--mnx-accent-text);
+}
+
+.mnx-ownership-overview-card strong,
+.mnx-ownership-exception-card strong,
+.mnx-ownership-card-person strong,
+.mnx-ownership-watch-item strong,
+.mnx-ownership-inline-state strong,
+.mnx-ownership-empty-card strong,
+.mnx-ownership-table-copy strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.mnx-ownership-overview-card strong {
+  font-size: clamp(1.85rem, 1.5rem + 1vw, 2.45rem);
+  line-height: 1;
+}
+
+.mnx-ownership-overview-card p,
+.mnx-ownership-exception-card p,
+.mnx-ownership-card-person p,
+.mnx-ownership-watch-item p,
+.mnx-ownership-inline-state p,
+.mnx-ownership-empty-card p,
+.mnx-ownership-selection-item small,
+.mnx-ownership-table-copy small {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: 1.5;
+}
+
+.mnx-ownership-toolbar {
+  gap: var(--mn-space-4);
+}
+
+.mnx-ownership-search {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+  min-width: min(100%, 28rem);
+  flex: 1 1 24rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface) 84%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
+
+.mnx-ownership-search > svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-ownership-search .mnx-field-control {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-ownership-toolbar-fields,
+.mnx-ownership-form-grid,
+.mnx-ownership-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+}
+
+.mnx-ownership-toolbar-fields {
+  flex: 1 1 16rem;
+  justify-content: flex-end;
+}
+
+.mnx-ownership-toolbar-field {
+  min-width: min(100%, 12rem);
+}
+
+.mnx-ownership-card-person,
+.mnx-ownership-team-list,
+.mnx-ownership-team-copy,
+.mnx-ownership-exception-card-top > div,
+.mnx-ownership-table-copy {
+  display: grid;
+  gap: var(--mn-space-2);
+  min-width: 0;
+}
+
+.mnx-ownership-team-list,
+.mnx-ownership-watch-list,
+.mnx-ownership-exception-list {
+  padding-top: var(--mn-space-1);
+}
+
+.mnx-ownership-team-item,
+.mnx-ownership-selection-item,
+.mnx-ownership-inline-state,
+.mnx-ownership-watch-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mn-space-3);
+  align-items: center;
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 86%, transparent);
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface) 74%, transparent);
+}
+
+.mnx-ownership-inline-state {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.mnx-ownership-inline-state > svg,
+.mnx-ownership-watch-item > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) - 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
+  color: var(--mnx-accent-text);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+}
+
+.mnx-ownership-form,
+.mnx-ownership-watch-list {
+  padding: var(--mn-space-5);
+}
+
+.mnx-ownership-form .mnx-field {
+  gap: var(--mn-space-2);
+}
+
+.mnx-ownership-selection-toolbar {
+  align-items: center;
+}
+
+.mnx-ownership-selection-toolbar span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mnx-ownership-selection-toolbar > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-ownership-selection-list {
+  display: grid;
+  gap: var(--mn-space-2);
+  max-height: 26rem;
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--mn-space-1);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 64%, transparent);
+}
+
+.mnx-ownership-selection-item {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.mnx-ownership-selection-item input {
+  margin-top: 0.15rem;
+  accent-color: var(--mnx-accent);
+}
+
+.mnx-ownership-selection-item span {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.mnx-ownership-selection-item strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-label-size);
+  font-weight: 650;
+}
+
+.mnx-ownership-selection-item.is-selected {
+  border-color: color-mix(in srgb, var(--mnx-accent) 55%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 11%, var(--mnx-surface));
+  box-shadow: var(--mn-shadow-accent-soft);
+}
+
+.mnx-ownership-table .mnx-people-table-cell,
+.mnx-ownership-table .mnx-people-table-head {
+  vertical-align: top;
+}
+
+@media (max-width: 78rem) {
+  .mnx-ownership-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 60rem) {
+  .mnx-ownership-overview-grid,
+  .mnx-ownership-exception-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 78rem) {
+  .mnx-org-structure-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 60rem) {
+  .mnx-org-structure-branch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
@@ -657,14 +2028,598 @@
   margin-top: var(--mn-space-4);
 }
 
+.mnx-tracking-shell {
+  display: grid;
+  gap: var(--mn-space-6);
+}
+
+.mnx-tracking-command {
+  padding: var(--mn-space-6);
+}
+
+.mnx-tracking-command-grid,
+.mnx-tracking-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mn-space-5);
+}
+
+.mnx-tracking-command-copy,
+.mnx-tracking-alert-stack,
+.mnx-tracking-health-stack,
+.mnx-tracking-trip-list {
+  display: grid;
+  gap: var(--mn-space-4);
+  min-width: 0;
+}
+
+.mnx-tracking-heading {
+  margin: 0;
+}
+
+.mnx-tracking-kpi-list,
+.mnx-tracking-policy-list,
+.mnx-tracking-governance-grid {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-tracking-kpi-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-tracking-kpi,
+.mnx-tracking-signal-card,
+.mnx-tracking-alert-card,
+.mnx-tracking-health-card,
+.mnx-tracking-trip-card,
+.mnx-tracking-governance-card {
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-surface) 92%, transparent), var(--mnx-surface-soft));
+  box-shadow: var(--mn-shadow-sm);
+}
+
+.mnx-tracking-kpi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-4);
+}
+
+.mnx-tracking-kpi-icon,
+.mnx-tracking-alert-icon,
+.mnx-tracking-governance-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface));
+  color: var(--mnx-accent);
+}
+
+.mnx-tracking-kpi-copy,
+.mnx-tracking-alert-copy,
+.mnx-tracking-mini,
+.mnx-tracking-governance-card > div:last-child {
+  min-width: 0;
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-tracking-kpi-copy strong,
+.mnx-tracking-signal-card strong,
+.mnx-tracking-health-card strong {
+  color: var(--mnx-text-strong);
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1;
+}
+
+.mnx-tracking-kpi-copy p,
+.mnx-tracking-signal-card span,
+.mnx-tracking-alert-copy p,
+.mnx-tracking-alert-message,
+.mnx-tracking-governance-card p,
+.mnx-tracking-empty p,
+.mnx-tracking-statline span {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  line-height: var(--mn-type-body-line);
+}
+
+.mnx-tracking-signal-grid {
+  display: grid;
+  gap: var(--mn-space-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-tracking-signal-card,
+.mnx-tracking-health-card {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-4);
+}
+
+.mnx-tracking-signal-label {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-tracking-policy-list {
+  grid-template-columns: repeat(4, minmax(0, max-content));
+  align-items: center;
+}
+
+.mnx-tracking-alert-card,
+.mnx-tracking-trip-card,
+.mnx-tracking-governance-card {
+  padding: var(--mn-space-4);
+}
+
+.mnx-tracking-alert-top,
+.mnx-tracking-trip-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-tracking-alert-copy strong,
+.mnx-tracking-trip-purpose,
+.mnx-tracking-governance-card strong,
+.mnx-tracking-empty strong,
+.mnx-tracking-mini strong {
+  color: var(--mnx-text);
+}
+
+.mnx-tracking-alert-message {
+  margin-top: var(--mn-space-3);
+}
+
+.mnx-tracking-alert-meta,
+.mnx-tracking-trip-points {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+  margin-top: var(--mn-space-4);
+}
+
+.mnx-tracking-trip-points {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-tracking-alert-meta dt,
+.mnx-tracking-trip-points span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+}
+
+.mnx-tracking-alert-meta dd,
+.mnx-tracking-trip-points strong {
+  margin: 0;
+  color: var(--mnx-text);
+  font-size: var(--mn-type-control-size);
+  line-height: var(--mn-type-body-line);
+}
+
+.mnx-tracking-health-stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-tracking-health-card {
+  align-content: space-between;
+  min-height: 9rem;
+}
+
+.mnx-tracking-health-card > div {
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-tracking-health-card p,
+.mnx-tracking-health-card span {
+  margin: 0;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-tracking-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+  gap: var(--mn-space-4);
+  margin-bottom: var(--mn-space-4);
+}
+
+.mnx-tracking-search,
+.mnx-tracking-toolbar-status {
+  min-width: 0;
+}
+
+.mnx-tracking-table-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--mnx-border);
+  background: var(--mnx-surface-soft);
+  color: var(--mnx-text);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+}
+
+.mnx-tracking-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.mnx-tracking-table-status.is-live {
+  color: var(--mnx-success);
+  background: color-mix(in srgb, var(--mnx-success) 10%, var(--mnx-surface));
+}
+
+.mnx-tracking-table-status.is-stale {
+  color: var(--mnx-warning);
+  background: color-mix(in srgb, var(--mnx-warning) 12%, var(--mnx-surface));
+}
+
+.mnx-tracking-table-status.is-offline {
+  color: var(--mnx-danger);
+  background: color-mix(in srgb, var(--mnx-danger) 10%, var(--mnx-surface));
+}
+
+.mnx-tracking-table-status.is-checked-in {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-tracking-mini span,
+.mnx-tracking-coordinate {
+  overflow-wrap: anywhere;
+}
+
+.mnx-tracking-trip-purpose {
+  margin: var(--mn-space-3) 0 0;
+  font-size: var(--mn-type-control-size);
+  line-height: var(--mn-type-body-line);
+}
+
+.mnx-tracking-governance-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-tracking-governance-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+}
+
+.mnx-tracking-statline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+  margin-top: var(--mn-space-4);
+}
+
+.mnx-tracking-empty {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-4);
+  border: 1px dashed var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-tracking-empty > svg {
+  color: var(--mnx-accent);
+}
+
+.mnx-reimbursement-workspace {
+  display: grid;
+  gap: var(--mn-space-6);
+}
+
+.mnx-reimbursement-command {
+  padding: clamp(var(--mn-space-5), 2vw, var(--mn-space-6));
+}
+
+.mnx-reimbursement-command-grid,
+.mnx-reimbursement-shell,
+.mnx-reimbursement-policy-grid {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-reimbursement-command-grid,
+.mnx-reimbursement-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-reimbursement-command-copy,
+.mnx-reimbursement-primary,
+.mnx-reimbursement-aside {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-reimbursement-heading-actions,
+.mnx-reimbursement-tabs,
+.mnx-reimbursement-policy-strip,
+.mnx-reimbursement-detail-actions,
+.mnx-reimbursement-side-actions,
+.mnx-reimbursement-modal-actions,
+.mnx-reimbursement-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+}
+
+.mnx-reimbursement-signal-grid,
+.mnx-reimbursement-board,
+.mnx-reimbursement-detail-grid,
+.mnx-reimbursement-side-facts {
+  display: grid;
+  gap: var(--mn-space-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mnx-reimbursement-signal-card,
+.mnx-reimbursement-board-card,
+.mnx-reimbursement-policy-card,
+.mnx-reimbursement-history-card {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-accent) 4%, transparent), transparent 50%),
+    var(--mnx-surface);
+}
+
+.mnx-reimbursement-signal-card p,
+.mnx-reimbursement-policy-card p,
+.mnx-reimbursement-history-card p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-reimbursement-signal-card strong,
+.mnx-reimbursement-board-value,
+.mnx-reimbursement-policy-card strong,
+.mnx-reimbursement-history-card strong,
+.mnx-reimbursement-rate-value {
+  font-size: var(--mn-font-size-heading-3);
+  line-height: 1.1;
+  color: var(--mnx-text-strong);
+}
+
+.mnx-reimbursement-signal-card span,
+.mnx-reimbursement-board-card span,
+.mnx-reimbursement-policy-card span,
+.mnx-reimbursement-history-card span,
+.mnx-reimbursement-watch-item p,
+.mnx-reimbursement-table-copy small,
+.mnx-reimbursement-reject-context span {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-reimbursement-board-top,
+.mnx-reimbursement-detail-top,
+.mnx-reimbursement-history-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-reimbursement-board-top p,
+.mnx-reimbursement-board-top strong,
+.mnx-reimbursement-detail-grid span,
+.mnx-reimbursement-detail-grid strong,
+.mnx-reimbursement-side-facts span,
+.mnx-reimbursement-side-facts strong,
+.mnx-reimbursement-watch-item p,
+.mnx-reimbursement-watch-item span,
+.mnx-reimbursement-timeline-item p,
+.mnx-reimbursement-timeline-item strong,
+.mnx-reimbursement-table-copy strong,
+.mnx-reimbursement-reject-context strong {
+  margin: 0;
+}
+
+.mnx-reimbursement-board-card,
+.mnx-reimbursement-detail,
+.mnx-reimbursement-watch-list,
+.mnx-reimbursement-history-list,
+.mnx-reimbursement-modal,
+.mnx-reimbursement-side-claim {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-reimbursement-detail-grid > div,
+.mnx-reimbursement-side-facts > div {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-3);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-reimbursement-detail-grid span,
+.mnx-reimbursement-side-facts span {
+  font-size: var(--mn-font-size-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-reimbursement-timeline {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-reimbursement-timeline-item,
+.mnx-reimbursement-watch-item,
+.mnx-reimbursement-empty,
+.mnx-reimbursement-reject-context {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+}
+
+.mnx-reimbursement-timeline-item span:first-child,
+.mnx-reimbursement-watch-item span:first-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
+  color: var(--mnx-accent);
+  font-size: var(--mn-font-size-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.mnx-reimbursement-toolbar {
+  display: grid;
+  gap: var(--mn-space-4);
+  grid-template-columns: minmax(0, 1.7fr) minmax(14rem, 0.8fr);
+  padding: 0 var(--mn-space-5) var(--mn-space-1);
+}
+
+.mnx-reimbursement-toolbar .mnx-field {
+  margin: 0;
+}
+
+.mnx-reimbursement-queue-row.is-selected {
+  background: color-mix(in srgb, var(--mnx-accent) 8%, transparent);
+}
+
+.mnx-reimbursement-table-copy {
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-reimbursement-side-panel {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-reimbursement-history-list,
+.mnx-reimbursement-watch-list {
+  padding: var(--mn-space-4);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-reimbursement-empty {
+  padding: var(--mn-space-4);
+  border: 1px dashed var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-reimbursement-empty > svg {
+  color: var(--mnx-accent);
+}
+
+.mnx-reimbursement-reject-context {
+  padding: var(--mn-space-3);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-reimbursement-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-label);
+}
+
+.mnx-reimbursement-tab {
+  min-height: 4.25rem;
+  padding: 0.95rem 1rem;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast),
+    color var(--mn-motion-fast);
+}
+
+.mnx-reimbursement-tab.is-active {
+  border-color: color-mix(in srgb, var(--mnx-accent) 45%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface));
+  color: var(--mnx-text-strong);
+}
+
 @media (max-width: 80rem) {
   .mnx-employee-profile-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mnx-hrms-command-grid,
+  .mnx-attendance-command-grid,
+  .mnx-tracking-command-grid,
+  .mnx-tracking-split,
+  .mnx-tracking-governance-grid,
+  .mnx-reimbursement-command-grid,
+  .mnx-reimbursement-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-hrms-lane-grid,
+  .mnx-hrms-lane-links,
+  .mnx-attendance-lane-grid,
+  .mnx-attendance-lane-links,
+  .mnx-attendance-watch-grid,
+  .mnx-attendance-check-grid,
+  .mnx-tracking-kpi-list,
+  .mnx-tracking-health-stack,
+  .mnx-reimbursement-signal-grid,
+  .mnx-reimbursement-board,
+  .mnx-reimbursement-detail-grid,
+  .mnx-reimbursement-side-facts,
+  .mnx-reimbursement-policy-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 64rem) {
   .mnx-employee-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mnx-hrms-priority-metrics,
+  .mnx-attendance-priority-metrics,
+  .mnx-org-visual-grid,
+  .mnx-org-employee-grid,
+  .mnx-tracking-toolbar,
+  .mnx-tracking-trip-points,
+  .mnx-tracking-alert-meta,
+  .mnx-reimbursement-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-tracking-policy-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -695,6 +2650,38 @@
 
   .mnx-employee-profile-field.is-span {
     grid-column: auto;
+  }
+
+  .mnx-tracking-command {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-tracking-kpi-list,
+  .mnx-tracking-health-stack,
+  .mnx-tracking-policy-list,
+  .mnx-reimbursement-signal-grid,
+  .mnx-reimbursement-board,
+  .mnx-reimbursement-detail-grid,
+  .mnx-reimbursement-side-facts,
+  .mnx-reimbursement-policy-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-tracking-alert-top,
+  .mnx-tracking-trip-top,
+  .mnx-reimbursement-board-top,
+  .mnx-reimbursement-detail-top,
+  .mnx-reimbursement-history-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mnx-tracking-governance-card {
+    align-items: start;
+  }
+
+  .mnx-tracking-governance-card {
+    display: grid;
   }
 }
 
@@ -732,6 +2719,15 @@
     padding: var(--mn-space-4);
   }
 
+  .mnx-hrms-command-grid,
+  .mnx-hrms-lane-grid,
+  .mnx-attendance-command-grid,
+  .mnx-attendance-lane-grid,
+  .mnx-attendance-watch-grid,
+  .mnx-attendance-check-grid {
+    padding: var(--mn-space-4);
+  }
+
   .mnx-people-summary {
     min-height: 7.5rem;
   }
@@ -739,6 +2735,132 @@
   .mnx-people-toolbar,
   .mnx-people-section-header {
     align-items: stretch;
+  }
+
+  .mnx-org-visual-company-card,
+  .mnx-org-person-card,
+  .mnx-org-visual-empty {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-org-structure-stack,
+  .mnx-org-structure-branch-grid,
+  .mnx-org-structure-blueprint,
+  .mnx-org-structure-health-list {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-hrms-priority-top,
+  .mnx-hrms-lane-top,
+  .mnx-attendance-priority-top,
+  .mnx-attendance-lane-top,
+  .mnx-attendance-watch-card-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mnx-org-structure-heading-actions,
+  .mnx-org-structure-panel-actions,
+  .mnx-org-structure-toolbar-controls,
+  .mnx-org-structure-dialog-footer,
+  .mnx-org-structure-blueprint-actions,
+  .mnx-org-structure-card-actions,
+  .mnx-org-structure-branch-card-actions,
+  .mnx-org-structure-division-actions,
+  .mnx-org-visual-toolbar-fields,
+  .mnx-org-visual-company-metrics,
+  .mnx-org-visual-inline-meta {
+    align-items: stretch;
+  }
+
+  .mnx-org-structure-heading-actions > *,
+  .mnx-org-structure-panel-actions > *,
+  .mnx-org-structure-toolbar-controls > *,
+  .mnx-org-structure-dialog-footer > *,
+  .mnx-org-structure-blueprint-actions > *,
+  .mnx-org-structure-card-actions > *,
+  .mnx-org-structure-branch-card-actions > *,
+  .mnx-org-structure-division-actions > *,
+  .mnx-org-visual-toolbar-fields > *,
+  .mnx-org-visual-company-metrics > *,
+  .mnx-org-visual-inline-meta > * {
+    width: 100%;
+  }
+
+  .mnx-org-structure-card-main,
+  .mnx-org-structure-inline-empty,
+  .mnx-org-structure-division-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-org-structure-search {
+    min-width: 100%;
+  }
+
+  .mnx-org-visual-search {
+    min-width: 100%;
+  }
+
+  .mnx-org-structure-card-badges,
+  .mnx-org-structure-card-title-row,
+  .mnx-org-structure-blueprint-hero,
+  .mnx-org-structure-health-row-top,
+  .mnx-org-visual-lane-header,
+  .mnx-org-visual-node-top,
+  .mnx-ownership-overview-card-top,
+  .mnx-ownership-exception-card-top,
+  .mnx-ownership-card-hero,
+  .mnx-ownership-selection-toolbar,
+  .mnx-ownership-watch-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mnx-ownership-overview-grid,
+  .mnx-ownership-exception-grid,
+  .mnx-ownership-card-stack,
+  .mnx-ownership-form,
+  .mnx-ownership-watch-list {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-ownership-tabs,
+  .mnx-ownership-toolbar-fields,
+  .mnx-ownership-form-grid,
+  .mnx-ownership-selection-toolbar > div {
+    align-items: stretch;
+  }
+
+  .mnx-ownership-tabs > *,
+  .mnx-ownership-toolbar-fields > *,
+  .mnx-ownership-form-grid > *,
+  .mnx-ownership-selection-toolbar > div > *,
+  .mnx-reimbursement-heading-actions > *,
+  .mnx-reimbursement-tabs > *,
+  .mnx-reimbursement-detail-actions > *,
+  .mnx-reimbursement-side-actions > *,
+  .mnx-reimbursement-modal-actions > *,
+  .mnx-reimbursement-table-actions > * {
+    width: 100%;
+  }
+
+  .mnx-ownership-search {
+    min-width: 100%;
+  }
+
+  .mnx-ownership-team-item,
+  .mnx-ownership-selection-item,
+  .mnx-ownership-inline-state,
+  .mnx-ownership-watch-item,
+  .mnx-reimbursement-timeline-item,
+  .mnx-reimbursement-watch-item,
+  .mnx-reimbursement-empty,
+  .mnx-reimbursement-reject-context {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-attendance-check-card {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -756,4 +2878,495 @@
 /* Ownership corrections moved from the shared stylesheet. */
 .mnx-people-empty {
   min-height: 350px;
+}
+
+.mnx-on-duty-workspace {
+  display: grid;
+  gap: var(--mn-space-6);
+}
+
+.mnx-on-duty-shell,
+.mnx-on-duty-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(19rem, 1fr);
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-on-duty-primary,
+.mnx-on-duty-aside {
+  min-width: 0;
+}
+
+.mnx-on-duty-aside,
+.mnx-on-duty-approval-stack,
+.mnx-on-duty-trip-stack,
+.mnx-on-duty-alert-stack,
+.mnx-on-duty-claim-stack,
+.mnx-on-duty-watch-list,
+.mnx-on-duty-governance-list,
+.mnx-on-duty-modal-stack,
+.mnx-on-duty-route-timeline {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-on-duty-lane-grid,
+.mnx-on-duty-route-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+}
+
+.mnx-on-duty-lane-card,
+.mnx-on-duty-approval-card,
+.mnx-on-duty-trip-card,
+.mnx-on-duty-alert-card,
+.mnx-on-duty-claim-card,
+.mnx-on-duty-governance-card,
+.mnx-on-duty-route-panel,
+.mnx-on-duty-modal-note {
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 90%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mnx-surface) 92%, transparent), var(--mnx-surface-soft));
+  box-shadow: var(--mn-shadow-sm);
+}
+
+.mnx-on-duty-lane-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-4);
+}
+
+.mnx-on-duty-lane-icon,
+.mnx-on-duty-governance-card > svg,
+.mnx-on-duty-empty > svg {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-accent);
+}
+
+.mnx-on-duty-lane-card strong,
+.mnx-on-duty-card-copy strong,
+.mnx-on-duty-watch-item strong,
+.mnx-on-duty-governance-card strong,
+.mnx-on-duty-route-panel strong,
+.mnx-on-duty-route-point strong,
+.mnx-on-duty-route-hero strong,
+.mnx-on-duty-modal-note strong,
+.mnx-on-duty-table-copy strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-control-size);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mnx-on-duty-lane-card p,
+.mnx-on-duty-card-copy p,
+.mnx-on-duty-watch-item p,
+.mnx-on-duty-governance-card p,
+.mnx-on-duty-route-panel p,
+.mnx-on-duty-route-point p,
+.mnx-on-duty-route-hero p,
+.mnx-on-duty-modal-note p,
+.mnx-on-duty-table-copy small,
+.mnx-on-duty-card-footer p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: 1.5;
+}
+
+.mnx-on-duty-approval-stack,
+.mnx-on-duty-trip-stack,
+.mnx-on-duty-alert-stack,
+.mnx-on-duty-claim-stack {
+  padding: var(--mn-space-5);
+}
+
+.mnx-on-duty-approval-card,
+.mnx-on-duty-trip-card,
+.mnx-on-duty-alert-card,
+.mnx-on-duty-claim-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4);
+}
+
+.mnx-on-duty-card-top,
+.mnx-on-duty-card-actions,
+.mnx-on-duty-card-footer,
+.mnx-on-duty-modal-actions,
+.mnx-on-duty-watch-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-on-duty-card-copy {
+  display: grid;
+  gap: var(--mn-space-1);
+  min-width: 0;
+}
+
+.mnx-on-duty-trip-meta,
+.mnx-on-duty-alert-meta,
+.mnx-on-duty-claim-metrics,
+.mnx-on-duty-route-hero {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-on-duty-trip-meta,
+.mnx-on-duty-alert-meta,
+.mnx-on-duty-claim-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-on-duty-trip-meta span,
+.mnx-on-duty-alert-meta span,
+.mnx-on-duty-claim-metrics span,
+.mnx-on-duty-route-hero span,
+.mnx-on-duty-route-panel span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+}
+
+.mnx-on-duty-trip-meta strong,
+.mnx-on-duty-alert-meta strong,
+.mnx-on-duty-claim-metrics strong,
+.mnx-on-duty-route-hero strong {
+  color: var(--mnx-text);
+  font-size: var(--mn-type-control-size);
+}
+
+.mnx-on-duty-watch-list,
+.mnx-on-duty-governance-list {
+  padding: var(--mn-space-5);
+}
+
+.mnx-on-duty-watch-item {
+  align-items: flex-start;
+  padding-bottom: var(--mn-space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+}
+
+.mnx-on-duty-watch-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.mnx-on-duty-watch-item > span,
+.mnx-on-duty-route-point > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
+  color: var(--mnx-accent-text);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.mnx-on-duty-governance-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-4);
+}
+
+.mnx-on-duty-history-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 74%, transparent);
+}
+
+.mnx-helpdesk-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
+  gap: var(--mn-space-6);
+}
+
+.mnx-helpdesk-stack {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+}
+
+.mnx-helpdesk-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-helpdesk-toggle-row .mnx-people-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-helpdesk-template-grid,
+.mnx-helpdesk-function-grid,
+.mnx-helpdesk-category-grid {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-helpdesk-template-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-helpdesk-function-grid,
+.mnx-helpdesk-category-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mnx-helpdesk-template-card,
+.mnx-helpdesk-function-card,
+.mnx-helpdesk-category-card,
+.mnx-helpdesk-note-card,
+.mnx-helpdesk-timeline-item {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 82%, transparent);
+}
+
+.mnx-helpdesk-template-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    box-shadow var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-helpdesk-template-card:hover,
+.mnx-helpdesk-template-card:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-accent) 46%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 8%, var(--mnx-surface));
+  box-shadow: var(--mn-shadow-panel);
+  outline: none;
+}
+
+.mnx-helpdesk-template-card strong,
+.mnx-helpdesk-function-card strong,
+.mnx-helpdesk-category-card strong,
+.mnx-helpdesk-note-card strong,
+.mnx-helpdesk-timeline-item strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-body-size);
+  font-weight: 650;
+}
+
+.mnx-helpdesk-template-card small,
+.mnx-helpdesk-function-card p,
+.mnx-helpdesk-category-card p,
+.mnx-helpdesk-note-card p,
+.mnx-helpdesk-timeline-item p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: var(--mn-type-body-line);
+}
+
+.mnx-helpdesk-template-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+  color: var(--mnx-accent-text);
+}
+
+.mnx-helpdesk-template-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.mnx-helpdesk-note-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-2);
+}
+
+.mnx-helpdesk-inline-badges,
+.mnx-helpdesk-meta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-helpdesk-meta-list {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-helpdesk-toolbar {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-helpdesk-filter-cluster {
+  display: grid;
+  gap: var(--mn-space-2);
+}
+
+.mnx-helpdesk-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(19rem, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--mn-space-5);
+  padding: var(--mn-space-5);
+}
+
+.mnx-helpdesk-timeline {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-on-duty-history-search,
+.mnx-on-duty-history-filter {
+  min-width: 0;
+}
+
+.mnx-on-duty-table-copy {
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-on-duty-empty {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-4);
+  border: 1px dashed var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-on-duty-modal-note,
+.mnx-on-duty-route-panel {
+  padding: var(--mn-space-4);
+}
+
+.mnx-on-duty-route-hero {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 72%, transparent);
+}
+
+.mnx-on-duty-route-timeline {
+  max-height: 24rem;
+  overflow: auto;
+  padding-right: var(--mn-space-2);
+}
+
+.mnx-on-duty-route-point {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 86%, transparent);
+  border-radius: calc(var(--mn-radius-control) + 0.125rem);
+  background: color-mix(in srgb, var(--mnx-surface) 78%, transparent);
+}
+
+@media (max-width: 80rem) {
+  .mnx-helpdesk-shell,
+  .mnx-helpdesk-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-on-duty-shell,
+  .mnx-on-duty-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 64rem) {
+  .mnx-helpdesk-template-grid,
+  .mnx-helpdesk-function-grid,
+  .mnx-helpdesk-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mnx-on-duty-lane-grid,
+  .mnx-on-duty-route-grid,
+  .mnx-on-duty-route-hero,
+  .mnx-on-duty-trip-meta,
+  .mnx-on-duty-alert-meta,
+  .mnx-on-duty-claim-metrics,
+  .mnx-on-duty-history-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-helpdesk-stack,
+  .mnx-helpdesk-detail-grid {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-helpdesk-template-grid,
+  .mnx-helpdesk-function-grid,
+  .mnx-helpdesk-category-grid,
+  .mnx-helpdesk-template-card,
+  .mnx-helpdesk-function-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-on-duty-lane-grid,
+  .mnx-on-duty-approval-stack,
+  .mnx-on-duty-trip-stack,
+  .mnx-on-duty-alert-stack,
+  .mnx-on-duty-claim-stack,
+  .mnx-on-duty-watch-list,
+  .mnx-on-duty-governance-list {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-on-duty-lane-card,
+  .mnx-on-duty-card-top,
+  .mnx-on-duty-card-actions,
+  .mnx-on-duty-card-footer,
+  .mnx-on-duty-modal-actions,
+  .mnx-on-duty-watch-item {
+    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+  }
+
+  .mnx-on-duty-governance-card,
+  .mnx-on-duty-empty,
+  .mnx-on-duty-route-point {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

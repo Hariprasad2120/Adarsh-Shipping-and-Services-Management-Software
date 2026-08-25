@@ -2,10 +2,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { listMessages, sendMessage, listMemberships } from "@/lib/google-chat-client";
+import {
+  listMessages,
+  sendMessage,
+  listMemberships,
+  resolveGoogleWorkspacePerson,
+  isCurrentGoogleChatUser,
+} from "@/lib/google-chat-client";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
 
 const CHAT_API_BASE = "https://chat.googleapis.com/v1";
+const GENERIC_CHAT_NAMES = new Set([
+  "Adarsh Operations",
+  "adarsh operations",
+  "ADARSH OPERATIONS",
+  "Adarsh Shipping",
+  "adarsh shipping",
+  "Google User",
+  "Google Chat DM",
+  "Direct message",
+  "Chat Member",
+]);
+
+function isGenericChatName(value?: string | null) {
+  return !value || GENERIC_CHAT_NAMES.has(value.trim());
+}
 
 // GET /api/communication/chat/messages?spaceId=spaces/XXX - Load messages
 export async function GET(req: NextRequest) {
@@ -14,8 +35,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = new URL(req.url);
-  const spaceId = url.searchParams.get("spaceId");
+    const url = new URL(req.url);
+    const spaceId = url.searchParams.get("spaceId");
+    const dmPartnerUserId = url.searchParams.get("dmPartnerUserId");
+    const dmPartnerEmail = url.searchParams.get("dmPartnerEmail");
 
   if (!spaceId) {
     return NextResponse.json({ error: "Missing spaceId parameter" }, { status: 400 });
@@ -62,7 +85,7 @@ export async function GET(req: NextRequest) {
     // Get current user's Google User ID
     const myConn = await db.googleWorkspaceConnection.findUnique({
       where: { userId: session.user.id },
-      select: { googleUserId: true }
+      select: { googleUserId: true, googleEmail: true }
     });
     const myGoogleUserId = myConn?.googleUserId;
 
@@ -72,7 +95,6 @@ export async function GET(req: NextRequest) {
     // Any non-me message must be from the partner.
     let spaceType: string | null = null;
     let dmPartnerName: string | null = null;
-    let dmPartnerGoogleId: string | null = null;
 
     try {
       const token = await getValidAccessToken(session.user.id);
@@ -88,59 +110,81 @@ export async function GET(req: NextRequest) {
     // Accept a name hint from the frontend (the sidebar already resolved the DM partner name)
     const dmPartnerHint = url.searchParams.get("dmPartnerName");
 
+    if (!dmPartnerName && dmPartnerUserId) {
+      const partnerUser = await db.user.findUnique({
+        where: { id: dmPartnerUserId },
+        select: { name: true, email: true },
+      });
+      if (partnerUser?.name) {
+        dmPartnerName = partnerUser.name;
+      }
+      if (!dmPartnerName && partnerUser?.email) {
+        dmPartnerName = nameByEmail.get(partnerUser.email.toLowerCase()) || null;
+      }
+    }
+
+    if (!dmPartnerName && dmPartnerEmail) {
+      dmPartnerName = nameByEmail.get(dmPartnerEmail.toLowerCase()) || null;
+    }
+
     if (spaceType === "DIRECT_MESSAGE") {
       try {
         const membersData = await listMemberships(spaceId, session.user.id);
-        const otherMember = membersData.memberships?.find(
-          (m) => m.member && m.member.name !== `users/${myGoogleUserId}`
+        const otherMember = membersData.memberships?.find((m) =>
+          m.member
+            ? !isCurrentGoogleChatUser({
+                memberName: m.member.name,
+                memberEmail: m.member.email,
+                googleUserId: myGoogleUserId,
+                googleEmail: myConn?.googleEmail ?? null,
+                userEmail: session.user.email ?? null,
+              })
+            : false,
         );
 
         if (otherMember?.member) {
           const otherId = otherMember.member.name?.replace("users/", "");
-          dmPartnerGoogleId = otherId || null;
 
-          // Priority 1: Google User ID → DB lookup
-          if (otherId && nameByGoogleId.has(otherId)) {
+          const resolved = await resolveGoogleWorkspacePerson({
+            actorUserId: session.user.id,
+            googleUserId: otherId,
+            email: otherMember.member.email || null,
+            displayName: otherMember.member.displayName || null,
+            orgId: session.user.orgId || null,
+          });
+
+          dmPartnerName = resolved.name;
+
+          if (!dmPartnerName && otherId && nameByGoogleId.has(otherId)) {
             dmPartnerName = nameByGoogleId.get(otherId)!;
-          }
-          // Priority 2: Member email → DB lookup
-          else if (otherMember.member.email) {
+          } else if (!dmPartnerName && otherMember.member.email) {
             const email = otherMember.member.email.toLowerCase();
             dmPartnerName = nameByEmail.get(email) || null;
-            if (!dmPartnerName) {
-              dmPartnerName = email.split("@")[0]
-                .replace(/[._]/g, " ")
-                .split(" ")
-                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" ");
-            }
-          }
-          // Priority 3: Match member displayName against Monolith users by name
-          else if (otherMember.member.displayName) {
+          } else if (!dmPartnerName && otherMember.member.displayName) {
             const memberDisplayName = otherMember.member.displayName;
-            // Check if this displayName matches any Monolith user name (case-insensitive)
-            const matchedUser = allUsers.find(u => 
+            const matchedUser = allUsers.find((u) =>
               u.name.toLowerCase() === memberDisplayName.toLowerCase()
             );
             if (matchedUser) {
               dmPartnerName = matchedUser.name;
             }
           }
+
           // Priority 4: Use frontend hint (already resolved by listSpaces)
-          if (!dmPartnerName && dmPartnerHint) {
+          if (!dmPartnerName && !isGenericChatName(dmPartnerHint)) {
             dmPartnerName = dmPartnerHint;
           }
         }
       } catch { /* non-critical */ }
 
       // Absolute fallback: if still no partner name, use frontend hint
-      if (!dmPartnerName && dmPartnerHint) {
+      if (!dmPartnerName && !isGenericChatName(dmPartnerHint)) {
         dmPartnerName = dmPartnerHint;
       }
     }
 
     // ── Enrich Messages ──
-    const enrichedMessages = messages.map((msg: any) => {
+    const enrichedMessages = await Promise.all(messages.map(async (msg: any) => {
       const senderName = msg.sender?.name || "";
       const match = senderName.match(/^users\/([a-zA-Z0-9_-]+)$/);
       const msgGoogleUserId = match ? match[1] : null;
@@ -168,12 +212,18 @@ export async function GET(req: NextRequest) {
         displayName = nameByEmail.get(msg.sender.email.toLowerCase())!;
       } else {
         // Fallback: use whatever Google gives us (unless it's the org name)
-        const raw = msg.sender?.displayName || "";
-        const ORG_NAMES = ["Adarsh Operations", "adarsh operations", "ADARSH OPERATIONS", "Adarsh Shipping"];
-        if (raw && !ORG_NAMES.includes(raw)) {
+        const resolvedSender = await resolveGoogleWorkspacePerson({
+          actorUserId: session.user.id,
+          googleUserId: msgGoogleUserId,
+          email: msg.sender?.email || null,
+          displayName: msg.sender?.displayName || null,
+          orgId: session.user.orgId || null,
+        });
+        const raw = resolvedSender.name || msg.sender?.displayName || "";
+        if (!isGenericChatName(raw)) {
           displayName = raw;
         } else {
-          displayName = "Chat Member";
+          displayName = dmPartnerName || "Teammate";
         }
       }
 
@@ -185,7 +235,7 @@ export async function GET(req: NextRequest) {
           displayName
         }
       };
-    });
+    }));
 
     return NextResponse.json({ messages: enrichedMessages });
   } catch (err: any) {

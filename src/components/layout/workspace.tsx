@@ -51,7 +51,7 @@ export function WorkspacePageHeader({
     >
       <div className="mnx-page-header-copy">
         {icon ? <span className="mnx-page-header-icon">{icon}</span> : null}
-        <div>
+        <div className="mnx-page-header-copy-body">
           <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel>
           <h1>{title}</h1>
           {description ? <p>{description}</p> : null}
@@ -322,7 +322,7 @@ export function WorkspacePanelHeader({
 }: WorkspacePanelHeaderProps) {
   return (
     <header className={cn("mnx-table-toolbar", className)} {...props}>
-      <div>
+      <div className="mnx-panel-header-copy">
         {eyebrow ? (
           <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel>
         ) : null}

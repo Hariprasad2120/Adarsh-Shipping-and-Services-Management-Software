@@ -1,6 +1,2256 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-19
+Last updated: 2026-08-25
+
+## 2026-08-25 Attendance command centre rework handoff
+
+Reworked `/attendance` from a lightweight attendance summary page into a fuller
+attendance command centre with control-tower framing closer to modern ERP
+attendance workspaces while staying inside the People module design system and
+the existing attendance services.
+
+Delivered:
+
+- rebuilt `src/app/(dashboard)/attendance/page.tsx` so the attendance home now:
+  - expands beyond the earlier personal summary into a command-centre layout
+    that surfaces daily capture posture, leave and overtime exceptions,
+    biometric sync recency, workforce reporting coverage, and month-end
+    attendance readiness;
+  - keeps the route inside the shared `PeopleWorkspaceFrame` and reuses
+    `PeopleSummary`, `PeopleSection`, `PeopleSectionHeader`, `PeopleTable`,
+    `PeopleStatus`, `PeopleActionLink`, and the shared dashboard-insight
+    components instead of introducing route-local primitives;
+  - adds operational lane grouping for punch capture, leave control,
+    overtime/settings, and sync/reporting so the module reads like a managed
+    attendance console instead of a flat shortcut board;
+  - adds an approvals or request watchlist plus month-to-date attendance
+    leaders so operators can act without leaving the home route immediately;
+- updated `src/styles/modules/people.css` with module-owned attendance command
+  centre styling for:
+  - the command-grid and priority-rail composition;
+  - attendance lane cards and responsive operational link groups;
+  - watchlist cards and closure checkpoint panels;
+  - desktop, tablet, and mobile collapse behavior;
+- regenerated:
+  - `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+  - `docs/ui-route-audit.md`;
+  - `docs/ui-component-and-style-ownership-audit.md`.
+
+ERP/reference framing used in this batch:
+
+- real-time attendance capture, biometric sync, leave plus overtime tracking,
+  policy controls, and payroll-ready attendance reporting were aligned with the
+  current Zoho People attendance-management reference pages and help content
+  reviewed on Tuesday, August 25, 2026.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/app/(dashboard)/attendance/page.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed, with the unchanged Turbopack NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository-wide `src/components/monolith`
+  ownership baseline outside this attendance batch.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- this pass intentionally improved attendance command-centre framing and route
+  composition without changing attendance business logic, permission keys,
+  server actions, sync APIs, payroll bridges, or downstream attendance tools;
+- the dashboard now surfaces stronger operational signals from currently
+  available attendance data, but deeper regularization, shift-roster, or
+  exception-remediation workflows would still require additional persistent
+  service contracts before the home route can perform those actions directly.
+
+## 2026-08-25 HRMS organisation tree and dashboard organization handoff
+
+Reworked `/hrms/org-structure` and the main `/dashboard` organization tab so
+both now expose a fuller organisation-tree and employee-tree experience instead
+of limiting users to the earlier structure registry or lightweight placeholder
+tree boards.
+
+Delivered:
+
+- added `src/modules/hrms/components/organisation-tree-explorers.tsx` as the
+  shared HRMS-owned production implementation for:
+  - an organisation tree explorer that reads real branch, department, and
+    division data;
+  - an employee tree explorer that reads real reporting-manager mappings and
+    shows leadership, direct reports, and second-line visibility;
+- updated `src/modules/hrms/components/organisation-structure-workspace.tsx`
+  so `/hrms/org-structure` now:
+  - keeps the existing structure control centre for branch/department/division
+    management;
+  - adds Monolith tabs for `Control centre`, `Organisation tree`, and
+    `Employee tree`;
+  - reuses the new shared tree explorer implementations inside the HRMS route
+    instead of introducing a second page-local tree system;
+- updated `src/app/(dashboard)/hrms/org-structure/page.tsx` and
+  `src/modules/core/user/service.ts` so the page now loads active employee
+  hierarchy context together with the organisation structure;
+- rebuilt
+  `src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx` so
+  the main dashboard organization workspace now:
+  - adds a real `Organisation tree` tab beside the employee tree;
+  - replaces the earlier placeholder tree layouts with the same shared HRMS
+    tree explorers;
+  - adds a direct launch into `/hrms/org-structure` from the dashboard
+    overview;
+- updated `src/styles/modules/people.css` with module-owned styling for the new
+  hierarchy explorers, selection cards, focus panels, and responsive tree
+  layouts;
+- regenerated:
+  - `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+  - `docs/ui-route-audit.md`;
+  - `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/hrms/components/organisation-tree-explorers.tsx' 'src/modules/hrms/components/organisation-structure-workspace.tsx' 'src/app/(dashboard)/hrms/org-structure/page.tsx' 'src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx' 'src/modules/core/user/service.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository-wide `src/components/monolith`
+  ownership baseline outside this HRMS/dashboard batch.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- the employee tree reflects current reporting-manager data, so employees
+  without complete manager mappings remain visible but do not form a deeper
+  reporting chain until that underlying data is present.
+
+## 2026-08-25 HRMS employee user-control workspace handoff
+
+Reworked `/hrms/users` from a simple employee login list into a more advanced
+access-governance workspace that feels closer to a mature ERP employee-control
+console while staying within the existing Monolith HRMS design system and the
+current `/api/hrms/employees` contract.
+
+Delivered:
+
+- rebuilt `src/modules/hrms/components/users-table.tsx` so the route now:
+  - adds an access-posture KPI strip for total employees, enabled logins,
+    pending activation, exceptions, and privileged accounts;
+  - introduces governance segments for all employees, enabled, pending
+    activation, disabled, exceptions, and privileged access;
+  - adds search plus department, role, and employment-state filtering inside
+    the shared Monolith control system;
+  - upgrades the directory into a fuller operational register with access
+    posture, organisational context, role visibility, lifecycle context, and
+    exception surfacing per employee;
+  - keeps bulk enable/disable actions while also adding clearer row-level
+    enable/disable controls and profile drill-through actions;
+  - surfaces invite failures, expired invites, missing roles, missing
+    department data, missing manager chains for privileged users, and exited
+    employees with active access as remediation cues instead of leaving them
+    hidden in the raw list;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/hrms/components/users-table.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/hrms/components/users-table.tsx'`:
+  passed, with only the existing Git LF/CRLF working-copy warning;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed, with the existing Turbopack NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository-wide `src/components/monolith`
+  ownership baseline outside this HRMS route batch.
+
+Known limits:
+
+- the backend still supports employee-list fetch plus enable/disable login
+  updates only, so this pass improves governance framing and operational
+  control presentation without yet adding resend-invite, role-edit, approval
+  workflow, session-forensics, or policy-configuration actions;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-25 HRMS help desk shared-services rework handoff
+
+Reworked `/hrms/helpdesk` from a basic HR case form into a more advanced
+internal shared-services workspace that better frames HR help desk operations
+and IT support-desk functions inside the Monolith design system.
+
+Delivered:
+
+- rebuilt `src/modules/hrms/components/helpdesk-view.tsx` so the route now:
+  - reframes the experience as a combined HR and IT service desk;
+  - adds service-lane switching between HR help desk and IT support desk;
+  - introduces service-template cards inspired by modern ERP/help-desk intake;
+  - surfaces queue-health metrics for open work, SLA risk, and overdue items;
+  - adds category ownership framing, knowledge coverage, and advanced
+    operating-function panels;
+  - upgrades the request register with desk and SLA columns plus queue filters;
+  - upgrades the conversation area with handling guidance and SLA posture;
+- updated `src/modules/people/components/people-workspace.tsx` so the shared
+  page header for `/hrms/helpdesk` now reflects the broader HR + IT service
+  desk framing;
+- updated `src/styles/modules/people.css` so the page now has module-owned
+  styling for the help-desk shell, intake cards, category board, queue tools,
+  and responsive detail layout.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/hrms/components/helpdesk-view.tsx' 'src/modules/people/components/people-workspace.tsx' --max-warnings=0`:
+  passed;
+
+Known limits:
+
+- the backend contract is still the existing HR cases API, so this batch
+  improves the operational workspace and IT support framing without yet adding
+  true IT-specific data fields, assignment controls, watchers, attachments, or
+  admin-side SLA configuration;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-25 HRMS onboarding command-center handoff
+
+Rebuilt `/hrms/onboarding` from a passive placeholder into a working onboarding
+operations workspace that feels closer to a mature ERP onboarding module while
+staying inside the current Monolith design system and existing service
+contracts.
+
+Delivered:
+
+- updated `src/modules/hrms/components/onboarding-view.tsx` so the route now:
+  - replaces the old coming-soon state with a full onboarding command center;
+  - uses shared `WorkspaceMetric`, `WorkspacePanel`, `WorkspaceSectionHeading`,
+    `PeopleSection`, `PeopleTable`, `OperationalDataTable`, and `Tabs`
+    primitives instead of a route-local reimplementation;
+  - frames advanced onboarding operations including lifecycle stages, journey
+    queue, template library, owner matrix, compliance gates, portal/invitation
+    posture, and escalation guidance;
+  - wires the existing `/api/hrms/onboarding` GET/POST contract into a live
+    `My record` tab so personal, contact, financial, and statutory details can
+    be updated from the page and reflected back into the onboarding checklist;
+  - uses `/api/hrms/employees?active=true` to enrich the HR journey view with
+    active employee context when available, while keeping a safe fallback
+    operating model when richer onboarding data is not yet present in the repo.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/hrms/components/onboarding-view.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on unchanged repository baseline issues outside this onboarding
+  batch:
+  - `src/app/(dashboard)/hrms/helpdesk/page.tsx` missing
+    `@/modules/hrms/components/helpdesk-view`;
+  - `src/modules/hrms/components/user-control-page.tsx` missing
+    `@/modules/hrms/components/users-table`;
+  - `src/modules/hrms/payroll.ts` missing required
+    `PayrollEmployeeRow` amount fields.
+
+Known limits:
+
+- manual runtime verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- the route now has real profile-completion editing and richer operational
+  framing, but broader backend onboarding entities such as dedicated checklist
+  templates, owner assignments, escalations, and document workflows still need
+  service-layer expansion if the team wants those sections to become fully
+  persistent;
+- this pass intentionally did not change RBAC, onboarding APIs, employee
+  schemas, or invitation behavior.
+
+## 2026-08-25 HRMS command centre rework handoff
+
+Reworked `/hrms` from a shortcut-first summary page into a fuller HRMS command
+centre with a denser control-tower layout, operational workload framing, and
+grouped launch lanes more aligned with modern ERP-style people operations.
+
+Delivered:
+
+- updated `src/app/(dashboard)/hrms/page.tsx` so the HRMS home now:
+  - expands its server-side summary queries beyond headcount into live service,
+    payroll, document, access, travel, work-report, and recruitment signals;
+  - replaces the older lightweight overview with an executive command-centre
+    section that surfaces workforce footprint, attention queues, and compliance
+    or rollout signals in one scan;
+  - adds priority action cards for approvals, service escalations, payroll
+    governance, and talent or activation flow;
+  - reorganizes the HRMS navigation into managed operational lanes instead of
+    presenting the route primarily as a flat shortcut board;
+  - keeps the recent employee directory visible as part of the main command
+    surface;
+- updated `src/styles/modules/people.css` so the HRMS dashboard now has:
+  - a split command-grid layout with a supporting priority rail;
+  - module-owned lane cards and operational metric tiles;
+  - responsive collapse behavior for desktop, tablet, and mobile;
+  - token-driven panel styling that stays inside the People module stylesheet
+    instead of adding anything to legacy compatibility CSS;
+- regenerated:
+  - `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+  - `docs/ui-route-audit.md`;
+  - `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/app/(dashboard)/hrms/page.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/app/(dashboard)/hrms/page.tsx' 'src/styles/modules/people.css'`:
+  passed, with only existing CRLF warning output from Git;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the unchanged repository baseline because
+  `src/app/(dashboard)/hrms/helpdesk/page.tsx` and
+  `src/app/(dashboard)/hrms/onboarding/page.tsx` import missing module files
+  that predate this dashboard rework;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline because
+  `src/components/monolith/**` contains pre-existing implementation files that
+  violate the enforced ownership rule outside this batch.
+
+Known limits:
+
+- the refreshed static audit still marks `/hrms` as `NON_COMPLIANT` because it
+  conservatively flags route-local `article` composition plus one remaining
+  link-as-button styling pattern in the current source, even though the page is
+  now built on the shared People workspace frame and module stylesheet;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- this pass intentionally focused on the HRMS home command-centre framing and
+  did not redesign downstream HRMS workspaces such as approvals, help desk,
+  payroll detail, or recruitment detail routes.
+
+## 2026-08-25 Dashboard composition spacing and declutter handoff
+
+Reworked `/dashboard` so the HR landing page uses a cleaner full-width
+composition with clearer reading order, lighter section framing, tighter font
+hierarchy, and less stacked card clutter.
+
+Delivered:
+
+- updated `src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx`
+  so the personal workspace now:
+  - replaces the old spotlight-card stack with a flatter command brief layout;
+  - keeps quick-launch and live-signal content in a tighter supporting rail;
+  - converts the metrics band into a lighter inline summary instead of boxed
+    cards;
+  - keeps the feed, task, schedule, and holiday areas but presents them as a
+    more organized operational grid with less visual noise;
+- updated `src/styles/monolith-system.css` so the protected dashboard route
+  now:
+  - uses a broader, less boxed hero composition;
+  - reduces heavy borders, radii, and shadows across dashboard-owned sections;
+  - improves spacing rhythm and heading/body font balance;
+  - gives the content more usable horizontal width;
+  - preserves responsive collapse behavior while keeping the new flatter
+    composition intact.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx' 'src/styles/monolith-system.css'`:
+  passed, with only existing CRLF warning output from Git.
+
+Known limits:
+
+- runtime browser verification for `/dashboard` across Light, Night, and
+  Violet themes is still pending in this Codex session;
+- this batch intentionally focused on the active "My space" dashboard
+  composition and shared dashboard shell styling, not a deeper content rewrite
+  of the Team or Organization tabs.
+
+## 2026-08-25 CRM Phase 2 compose recipient-chip handoff
+
+Refined the Phase 2 rate-request composer so recipient entry now feels closer
+to a modern mail client, with selected agents added directly inside the compose
+header instead of feeling detached from the message workspace.
+
+Delivered:
+
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the compose pane now:
+  - renders a mail-style `To` row with inline selected-recipient chips;
+  - lets users remove recipients directly from the compose header;
+  - moves agent search into that same `To` area so adding agents happens inside
+    the compose experience;
+  - keeps the CRM agent master list as the supporting suggestion panel;
+  - simplifies the earlier detached preview wording into a send-batch preview;
+- updated `src/styles/modules/crm.css` so the Phase 2 composer now has:
+  - structured `To`, `Cc`, and `Subject` header rows;
+  - chip styling for selected recipients;
+  - inline compose search styling;
+  - lighter mail-surface framing that better supports the compose-first layout.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/styles/modules/crm.css'`:
+  passed, with only existing CRLF warning output from Git.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- this pass improves recipient-entry flow and compose presentation, but does
+  not yet add keyboard-autocomplete navigation or a floating suggestion popover
+  inside the `To` field itself.
+
+## 2026-08-25 CRM Phase 2 inline recipient suggestions handoff
+
+Extended the Phase 2 compose header again so matching agent suggestions now
+appear directly below the `To` field, making recipient selection happen inside
+the compose surface instead of relying on the side list first.
+
+Delivered:
+
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the mail-style `To` row now:
+  - derives unselected recipient suggestions from the current search term;
+  - shows a compact clickable suggestion tray directly under the inline search;
+  - allows agents to be added into the recipient chips from that tray in one
+    step;
+- updated `src/styles/modules/crm.css` so the inline suggestion tray now has:
+  - compact mail-like suggestion pills/cards;
+  - hover feedback aligned to the compose surface;
+  - structured spacing under the `To` row without breaking responsive layout.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/styles/modules/crm.css'`:
+  passed, with only existing CRLF warning output from Git.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- keyboard arrow-key navigation and enter-to-select behavior for the suggestion
+  tray are still not implemented in this pass.
+
+## 2026-08-24 CRM enquiry detail sequencing and spacing handoff
+
+Reshaped `/crm/enquiries/[id]` so the enquiry detail experience reads as a
+single full-width operational workspace instead of a left-detail / right-card
+split, and gated the commercial worksheet so later phases stay hidden until the
+previous action is completed.
+
+Delivered:
+
+- rebuilt `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`
+  into a sequential layout with:
+  - one shared route header surface;
+  - wider summary metrics and action framing;
+  - full-width enquiry detail composition;
+  - a consolidated notes/activity/audit/calls section instead of the old
+    stacked right-column card rail;
+- updated
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the enquiry commercial flow now:
+  - shows the request composer first;
+  - reveals response capture only after requests exist;
+  - reveals comparison/finalization only after structured responses exist;
+  - reveals pricing/quote creation only after buy rates are finalized;
+  - shows locked-step guidance in place of future controls instead of dumping
+    every phase on first load.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx' --max-warnings=0`:
+  still fails on pre-existing route debt in the file, including long-standing
+  `any` props/state and the existing `setLocalCalls(calls)` effect pattern that
+  predates this UI pass;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+Known limits:
+
+- this pass intentionally did not widen into a full typing cleanup for
+  `enquiry-detail-client.tsx`;
+- `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md` and `docs/ui-route-audit.md`
+  already classify `/crm/enquiries/[id]` as `COMPLIANT`; this batch changes the
+  composition and workflow flow, but does not change that route-family status;
+- the route still needs manual visual QA for desktop, tablet, and mobile with
+  real enquiry data.
+
+## 2026-08-24 CRM Phase 2 composer priority refinement handoff
+
+Applied a small follow-up refinement to the Phase 2 rate-request composer so
+agent selection feels denser and the compose workspace gets more visual
+priority.
+
+Delivered:
+
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the recipient pane and compose pane use explicit compact/priority classes,
+  and increased the email body editing area;
+- updated `src/styles/modules/crm.css` so the Phase 2 split now favors compose
+  width, the recipient list is shorter and denser, and the compose controls use
+  roomier spacing and a larger body editor.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/styles/modules/crm.css'`:
+  passed, with only existing CRLF warning output from Git.
+
+Known limits:
+
+- this follow-up only refines the Phase 2 composer emphasis and does not change
+  later commercial stages;
+- runtime browser/theme verification is still pending in this Codex session.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 12 pricing governance
+
+Completed the twelfth CRM enquiry commercial batch by hardening quotation
+creation and approval against stale enquiry pricing, while keeping the existing
+saved pricing worksheet and quote approval flow intact.
+
+Delivered:
+
+- added `src/modules/crm/services/quote-pricing-governance.service.ts` so CRM
+  quotes can compute whether they are aligned to the current enquiry pricing
+  worksheet, stale against a newer worksheet, missing pricing evidence, or
+  unlinked from an enquiry workflow;
+- extended the quote workflow snapshot typing in
+  `src/modules/crm/components/quotes/lib/types.ts` so
+  `sourceQuotationSnapshot` can preserve structured pricing trace data;
+- updated `src/modules/crm/actions.ts` and
+  `src/app/(dashboard)/crm/quotes/new/page.tsx` so new quote versions now store
+  pricing trace metadata and refuse creation from linked enquiries when the
+  pricing worksheet is stale or missing relative to the current finalized
+  revision;
+- updated `src/modules/crm/approval-workflow.ts` and
+  `src/modules/crm/components/ApprovalActionBar.tsx` so manager submission,
+  manager approval, and recorded customer decisions now block on stale pricing
+  and show visible guidance in the approval bar;
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so stale pricing snapshots no longer expose quote-creation actions until the
+  worksheet is re-saved against the latest finalized revision;
+- updated `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` and
+  `src/modules/crm/components/quotes/QuoteDetailsPage.tsx` so the internal
+  quote detail workspace now shows pricing freshness status, source revision
+  linkage, and approval blocking context directly in the workflow section.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/services/quote-pricing-governance.service.ts' 'src/modules/crm/components/quotes/lib/types.ts' 'src/modules/crm/rate-workflow.ts' 'src/app/(dashboard)/crm/quotes/new/page.tsx' 'src/modules/crm/approval-workflow.ts' 'src/modules/crm/components/quotes/NewQuotePage.tsx' 'src/modules/crm/components/ApprovalActionBar.tsx' 'src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx' 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- full repo `tsc --noEmit` is currently blocked by the unchanged generated
+  `.next` route-validator baseline around `/my-payroll`;
+- public quote sharing remains blocked by the existing share-token schema
+  dependency in `src/modules/crm/share.ts`, so customer-share hardening is not
+  finished yet.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 11 pricing worksheet
+
+Completed the eleventh CRM enquiry commercial batch by adding a persisted
+pricing worksheet on top of the finalized buy-rate snapshot, so quotation
+seeding now uses stored sell-rate decisions instead of directly reading the
+editable charge worksheet.
+
+Delivered:
+
+- added `src/modules/crm/services/pricing-snapshot.service.ts` so the CRM
+  workflow now builds a pricing snapshot from the current finalized buy-rate
+  revision with:
+  - line-level sell-rate overrides;
+  - quantity controls;
+  - worksheet and line notes;
+  - calculated buy total, sell total, margin amount, and margin percent;
+  - linkage back to the finalized buy-rate revision label and id;
+- extended `src/modules/crm/rate-workflow.ts` so saved enquiry workflow JSON
+  now preserves:
+  - the pricing snapshot record;
+  - normalized pricing lines and totals;
+  - `PRICING` status derivation;
+  - quote-line seeding from the stored sell-rate worksheet;
+- updated `src/modules/crm/actions.ts` with
+  `saveEnquiryPricingSnapshotAction` so users can persist the pricing worksheet
+  from the enquiry panel before entering the quote form;
+- rebuilt the Phase 11 portion of
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now shows:
+  - buy/sell/margin summary cards;
+  - editable sell-rate controls per finalized line;
+  - quantity controls and pricing notes;
+  - stale-pricing warnings when a new finalized revision exists;
+  - quote-entry actions that now rely on the saved pricing snapshot;
+- updated `src/app/(dashboard)/crm/quotes/new/page.tsx` and
+  `src/modules/crm/components/quotes/lib/types.ts` so quote creation receives
+  pricing snapshot metadata and starts from saved sell rates when available;
+- extended `src/modules/crm/__tests__/rate-workflow.test.ts` with a focused
+  pricing snapshot and quote-seeding scenario.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/services/pricing-snapshot.service.ts' 'src/modules/crm/services/finalized-buy-rate.service.ts' 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/app/(dashboard)/crm/quotes/new/page.tsx' 'src/modules/crm/components/quotes/lib/types.ts' 'src/modules/crm/__tests__/rate-workflow.test.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/modules/crm/__tests__/rate-workflow.test.ts'`:
+  blocked by the existing repository guard because `.env.staging.local` is
+  required before `vitest.config.ts` will load.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live pricing-worksheet validation still needs real-user review of sell-rate
+  editing, stale-snapshot refresh behavior, and pricing-based quote seeding on
+  production-like enquiries;
+- this batch intentionally stops before any later pricing governance and quote
+  approval hardening beyond the saved worksheet foundation.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 10 finalized buy-rate snapshot
+
+Completed the tenth CRM enquiry commercial batch by converting the stored Phase
+9 recommendation decision into immutable finalized buy-rate revisions and
+exposing the controlled costing unlock in the existing CRM worksheet flow.
+
+Delivered:
+
+- added `src/modules/crm/services/finalized-buy-rate.service.ts` so the CRM
+  workflow now rebuilds the saved comparison decision into a versioned
+  finalized snapshot with:
+  - line-level vendor and response provenance;
+  - preserved original amount, currency, and unit;
+  - normalized base-currency totals;
+  - validity, carrier, routing, and transit context;
+  - recommendation-vs-override traceability;
+- extended `src/modules/crm/rate-workflow.ts` so saved enquiry workflow JSON
+  now preserves:
+  - finalized buy-rate revision history;
+  - the current finalized version pointer;
+  - backward-compatible status derivation for `RATE_FINALIZED`;
+  - costing-lock defaults aligned to finalized snapshot availability;
+- updated `src/modules/crm/actions.ts` with
+  `finalizeEnquiryBuyRatesAction` so users can append immutable `R1`, `R2`,
+  and later revisions while moving the enquiry into `RATE_FINALIZED` and
+  unlocking costing for the next phase;
+- rebuilt the Phase 10 portion of
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now shows:
+  - costing locked vs unlocked state;
+  - current finalized-version summary;
+  - optional revision notes;
+  - finalize and re-finalize actions;
+  - stored finalized-version history cards;
+- extended `src/modules/crm/__tests__/rate-workflow.test.ts` with a focused
+  finalized snapshot scenario.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/services/finalized-buy-rate.service.ts' 'src/modules/crm/services/best-rate-recommendation.service.ts' 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/modules/crm/__tests__/rate-workflow.test.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/modules/crm/__tests__/rate-workflow.test.ts'`:
+  blocked by the existing repository guard because `.env.staging.local` is
+  required before `vitest.config.ts` will load.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live finalized-buy-rate validation still needs real-user review of revision
+  history behavior, override-based finalization, and downstream costing use of
+  the unlocked snapshot;
+- this batch intentionally stops before Phase 11 pricing worksheet and margin
+  control composition.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 9 best-rate recommendation
+
+Completed the ninth CRM enquiry commercial batch by layering a configurable
+best-rate recommendation and explicit human override capture onto the existing
+comparison workspace, without unlocking buy-rate finalization ahead of Phase
+10.
+
+Delivered:
+
+- added `src/modules/crm/config/rate-recommendation-settings.json` so the
+  recommendation weights and mixed-selection penalty now live in configuration
+  instead of React code;
+- added `src/modules/crm/services/best-rate-recommendation.service.ts` so the
+  CRM workflow now scores:
+  - landed buy cost;
+  - mandatory-charge completeness;
+  - validity quality;
+  - response speed;
+  - historical reliability from the Phase 8 agent-intelligence layer;
+- extended `src/modules/crm/rate-workflow.ts` so saved enquiry workflow JSON
+  now preserves:
+  - recommendation metadata;
+  - recommendation reasons;
+  - recommended whole-agent or mixed-charge selections;
+  - accepted vs overridden decision state with override reason/note capture;
+- updated `src/modules/crm/actions.ts` with:
+  - `generateEnquiryBestRateRecommendationAction`;
+  - `saveEnquiryRateRecommendationDecisionAction`;
+- rebuilt the comparison area inside
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now shows:
+  - a dedicated Phase 9 recommendation panel;
+  - generation and refresh controls;
+  - explanation-first recommendation output;
+  - explicit accept and override actions;
+  - override reason and override note capture;
+- expanded `src/styles/modules/crm.css` with recommendation-panel layout styles;
+- extended `src/modules/crm/__tests__/rate-workflow.test.ts` with a focused
+  recommendation-service scenario.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/services/best-rate-recommendation.service.ts' 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/modules/crm/__tests__/rate-workflow.test.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/modules/crm/__tests__/rate-workflow.test.ts'`:
+  blocked by the existing repository guard because `.env.staging.local` is
+  required before `vitest.config.ts` will load.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live recommendation-quality validation still needs real-user review of
+  whole-agent versus mixed recommendations plus the new override-reason capture;
+- this batch intentionally stops before Phase 10 finalized buy-rate versioning
+  and the controlled costing unlock.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 8 agent recommendation engine
+
+Completed the eighth CRM enquiry commercial batch by extending the existing
+agent-recipient composer with contextual ranking and transparent performance
+history, while keeping the implementation inside the current CRM worksheet flow.
+
+Delivered:
+
+- added `src/modules/crm/services/agent-recommendation.service.ts` so the CRM
+  workflow now computes contextual recommendation profiles from historical
+  enquiry workflow data, including:
+  - request count;
+  - response rate;
+  - median response time;
+  - complete rate;
+  - clarification rate;
+  - competitiveness;
+  - selection rate;
+  - booking rate;
+  - operational outcome rate where available;
+  - rate-validity quality;
+- updated `src/modules/crm/actions.ts` so the existing
+  `listRateRequestRecipientsAction` now accepts the current lead context and
+  returns ranked agent recommendations alongside the existing recipient list;
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the existing recipient cards now show:
+  - recommendation badge or rank;
+  - similar-enquiry count;
+  - explanation-first recommendation copy;
+  - quick response, competitiveness, and selection metrics;
+- expanded `src/styles/modules/crm.css` with the small recipient-insight styles
+  needed for the existing recipient cards;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint src/modules/crm/services/agent-recommendation.service.ts src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live recommendation-quality validation still needs larger production-history
+  review and real-user feedback on ranking usefulness;
+- this batch intentionally stops before Phase 9 AI-assisted best-rate
+  recommendation and manual override capture.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 7 comparison workspace
+
+Completed the seventh CRM enquiry commercial batch so the enquiry worksheet can
+compare competing agent replies deterministically, calculate landed buy costs,
+and persist a whole-agent or per-charge recommendation without pretending
+incomplete replies are cheaper than they really are.
+
+Delivered:
+
+- added `src/modules/crm/config/rate-comparison-settings.json` as the
+  configurable Phase 7 comparison settings asset with base-currency and
+  exchange-rate extension points;
+- added `src/modules/crm/services/rate-comparison.service.ts` so the CRM
+  workflow now supports:
+  - preserved original rate values for review;
+  - deterministic normalization for W/M, BL, shipment, KG, and container
+    charges;
+  - minimum-charge and tax-aware comparable cost calculations;
+  - mandatory-charge completeness handling;
+  - mismatched-currency, invalid-unit, unclear-inclusion, container-mismatch,
+    and validity-risk detection;
+  - whole-agent landed buy-cost summaries and mixed per-charge recommendations;
+- extended `src/modules/crm/rate-workflow.ts` so the enquiry workflow snapshot
+  now preserves saved comparison choices inside the existing JSON model;
+- updated `src/modules/crm/actions.ts` with
+  `saveEnquiryRateComparisonSelectionAction` so users can persist:
+  - whole-agent selections;
+  - per-charge selections;
+  - comparison save metadata;
+- rebuilt the comparison area inside
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now shows:
+  - landed buy-cost cards per responding agent;
+  - a charge-by-charge comparison matrix;
+  - deterministic best-cell recommendations;
+  - selection-mode switching between entire-agent and per-charge decisions;
+  - saveable comparison outcomes;
+- expanded `src/styles/modules/crm.css` with the comparison-grid, selection, and
+  landed-cost styles;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint src/modules/crm/services/rate-comparison.service.ts src/modules/crm/services/standard-buy-rates.service.ts src/modules/crm/services/rate-response-parser.service.ts src/modules/crm/rate-workflow.ts src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still reports an unrelated payroll/accounting repository baseline outside the
+  CRM Phase 7 files, so the directly rebuilt comparison/workflow/UI files
+  remain the meaningful validation scope for this batch.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live mailbox acceptance still needs manual verification for mixed-currency
+  comparison behavior, W/M quantity realism on production enquiry data, and the
+  resulting whole-agent versus mixed recommendations;
+- this batch intentionally stops before Phase 8 agent-performance scoring and
+  enquiry-time recommendation intelligence.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 6 standard buy-rate master
+
+Completed the sixth CRM enquiry commercial batch so the enquiry worksheet can
+apply a configurable standard buy-rate master when vendor replies say standard
+charges apply, while still preserving any explicit agent amount as the winning
+value.
+
+Delivered:
+
+- added `src/modules/crm/config/standard-buy-rates.json` as the configurable
+  Phase 6 source of truth for confidently mapped standard rates from
+  `Standard rates in quote.docx`;
+- added `src/modules/crm/services/standard-buy-rates.service.ts` so the CRM
+  workflow now supports:
+  - scenario-based standard-master filtering;
+  - branch and effective-date windows;
+  - latest-version selection across multiple revisions;
+  - standard-charge phrase detection for `standard charges applicable` and
+    `as agreed`;
+  - best-match line-level standard reference resolution;
+- extended `src/modules/crm/rate-workflow.ts` so saved structured responses now
+  preserve:
+  - response-level standard-rate signals;
+  - line-level standard-rate references;
+  - explicit-agent-override metadata;
+- updated `src/modules/crm/services/rate-response-parser.service.ts` so parsed
+  drafts can:
+  - apply standard-master values to missing amounts;
+  - create additional standard lines when the reply only signals standard
+    charges;
+  - keep standard references attached even when an explicit agent amount is
+    already present;
+- updated `src/modules/crm/actions.ts` so reviewed standard references persist
+  inside the same enquiry workflow JSON model while avoiding Prisma schema
+  conflicts with the parallel monolith agent;
+- rebuilt the structured response review area inside
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now shows:
+  - parser badges for the detected standard-charge trigger;
+  - line-level standard-master reference cards;
+  - explicit-override versus standard-applied status;
+  - backing document excerpts for the mapped standard rate;
+- expanded `src/styles/modules/crm.css` with the standard-reference review
+  styles;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint src/modules/crm/services/standard-buy-rates.service.ts src/modules/crm/services/rate-response-parser.service.ts src/modules/crm/rate-workflow.ts src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live mailbox acceptance still needs manual verification for the new Phase 6
+  standard-charge scenarios, including `standard charges applicable`,
+  `as agreed`, expired standards, multiple revisions, and explicit agent
+  overrides;
+- this batch intentionally stops before Phase 7 comparison normalization and
+  downstream pricing intelligence.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 5 AI-assisted response parsing
+
+Completed the fifth CRM enquiry commercial batch so the enquiry worksheet can
+now draft structured rate responses from Gmail replies and supported attachment
+text before the salesperson performs the final review.
+
+Delivered:
+
+- added `src/modules/crm/services/rate-response-parser.service.ts` as the
+  dedicated Phase 5 parser service, keeping extraction logic out of React and
+  server actions while supporting:
+  - email plain-text and HTML parsing;
+  - spreadsheet text extraction;
+  - DOCX text extraction;
+  - best-effort PDF text extraction;
+  - AI-assisted parsing when `OPENAI_API_KEY` is configured;
+  - deterministic fallback parsing when AI is unavailable or incomplete;
+  - explicit `Not Provided` handling for missing fields instead of invented
+    values;
+- extended `src/modules/crm/rate-workflow.ts` so saved structured responses now
+  preserve:
+  - parser status;
+  - parser model and run time;
+  - overall confidence;
+  - source document lists;
+  - parser warnings;
+  - line-level evidence, confidence labels, review status, quantity/container
+    text, free-days text, and missing-field markers;
+- updated `src/modules/crm/actions.ts` with:
+  - `parseEnquiryAgentResponseDraftAction` to load the latest non-bounce Gmail
+    reply, download its non-inline attachments, and return a structured draft
+    from the parser service;
+  - extended `saveEnquiryAgentResponseAction` so reviewed parser metadata is
+    persisted into the same deterministic response record used by the manual
+    workflow;
+- rebuilt the structured response area inside
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now includes:
+  - `Parse latest reply` actions from the Agent Responses table;
+  - in-editor re-parse support for the selected request;
+  - parser summary blocks with source coverage and warnings;
+  - line-level evidence and confidence review inside the existing capture form;
+- expanded `src/styles/modules/crm.css` with parser summary and evidence panel
+  styles;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint src/modules/crm/services/rate-response-parser.service.ts src/modules/crm/rate-workflow.ts src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint src/modules/crm/actions.ts --max-warnings=0`:
+  still reports the unchanged repository baseline of many existing
+  `@typescript-eslint/no-explicit-any` violations across that long legacy
+  action file, so the directly rebuilt parser/workflow/UI files remain the
+  meaningful targeted lint evidence for this batch.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live mailbox acceptance still needs manual verification across the prompt
+  scenarios for plain text, HTML tables, PDFs, spreadsheets, multiple
+  currencies, ambiguous charges, omitted units, revised rates, changed-subject
+  replies, reply-all, alternate contacts, bounces, duplicate sync, and
+  multiple agents replying;
+- DOCX and PDF extraction remain best-effort and depend on the parser host's
+  available runtime capabilities;
+- this batch intentionally stops before Phase 6 standard-rate-master handling
+  and `standard charges applicable` override logic.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 4 structured manual response capture
+
+Completed the fourth CRM enquiry commercial batch so the enquiry worksheet no
+longer stops at reply detection. The commercial workflow can now persist
+deterministic structured rate responses, let the salesperson capture charge
+lines manually without AI, and reuse confirmed external charge aliases against
+the canonical enquiry charge model.
+
+Delivered:
+
+- extended `src/modules/crm/rate-workflow.ts` so the enquiry workflow snapshot
+  now parses and exposes:
+  - `rateResponses` for structured agent-response records;
+  - `chargeAliases` for confirmed external-to-canonical charge mappings;
+  - canonical charge option derivation and alias-based suggestion helpers for
+    the worksheet UI;
+- updated `src/modules/crm/actions.ts` with
+  `saveEnquiryAgentResponseAction` so the CRM workflow can:
+  - save deterministic response headers like received time, currency, validity,
+    carrier, routing, transit, and remarks;
+  - normalize and store many response line items with canonical charge linkage
+    plus original external descriptions;
+  - persist reusable alias confirmations from the salesperson;
+  - move the enquiry workflow into `RATE_COMPARISON` after a structured
+    response is captured;
+  - avoid Prisma schema edits by writing the Phase 4 model into
+    `lead.enquiryDetails.rateWorkflow` JSON, which reduces conflict risk while
+    another monolith agent is active in parallel;
+- rebuilt the Agent Responses area inside
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the worksheet now includes:
+  - `Capture rates` entry points per tracked request;
+  - a structured manual response form for response metadata;
+  - repeatable response line cards for original description, canonical charge,
+    amount, currency, unit, basis, minimum, tax, inclusion state, and notes;
+  - alias-confirmation toggles and structured save actions;
+- expanded `src/styles/modules/crm.css` with the manual-capture layout,
+  line-card, table-action, and alias-toggle styles required by the Phase 4 UI;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/actions.ts'`:
+  still reports the unchanged repository baseline of many existing
+  `@typescript-eslint/no-explicit-any` violations across that long legacy
+  action file, so the directly rebuilt CRM workflow files remain the meaningful
+  targeted lint evidence for this batch.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- live mailbox acceptance cases from Phase 3 still need manual verification:
+  same-thread reply, changed subject, reply-all, alternate contact, bounce,
+  duplicate sync, and multiple agents replying;
+- this batch intentionally stops before Phase 5 AI extraction, confidence
+  scoring, and parser-assisted pricing intelligence.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 3 email tracking and reply correlation
+
+Completed the third CRM enquiry commercial batch so the enquiry worksheet no
+longer stops at outbound mail logging. The commercial workflow can now retain
+message and thread identifiers, sync Gmail thread activity back into the
+enquiry, classify replies and bounces with stronger matching signals than
+subject-only logic, and surface a usable Agent Responses table with direct
+thread links.
+
+Delivered:
+
+- extended `src/modules/crm/rate-workflow.ts` so each stored rate-request
+  record now supports:
+  - Gmail `messageId` and `threadId`;
+  - delivery state;
+  - best-effort open metadata placeholders;
+  - reply status and reply timestamp;
+  - bounce state;
+  - reply message/source tracking;
+  - last sync and reply-notification markers;
+- updated `src/modules/crm/actions.ts` so:
+  - new outbound requests now store `threadId` immediately when Gmail returns
+    it;
+  - `syncEnquiryRateRequestResponsesAction` resolves threads using the strongest
+    available identifiers in this order:
+    1. stored thread ID;
+    2. search fallback using recipient, enquiry reference, and subject signals;
+    3. sender and subject correlation on candidate threads;
+  - inbound post-send messages are classified into reply or bounce outcomes;
+  - new replies notify the enquiry salesperson and reporting manager using the
+    existing notification system;
+  - CRM timeline events capture newly detected reply activity;
+- rebuilt the sent-history area inside
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  into a Phase 3 `Agent Responses` table showing:
+  - `Agent`;
+  - `Status`;
+  - `Sent`;
+  - `Opened`;
+  - `Replied`;
+  - `Response Time`;
+  - `Thread`;
+  and added a worksheet-level `Sync agent responses` action;
+- expanded `src/styles/modules/crm.css` with the response-table and sync-header
+  styles needed by the Phase 3 UI;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/actions.ts'`:
+  still reports the unchanged repository baseline of many existing
+  `@typescript-eslint/no-explicit-any` violations across that long legacy
+  action file, so the directly rebuilt CRM workflow UI files remain the
+  meaningful targeted lint evidence for this batch.
+
+Known limits:
+
+- open tracking remains best-effort and is not represented as guaranteed human
+  reading;
+- live mailbox acceptance cases are still pending manual verification:
+  same-thread reply, changed subject, reply-all, alternate contact, bounce,
+  duplicate sync, and multiple agents replying;
+- this batch intentionally stops before Phase 4 structured manual rate storage,
+  canonical charge aliasing, and extraction-entry workflows;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 2 rate-request composer
+
+Completed the second CRM enquiry commercial batch so `/crm/enquiries/[id]`
+and the lead-side enquiry worksheet now move beyond staged placeholders for
+agent outreach. The commercial worksheet can now load recipients from the CRM
+agent/vendor master, generate the user-approved LCL/FCL/Air enquiry formats,
+apply reporting-manager CC behavior from the HRMS hierarchy, and log outbound
+rate requests directly into the enquiry workflow state.
+
+Delivered:
+
+- extended `src/modules/crm/rate-workflow.ts` so the enquiry workflow snapshot
+  now parses and exposes tracked outbound rate-request records alongside the
+  dynamic department charge model;
+- updated `src/modules/crm/actions.ts` with:
+  - `listRateRequestRecipientsAction` to load active CRM agent/vendor records
+    with email addresses plus reporting-manager and TL CC details from the
+    current user profile;
+  - `sendEnquiryRateRequestsAction` to send separate Gmail messages per selected
+    agent, persist the request log into the enquiry workflow JSON, update
+    service-enquiry status to `RATES_REQUESTED`, and add CRM timeline plus
+    communication audit history;
+- rebuilt
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the enquiry commercial area now includes:
+  - agent master search and multi-select;
+  - automatic reporting CC visibility;
+  - editable email subject/body generation using the provided LCL, FCL, and Air
+    formats with `{{recipientName}}` salutation substitution;
+  - outbound send actions and tracked send history;
+  - the existing dynamic worksheet and quotation compatibility controls;
+- expanded `src/styles/modules/crm.css` with the supporting Phase 2 commercial
+  composer, recipient-list, preview, reporting, and history layouts;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/actions.ts'`:
+  still reports the unchanged repository baseline of many existing
+  `@typescript-eslint/no-explicit-any` violations in that long legacy action
+  file, so this batch records targeted lint evidence for the directly rebuilt UI
+  files instead of claiming the whole actions file is newly clean.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- this batch intentionally stops before Phase 3 reply ingestion, response
+  normalization, rate comparison, recommendation scoring, and costing-lock
+  finalization;
+- worksheet-specific attachment upload, draft save, and rich preview are not
+  separately rebuilt here because the existing Communication workspace already
+  owns those broader compose capabilities.
+
+## 2026-08-24 CRM enquiry commercial workflow Phase 1 foundation
+
+Implemented the Phase 1 CRM enquiry commercial foundation so `/crm/enquiries/[id]`
+no longer presents the old six-field worksheet as if costing were already the
+primary workflow. The enquiry commercial area now frames the work correctly as
+rate acquisition pending, uses a scenario-driven dynamic charge catalogue, and
+keeps later workflow lanes visible but intentionally staged.
+
+Delivered:
+
+- rebuilt `src/modules/crm/rate-workflow.ts` around a dynamic enquiry charge
+  model driven by `Direction + Mode + Load Type`, with seeded charge lists for
+  Import/Export LCL, FCL, and Air scenarios;
+- preserved backward compatibility by continuing to write legacy flat `rates`
+  alongside the richer worksheet snapshot so the current quote flow still works;
+- updated `src/modules/crm/actions.ts` so saved department worksheets now store
+  dynamic charge rows, a commercial workflow status, and the derived charge
+  context inside the enquiry workflow snapshot and `pricingSnapshot`;
+- rebuilt
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  so the enquiry commercial area now shows:
+  - a `Rate acquisition pending` summary;
+  - staged placeholders for Rate Requests, Agent Responses, Rate Comparison,
+    and locked Costing;
+  - department-specific dynamic charge rows;
+  - `Add additional charge` support;
+  - legacy quotation compatibility actions without making costing look finished;
+- added CRM module-owned commercial worksheet styles to
+  `src/styles/modules/crm.css`;
+- added `src/modules/crm/__tests__/rate-workflow.test.ts` for scenario seeding
+  and additional-charge preservation coverage;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/modules/crm/__tests__/rate-workflow.test.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed; the existing Turbopack NFT tracing warning remained from
+  `next.config.ts` through
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/modules/crm/__tests__/rate-workflow.test.ts' --reporter verbose`:
+  blocked by the repository guard in `vitest.config.ts`, which refuses test
+  startup unless `.env.staging.local` is present.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- Phase 1 intentionally stops before tracked outbound agent mail, reply
+  correlation, response parsing, comparison, and buy-rate costing;
+- `email format.pdf` still needs manual review if its exact wording is required
+  before Phase 2 mail-template implementation begins.
+
+## 2026-08-24 CRM leads register design-system completion
+
+Finished the `/crm/leads` migration pass so the leads register now uses the
+shared CRM and workspace state/action contract end-to-end instead of keeping a
+route-local empty state and leftover inline utility composition.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/leads/page.tsx` so the empty register state
+  now renders the canonical `WorkspaceState` with a shared `CrmActionLink`
+  primary action instead of a custom route-local block;
+- removed the remaining page-local utility-heavy row presentation from the lead
+  list by moving company/contact/timer/source/owner presentation into CRM-owned
+  module classes;
+- added the corresponding CRM module selectors in `src/styles/modules/crm.css`
+  for the lead company cell, contact stack, timer stack, timer value, and
+  small-text ownership/source treatments;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; the fresh route audit now
+  classifies `/crm/leads` as `COMPLIANT`.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/(dashboard)/crm/leads/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/(dashboard)/crm/leads/page.tsx' 'src/styles/modules/crm.css'`:
+  reported the unchanged repository limitation that the stylesheet is ignored
+  because no matching ESLint configuration is supplied for CSS files;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit.
+
+Known limits:
+
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this batch records source and verification
+  evidence but not fresh runtime screenshots;
+- this pass completes `/crm/leads`, but other CRM routes such as
+  `/crm/contacts`, `/crm/calls`, `/crm/efficiency`, `/crm/products`, and
+  `/crm/vendors` still remain outside full compliance in the current audit.
+
+## 2026-08-24 CRM enquiry detail header spacing fix
+
+Tightened the top enquiry detail status/assignment card so the content and
+action area sit on a cleaner two-column rhythm instead of reading like a wide
+slab with broken spacing.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`
+  so the header panel now uses a responsive grid instead of a loose
+  `justify-between` flex row;
+- grouped the title and owner metadata with a steadier vertical rhythm and made
+  the owner line wrap as discrete inline pieces instead of one long sentence;
+- aligned the action area to the same responsive structure and tightened the
+  follow-up owner-assignment surface so it wraps cleanly without stretching the
+  header awkwardly.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks.
+
+## 2026-08-24 shared tab selected-label contrast fix
+
+Fixed the shared Monolith tab treatment so selected CRM detail tabs no longer
+lose their labels against the light selected surface when the tab trigger is
+implemented with a primary `WorkspaceAction` or `CrmButton`.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so shared tab hover/focus and
+  selected states now force the semantic strong foreground color with
+  `!important`, ensuring the tab state owns its foreground even when the
+  underlying trigger variant applies a stronger button color contract;
+- this specifically restores readable selected labels for CRM detail workspaces
+  such as lead and enquiry related-list tabs that use `CrmButton` inside
+  `CrmTabs`.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks.
+
+## 2026-08-24 CRM in-call enquiry dialog spacing and width pass
+
+Adjusted the CRM in-call enquiry dialog so the working surface is wider and the
+form reads with more breathing room instead of compressing controls into a
+crowded scroll area.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/leads/[id]/interested-modal.tsx` so the
+  dialog uses the shared workspace-size CRM dialog surface instead of the
+  narrower wide variant;
+- added CRM module-owned enquiry dialog spacing rules in
+  `src/styles/modules/crm.css` for the dialog width, tab strip padding, body
+  padding, internal card spacing, and taller control rhythm;
+- removed an accidental duplicate Sea-form `Direction` row that was binding the
+  Air state inside the Sea tab and making the enquiry flow feel unnecessarily
+  cluttered.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/(dashboard)/crm/leads/[id]/interested-modal.tsx'`:
+  still reports the unchanged file-local `@typescript-eslint/no-explicit-any`
+  findings already present in the modal;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract.
+
+## 2026-08-24 full-width tab and two-surface workspace standardization
+
+Standardized the tabbed Monolith workspace pattern so tab strips now use the
+full available workspace width and tabbed operational pages no longer default to
+split desktop sidebars that leave the active tab content constrained to a
+narrow column.
+
+Delivered:
+
+- updated `src/components/ui/tabs.tsx` to use a design-system tab contract
+  instead of route-local utility styling, so shared tabs now inherit Monolith
+  surface, spacing, and active-state behavior from the global system;
+- updated `src/styles/monolith-system.css` to define a shared full-width tab
+  treatment across the active tab families, including:
+  `mnx-tabs`, `mnx-dashboard-tabs`, `mnx-performance-tabs`,
+  `mnx-crm-tabs`, `mnx-ownership-tabs`, `mnx-reimbursement-tabs`,
+  `mnx-organization-tabs`, `mnx-admin-tabs`, and `mnx-catalogue-tabs`;
+- converted those tab systems to equal-width grid tracks so each tab fills the
+  row instead of sizing only to its text content;
+- aligned the tab buttons to the same simplified Monolith card language with
+  only two dominant surface types in play: compact metric cards and primary
+  content surfaces;
+- updated `src/styles/modules/people.css` so the tabbed HRMS workspaces that
+  were still using split desktop shells now default to full-width content flow,
+  including the ownership, reimbursement, and location-tracking shells;
+- reduced multi-card fragmentation in those tabbed HRMS workspaces by
+  collapsing several repeated card grids to single-column content flow, so
+  related content reads as one primary surface sequence rather than many small
+  panels competing on the same row;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; this shared-style batch did
+  not materially change route classification.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/components/ui/tabs.tsx' 'src/styles/monolith-system.css' 'src/styles/modules/people.css'`:
+  completed without code errors; ESLint reported the unchanged repository
+  limitation that CSS files are ignored because no matching configuration is
+  supplied for them;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract.
+
+Known limits:
+
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this entry records source-level and
+  design-system verification but not fresh runtime screenshots;
+- this batch standardizes the shared tab and full-width tabbed-workspace rules,
+  but it does not yet rewrite every older non-tabbed route that still uses
+  route-local card fragmentation outside those shared workspace families.
+
+## 2026-08-24 shared workspace metric hover standardization
+
+Standardized the shared Monolith workspace metric cards so summary cards no
+longer read like fixed slabs in CHA-style workspaces and instead inherit a
+consistent soft hover-surface treatment across the shared metric primitive.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so `WorkspaceMetric` now uses a
+  shared hover treatment for all metric cards, with a soft accent wash,
+  stronger border, and elevated shadow while keeping non-actionable metrics
+  visually calm and without motion;
+- kept actionable metrics on the same shared visual system while preserving
+  their existing keyboard/focus contract;
+- removed the CHA-only joined-strip metric wrapper treatment from
+  `src/styles/modules/cha-expense.css`, including the fused container border,
+  shared slab background, and vertical divider lines, so CHA metrics now render
+  as standard separated Monolith cards;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; this shared-style batch did
+  not materially change route classification.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run src/components/layout/workspace.test.tsx --reporter verbose`:
+  blocked by the repository guard in `vitest.config.ts`, which refuses test
+  startup unless `.env.staging.local` is present for guarded execution.
+
+Known limits:
+
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this entry records source-level and
+  design-system verification but not fresh runtime screenshots;
+- this batch standardizes the shared workspace metric system and CHA metric
+  composition, but it does not yet rewrite unrelated route-local cards that do
+  not use the shared `WorkspaceMetric` primitive.
+
+## 2026-08-24 HRMS fuel reimbursement workspace rework
+
+Reworked `/hrms/reimbursement` from a sparse single-table claim list into a
+fuller fuel reimbursement control center that feels closer to a modern ERP
+expense desk while staying inside the current reimbursement API and policy
+model.
+
+Delivered:
+
+- rebuilt `src/modules/hrms/components/reimbursement-admin-view.tsx` around
+  canonical People, Workspace, and Operational table primitives instead of a
+  duplicate local page header and bare table shell;
+- added a connected reimbursement command surface with KPI metrics, summary
+  cards, queue-health alerts, overview/review/policy tabs, and a selected-claim
+  detail workbench for approval and payout actions;
+- added richer operational framing inspired by current mileage-management
+  patterns from Zoho Expense, including visible policy governance, payout
+  readiness, aged pending review, historical rate awareness, and rejection-note
+  capture;
+- extended the client data load to consume the existing
+  `/api/hrms/reimbursement?type=history` policy history feed alongside claims
+  and the active rate so admins can see both current and historic mileage
+  policy context;
+- replaced the old reject flow with a reason-capture modal and upgraded the
+  policy modal so rate management reads like an administrative control rather
+  than a standalone button;
+- added module-owned reimbursement styles to `src/styles/modules/people.css`
+  for the command board, signal cards, queue workbench, detail timeline,
+  policy history cards, governance lists, and responsive stacking behavior;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; the fresh route audit
+  continues to classify `/hrms/reimbursement` as `COMPLIANT`.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/hrms/components/reimbursement-admin-view.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract.
+
+Known limits:
+
+- the redesign intentionally stays within the current backend contract, so it
+  does not introduce new persistence for multi-stage approval routing, payout
+  batches, receipt OCR, manual odometer entry, maps, or accounting export;
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this entry records source and verification
+  gates but not fresh runtime evidence;
+- reimbursement policy updates still activate immediately because the current
+  API stores a new active rate record but does not yet expose future-dated rate
+  scheduling.
+
+## 2026-08-24 HRMS on-duty command-center rework
+
+Reworked `/hrms/on-duty-admin` from a sparse pending-only approval list into a
+fuller on-duty command center that better matches advanced ERP attendance
+operations while preserving the existing on-duty lifecycle, approvals, trip
+tracking, and reimbursement contracts.
+
+Delivered:
+
+- expanded `src/app/api/hrms/on-duty/route.ts` from a pending-approvals-only
+  payload into a manager-scoped dashboard snapshot that now returns pending
+  requests, active trips, recent request history, unresolved on-duty tracking
+  alerts, reimbursement claims, and summary metrics without changing the
+  underlying workflow rules;
+- rebuilt `src/modules/hrms/components/on-duty-admin-view.tsx` around People
+  and Workspace primitives instead of a duplicate route-local header plus a few
+  raw cards, so the page now reads like an operational desk with approval,
+  live-trip, exception, settlement, and audit lanes;
+- added richer management framing using existing backend evidence already
+  present in the repo: approval queue cards, active trip supervision, GPS
+  exception review, reimbursement visibility, searchable recent history, and a
+  route-audit modal for waypoint inspection;
+- added module-owned styling in `src/styles/modules/people.css` for the new
+  on-duty lane cards, split workbench layout, alert/claim stacks, manager
+  watchlist, audit toolbar, and route-review presentation;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; the fresh route audit still
+  classifies `/hrms/on-duty-admin` as `COMPLIANT`.
+
+Reference direction:
+
+- the operational framing was guided by currently published Zoho People
+  attendance, approvals, and on-duty materials reviewed on Monday, August 24,
+  2026, especially their emphasis on request approvals, attendance trail
+  continuity, and report-oriented workforce control, but the implementation
+  stays within Monolith's existing contracts and component system.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/api/hrms/on-duty/route.ts' 'src/modules/hrms/components/on-duty-admin-view.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the current repository baseline because
+  `src/app/(dashboard)/hrms/reimbursement/page.tsx` references
+  `@/modules/hrms/components/reimbursement-admin-view`, which is currently
+  missing from the checkout;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  compiles successfully through Turbopack build creation, then fails on the
+  same unrelated reimbursement workspace type error already noted above.
+
+Known limits:
+
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this batch claims source-audit compliance
+  but not fresh runtime screenshot evidence;
+- the desk now frames advanced operational functions using existing payloads,
+  but it does not yet introduce new backend capabilities such as reassignment,
+  multi-level approval routing, persisted SLA rules, map canvases, or claim
+  adjudication directly from this screen;
+- route metrics such as average distance are derived from the recent request
+  history slice returned to this workspace, not from a dedicated historical BI
+  aggregation model.
+
+## 2026-08-24 standalone Payroll module carve-out
+
+Added a new top-level `/payroll` module so Payroll now exists as its own
+standalone dashboard section while still consuming canonical HRMS, Attendance,
+Leave, OT, Incentive, and Accounting data sources instead of duplicating those
+engines.
+
+Delivered:
+
+- added standalone Payroll navigation and module-control wiring through
+  `src/lib/navigation.ts` and
+  `src/modules/core/organisation/module-config.ts`;
+- added a dedicated Payroll route family under
+  `src/app/(dashboard)/payroll/**`, including:
+  `layout.tsx`, `page.tsx`, `pay-runs/page.tsx`, `employees/page.tsx`,
+  `compensation/page.tsx`, `inputs/page.tsx`, `compliance/page.tsx`,
+  `payments/page.tsx`, `payslips/page.tsx`, `loans/page.tsx`,
+  `reports/page.tsx`, and `settings/page.tsx`;
+- added `src/modules/payroll/service.ts` as the standalone Payroll read-model
+  aggregator over existing HRMS payroll runs, employee compensation, incentives,
+  accounting batch history, and payroll readiness fields;
+- added `src/modules/payroll/components/payroll-module-nav.tsx` plus
+  `src/modules/payroll/constants.ts` to give Payroll its own route-level
+  section navigation rather than living only as an HRMS subpage;
+- kept `/hrms/payroll` as the existing implementation surface while exposing
+  the same pay-run workspace under `/payroll/pay-runs`, so the module is now
+  standalone without breaking the current HRMS-owned route;
+- extended payroll and accounting action revalidation so approvals and postings
+  refresh the standalone module pages as well as the older HRMS route;
+- added `docs/payroll/SCREEN_CAPABILITY_MAP.md` to map concrete scrape screens
+  from the local payroll corpus into Monolith routes and implementation status.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --format stylish -- 'src/app/(dashboard)/payroll/**/*.tsx' 'src/modules/payroll/**/*.ts' 'src/modules/payroll/**/*.tsx' 'src/lib/navigation.ts' 'src/modules/core/organisation/module-config.ts' 'src/modules/hrms/payroll-actions.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks.
+
+Known limits:
+
+- static route audit now records mixed status across the new standalone Payroll
+  family: `/payroll/pay-runs` and `/payroll/reports` are `COMPLIANT`,
+  `/payroll/compliance`, `/payroll/employees`, and `/payroll/loans` are
+  `PARTIAL`, and `/payroll`, `/payroll/compensation`, `/payroll/inputs`,
+  `/payroll/payments`, `/payroll/payslips`, and `/payroll/settings` are still
+  `NON_COMPLIANT`, so the new module is functionally present but still needs a
+  follow-up design-system cleanup pass;
+- the standalone module now covers dashboard, pay runs, employees,
+  compensation, inputs, compliance, payments, payslips, reports, settings, and
+  loans as native route areas, but several of those remain orchestration and
+  readiness surfaces over existing data rather than full Zoho-level engines;
+- employee loans, salary advances, statutory filing outputs, payslip document
+  generation, tax proof workflows, off-cycle orchestration, and pay-schedule
+  persistence are still pending deeper backend implementation.
+
+## 2026-08-24 HRMS payroll operations workspace rework
+
+Reworked `/hrms/payroll` from a thin batch-oriented payroll stub into an
+Monolith-native HRMS payroll operations workspace that compiles live employee,
+leave, attendance, OT, incentive, and manual LOP inputs before handing an
+immutable approved snapshot to Accounting.
+
+Delivered:
+
+- added `src/modules/hrms/payroll.ts` as the HRMS-owned payroll aggregation and
+  approval service, including employee-level calculation helpers, period
+  summaries, validation issue generation, and immutable Accounting handoff line
+  construction;
+- added `src/modules/hrms/payroll-actions.ts` so payroll approval now runs
+  through a dedicated HRMS server action boundary instead of the old
+  Accounting-owned compile/create path;
+- rebuilt `src/app/(dashboard)/hrms/payroll/page.tsx` and
+  `src/app/(dashboard)/hrms/payroll/payroll-client.tsx` around canonical
+  People and Workspace primitives, with period controls, KPI summaries,
+  employee pay register search/filtering, validation blockers, and batch
+  timeline controls;
+- preserved the existing Accounting posting boundary: HRMS now approves the
+  run, Accounting still posts the accrual journal through the existing
+  `finalizePayrollBatchAction` flow;
+- aligned People workspace metadata and HRMS navigation copy from "Payroll
+  Batches" to the broader "Payroll" / "Payroll operations" framing;
+- added `src/modules/hrms/__tests__/payroll.test.ts` to cover the pure payroll
+  row calculation contract for proration and validation failures;
+- added `docs/payroll/REFERENCE_ANALYSIS.md` and
+  `docs/payroll/FEATURE_MATRIX.md` to capture the scrape-corpus findings and
+  product research trail;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; the fresh route audit now
+  classifies `/hrms/payroll` as `COMPLIANT`.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --format stylish -- 'src/app/(dashboard)/hrms/payroll/page.tsx' 'src/app/(dashboard)/hrms/payroll/payroll-client.tsx' 'src/modules/hrms/payroll.ts' 'src/modules/hrms/payroll-actions.ts' 'src/modules/hrms/__tests__/payroll.test.ts' 'src/modules/people/components/people-workspace.tsx' 'src/lib/navigation.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run src/modules/hrms/__tests__/payroll.test.ts`:
+  blocked by the repository guard in `vitest.config.ts`, which refuses test
+  startup unless `.env.staging.local` is present for guarded execution.
+
+Known limits:
+
+- this batch establishes a real payroll run foundation, but it does not yet
+  implement the broader requested payroll surface such as statutory engines,
+  loan/advance recovery, reimbursement integration, payslips, payment file
+  generation, or employee self-service release flows;
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this batch claims source-audit compliance
+  but not fresh runtime theme evidence;
+- guarded Vitest startup prevented execution of the new unit test in this
+  session without the required `.env.staging.local` file.
+
+## 2026-08-24 HRMS ownership and reporting workspace rework
+
+Reworked `/hrms/ownership` from a route-local tabbed assignment page into a
+module-owned ownership and reporting control centre that feels closer to an
+advanced ERP people-governance workspace while preserving the existing
+permission gate and assignment actions.
+
+Delivered:
+
+- moved the route implementation into
+  `src/modules/hrms/components/ownership-reporting-workspace.tsx` so the page
+  now lives in an approved HRMS module owner instead of a large route-local
+  page implementation;
+- replaced the older inline tabs, raw cards, and basic side form with a richer
+  People-framed workspace composed from canonical `WorkspaceSectionHeading`,
+  `WorkspacePanelHeader`, `WorkspacePanel`, `WorkspaceAction`,
+  `WorkspaceInput`, `WorkspaceSelect`, and People summary/table patterns;
+- added ERP-style reporting coverage framing including KPI summaries,
+  exception-first alerts, overview cards, TL roster management, manager
+  oversight lanes, department alignment reporting, searchable workbench pools,
+  and governance side panels without changing the underlying database contracts;
+- moved the server actions into `src/modules/hrms/ownership-actions.ts` and
+  left `src/app/(dashboard)/hrms/ownership/actions.ts` as a route-level
+  re-export so feature modules no longer depend on route implementations;
+- added module-owned styling in `src/styles/modules/people.css` for the new
+  ownership tabs, summary cards, roster cards, selection workbenches,
+  governance panels, responsive shell, and department coverage table;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`; the fresh route audit now
+  classifies `/hrms/ownership` as `COMPLIANT`.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/(dashboard)/hrms/ownership/page.tsx' 'src/app/(dashboard)/hrms/ownership/actions.ts' 'src/modules/hrms/ownership-actions.ts' 'src/modules/hrms/components/ownership-reporting-workspace.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false --incremental false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed, with the unchanged Turbopack NFT tracing warning from `next.config.ts`
+  through `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Known limits:
+
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session, so this batch does not claim fresh runtime
+  theme/viewport evidence even though source audits and build gates passed;
+- the richer ownership workspace adds filtering, framing, and governance views
+  around the current TL and manager assignment contracts, but it does not yet
+  introduce new backend capabilities such as drag-and-drop org charts, approval
+  routing rules, historical reporting-line snapshots, or import/export flows;
+- broader repository baselines outside this batch remain unchanged, including
+  the existing `architecture:check` failure described above.
+
+## 2026-08-24 HRMS GPS tracking command-center rework
+
+Reworked `/hrms/tracking` from a sparse attendance snapshot into a fuller GPS
+operations command center that better matches modern ERP and workforce-tracking
+patterns while preserving the existing backend payload and route ownership.
+
+Delivered:
+
+- rebuilt `src/modules/hrms/components/tracking-dashboard-view.tsx` around
+  shared People and Workspace primitives instead of a duplicate local page
+  header plus loosely spaced raw cards;
+- added a live control-tower summary with connected Monolith metrics for
+  checked-in coverage, live streams, open exceptions, on-duty missions, and
+  face-auth coverage;
+- derived richer operational insights from the existing API response, including
+  heartbeat freshness, stale/offline session detection, integrity-risk counts,
+  tracking coverage, cadence, per-employee exception posture, and a searchable
+  workforce feed;
+- added dedicated operations panels for alert triage, tracking health,
+  on-duty missions, and governance framing so the page now reads like an actual
+  tracking management surface instead of a static list;
+- added module-owned tracking styles to `src/styles/modules/people.css` for the
+  command-center shell, KPI cards, alert queue, health cards, table status
+  pills, trip cards, governance grid, and responsive mobile stacking;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the route batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/modules/hrms/components/tracking-dashboard-view.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  did not complete in this session because Next reported that another build
+  process was already running, so no new route-specific build failure was
+  captured from this batch.
+
+Known limits:
+
+- the redesign intentionally derives advanced control-tower behavior from the
+  current `/api/hrms/tracking` payload only, so true map canvases, persisted
+  geofence editors, dispatch reassignment, route replay, and alert-resolution
+  workflows were not introduced in this pass;
+- manual runtime browser verification across Light, Night, and Violet themes is
+  still pending in this Codex session;
+- the regenerated source audit continues to classify `/hrms/tracking` as
+  `COMPLIANT`, but this entry does not claim a fresh runtime-verified migration
+  completion because in-browser validation was not completed here.
+
+## 2026-08-24 Shared workspace divider restraint pass
+
+Refined the shared Monolith workspace separator contract so single-surface
+pages stop drawing stray horizontal rules directly above card-like panels and
+metric strips unless a route explicitly opts back into that divider.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so
+  `.mnx-workspace-page[data-workspace-surface="single"]` still supports the
+  shared horizontal divider language, but now suppresses that rule for shared
+  panel, table-card, and metrics surfaces by default;
+- added a lightweight opt-in/opt-out contract using
+  `data-workspace-divider="line"` and `data-workspace-divider="none"` so future
+  route work can restore or suppress a divider intentionally instead of
+  inheriting a naked rule line automatically;
+- removed the older blanket top-border rule that was reapplying separators to
+  direct workspace panels and table cards even when the line was visually too
+  close to adjacent surfaces.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including design-system coverage and catalogue-style boundary checks.
+
+Known limits:
+
+- manual browser verification is still pending in this Codex session because
+  the in-app browser runtime reported that no controllable browser was
+  available for `http://localhost:3000`;
+- this pass changes the shared default separator behavior only and does not yet
+  add route-specific `data-workspace-divider` overrides for any page that may
+  want to reintroduce a divider intentionally.
+
+## 2026-08-24 Shared development-build watermark and catalogue options
+
+Added a shared development-build watermark for the floating Mona launcher and
+registered multiple visual options in the Admin Design System so the team can
+review alternate treatments from one production-backed component.
+
+Delivered:
+
+- added `src/components/feedback/development-build-watermark.tsx`, a shared
+  build-status surface that reads from the public app version when present and
+  otherwise falls back to the repository version, while also exposing three
+  approved visual variants: `glass-chip`, `signal-bar`, and `stacked-card`;
+- updated `src/modules/mona/components/mona-chat.tsx` so the live app renders
+  the shared development-build watermark directly above the bottom-right Mona
+  chat launcher without introducing route-local placement logic;
+- exported the new shared watermark through `src/components/monolith/index.ts`
+  so the supported Monolith UI API and the design-system catalogue can consume
+  the same implementation;
+- updated `src/components/monolith/catalogue/shared-catalogue.tsx` with a live
+  production specimen that shows all three watermark design directions side by
+  side on `/admin/design-system`, giving stakeholders multiple visible options
+  to choose from while the runtime continues to use one default treatment;
+- updated `src/styles/monolith-system.css` with the shared floating-stack,
+  watermark, and design-system showcase styling using existing semantic theme
+  tokens so the component remains legible in Light, Night, and Violet themes.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/components/feedback/development-build-watermark.tsx' 'src/modules/mona/components/mona-chat.tsx' 'src/components/monolith/catalogue/shared-catalogue.tsx' 'src/components/monolith/index.ts'`:
+  completed with the unchanged existing `no-restricted-syntax` raw-button
+  warnings in `src/modules/mona/components/mona-chat.tsx`; no new lint errors
+  were introduced by this batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including the design-system coverage and catalogue-style boundary
+  checks.
+
+Known limits:
+
+- the live runtime currently uses the default `glass-chip` treatment above the
+  Mona launcher, while the alternate `signal-bar` and `stacked-card` variants
+  are exposed in the design-system catalogue for visual review rather than as a
+  persisted end-user preference;
+- the watermark shows the shared app version and a fallback `local` build label
+  unless a public build-number environment value is supplied;
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-24 HRMS organisation structure workspace rework
+
+Reworked `/hrms/org-structure` from a prompt-driven two-column CRUD list into a
+fuller HRMS structure-management workspace that feels closer to a modern ERP
+setup surface while staying inside the existing Monolith People frame and
+current backend contracts.
+
+Delivered:
+
+- moved the route implementation into
+  `src/modules/hrms/components/organisation-structure-workspace.tsx` so the
+  page now lives in the approved HRMS module ownership area instead of a
+  route-local manager file;
+- replaced browser `prompt` and `confirm` flows with canonical
+  `WorkspaceDialog` create, edit, and delete dialogs for branches,
+  departments, and divisions, wiring the existing `POST`, `PATCH`, and
+  `DELETE` organisation APIs rather than changing backend behavior;
+- added searchable structure exploration, scope filtering, selected-department
+  blueprint framing, structure-health callouts, and summary metrics so
+  administrators can review and manage the organisation hierarchy from one
+  connected control surface;
+- added module-owned styling to `src/styles/modules/people.css` for the new
+  organisation workspace shell, explorer cards, branch registry, blueprint
+  rail, health list, and responsive mobile behavior;
+- removed the obsolete route-local
+  `src/app/(dashboard)/hrms/org-structure/org-structure-manager.tsx`
+  implementation after migrating the page to the HRMS module component;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the route batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish 'src/app/(dashboard)/hrms/org-structure/page.tsx' 'src/modules/hrms/components/organisation-structure-workspace.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false --incremental false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- runtime browser verification remained blocked in this Codex session because
+  the browser runtime reported no available controllable browser backends
+  (`agent.browsers.list()` returned `[]`);
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  started, but no result was captured before the long-running process was
+  manually interrupted in this session.
+
+Known limits:
+
+- the richer workspace currently operates on the existing organisation APIs
+  only, so advanced ERP behaviors such as bulk import/export, drag-and-drop
+  hierarchy rearrangement, department heads, or branch-to-department
+  assignment matrices were not introduced in this batch;
+- static audit classification remains `COMPLIANT` for `/hrms/org-structure`,
+  but manual runtime verification across Light, Night, and Violet themes is
+  still pending because no browser backend was available;
+- broader repository baselines outside this batch remain unchanged, including
+  the existing `architecture:check` failure described above.
+
+## 2026-08-24 Design-system governance and unverified-design queue
+
+Turned the admin design system into a living governance surface by adding a
+reviewable unverified-design queue, repository-backed discovery, persisted
+review decisions, and a dedicated `/admin/design-system/unverified-designs`
+route while keeping replacements intentionally developer-safe.
+
+Delivered:
+
+- replaced the older admin design-system route implementation with
+  `src/app/(dashboard)/admin/design-system/design-system-client.tsx`, a
+  production-backed catalogue shell that keeps the official inventory, review
+  summary metrics, approved-from-queue patterns, and the unverified-design
+  entry point in one Monolith-owned experience;
+- updated `src/app/(dashboard)/admin/design-system/page.tsx` to use the
+  enforced catalogue-only stylesheet boundary through
+  `design-system-catalogue.css` and to load a repository discovery snapshot
+  instead of relying on the older disconnected route-local showcase markup;
+- added `src/app/(dashboard)/admin/design-system/unverified-designs/page.tsx`
+  so the governance queue has its own route under the existing design-system
+  family rather than being hidden behind a static section;
+- added
+  `src/modules/admin/components/design-system-governance.ts`, which scans
+  active route/module source for reusable unregistered patterns, groups likely
+  duplicate families, tracks recurring token deviations, and persists review
+  decisions to `storage/design-system-governance/reviews.json` without a
+  database migration;
+- added `src/app/(dashboard)/admin/design-system/actions.ts` so admin users can
+  approve patterns, mark them for manual review, or map them to approved
+  alternatives, with those decisions revalidating both design-system routes;
+- updated `src/modules/admin/components/admin-workspace.tsx` so the dedicated
+  design-system route family is not wrapped by the standard admin workspace
+  chrome;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`, which now reflect 292 page
+  routes and the new `/admin/design-system/unverified-designs` entry.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/app/(dashboard)/admin/design-system/page.tsx' 'src/app/(dashboard)/admin/design-system/design-system-client.tsx' 'src/app/(dashboard)/admin/design-system/actions.ts' 'src/app/(dashboard)/admin/design-system/unverified-designs/page.tsx' 'src/modules/admin/components/design-system-governance.ts' 'src/modules/admin/components/admin-workspace.tsx'`:
+  passed, with only the unchanged pre-existing raw-input wrapper warning in
+  `src/modules/admin/components/admin-workspace.tsx`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed, including the catalogue coverage and catalogue-style boundary checks;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed, with the unchanged Turbopack NFT tracing warning from `next.config.ts`
+  through `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Known limits:
+
+- the review queue persists governance decisions and approved/replaced status,
+  but actual source-code replacement is still intentionally surfaced as
+  developer review because runtime-safe automatic UI rewrites are not supported
+  by the current architecture;
+- current unverified previews are source-derived live specimens rather than
+  isolated imports of every route-local implementation, which keeps the feature
+  operational without pretending every active production fragment can be safely
+  executed in catalogue isolation;
+- manual browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-24 Shared text containment and workflow stage wrapping pass
+
+Stabilized the shared text-containment contracts that were letting long enum
+labels, badges, and action labels escape their containers, and fixed the
+`/product-catalogue` workflow stage navigation that was reproducing the
+reported `DUE_NOTIFIED` / `SELF_ASSESSMENT_OPEN` overflow screenshot.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so shared page headers, panel
+  headers, actions, badges, chips, text actions, and operational activity copy
+  now opt into `min-width: 0` style containment and wrap long dynamic text with
+  `overflow-wrap: anywhere` / `word-break: break-word` instead of assuming a
+  single-line label;
+- updated the shared `mnx-button` contract so non-icon buttons can grow
+  vertically for longer labels while icon-mode buttons keep their fixed compact
+  footprint;
+- updated `src/components/layout/workspace.tsx` to expose dedicated
+  `mnx-page-header-copy-body` and `mnx-panel-header-copy` hooks so canonical
+  page/panel header text columns can shrink and wrap safely without colliding
+  with actions;
+- updated `src/app/(dashboard)/product-catalogue/page.tsx` so the workflow
+  stage buttons now use an explicit `[index] [content] [icon]` structure rather
+  than relying on a looser inline span layout;
+- updated `src/styles/monolith-system.css` with the matching
+  `mnx-catalogue-stage-button-*` rules so long raw stage names such as
+  `SELF_ASSESSMENT_OPEN` wrap inside their cards and the workflow grid stacks to
+  one column on narrower widths;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the responsive batch.
+
+Verification on Monday, August 24, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --no-cache --format stylish -- 'src/components/layout/workspace.tsx' 'src/app/(dashboard)/product-catalogue/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route + migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository baseline that
+  `src/components/monolith` contains implementation files outside the allowed
+  barrel/catalogue-only contract;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  coverage passed, but the unchanged repository baseline still fails because
+  `design-system-catalogue.css` is missing;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/components/layout/workspace.test.tsx' --reporter verbose`:
+  remains blocked by the repository guard that `.env.staging.local` is
+  required for guarded test execution;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed, with the existing Turbopack NFT tracing warning from `next.config.ts`
+  through `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Known limits:
+
+- runtime browser verification in this Codex session is still pending, so this
+  pass does not claim a full manual zoom/viewport sweep across every route
+  family;
+- the regenerated static audits still classify `/product-catalogue` as
+  `NON_COMPLIANT` because the route continues to own significant bespoke visual
+  composition beyond this responsive containment repair;
+- broader repository baselines outside this batch remain unchanged, including
+  the previously known `architecture:check`, `design-system:verify`, and
+  guarded Vitest prerequisites noted above.
 
 ## 2026-08-21 Module composition responsive containment pass
 

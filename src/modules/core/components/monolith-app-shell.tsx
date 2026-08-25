@@ -127,6 +127,13 @@ function applyAccentInlineStyles(root: HTMLElement, accent: MonolithAccent) {
   root.style.setProperty("--frappe-primary-active", stops.active);
   root.style.setProperty("--frappe-primary-soft", stops.softLight);
   root.style.setProperty("--frappe-primary-soft-border", stops.softBorderLight);
+  // --mnx-accent-text / --mnx-accent-contrast (used app-wide for accent-colored
+  // text and for text-on-solid-accent-fill) resolve through these two — they
+  // were never set here, so every such usage silently computed to nothing
+  // (invisible text/fills). `active` (700-weight) reads well as text on light
+  // backgrounds; white reads well as text on any of the four accent hues.
+  root.style.setProperty("--frappe-primary-strong", stops.active);
+  root.style.setProperty("--frappe-primary-foreground", "#ffffff");
 }
 
 const MonolithThemeContext = createContext<{

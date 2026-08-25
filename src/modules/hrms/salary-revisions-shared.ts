@@ -44,6 +44,7 @@ export type SalaryRevisionRecord = {
   fixedAllowanceMonthly: number | null;
   stipendMonthly: number | null;
   effectiveSort: number;
+  reason: string | null;
 };
 
 export type SalaryRevisionSummary = {
@@ -179,12 +180,14 @@ export function normalizeRevision(row: SalaryRevisionRow): SalaryRevisionRecord 
   const status = normalizeStatus(row["Status"]);
 
   return {
-    id: [
-      asString(row["Employee Number"]),
-      effectiveFrom ?? "unknown",
-      revisedCtcAnnual ?? "",
-      revisedGrossAnnual ?? "",
-    ].join(":"),
+    id:
+      asString(row["Id"]) ||
+      [
+        asString(row["Employee Number"]),
+        effectiveFrom ?? "unknown",
+        revisedCtcAnnual ?? "",
+        revisedGrossAnnual ?? "",
+      ].join(":"),
     status,
     statusLabel: status.charAt(0) + status.slice(1).toLowerCase(),
     effectiveFrom,
@@ -204,6 +207,7 @@ export function normalizeRevision(row: SalaryRevisionRow): SalaryRevisionRecord 
     fixedAllowanceMonthly: asNumber(row["Fixed Allowance"]),
     stipendMonthly: asNumber(row["Stipend"]),
     effectiveSort,
+    reason: asString(row["Reason"]) || null,
   };
 }
 

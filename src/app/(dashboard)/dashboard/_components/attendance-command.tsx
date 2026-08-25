@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MonolithSpecLabel } from "@/components/ui/foundation";
@@ -31,6 +30,12 @@ type DashboardActionItem = {
   task: string;
   meta: string;
   signal: string;
+};
+
+type DashboardInsightItem = {
+  label: string;
+  value: string;
+  detail: string;
 };
 
 const attendanceCopy: Record<
@@ -171,11 +176,24 @@ export function AttendanceCommand({
       signal: "Monitoring",
     },
   ];
-  const tickerViewportStyle = {
-    "--mnx-action-item-height": "112px",
-    "--mnx-action-item-count": actionItems.length,
-    "--mnx-action-stream-duration": `${actionItems.length * 3.6}s`,
-  } as CSSProperties;
+  const [featuredAction, ...queuedActions] = actionItems;
+  const insightItems: DashboardInsightItem[] = [
+    {
+      label: "Priority queue",
+      value: String(pending.tasks).padStart(2, "0"),
+      detail: pending.tasks > 0 ? "Tasks ready for review" : "No urgent tasks waiting",
+    },
+    {
+      label: "Leave desk",
+      value: String(pending.leaves).padStart(2, "0"),
+      detail: pending.leaves > 0 ? "Requests need a response" : "Approvals are under control",
+    },
+    {
+      label: "Helpdesk watch",
+      value: String(pending.cases).padStart(2, "0"),
+      detail: pending.cases > 0 ? "Support signals are open" : "Service desk is quiet",
+    },
+  ];
 
   useEffect(() => {
     if (!celebrating) return;
@@ -212,23 +230,38 @@ export function AttendanceCommand({
       </div>
       <div className="mnx-dashboard-hero-stage">
         <div className="mnx-dashboard-identity-card">
-          <div className="mnx-dashboard-eyebrow">
-            <span className="mnx-dashboard-pulse" />
-            OPERATIONS WORKSPACE
+          <div className="mnx-dashboard-hero-header">
+            <div className="mnx-dashboard-eyebrow">
+              <span className="mnx-dashboard-pulse" />
+              OPERATIONS WORKSPACE
+            </div>
+            <span className="mnx-dashboard-hero-status">{status.label}</span>
           </div>
 
-          <div className="mnx-dashboard-profile">
-            <div className="mnx-dashboard-profile-mark" aria-hidden="true">
-              {initials(profile.name)}
+          <div className="mnx-dashboard-profile-band">
+            <div className="mnx-dashboard-profile">
+              <div className="mnx-dashboard-profile-mark" aria-hidden="true">
+                {initials(profile.name)}
+              </div>
+              <div>
+                <p className="mnx-dashboard-welcome">Welcome back,</p>
+                <h1>{profile.name}</h1>
+                <p className="mnx-dashboard-role">
+                  {profile.designation || "Team member"}
+                  {profile.employeeNo ? ` · Employee ${profile.employeeNo}` : ""}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="mnx-dashboard-welcome">Welcome back,</p>
-              <h1>{profile.name}</h1>
-              <p className="mnx-dashboard-role">
-                {profile.designation || "Team member"}
-                {profile.employeeNo ? ` · Employee ${profile.employeeNo}` : ""}
-              </p>
-            </div>
+
+            <dl className="mnx-dashboard-insight-grid" aria-label="Dashboard highlights">
+              {insightItems.map((item) => (
+                <div key={item.label}>
+                  <dt>{item.label}</dt>
+                  <dd>{item.value}</dd>
+                  <p>{item.detail}</p>
+                </div>
+              ))}
+            </dl>
           </div>
 
           <div className="mnx-dashboard-context" aria-label="Workspace context">
@@ -237,24 +270,34 @@ export function AttendanceCommand({
             {profile.manager ? <span><Sparkles size={14} />Reports to {profile.manager}</span> : null}
           </div>
 
-          <div className="mnx-dashboard-action-window" aria-label="Actions needing attention">
-            <div className="mnx-dashboard-action-header">
-              <p>Action stream</p>
-              <span>Live updates</span>
-            </div>
-            <div className="mnx-dashboard-action-viewport" style={tickerViewportStyle} tabIndex={0}>
-              <ul>
-                {[...actionItems, ...actionItems].map((item, index) => (
-                  <li key={`${item.module}-${item.task}-${index}`} aria-hidden={index >= actionItems.length}>
+          <div className="mnx-dashboard-action-showcase" aria-label="Actions needing attention">
+            <article className="mnx-dashboard-action-feature">
+              <div className="mnx-dashboard-action-feature-head">
+                <span>Primary pulse</span>
+                <b>{featuredAction.signal}</b>
+              </div>
+              <strong>{featuredAction.task}</strong>
+              <p>{featuredAction.meta}</p>
+              <small>{featuredAction.module}</small>
+            </article>
+
+            <div className="mnx-dashboard-action-window">
+              <div className="mnx-dashboard-action-header">
+                <p>Action queue</p>
+                <span>{queuedActions.length} live updates</span>
+              </div>
+              <div className="mnx-dashboard-action-list">
+                {queuedActions.map((item) => (
+                  <article key={`${item.module}-${item.task}`}>
                     <div className="mnx-dashboard-action-row">
                       <span>{item.module}</span>
                       <b>{item.signal}</b>
                     </div>
                     <strong>{item.task}</strong>
                     <small>{item.meta}</small>
-                  </li>
+                  </article>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         </div>

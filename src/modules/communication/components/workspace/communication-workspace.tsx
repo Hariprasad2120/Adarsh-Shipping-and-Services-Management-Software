@@ -158,6 +158,12 @@ export function CommunicationWorkspaceFrame({
   const pathname = normalizePathname(usePathname());
   const meta = getCommunicationRouteMeta(pathname);
   const Icon = meta.icon;
+  // Chat is a fixed-height messaging layout (pinned composer, independently
+  // scrolling panes) — every other communication route wants normal
+  // document-flow scrolling from .mnx-dashboard-main, so this override is
+  // scoped to just this route rather than changing the shared page/content
+  // primitives (which would break page-level scroll everywhere else).
+  const isChatRoute = pathname === "/communication/chat" || pathname.startsWith("/communication/chat/");
   const items = showGoogleChatLiveView
     ? [
         ...navigationItems.slice(0, 3),
@@ -171,17 +177,17 @@ export function CommunicationWorkspaceFrame({
 
   return (
     <WorkspacePage
-      className="mnx-communication-page"
+      className={cn("mnx-communication-page", isChatRoute && "flex flex-col h-full min-h-0 overflow-hidden")}
       data-communication-workspace="true"
     >
       <WorkspacePageHeader
-        className="mnx-communication-page-header"
+        className="mnx-communication-page-header shrink-0"
         eyebrow={meta.eyebrow}
         title={meta.title}
         description={meta.description}
         icon={<Icon aria-hidden="true" />}
       />
-      <nav className="mnx-communication-nav" aria-label="Communication workspace">
+      <nav className="mnx-communication-nav shrink-0" aria-label="Communication workspace">
         {items.map((item) => {
           const active =
             item.href === "/communication"
@@ -198,7 +204,7 @@ export function CommunicationWorkspaceFrame({
           );
         })}
       </nav>
-      <div className="mnx-communication-content">{children}</div>
+      <div className={cn("mnx-communication-content", isChatRoute && "flex-1 flex flex-col min-h-0 overflow-hidden")}>{children}</div>
     </WorkspacePage>
   );
 }

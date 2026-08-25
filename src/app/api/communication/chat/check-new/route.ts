@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
+import { isCurrentGoogleChatUser, resolveGoogleWorkspacePerson } from "@/lib/google-chat-client";
 
 const CHAT_API_BASE = "https://chat.googleapis.com/v1";
 
@@ -38,9 +39,31 @@ export async function GET(req: NextRequest) {
   const { db } = await import("@/lib/db");
   const conn = await db.googleWorkspaceConnection.findUnique({
     where: { userId: session.user.id },
-    select: { googleUserId: true }
+    select: { googleUserId: true, googleEmail: true }
   });
   const myGoogleId = conn?.googleUserId;
+  const myGoogleEmail = conn?.googleEmail?.toLowerCase() ?? session.user.email?.toLowerCase() ?? null;
+
+  const connections = await db.googleWorkspaceConnection.findMany({
+    select: {
+      googleUserId: true,
+      googleEmail: true,
+      user: { select: { id: true, name: true, email: true } },
+    },
+  });
+  const userByGoogleId = new Map<string, string>();
+  const userByEmail = new Map<string, string>();
+  for (const connection of connections) {
+    if (connection.googleUserId && connection.user?.name) {
+      userByGoogleId.set(connection.googleUserId, connection.user.name);
+    }
+    if (connection.googleEmail && connection.user?.name) {
+      userByEmail.set(connection.googleEmail.toLowerCase(), connection.user.name);
+    }
+    if (connection.user?.email && connection.user?.name) {
+      userByEmail.set(connection.user.email.toLowerCase(), connection.user.name);
+    }
+  }
 
   const results = await Promise.allSettled(
     spaceIds.map(async (spaceId) => {
@@ -58,7 +81,29 @@ export async function GET(req: NextRequest) {
 
         const msg = messages[0];
         const senderId = msg.sender?.name?.replace("users/", "");
-        const isMe = senderId === myGoogleId;
+        const senderResourceName = msg.sender?.name || null;
+        const isMe = isCurrentGoogleChatUser({
+          memberName: senderResourceName,
+          memberEmail: msg.sender?.email || null,
+          googleUserId: myGoogleId,
+          googleEmail: myGoogleEmail,
+          userEmail: session.user.email ?? null,
+        });
+        const senderEmail = msg.sender?.email?.toLowerCase?.() ?? null;
+        const resolvedSender = await resolveGoogleWorkspacePerson({
+          actorUserId: session.user.id,
+          googleUserId: senderId,
+          email: senderEmail,
+          displayName: msg.sender?.displayName || null,
+          orgId: session.user.orgId || null,
+        });
+        const senderDisplayName =
+          (isMe ? session.user.name : undefined) ||
+          (senderId ? userByGoogleId.get(senderId) : undefined) ||
+          (senderEmail ? userByEmail.get(senderEmail) : undefined) ||
+          resolvedSender.name ||
+          msg.sender?.displayName ||
+          "Chat Member";
 
         // Detect @mention via structured annotations (most reliable)
         const hasMention = myGoogleId
@@ -73,9 +118,9 @@ export async function GET(req: NextRequest) {
           spaceId,
           latestMessageName: msg.name,
           latestTime: msg.createTime,
-          senderDisplayName: msg.sender?.displayName || "Unknown",
+          senderDisplayName,
           snippet: (msg.text || msg.formattedText || "").slice(0, 100),
-          isMe,
+          isMe: isMe || Boolean(senderEmail && myGoogleEmail && senderEmail === myGoogleEmail),
           hasMention,
         };
       } catch {

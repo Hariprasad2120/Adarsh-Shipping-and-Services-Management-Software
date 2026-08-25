@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import { getAppUrl } from "@/lib/app-url";
 import { db } from "@/lib/db";
 import * as driveClient from "./google-drive-client";
-import { sendMessage, createMembership, getAccessToken } from "./google-chat-client";
+import { sendMessage, createMembership, getAccessToken, type ChatCard } from "./google-chat-client";
 import {
   createJobWorkspaceProfileCompat,
   createOrUpdateJobWorkspaceProfile,
@@ -17,6 +18,92 @@ type JobForDrive = {
 };
 
 const DEFAULT_SHARED_DRIVE_JOBS_ROOT_NAME = "Monolith Job Workspaces";
+
+function buildJobSpaceProvisionedCard(params: {
+  jobNumber: string;
+  customerName: string;
+  serviceName: string;
+  priority: string;
+  driveFolderUrl: string;
+  monolithJobUrl: string;
+}): ChatCard {
+  const { jobNumber, customerName, serviceName, priority, driveFolderUrl, monolithJobUrl } = params;
+
+  return {
+    cardId: `job-space-provisioned-${jobNumber}`,
+    card: {
+      header: {
+        title: "🚀 Job Space Created Successfully!",
+        subtitle: "A new job space has been provisioned and is ready to use.",
+      },
+      sections: [
+        {
+          widgets: [
+            {
+              decoratedText: {
+                topLabel: "Job Space",
+                text: `<b>${jobNumber}</b>`,
+                startIcon: { knownIcon: "DESCRIPTION" },
+              },
+            },
+            {
+              decoratedText: {
+                topLabel: "Customer",
+                text: `<b>${customerName}</b>`,
+                startIcon: { knownIcon: "PERSON" },
+              },
+            },
+            {
+              decoratedText: {
+                topLabel: "Service",
+                text: `<b>${serviceName}</b>`,
+                startIcon: { knownIcon: "BOOKMARK" },
+              },
+            },
+            {
+              decoratedText: {
+                topLabel: "Priority",
+                text: `<b>${priority}</b>`,
+                startIcon: { knownIcon: "STAR" },
+              },
+            },
+          ],
+        },
+        {
+          header: "Quick access",
+          collapsible: false,
+          widgets: [
+            {
+              decoratedText: {
+                topLabel: "Shared Folder",
+                text: driveFolderUrl,
+                button: {
+                  text: "Open",
+                  onClick: { openLink: { url: driveFolderUrl } },
+                },
+              },
+            },
+          ],
+        },
+        {
+          widgets: [
+            {
+              buttonList: {
+                buttons: [
+                  {
+                    text: "Open Job",
+                    color: { red: 0.16, green: 0.4, blue: 0.85, alpha: 1 },
+                    onClick: { openLink: { url: monolithJobUrl } },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
 
 // Resolve a Drive-scoped OAuth access token to act as, preferring the
 // triggering user's connection and falling back to the job's primary owner.
@@ -451,18 +538,24 @@ export async function provisionJobWorkspace(
         }
       }
 
-      // ─── 3. Post Structured Welcome Message ───
-      const welcomeText = `🚀 *Job Space Provisioned: ${job.jobNumber}*\n\n` +
-        `*Customer:* ${job.customer.name}\n` +
-        `*Service:* ${job.jobType.name}\n` +
-        `*Priority:* ${job.priority}\n\n` +
-        `📂 *Shared Folder:* https://drive.google.com/drive/folders/${rootFolderId}\n` +
-        `🔗 *Monolith Job:* ${process.env.NEXTAUTH_URL || "http://localhost:3000"}/cha/jobs/${job.id}`;
+      // ─── 3. Post Structured Welcome Card ───
+      const monolithJobUrl = `${getAppUrl()}/cha/jobs/${job.id}`;
+      const driveFolderUrl = `https://drive.google.com/drive/folders/${rootFolderId}`;
 
       if (googleSpaceId) {
         await sendMessage({
           spaceResourceName: googleSpaceId,
-          text: welcomeText
+          text: `🚀 Job Space Created: ${job.jobNumber} — ${monolithJobUrl}`,
+          cardsV2: [
+            buildJobSpaceProvisionedCard({
+              jobNumber: job.jobNumber,
+              customerName: job.customer.name,
+              serviceName: job.jobType.name,
+              priority: job.priority,
+              driveFolderUrl,
+              monolithJobUrl,
+            }),
+          ],
         });
       }
     }

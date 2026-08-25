@@ -9,6 +9,7 @@ import { maskIp, deviceLabel, extractRequestMeta } from "@/lib/session-service";
 import type { Prisma } from "@/generated/prisma/client";
 import { PORTAL_COOKIE_NAME, PORTAL_LOGIN_PATH } from "./config";
 import { requireProductionSecret } from "@/lib/security";
+import { getAppUrl } from "@/lib/app-url";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 const PORTAL_SESSION_MAX_AGE_S = 7 * 24 * 60 * 60;
@@ -40,7 +41,7 @@ export function hashPortalToken(token: string) {
 }
 
 export function buildPortalLink(path: string) {
-  const base = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const base = getAppUrl();
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

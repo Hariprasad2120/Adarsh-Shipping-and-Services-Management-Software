@@ -110,7 +110,7 @@ export function ScrollNavigator() {
   const primaryDirection = scrollState === "top" ? "down" : "up";
 
   return (
-    <div className="fixed bottom-0 right-3 z-[60] sm:right-6">
+    <div className="mnx-scroll-navigator-shell">
       <div
         className={cn(
           "mnx-scroll-navigator",
@@ -119,35 +119,44 @@ export function ScrollNavigator() {
             : "transition-[box-shadow,background-color] duration-200",
         )}
       >
-        <div className="flex min-w-[156px] items-center gap-2 px-3 pb-[max(0.72rem,env(safe-area-inset-bottom))] pt-2.5">
-          <span className="mnx-scroll-navigator-label pr-1 text-[9px] font-semibold tracking-[0.3em]">
-            SCROLL
+        <div className="mnx-scroll-navigator-inner">
+          <span className="mnx-scroll-navigator-label">
+            PAGE
           </span>
 
-          {scrollState === "middle" ? (
-            <div className="flex items-center gap-1.5">
-              <InlineActionButton
-                label="TOP"
-                direction="up"
-                onClick={scrollToTop}
-                prefersReducedMotion={prefersReducedMotion}
-              />
-              <span className="mnx-scroll-navigator-separator">/</span>
-              <InlineActionButton
-                label="BOTTOM"
-                direction="down"
-                onClick={scrollToBottom}
-                prefersReducedMotion={prefersReducedMotion}
-              />
-            </div>
-          ) : (
+          <div className="mnx-scroll-navigator-actions">
             <InlineActionButton
-              label={scrollState === "top" ? "BOTTOM" : "TOP"}
-              direction={primaryDirection}
-              onClick={scrollState === "top" ? scrollToBottom : scrollToTop}
+              label="TOP"
+              direction="up"
+              onClick={scrollToTop}
               prefersReducedMotion={prefersReducedMotion}
+              isActive={scrollState !== "top"}
             />
-          )}
+
+            <div
+              className="mnx-scroll-navigator-status"
+              aria-hidden="true"
+              data-state={scrollState}
+            >
+              <span />
+            </div>
+
+            <InlineActionButton
+              label="BOTTOM"
+              direction="down"
+              onClick={scrollToBottom}
+              prefersReducedMotion={prefersReducedMotion}
+              isActive={scrollState !== "bottom"}
+            />
+          </div>
+
+          <span className="mnx-scroll-navigator-hint">
+            {scrollState === "middle"
+              ? "Jump"
+              : scrollState === "top"
+                ? "Down"
+                : "Up"}
+          </span>
         </div>
       </div>
     </div>
@@ -159,29 +168,30 @@ function InlineActionButton({
   label,
   onClick,
   prefersReducedMotion,
+  isActive,
 }: {
   direction: "up" | "down";
   label: string;
   onClick: () => void;
   prefersReducedMotion: boolean;
+  isActive: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label === "TOP" ? "Scroll to top" : "Scroll to bottom"}
+      aria-pressed={isActive}
       className={cn(
-        "mnx-scroll-navigator-action inline-flex items-center gap-1 rounded-full px-2 py-1",
+        "mnx-scroll-navigator-action",
         "focus:outline-none focus-visible:ring-2",
+        isActive ? "is-active" : "is-idle",
         prefersReducedMotion ? "" : "transition-colors duration-150",
       )}
     >
-      <span className="text-[8px] font-semibold tracking-[0.22em]">
-        {label}
-      </span>
+      <span className="mnx-scroll-navigator-action-text">{label}</span>
       <div className="flex flex-col items-center leading-none">
         <ChevronMark direction={direction} />
-        <ChevronMark direction={direction} className="-mt-1" />
       </div>
     </button>
   );

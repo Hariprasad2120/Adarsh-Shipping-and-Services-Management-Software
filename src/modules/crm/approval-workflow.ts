@@ -10,10 +10,15 @@ import {
   type FreightContainerRow,
 } from "@/modules/freight-forwarding/booking-shared";
 import type {
+  QuotePricingTrace,
   QuoteApprovalFlowState,
   QuoteConversionState,
   QuoteWorkflowContext,
 } from "@/modules/crm/components/quotes/lib/types";
+import {
+  buildQuotePricingTrace,
+  isQuotePricingGovernanceBlocked,
+} from "@/modules/crm/services/quote-pricing-governance.service";
 
 // ─── Status type unions ───────────────────────────────────────────────────────
 
@@ -112,6 +117,7 @@ function readQuoteSnapshot(snapshot: unknown): QuoteSnapshot {
   }
 
   return {
+    ...snapshot,
     mode:
       snapshot.mode === "freight-only" ||
       snapshot.mode === "customs-only" ||
@@ -142,6 +148,33 @@ function readQuoteSnapshot(snapshot: unknown): QuoteSnapshot {
         ? snapshot.quoteBaseNumber
         : null,
     recreateRequired: snapshot.recreateRequired === true,
+    pricingSnapshotId:
+      typeof snapshot.pricingSnapshotId === "string"
+        ? snapshot.pricingSnapshotId
+        : null,
+    pricingSnapshotVersionLabel:
+      typeof snapshot.pricingSnapshotVersionLabel === "string"
+        ? snapshot.pricingSnapshotVersionLabel
+        : null,
+    pricingSellTotal:
+      typeof snapshot.pricingSellTotal === "number"
+        ? snapshot.pricingSellTotal
+        : null,
+    pricingBuyTotal:
+      typeof snapshot.pricingBuyTotal === "number"
+        ? snapshot.pricingBuyTotal
+        : null,
+    pricingMarginAmount:
+      typeof snapshot.pricingMarginAmount === "number"
+        ? snapshot.pricingMarginAmount
+        : null,
+    pricingMarginPercent:
+      typeof snapshot.pricingMarginPercent === "number"
+        ? snapshot.pricingMarginPercent
+        : null,
+    pricingTrace: isObjectRecord(snapshot.pricingTrace)
+      ? (snapshot.pricingTrace as QuotePricingTrace)
+      : null,
     approvalFlow: isObjectRecord(snapshot.approvalFlow)
       ? (snapshot.approvalFlow as QuoteApprovalFlowState)
       : null,
@@ -223,6 +256,45 @@ async function buildQuoteNotificationMessage(managerId: string, quoteNumber: str
     : `Awaiting manager approval for ${quoteNumber}.`;
 }
 
+async function assertQuotePricingApprovalReady(params: {
+  invoice: Awaited<ReturnType<typeof loadInvoice>>;
+  orgId: string;
+}) {
+  const { invoice, orgId } = params;
+  if (invoice.type !== "QUOTE") {
+    return;
+  }
+
+  const snapshot = readQuoteSnapshot(invoice.sourceQuotationSnapshot);
+  const linkedLeadId =
+    invoice.crmLeadId ||
+    ((snapshot as Record<string, unknown>).leadId as string | null | undefined) ||
+    null;
+
+  if (!linkedLeadId) {
+    return;
+  }
+
+  const lead = await db.crmLead.findFirst({
+    where: { id: linkedLeadId, orgId },
+    select: { enquiryDetails: true },
+  });
+
+  const pricingTrace = buildQuotePricingTrace({
+    workflowContext: snapshot,
+    linkedLeadEnquiryDetails: lead?.enquiryDetails,
+  });
+
+  if (!isQuotePricingGovernanceBlocked(pricingTrace)) {
+    return;
+  }
+
+  throw new Error(
+    pricingTrace.message ||
+      "Refresh the linked pricing worksheet and recreate this quotation before approval can continue.",
+  );
+}
+
 function appendApprovalAudit(
   approvalFlow: QuoteApprovalFlowState | null | undefined,
   entry: NonNullable<QuoteApprovalFlowState["auditTrail"]>[number],
@@ -274,6 +346,8 @@ async function buildUniqueFreightBookingNumber(params: {
   );
 }
 
+// Reserved for the next CRM quote-to-freight conversion phase.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function createFreightBookingFromQuote(params: {
   actorId: string;
   actorName: string | null;
@@ -522,6 +596,8 @@ async function resolveQuoteManager(
   });
 }
 
+// Reserved for the next CRM quote-to-CHA conversion phase.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function createChaJobFromQuote(params: {
   actorId: string;
   orgId: string;
@@ -613,6 +689,8 @@ export async function submitForApproval(params: {
     if (normalizedStatus !== "DRAFT") {
       throw new Error(`Cannot submit from status: ${inv.approvalStatus}`);
     }
+
+    await assertQuotePricingApprovalReady({ invoice: inv, orgId });
 
     if (!managerId) {
       throw new Error("Select the approving manager before submitting.");
@@ -767,6 +845,8 @@ export async function approveDocument(params: {
     if (normalizedStatus !== "PENDING_MANAGER_APPROVAL") {
       throw new Error(`Cannot approve from status: ${inv.approvalStatus}`);
     }
+
+    await assertQuotePricingApprovalReady({ invoice: inv, orgId });
 
     const snapshot = readQuoteSnapshot(inv.sourceQuotationSnapshot);
     const selectedManagerId = snapshot.approvalFlow?.selectedManagerId;
@@ -1132,6 +1212,8 @@ export async function recordCustomerDecision(params: {
   if (normalizedStatus !== "PENDING_CUSTOMER_APPROVAL") {
     throw new Error(`Cannot record a customer decision from status: ${inv.approvalStatus}`);
   }
+
+  await assertQuotePricingApprovalReady({ invoice: inv, orgId });
 
   const actorName = await getUserName(actorId);
   const decisionDate = actedAt ? new Date(actedAt) : await getNow();

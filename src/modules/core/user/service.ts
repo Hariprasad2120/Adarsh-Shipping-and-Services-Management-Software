@@ -151,8 +151,11 @@ export async function listUsersForDashboard(orgId: string, filters?: {
       email: true,
       employeeNumber: true,
       designation: true,
+      managerId: true,
       department: { select: { id: true, name: true } },
       branch: { select: { id: true, name: true } },
+      division: { select: { id: true, name: true } },
+      manager: { select: { id: true, name: true } },
     },
   });
 }

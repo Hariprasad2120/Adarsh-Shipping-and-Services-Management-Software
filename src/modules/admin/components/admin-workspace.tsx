@@ -139,7 +139,7 @@ export function getAdminRouteMeta(pathname: string | null): AdminRouteMeta {
 export function AdminWorkspaceFrame({ children }: { children: ReactNode }) {
   const pathname = normalizePathname(usePathname());
 
-  if (pathname === "/admin/design-system") {
+  if (pathname === "/admin/design-system" || pathname.startsWith("/admin/design-system/")) {
     return <>{children}</>;
   }
 

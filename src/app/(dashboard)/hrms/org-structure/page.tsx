@@ -2,7 +2,8 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { getOrg } from "@/modules/core/organisation/service";
-import { OrgStructureManager } from "./org-structure-manager";
+import { listUsersForDashboard } from "@/modules/core/user/service";
+import { OrganisationStructureWorkspace } from "@/modules/hrms/components/organisation-structure-workspace";
 
 export default async function HrmsOrgStructurePage() {
   const session = await getSession();
@@ -10,11 +11,10 @@ export default async function HrmsOrgStructurePage() {
 
   await requirePermission(session.user.id, "hrms.org_structure.manage");
 
-  const org = await getOrg(session.user.orgId!);
+  const [org, employees] = await Promise.all([
+    getOrg(session.user.orgId!),
+    listUsersForDashboard(session.user.orgId!, { active: true, take: 300 }),
+  ]);
 
-  return (
-    <div className="space-y-6">
-      <OrgStructureManager org={org} />
-    </div>
-  );
+  return <OrganisationStructureWorkspace org={org} employees={employees} />;
 }

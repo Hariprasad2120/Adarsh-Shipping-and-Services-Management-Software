@@ -1,0 +1,340 @@
+.mnx-catalogue-page {
+  display: grid;
+  gap: 2rem;
+  width: 100%;
+  max-width: min(100%, 110rem);
+  margin: 0;
+  padding: clamp(1rem, 1.8vw, 2rem) clamp(1rem, 2.2vw, 2.5rem) 3rem;
+}
+
+.mnx-catalogue-page-header {
+  margin-bottom: 0;
+}
+
+.mnx-catalogue-overview,
+.mnx-catalogue-intro-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.mnx-catalogue-overview-panel,
+.mnx-catalogue-intro-panel {
+  height: 100%;
+}
+
+.mnx-catalogue-top-links {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mnx-catalogue-top-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  max-width: 100%;
+  text-decoration: none;
+  padding: 1.125rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--mn-color-border);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mn-color-surface) 88%, white 12%), color-mix(in srgb, var(--mn-color-surface-soft) 92%, transparent 8%));
+}
+
+.mnx-catalogue-top-link > div,
+.mnx-catalogue-live-card > header > div,
+.mnx-catalogue-live-group-header > div,
+.mnx-catalogue-source-preview > div,
+.mnx-catalogue-meta-card,
+.mnx-catalogue-alternative > div {
+  min-width: 0;
+}
+
+.mnx-catalogue-top-link strong,
+.mnx-catalogue-live-card h3,
+.mnx-catalogue-live-group-header h2,
+.mnx-catalogue-review-item strong,
+.mnx-catalogue-alternative strong {
+  display: block;
+}
+
+.mnx-catalogue-top-link p,
+.mnx-catalogue-live-card p,
+.mnx-catalogue-live-group-header p,
+.mnx-catalogue-review-item p,
+.mnx-catalogue-source-preview p,
+.mnx-catalogue-meta-card p,
+.mnx-catalogue-history p,
+.mnx-catalogue-modal-stack p,
+.mnx-catalogue-alternative p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mnx-catalogue-summary-grid,
+.mnx-catalogue-queue-summary,
+.mnx-catalogue-inventory-grid,
+.mnx-catalogue-review-meta,
+.mnx-catalogue-difference-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.mnx-catalogue-live-group {
+  display: grid;
+  gap: 1.25rem;
+  padding-top: 0.5rem;
+}
+
+.mnx-catalogue-live-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+}
+
+.mnx-catalogue-live-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 90%, transparent 10%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mn-color-surface) 95%, white 5%), var(--mn-color-surface));
+  box-shadow: 0 20px 40px color-mix(in srgb, var(--mn-color-shadow, rgba(15, 23, 42, 0.08)) 100%, transparent 0%);
+}
+
+.mnx-catalogue-live-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mnx-catalogue-live-card > header span,
+.mnx-catalogue-live-group-header span,
+.mnx-catalogue-review-item span,
+.mnx-catalogue-comparison-label {
+  display: inline-flex;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mnx-catalogue-live-group-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mn-color-border) 88%, transparent 12%);
+}
+
+.mnx-catalogue-live-group-header h2 {
+  margin: 0.25rem 0 0;
+}
+
+.mnx-catalogue-live-preview,
+.mnx-catalogue-approved-preview,
+.mnx-catalogue-preview-frame {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 0.9rem;
+}
+
+.mnx-catalogue-review-shell {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(21rem, 26rem) minmax(0, 1fr);
+  align-items: start;
+}
+
+.mnx-catalogue-review-list,
+.mnx-catalogue-review-detail {
+  position: relative;
+}
+
+.mnx-catalogue-review-items {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mnx-catalogue-review-item,
+.mnx-catalogue-alternative {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1.05rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 88%, transparent 12%);
+  background: color-mix(in srgb, var(--mn-color-surface) 95%, white 5%);
+}
+
+.mnx-catalogue-review-item[aria-pressed="true"],
+.mnx-catalogue-alternative[data-active="true"] {
+  border-color: color-mix(in srgb, var(--mn-color-primary) 60%, var(--mn-color-border) 40%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mn-color-primary) 18%, transparent 82%);
+}
+
+.mnx-catalogue-filter-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(10rem, 1fr));
+}
+
+.mnx-catalogue-filter-row select,
+.mnx-catalogue-filter-search input,
+.mnx-catalogue-modal-stack select {
+  width: 100%;
+}
+
+.mnx-catalogue-filter-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--mn-color-border);
+  background: color-mix(in srgb, var(--mn-color-surface) 96%, white 4%);
+}
+
+.mnx-catalogue-comparison-shell {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mnx-catalogue-alternative-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.mnx-catalogue-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mnx-catalogue-intro-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.mnx-catalogue-source-preview {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 82%, transparent 18%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mn-color-surface-soft) 84%, white 16%), color-mix(in srgb, var(--mn-color-surface) 96%, white 4%));
+}
+
+.mnx-catalogue-source-grid,
+.mnx-catalogue-source-toolbar,
+.mnx-catalogue-source-pills,
+.mnx-catalogue-token-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mnx-catalogue-source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.mnx-catalogue-source-grid label,
+.mnx-catalogue-source-preview label {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mnx-catalogue-source-table {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mnx-catalogue-source-table > div,
+.mnx-catalogue-source-timeline {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-catalogue-source-timeline {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.mnx-catalogue-source-timeline > span {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+}
+
+.mnx-catalogue-source-upload,
+.mnx-catalogue-source-module {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mnx-catalogue-history,
+.mnx-catalogue-modal-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mnx-catalogue-meta-card {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.05rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 84%, transparent 16%);
+  background: color-mix(in srgb, var(--mn-color-surface) 97%, white 3%);
+}
+
+.mnx-catalogue-preview-frame {
+  padding: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 84%, transparent 16%);
+  background: color-mix(in srgb, var(--mn-color-surface) 98%, white 2%);
+}
+
+.mnx-catalogue-comparison-label {
+  margin: 0 0 0.45rem;
+}
+
+@media (max-width: 1024px) {
+  .mnx-catalogue-overview,
+  .mnx-catalogue-intro-grid,
+  .mnx-catalogue-review-shell,
+  .mnx-catalogue-comparison-shell,
+  .mnx-catalogue-filter-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-catalogue-top-links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .mnx-catalogue-page,
+  .mnx-catalogue-live-grid,
+  .mnx-catalogue-top-links,
+  .mnx-catalogue-summary-grid,
+  .mnx-catalogue-queue-summary,
+  .mnx-catalogue-inventory-grid,
+  .mnx-catalogue-review-meta,
+  .mnx-catalogue-difference-grid,
+  .mnx-catalogue-alternative-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

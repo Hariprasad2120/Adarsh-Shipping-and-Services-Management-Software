@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { exchangeCodeForTokens, encryptToken } from "@/lib/workspace-oauth";
 import { db } from "@/lib/db";
+import { getAppUrl } from "@/lib/app-url";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user || !session.user.orgId) {
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login?error=Unauthorized`);
+    return NextResponse.redirect(`${getAppUrl()}/login?error=Unauthorized`);
   }
 
   const url = new URL(req.url);
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  const baseUrl = process.env.NEXTAUTH_URL || `${url.protocol}//${url.host}`;
+  const baseUrl = getAppUrl();
 
   if (error) {
     return NextResponse.redirect(`${baseUrl}/communication?error=${encodeURIComponent(error)}`);
