@@ -44,12 +44,12 @@
 
 .loginCard {
   display: grid;
-  grid-template-columns: minmax(320px, 42%) minmax(360px, 58%);
+  grid-template-columns: minmax(300px, 46%) minmax(320px, 54%);
   width: min(
-    920px,
-    calc(100vw - 112px)
+    760px,
+    calc(100vw - 180px)
   );
-  max-height: min(620px, calc(100svh - 96px));
+  max-height: min(620px, calc(100svh - 104px));
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1220,9 +1220,9 @@
 
 @media (max-width: 900px) {
   .loginCard {
-    grid-template-columns: 42% 58%;
-    width: min(860px, calc(100vw - 72px));
-    max-height: min(600px, calc(100svh - 72px));
+    grid-template-columns: 44% 56%;
+    width: min(720px, calc(100vw - 72px));
+    max-height: min(580px, calc(100svh - 72px));
   }
 
   .formPanel {
@@ -1351,9 +1351,9 @@
 
 @media (max-height: 620px) and (min-width: 821px) {
   .loginCard {
-    grid-template-columns: 44% 56%;
-    width: min(860px, calc(100vw - 64px));
-    max-height: min(560px, calc(100svh - 32px));
+    grid-template-columns: 46% 54%;
+    width: min(700px, calc(100vw - 72px));
+    max-height: min(520px, calc(100svh - 32px));
   }
 
   .brandLight {
