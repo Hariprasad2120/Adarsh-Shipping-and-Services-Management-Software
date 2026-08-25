@@ -50,3 +50,47 @@ export type DashboardModuleSnapshot = {
   modules: DashboardModuleSummary[];
   generatedAt: string;
 };
+
+export type DashboardAttentionSeverity = "critical" | "warning" | "info";
+
+export type DashboardAttentionItem = {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  source: string;
+  severity: DashboardAttentionSeverity;
+  createdAt?: string;
+};
+
+export type DashboardPulseMetric = {
+  id: string;
+  label: string;
+  value: number;
+  detail: string;
+  href: string;
+};
+
+export type DashboardStageCount = {
+  id: string;
+  label: string;
+  value: number;
+};
+
+export type DashboardRecentActivityItem = {
+  id: string;
+  title: string;
+  detail: string;
+  source: string;
+  occurredAt: string;
+  href?: string | null;
+};
+
+export type DashboardCommandCenterSnapshot = {
+  generatedAt: string;
+  attentionItems: DashboardAttentionItem[];
+  pulseMetrics: DashboardPulseMetric[];
+  appraisalStages: DashboardStageCount[];
+  attendanceSignals: DashboardStageCount[];
+  recentActivity: DashboardRecentActivityItem[];
+};

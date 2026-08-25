@@ -80,338 +80,290 @@ export type AccountingBreadcrumb = {
 const exactRouteMeta: Record<string, AccountingRouteMeta> = {
   "/accounting": {
     eyebrow: "Finance operations",
-    title: "Accounting command centre",
-    description:
-      "Monitor double-entry ledgers, liquidity, receivables, payables, financial controls, and period performance.",
+    title: "Accounting",
+    description: "Ledgers, documents, banking, and reports.",
     icon: LayoutDashboard,
   },
   "/accounting/access-denied": {
     eyebrow: "Accounting access",
     title: "Access denied",
-    description:
-      "Your current role does not include access to this Accounting workspace.",
+    description: "You do not have access to this workspace.",
     icon: ShieldAlert,
   },
   "/accounting/approvals": {
     eyebrow: "Maker-checker control",
     title: "Approval inbox",
-    description:
-      "Review prepared canonical documents and payments before independent approval and posting.",
+    description: "Review documents and payments before posting.",
     icon: ClipboardCheck,
   },
   "/accounting/customer-receipts": {
     eyebrow: "Banking",
     title: "Customer receipts",
-    description:
-      "Review canonical customer receipts, applied amounts, unapplied balances, and posting lineage.",
+    description: "Review customer receipts and balances.",
     icon: CircleDollarSign,
   },
   "/accounting/vendor-payments": {
     eyebrow: "Banking",
     title: "Vendor payments",
-    description:
-      "Review canonical supplier disbursements, allocations, unapplied balances, and posting lineage.",
+    description: "Review supplier payments and balances.",
     icon: CreditCard,
   },
   "/accounting/vendor-master": {
     eyebrow: "Accounts payable",
     title: "Vendor master",
-    description:
-      "Maintain the shared supplier master used by purchase invoices, vendor payments, and debit notes.",
+    description: "Manage supplier records.",
     icon: Truck,
   },
   "/accounting/vendor-master/new": {
     eyebrow: "Vendor onboarding",
     title: "New vendor",
-    description:
-      "Create a supplier profile with contact, finance, KYC, and portal settings.",
+    description: "Create a new supplier record.",
     icon: FilePlus2,
   },
   "/accounting/payments": {
     eyebrow: "Banking",
     title: "All payments",
-    description:
-      "Monitor every canonical receipt and payment without implying external fund execution.",
+    description: "Review all receipts and payments.",
     icon: WalletCards,
   },
   "/accounting/allocations": {
     eyebrow: "Banking",
     title: "Allocations",
-    description:
-      "Trace active, reversed, partial, and multi-document allocations through canonical payment lineage.",
+    description: "Review payment allocations.",
     icon: Workflow,
   },
   "/accounting/credit-notes": {
     eyebrow: "Accounts receivable",
     title: "Customer credit notes",
-    description:
-      "Review correction documents linked to posted customer invoices and their immutable ledger effect.",
+    description: "Review customer credit notes.",
     icon: RefreshCcw,
   },
   "/accounting/debit-notes": {
     eyebrow: "Accounts payable",
     title: "Vendor debit notes",
-    description:
-      "Review correction documents linked to posted supplier bills and their immutable ledger effect.",
+    description: "Review vendor debit notes.",
     icon: RefreshCcw,
   },
   "/accounting/recurring": {
     eyebrow: "Accountant",
     title: "Recurring journals",
-    description:
-      "Monitor deterministic scheduled occurrences and their generated records without direct ledger writes.",
+    description: "Review recurring journal schedules.",
     icon: Repeat2,
   },
   "/accounting/depreciation": {
     eyebrow: "Accountant",
     title: "Depreciation runs",
-    description:
-      "Review source readiness and the Finance/CA policy gate before any depreciation effect is permitted.",
+    description: "Review depreciation readiness and runs.",
     icon: Calculator,
   },
   "/accounting/partners": {
     eyebrow: "Partnership accounting",
     title: "Partner transactions",
-    description:
-      "Review partner-account readiness while deed terms and approved posting policy remain fail-closed.",
+    description: "Review partner-account activity.",
     icon: UsersRound,
   },
   "/accounting/outbox": {
     eyebrow: "Integration operations",
     title: "Accounting outbox",
-    description:
-      "Monitor durable Accounting events, attempts, retry eligibility, and safe publication outcomes.",
+    description: "Review outbound accounting events.",
     icon: Workflow,
   },
   "/accounting/manual-review": {
     eyebrow: "Integration operations",
     title: "Manual review",
-    description:
-      "Resolve failed and dead-letter Accounting events with permissioned, reasoned canonical operations.",
+    description: "Resolve failed accounting events.",
     icon: ShieldAlert,
   },
   "/accounting/configuration": {
     eyebrow: "Accounting administration",
     title: "Accounting configuration",
-    description:
-      "Inspect legal entities, periods, currencies, policies, number series, mappings, and explicit policy gates.",
+    description: "Manage entities, periods, and policies.",
     icon: Settings2,
   },
   "/accounting/readiness": {
     eyebrow: "Production authorization planning",
     title: "Accounting readiness evidence",
-    description:
-      "Collect and independently verify readiness metadata. This workspace cannot authorize production or begin cutover.",
+    description: "Review readiness evidence.",
     icon: ShieldAlert,
   },
   "/accounting/accounts": {
     eyebrow: "Accountant",
     title: "Chart of accounts",
-    description:
-      "Maintain the controlled account hierarchy, branch mappings, opening balances, and posting classifications.",
+    description: "Manage the chart of accounts.",
     icon: NotebookTabs,
   },
   "/accounting/balance-sheet": {
     eyebrow: "Financial statements",
     title: "Balance sheet",
-    description:
-      "Review assets, liabilities, and equity as of the selected reporting date.",
+    description: "Review assets, liabilities, and equity.",
     icon: FileBarChart,
   },
   "/accounting/banking": {
     eyebrow: "Banking",
     title: "Banking",
-    description:
-      "Review liquid accounts and record controlled transfers between bank and cash ledgers.",
+    description: "Review bank and cash accounts.",
     icon: Landmark,
   },
   "/accounting/general-ledger": {
     eyebrow: "Ledger reporting",
     title: "General ledger",
-    description:
-      "Trace posted debits and credits by account and reporting period.",
+    description: "Review posted ledger entries.",
     icon: BookOpenText,
   },
   "/accounting/invoices-sales": {
     eyebrow: "Commercial documents",
     title: "Sales documents",
-    description:
-      "Track customer invoices through the shared commercial document workflow.",
+    description: "Track customer sales documents.",
     icon: ReceiptText,
   },
   "/accounting/invoices-sales/new": {
     eyebrow: "Commercial documents",
     title: "New sales invoice",
-    description:
-      "Create a customer invoice with ownership, pricing, tax, currency, and payment terms.",
+    description: "Create a new sales invoice.",
     icon: FilePlus2,
   },
   "/accounting/items": {
     eyebrow: "Accounting catalogue",
     title: "Items and services",
-    description:
-      "Maintain billable services, inventory items, tax treatment, rates, and multi-currency prices.",
+    description: "Manage items, rates, and tax setup.",
     icon: Boxes,
   },
   "/accounting/items/new": {
     eyebrow: "Accounting catalogue",
     title: "New item",
-    description:
-      "Register a product or service with its sales, purchase, tax, inventory, and logistics attributes.",
+    description: "Create a new item.",
     icon: FilePlus2,
   },
   "/accounting/jobs": {
     eyebrow: "Job accounting",
     title: "Cargo job costing",
-    description:
-      "Compare contract value, invoiced revenue, purchase cost, and ledger postings for each cargo job.",
+    description: "Review job revenue, cost, and postings.",
     icon: BriefcaseBusiness,
   },
   "/accounting/journal-entries": {
     eyebrow: "Accountant",
     title: "Manual journals",
-    description:
-      "Review balanced vouchers and their draft, posted, cancelled, and reversal states.",
+    description: "Review manual journal entries.",
     icon: BookOpenText,
   },
   "/accounting/bulk-update": {
     eyebrow: "Accountant",
     title: "Bulk update",
-    description:
-      "Use the controlled accountant maintenance workspaces for ledger, configuration, policy, and asset updates.",
+    description: "Run bulk accounting maintenance.",
     icon: Settings2,
   },
   "/accounting/currency-adjustments": {
     eyebrow: "Accountant",
     title: "Currency adjustments",
-    description:
-      "Review functional currency settings and approved FX evidence before foreign-currency adjustments are used.",
+    description: "Review foreign-currency adjustments.",
     icon: Calculator,
   },
   "/accounting/transaction-locking": {
     eyebrow: "Accountant",
     title: "Transaction locking",
-    description:
-      "Protect finalised periods by applying and reviewing transaction lock controls.",
+    description: "Manage transaction locks.",
     icon: ShieldAlert,
   },
   "/accounting/fixed-assets": {
     eyebrow: "Accountant",
     title: "Fixed assets",
-    description:
-      "Review asset readiness, depreciation policy gates, and the connected fixed-asset accounting controls.",
+    description: "Review fixed assets and depreciation.",
     icon: Calculator,
   },
   "/accounting/journal-entries/new": {
     eyebrow: "General journal",
     title: "New journal entry",
-    description:
-      "Create a balanced multi-line voucher with branch, reference, and posting controls.",
+    description: "Create a new journal entry.",
     icon: FilePlus2,
   },
   "/accounting/payment-entries": {
     eyebrow: "Receipts and payments",
     title: "Payment entries",
-    description:
-      "Track incoming receipts, outgoing payments, allocations, and ledger posting state.",
+    description: "Track receipts, payments, and allocations.",
     icon: WalletCards,
   },
   "/accounting/payment-entries/new": {
     eyebrow: "Receipts and payments",
     title: "New payment entry",
-    description:
-      "Record a receipt or payment and allocate it against outstanding documents.",
+    description: "Create a new payment entry.",
     icon: FilePlus2,
   },
   "/accounting/profit-loss": {
     eyebrow: "Financial statements",
     title: "Profit and loss",
-    description:
-      "Review income, expenses, and net operating performance for the selected period.",
+    description: "Review income, expenses, and profit.",
     icon: BarChart3,
   },
   "/accounting/purchase-invoices": {
     eyebrow: "Accounts payable",
     title: "Purchase invoices",
-    description:
-      "Track supplier bills, posting state, payment allocation, and outstanding balances.",
+    description: "Track supplier bills and balances.",
     icon: ShoppingCart,
   },
   "/accounting/purchase-invoices/new": {
     eyebrow: "Accounts payable",
     title: "New purchase invoice",
-    description:
-      "Capture a supplier bill with branch, items, tax, due date, and posting controls.",
+    description: "Create a new purchase invoice.",
     icon: FilePlus2,
   },
   "/accounting/purchase-orders": {
     eyebrow: "Commercial documents",
     title: "Purchase orders",
-    description:
-      "Track supplier purchase orders through the shared commercial document workflow.",
+    description: "Track supplier purchase orders.",
     icon: ShoppingCart,
   },
   "/accounting/purchase-orders/new": {
     eyebrow: "Commercial documents",
     title: "New purchase order",
-    description:
-      "Create a supplier order with ownership, pricing, tax, currency, and delivery terms.",
+    description: "Create a new purchase order.",
     icon: FilePlus2,
   },
   "/accounting/quotations": {
     eyebrow: "Commercial pipeline",
     title: "Quotations and customer notes",
-    description:
-      "Prepare quotations, convert accepted work to invoices, and manage customer debit or credit notes.",
+    description: "Track quotations and customer notes.",
     icon: FileCheck2,
   },
   "/accounting/reports": {
     eyebrow: "Financial intelligence",
     title: "Accounting reports",
-    description:
-      "Run statements, registers, ageing, GST, cash, journal, and job-profitability reports.",
+    description: "Run statements, registers, and reports.",
     icon: FileSpreadsheet,
   },
   "/accounting/sales-invoices": {
     eyebrow: "Accounts receivable",
     title: "Sales invoices",
-    description:
-      "Track customer invoices, posting state, payment allocation, and outstanding balances.",
+    description: "Track customer invoices and balances.",
     icon: ReceiptText,
   },
   "/accounting/sales-invoices/new": {
     eyebrow: "Accounts receivable",
     title: "New sales invoice",
-    description:
-      "Create a customer invoice with branch, items, tax, due date, and posting controls.",
+    description: "Create a new sales invoice.",
     icon: FilePlus2,
   },
   "/accounting/sales-orders": {
     eyebrow: "Commercial documents",
     title: "Sales orders",
-    description:
-      "Track customer sales orders through the shared commercial document workflow.",
+    description: "Track customer sales orders.",
     icon: FileCheck2,
   },
   "/accounting/sales-orders/new": {
     eyebrow: "Commercial documents",
     title: "New sales order",
-    description:
-      "Create a customer order with ownership, pricing, tax, currency, and delivery terms.",
+    description: "Create a new sales order.",
     icon: FilePlus2,
   },
   "/accounting/settings": {
     eyebrow: "Accounting administration",
     title: "Accounting settings",
-    description:
-      "Configure numbering, financial year, transaction locks, default ledgers, and GST policy.",
+    description: "Manage numbering, ledgers, and GST settings.",
     icon: Settings2,
   },
   "/accounting/trial-balance": {
     eyebrow: "Ledger reporting",
     title: "Trial balance",
-    description:
-      "Confirm debit and credit balances across the chart of accounts for the selected period.",
+    description: "Review debit and credit balances.",
     icon: Calculator,
   },
 };
@@ -433,8 +385,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "Accounting catalogue",
       title: "Item details",
-      description:
-        "Review sales, purchase, tax, inventory, logistics, and multi-currency pricing information.",
+      description: "Review item pricing and details.",
       icon: Boxes,
     };
   }
@@ -443,8 +394,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "General journal",
       title: "Journal entry details",
-      description:
-        "Review voucher lines, balance, audit references, posting state, and reversal controls.",
+      description: "Review voucher lines and status.",
       icon: BookOpenText,
     };
   }
@@ -453,8 +403,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "Receipts and payments",
       title: "Payment entry details",
-      description:
-        "Review payment direction, party, allocations, ledger accounts, and posting state.",
+      description: "Review payment details and allocations.",
       icon: WalletCards,
     };
   }
@@ -463,8 +412,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "Canonical Accounting payment",
       title: "Payment details",
-      description:
-        "Review immutable payment identity, allocations, approval, journal effect, reversal lineage, and audit history.",
+      description: "Review payment history and status.",
       icon: WalletCards,
     };
   }
@@ -473,8 +421,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "Canonical Accounting document",
       title: "Document review",
-      description:
-        "Review immutable source identity, totals, approval state, journal effect, allocations, corrections, and audit history.",
+      description: "Review document totals and history.",
       icon: ClipboardCheck,
     };
   }
@@ -483,8 +430,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "Accounts payable",
       title: "Purchase invoice details",
-      description:
-        "Review supplier charges, taxes, totals, allocations, and posting controls.",
+      description: "Review supplier charges and totals.",
       icon: ShoppingCart,
     };
   }
@@ -493,8 +439,7 @@ export function getAccountingRouteMeta(
     return {
       eyebrow: "Accounts receivable",
       title: "Sales invoice details",
-      description:
-        "Review customer charges, taxes, totals, allocations, and posting controls.",
+      description: "Review customer charges and totals.",
       icon: ReceiptText,
     };
   }

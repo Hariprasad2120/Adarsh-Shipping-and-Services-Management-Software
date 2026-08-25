@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Mail, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
   CrmButton,
   CrmField,
   CrmInput,
-  CrmPanel,
   CrmSection,
   CrmSelect,
   CrmStatus,
@@ -500,6 +500,9 @@ export function ServiceRateWorkflowPanel({
   const [isSavingRecommendationDecision, setIsSavingRecommendationDecision] = useState(false);
   const [isFinalizingBuyRates, setIsFinalizingBuyRates] = useState(false);
   const [isSavingPricingSnapshot, setIsSavingPricingSnapshot] = useState(false);
+  const recipientSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const additionalCcInputRef = useRef<HTMLInputElement | null>(null);
+  const composeBodyRef = useRef<HTMLTextAreaElement | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideNote, setOverrideNote] = useState("");
   const [finalizationNote, setFinalizationNote] = useState("");
@@ -604,6 +607,7 @@ export function ServiceRateWorkflowPanel({
   const availableRecipientSuggestions = filteredRecipients
     .filter((recipient) => !selectedRecipientIds.includes(recipient.id))
     .slice(0, recipientSearch.trim() ? 8 : 6);
+  const suggestedRecipientsDock = filteredRecipients.slice(0, recipientSearch.trim() ? 8 : 6);
   const stageCards = COMMERCIAL_STAGE_ORDER.map((status) => {
     if (status === workflow.commercialStatus) {
       return {
@@ -682,6 +686,14 @@ export function ServiceRateWorkflowPanel({
       state: "Ready",
     };
   });
+  const activeStageCard = stageCards.find((card) => card.state === "Active") ?? stageCards[0];
+  const activeStageIndex = Math.max(
+    stageCards.findIndex((card) => card.key === activeStageCard.key),
+    0,
+  );
+  const nextStageCard = stageCards[activeStageIndex + 1] ?? null;
+  const responseCount = workflow.rateResponses.length;
+  const finalizedCount = workflow.finalizedBuyRateVersions.length;
   const pricingLines = pricingLineSeeds.map((line) => ({
     ...line,
     ...(pricingLineEdits[line.finalizedLineId] ?? {}),
@@ -1202,75 +1214,116 @@ export function ServiceRateWorkflowPanel({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mnx-crm-commercial-page">
       <CrmSection
         eyebrow="Commercial worksheet"
         title="Rate acquisition worksheet"
         description="Phase 2 connects enquiry rate requests to the live communication stack, tracks sent agent mail, and keeps the costing worksheet ready for incoming buy rates."
       >
         <div className="mnx-crm-commercial-workbench">
-          <CrmPanel className="mnx-crm-panel-surface mnx-crm-commercial-summary">
-            <div className="mnx-crm-commercial-summary-copy">
-              <div className="mnx-crm-commercial-summary-heading">
-                <CrmStatus variant="warning">
-                  {workflow.rateRequests.length > 0 ? "Requests in progress" : "Rate acquisition pending"}
-                </CrmStatus>
-                <CrmStatus variant="accent">
-                  {getCommercialStatusLabel(workflow.commercialStatus)}
-                </CrmStatus>
-                {workflow.chargeContext.scenarioKey ? (
-                  <CrmStatus variant="success">{workflow.chargeContext.scenarioLabel}</CrmStatus>
-                ) : (
-                  <CrmStatus variant="warning">Scenario incomplete</CrmStatus>
-                )}
+          <div className="mnx-crm-commercial-summary">
+            <div className="mnx-crm-commercial-summary-shell">
+              <div className="mnx-crm-commercial-summary-copy">
+                <div className="mnx-crm-commercial-summary-heading">
+                  <CrmStatus variant="warning">
+                    {workflow.rateRequests.length > 0
+                      ? "Requests in progress"
+                      : "Rate acquisition pending"}
+                  </CrmStatus>
+                  <CrmStatus variant="accent">
+                    {getCommercialStatusLabel(workflow.commercialStatus)}
+                  </CrmStatus>
+                  {workflow.chargeContext.scenarioKey ? (
+                    <CrmStatus variant="success">{workflow.chargeContext.scenarioLabel}</CrmStatus>
+                  ) : (
+                    <CrmStatus variant="warning">Scenario incomplete</CrmStatus>
+                  )}
+                </div>
+                <p className="mnx-crm-commercial-summary-text">
+                  {workflow.chargeContext.scenarioKey
+                    ? `The enquiry charge list is generated from ${workflow.chargeContext.scenarioLabel}. Agent requests, sent-mail history, and worksheet pricing now stay on the same commercial surface.`
+                    : "Complete the enquiry direction, mode, and load type to unlock the seeded commercial charge catalogue for this enquiry."}
+                </p>
+                <div className="mnx-crm-commercial-summary-inline">
+                  <div className="mnx-crm-commercial-summary-inline-card">
+                    <span>Pending departments</span>
+                    <strong>
+                      {pendingDepartments.length
+                        ? pendingDepartments
+                            .map((item) =>
+                              item === "FREIGHT_FORWARDING"
+                                ? "Freight Forwarding"
+                                : "Customs Clearance",
+                            )
+                            .join(", ")
+                        : "None"}
+                    </strong>
+                  </div>
+                  <div className="mnx-crm-commercial-summary-inline-card">
+                    <span>Next milestone</span>
+                    <strong>{nextStageCard?.label ?? activeStageCard.label}</strong>
+                  </div>
+                </div>
               </div>
-              <p className="mnx-crm-commercial-summary-text">
-                {workflow.chargeContext.scenarioKey
-                  ? `The enquiry charge list is generated from ${workflow.chargeContext.scenarioLabel}. Agent requests, sent-mail history, and worksheet pricing now stay on the same commercial surface.`
-                  : "Complete the enquiry direction, mode, and load type to unlock the seeded commercial charge catalogue for this enquiry."}
-              </p>
+
+              <div className="mnx-crm-commercial-command-board">
+                <div className="mnx-crm-commercial-command-head">
+                  <span>Control board</span>
+                  <strong>
+                    Stage {activeStageIndex + 1} of {stageCards.length}
+                  </strong>
+                  <p>{activeStageCard.description}</p>
+                </div>
+                <div className="mnx-crm-commercial-command-grid">
+                  <div className="mnx-crm-commercial-command-metric">
+                    <span>Requests</span>
+                    <strong>{workflow.rateRequests.length}</strong>
+                    <small>Outbound agent mails logged</small>
+                  </div>
+                  <div className="mnx-crm-commercial-command-metric">
+                    <span>Responses</span>
+                    <strong>{responseCount}</strong>
+                    <small>Structured buy-rate inputs captured</small>
+                  </div>
+                  <div className="mnx-crm-commercial-command-metric">
+                    <span>Finalized</span>
+                    <strong>{finalizedCount}</strong>
+                    <small>Buy-rate snapshot revisions stored</small>
+                  </div>
+                  <div className="mnx-crm-commercial-command-metric">
+                    <span>Costing</span>
+                    <strong>{workflow.costingLocked ? "Locked" : "Open"}</strong>
+                    <small>
+                      {workflow.costingLocked
+                        ? "Pricing unlocks after buy-rate finalization"
+                        : "Pricing worksheet can now be edited"}
+                    </small>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="mnx-crm-commercial-meta-grid">
-              <div>
-                <span>Pending departments</span>
-                <strong>
-                  {pendingDepartments.length
-                    ? pendingDepartments
-                        .map((item) =>
-                          item === "FREIGHT_FORWARDING"
-                            ? "Freight Forwarding"
-                            : "Customs Clearance",
-                        )
-                        .join(", ")
-                    : "None"}
-                </strong>
-              </div>
-              <div>
-                <span>Rate requests sent</span>
-                <strong>{workflow.rateRequests.length}</strong>
-              </div>
-              <div>
-                <span>Costing</span>
-                <strong>Locked for later phase</strong>
-              </div>
-            </div>
-          </CrmPanel>
+          </div>
 
           <div className="mnx-crm-commercial-stage-grid">
-            {stageCards.map((card) => (
-              <CrmPanel key={card.key} className="mnx-crm-commercial-stage-card">
-                <div className="mnx-crm-commercial-stage-header">
-                  <strong>{card.label}</strong>
-                  <CrmStatus variant={getStageBadgeVariant(card.state)}>
-                    {card.state}
-                  </CrmStatus>
+            {stageCards.map((card, index) => (
+              <div key={card.key} className="mnx-crm-commercial-stage-card">
+                <div className="mnx-crm-commercial-stage-step">
+                  {String(index + 1).padStart(2, "0")}
                 </div>
-                <p>{card.description}</p>
-              </CrmPanel>
+                <div className="mnx-crm-commercial-stage-copy">
+                  <div className="mnx-crm-commercial-stage-header">
+                    <strong>{card.label}</strong>
+                    <CrmStatus variant={getStageBadgeVariant(card.state)}>
+                      {card.state}
+                    </CrmStatus>
+                  </div>
+                  <p>{card.description}</p>
+                </div>
+              </div>
             ))}
           </div>
 
-          <CrmPanel className="mnx-crm-panel-surface mnx-crm-commercial-mailer">
+          <div className="mnx-crm-commercial-mailer">
             <div className="mnx-crm-commercial-sheet-header">
               <div className="mnx-crm-commercial-sheet-copy">
                 <span className="mnx-crm-commercial-eyebrow">Phase 2</span>
@@ -1289,206 +1342,202 @@ export function ServiceRateWorkflowPanel({
             </div>
 
             <div className="mnx-crm-commercial-mailer-grid">
-              <div className="mnx-crm-commercial-recipient-pane mnx-crm-commercial-recipient-pane-compact">
-                <div className="mnx-crm-commercial-recipient-pane-heading">
-                  <strong>Agent suggestions</strong>
-                  <p>Pick from the CRM master while composing the mail.</p>
-                </div>
-
-                <div className="mnx-crm-commercial-recipient-list">
-                  {isLoadingRecipients ? (
-                    <p className="text-sm text-[var(--mnx-text-muted)]">Loading recipients...</p>
-                  ) : filteredRecipients.length > 0 ? (
-                    filteredRecipients.map((recipient) => (
-                      <label key={recipient.id} className="mnx-crm-commercial-recipient-card">
-                        {/* eslint-disable-next-line no-restricted-syntax -- This is an intentional multi-select checkbox list for agent recipients. */}
-                        <input
-                          type="checkbox"
-                          checked={selectedRecipientIds.includes(recipient.id)}
-                          onChange={() => toggleRecipient(recipient.id)}
-                        />
-                        <div>
-                          <strong>{recipient.name}</strong>
-                          <p>
-                            {recipient.contactName || "Primary contact pending"} ·{" "}
-                            {recipient.email || "Email missing"}
-                          </p>
-                          <span>{recipient.services || "Service tags not set"}</span>
-                          {recipient.recommendation ? (
-                            <div className="mnx-crm-commercial-recipient-insight">
-                              <div className="mnx-crm-commercial-recipient-insight-badges">
-                                {recipient.recommendation.recommended ? (
-                                  <CrmStatus variant="success">Recommended</CrmStatus>
-                                ) : recipient.recommendation.rank ? (
-                                  <CrmStatus variant="accent">
-                                    Rank #{recipient.recommendation.rank}
-                                  </CrmStatus>
-                                ) : null}
-                                <CrmStatus variant="neutral">
-                                  {recipient.recommendation.metrics.similarEnquiryCount} similar
-                                </CrmStatus>
-                              </div>
-                              <p>
-                                {recipient.recommendation.explanation ||
-                                  "Historical recommendation evidence is still building."}
-                              </p>
-                              <span>
-                                Response{" "}
-                                {recipient.recommendation.metrics.responseRatePct ?? "N/A"}% ·
-                                Competitive{" "}
-                                {recipient.recommendation.metrics.competitivenessPct ?? "N/A"}% ·
-                                Selected{" "}
-                                {recipient.recommendation.metrics.selectionRatePct ?? "N/A"}%
-                              </span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </label>
-                    ))
-                  ) : (
-                    <p className="text-sm text-[var(--mnx-text-muted)]">
-                      No active agent master records match this search.
-                    </p>
-                  )}
-                </div>
-              </div>
-
               <div className="mnx-crm-commercial-compose-pane mnx-crm-commercial-compose-pane-priority">
-                <div className="mnx-crm-commercial-compose-shell">
-                  <div className="mnx-crm-commercial-compose-row">
-                    <span className="mnx-crm-commercial-compose-label">To</span>
-                    <div className="mnx-crm-commercial-compose-recipient-stack">
-                      <div className="mnx-crm-commercial-compose-recipients">
-                        {selectedRecipients.map((recipient) => (
-                          /* eslint-disable-next-line no-restricted-syntax -- This is an intentional tokenized recipient chip used inside a custom mail-style compose widget. */
-                          <button
-                            key={recipient.id}
-                            type="button"
-                            className="mnx-crm-commercial-recipient-pill"
-                            onClick={() => toggleRecipient(recipient.id)}
-                            aria-label={`Remove ${recipient.name} from recipients`}
-                          >
-                            <span>{recipient.contactName || recipient.name}</span>
-                            <small>{recipient.email || "Email missing"}</small>
-                            <b>Remove</b>
-                          </button>
-                        ))}
-                        {/* eslint-disable-next-line no-restricted-syntax -- This is an intentional inline recipient search input inside the custom mail-style compose widget. */}
-                        <input
-                          value={recipientSearch}
-                          onChange={(event) => setRecipientSearch(event.target.value)}
-                          placeholder={
-                            selectedRecipients.length > 0
-                              ? "Add more agents by name, email, or service"
-                              : "Search and add agents like a mail recipient list"
-                          }
-                          className="mnx-crm-commercial-compose-inline-input"
-                          aria-label="Search and add rate-request recipients"
-                        />
-                      </div>
+                <div className="mnx-crm-commercial-compose-sheet">
+                  <header className="mnx-crm-commercial-compose-sheet-header">
+                    <div className="mnx-crm-commercial-compose-sheet-title">
+                      <CrmButton
+                        type="button"
+                        variant="secondary"
+                        size="compact"
+                        onClick={() => composeBodyRef.current?.focus()}
+                        aria-label="Focus email body"
+                      >
+                        <Mail aria-hidden="true" />
+                      </CrmButton>
+                      <CrmButton
+                        type="button"
+                        variant="secondary"
+                        size="compact"
+                        onClick={() => recipientSearchInputRef.current?.focus()}
+                        aria-label="Focus recipient search"
+                      >
+                        <ChevronDown aria-hidden="true" />
+                      </CrmButton>
+                      <h3>To</h3>
+                    </div>
+                    <div className="mnx-crm-commercial-compose-sheet-window-actions">
+                      <CrmButton
+                        type="button"
+                        variant="secondary"
+                        size="compact"
+                        className="mnx-crm-commercial-compose-inline-toggle"
+                        onClick={() => additionalCcInputRef.current?.focus()}
+                      >
+                        Cc
+                      </CrmButton>
+                      <CrmButton
+                        type="button"
+                        variant="secondary"
+                        size="compact"
+                        onClick={regenerateTemplate}
+                      >
+                        <RefreshCw aria-hidden="true" />
+                      </CrmButton>
+                    </div>
+                  </header>
 
-                      {!isLoadingRecipients && availableRecipientSuggestions.length > 0 ? (
-                        <div className="mnx-crm-commercial-compose-suggestions" aria-label="Matching agents">
-                          {availableRecipientSuggestions.map((recipient) => (
-                            /* eslint-disable-next-line no-restricted-syntax -- This is an intentional suggestion action inside the custom recipient picker. */
+                  <div className="mnx-crm-commercial-compose-fields">
+                    <div className="mnx-crm-commercial-compose-address-row">
+                      <span className="mnx-crm-commercial-compose-address-label">To</span>
+                      <div className="mnx-crm-commercial-compose-recipient-stack">
+                        <div className="mnx-crm-commercial-compose-recipients">
+                          {selectedRecipients.map((recipient) => (
+                            /* eslint-disable-next-line no-restricted-syntax -- This is an intentional tokenized recipient chip used inside a custom mail-style compose widget. */
                             <button
-                              key={`suggestion-${recipient.id}`}
+                              key={recipient.id}
                               type="button"
-                              className="mnx-crm-commercial-compose-suggestion"
+                              className="mnx-crm-commercial-recipient-pill"
                               onClick={() => toggleRecipient(recipient.id)}
+                              aria-label={`Remove ${recipient.name} from recipients`}
                             >
                               <span>{recipient.contactName || recipient.name}</span>
-                              <small>{recipient.name}</small>
-                              <em>{recipient.email || "Email missing"}</em>
+                              <small>{recipient.email || "Email missing"}</small>
+                              <b>Remove</b>
                             </button>
                           ))}
+                          {/* eslint-disable-next-line no-restricted-syntax -- This is an intentional inline recipient search input inside the custom mail-style compose widget. */}
+                          <input
+                            ref={recipientSearchInputRef}
+                            value={recipientSearch}
+                            onChange={(event) => setRecipientSearch(event.target.value)}
+                            placeholder={
+                              selectedRecipients.length > 0
+                                ? "Add more agents by name, email, or service"
+                                : "Search and add agents like a mail recipient list"
+                            }
+                            className="mnx-crm-commercial-compose-inline-input"
+                            aria-label="Search and add rate-request recipients"
+                          />
                         </div>
-                      ) : null}
-                    </div>
-                  </div>
 
-                  <div className="mnx-crm-commercial-compose-row">
-                    <span className="mnx-crm-commercial-compose-label">Cc</span>
-                    <div className="mnx-crm-commercial-compose-meta">
-                      {reportingCc.length > 0 ? (
-                        <div className="mnx-crm-commercial-inline-note">
-                          <strong>Reporting CC</strong>
-                          <span>{reportingCc.join(", ")}</span>
-                        </div>
-                      ) : (
-                        <div className="mnx-crm-commercial-inline-note is-warning">
-                          <strong>Reporting CC</strong>
-                          <span>Not configured</span>
-                        </div>
-                      )}
-                      <CrmInput
-                        value={additionalCc}
-                        onChange={(event) => setAdditionalCc(event.target.value)}
-                        placeholder="Optional extra CC emails, comma separated"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mnx-crm-commercial-compose-row">
-                    <span className="mnx-crm-commercial-compose-label">Subject</span>
-                    <div className="mnx-crm-commercial-compose-meta">
-                      <CrmInput
-                        value={mailSubject}
-                        onChange={(event) => setMailSubject(event.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mnx-crm-commercial-badge-row">
-                  <CrmStatus variant="accent">Template token: {"{{recipientName}}"}</CrmStatus>
-                  <CrmStatus variant={selectedRecipients.length > 0 ? "success" : "warning"}>
-                    {selectedRecipients.length > 0
-                      ? `${selectedRecipients.length} agent(s) queued`
-                      : "Add recipients to enable sending"}
-                  </CrmStatus>
-                </div>
-
-                {reportingContacts.length > 0 ? (
-                  <div className="mnx-crm-commercial-reporting-list">
-                    {reportingContacts.map((contact) => (
-                      <div key={contact.id} className="mnx-crm-commercial-reporting-card">
-                        <strong>{contact.role}</strong>
-                        <p>{contact.name}</p>
-                        <span>{contact.email}</span>
+                        {!isLoadingRecipients && availableRecipientSuggestions.length > 0 ? (
+                          <div
+                            className="mnx-crm-commercial-compose-suggestions"
+                            aria-label="Matching agents"
+                          >
+                            {availableRecipientSuggestions.map((recipient) => (
+                              /* eslint-disable-next-line no-restricted-syntax -- This is an intentional suggestion action inside the custom recipient picker. */
+                              <button
+                                key={`suggestion-${recipient.id}`}
+                                type="button"
+                                className="mnx-crm-commercial-compose-suggestion"
+                                onClick={() => toggleRecipient(recipient.id)}
+                              >
+                                <span>{recipient.contactName || recipient.name}</span>
+                                <small>{recipient.name}</small>
+                                <em>{recipient.email || "Email missing"}</em>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="mnx-crm-commercial-compose-address-row">
+                      <span className="mnx-crm-commercial-compose-address-label">Cc</span>
+                      <div className="mnx-crm-commercial-compose-address-stack">
+                        <div className="mnx-crm-commercial-compose-meta">
+                          {reportingCc.length > 0 ? (
+                            <div className="mnx-crm-commercial-inline-note">
+                              <strong>Reporting CC</strong>
+                              <span>{reportingCc.join(", ")}</span>
+                            </div>
+                          ) : (
+                            <div className="mnx-crm-commercial-inline-note is-warning">
+                              <strong>Reporting CC</strong>
+                              <span>Not configured</span>
+                            </div>
+                          )}
+                          <CrmInput
+                            ref={additionalCcInputRef}
+                            value={additionalCc}
+                            onChange={(event) => setAdditionalCc(event.target.value)}
+                            placeholder="Optional extra CC emails, comma separated"
+                          />
+                        </div>
+                        {reportingContacts.length > 0 ? (
+                          <div className="mnx-crm-commercial-reporting-list">
+                            {reportingContacts.map((contact) => (
+                              <div key={contact.id} className="mnx-crm-commercial-reporting-card">
+                                <strong>{contact.role}</strong>
+                                <p>{contact.name}</p>
+                                <span>{contact.email}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <CrmInput
+                      value={mailSubject}
+                      onChange={(event) => setMailSubject(event.target.value)}
+                      className="mnx-crm-commercial-compose-subject"
+                      placeholder="Subject"
+                    />
+
+                    <div className="mnx-crm-commercial-compose-note-bar">
+                      <CrmStatus variant="accent">Template token: {"{{recipientName}}"}</CrmStatus>
+                      <CrmStatus variant={selectedRecipients.length > 0 ? "success" : "warning"}>
+                        {selectedRecipients.length > 0
+                          ? `${selectedRecipients.length} agent(s) queued`
+                          : "Add recipients to enable sending"}
+                      </CrmStatus>
+                    </div>
+
+                    <CrmTextarea
+                      rows={3}
+                      value={requestNotes}
+                      onChange={(event) => setRequestNotes(event.target.value)}
+                      placeholder="Optional notes shown inside the enquiry email."
+                      className="mnx-crm-commercial-compose-notes"
+                    />
+
+                    <CrmTextarea
+                      ref={composeBodyRef}
+                      rows={20}
+                      value={mailBody}
+                      onChange={(event) => setMailBody(event.target.value)}
+                      className="mnx-crm-commercial-compose-editor"
+                      placeholder="Describe your message"
+                    />
                   </div>
-                ) : null}
 
-                <CrmField label="Additional notes">
-                  <CrmTextarea
-                    rows={3}
-                    value={requestNotes}
-                    onChange={(event) => setRequestNotes(event.target.value)}
-                    placeholder="Optional notes shown inside the enquiry email."
-                  />
-                </CrmField>
-
-                <CrmField label="Email body" className="mnx-crm-commercial-body-field">
-                  <CrmTextarea
-                    rows={20}
-                    value={mailBody}
-                    onChange={(event) => setMailBody(event.target.value)}
-                  />
-                </CrmField>
-
-                <div className="mnx-crm-commercial-compose-actions">
-                  <CrmButton type="button" variant="secondary" size="compact" onClick={regenerateTemplate}>
-                    Reset to template
-                  </CrmButton>
-                  <CrmButton
-                    type="button"
-                    onClick={handleSendRateRequests}
-                    disabled={isSendingRequests || isLoadingRecipients}
-                  >
-                    {isSendingRequests ? "Sending..." : `Send to ${selectedRecipients.length || 0} agents`}
-                  </CrmButton>
+                  <footer className="mnx-crm-commercial-compose-sheet-footer">
+                    <div className="mnx-crm-commercial-compose-footer-primary">
+                      <CrmButton
+                        type="button"
+                        variant="secondary"
+                        size="compact"
+                        onClick={regenerateTemplate}
+                      >
+                        Reset to template
+                      </CrmButton>
+                    </div>
+                    <div className="mnx-crm-commercial-compose-footer-tools">
+                      <CrmButton
+                        type="button"
+                        onClick={handleSendRateRequests}
+                        disabled={isSendingRequests || isLoadingRecipients}
+                      >
+                        <Send aria-hidden="true" />
+                        {isSendingRequests
+                          ? "Sending..."
+                          : `Send to ${selectedRecipients.length || 0} agents`}
+                      </CrmButton>
+                    </div>
+                  </footer>
                 </div>
               </div>
             </div>
@@ -1513,6 +1562,74 @@ export function ServiceRateWorkflowPanel({
                 ) : (
                   <p className="text-sm text-[var(--mnx-text-muted)]">
                     Choose one or more agents from the master list to prepare the send batch.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mnx-crm-commercial-suggestion-dock">
+              <div className="mnx-crm-commercial-suggestion-dock-heading">
+                <div>
+                  <strong>Agent suggestion dock</strong>
+                  <p>Quick-add recommended vendors without crowding the composer.</p>
+                </div>
+                <CrmStatus variant="neutral">
+                  {recipientSearch.trim() ? "Filtered by recipient search" : "Top CRM matches"}
+                </CrmStatus>
+              </div>
+
+              <div className="mnx-crm-commercial-suggestion-dock-rail">
+                {isLoadingRecipients ? (
+                  <p className="text-sm text-[var(--mnx-text-muted)]">Loading agent suggestions...</p>
+                ) : suggestedRecipientsDock.length > 0 ? (
+                  suggestedRecipientsDock.map((recipient) => {
+                    const isSelected = selectedRecipientIds.includes(recipient.id);
+                    return (
+                      /* eslint-disable-next-line no-restricted-syntax -- This is an intentional quick-add suggestion card that behaves like a compact recipient-picker widget. */
+                      <button
+                        key={recipient.id}
+                        type="button"
+                        className="mnx-crm-commercial-suggestion-dock-card"
+                        data-selected={isSelected ? "true" : "false"}
+                        onClick={() => toggleRecipient(recipient.id)}
+                      >
+                        <div className="mnx-crm-commercial-suggestion-dock-card-head">
+                          <strong>{recipient.name}</strong>
+                          <CrmStatus variant={isSelected ? "success" : "neutral"}>
+                            {isSelected ? "Added" : "Tap to add"}
+                          </CrmStatus>
+                        </div>
+                        <p>
+                          {recipient.contactName || "Primary contact pending"} ·{" "}
+                          {recipient.email || "Email missing"}
+                        </p>
+                        <span>{recipient.services || "Service tags not set"}</span>
+                        {recipient.recommendation ? (
+                          <div className="mnx-crm-commercial-suggestion-dock-insight">
+                            <div className="mnx-crm-commercial-recipient-insight-badges">
+                              {recipient.recommendation.recommended ? (
+                                <CrmStatus variant="success">Recommended</CrmStatus>
+                              ) : recipient.recommendation.rank ? (
+                                <CrmStatus variant="accent">
+                                  Rank #{recipient.recommendation.rank}
+                                </CrmStatus>
+                              ) : null}
+                              <CrmStatus variant="neutral">
+                                {recipient.recommendation.metrics.similarEnquiryCount} similar
+                              </CrmStatus>
+                            </div>
+                            <small>
+                              {recipient.recommendation.explanation ||
+                                "Historical recommendation evidence is still building."}
+                            </small>
+                          </div>
+                        ) : null}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-[var(--mnx-text-muted)]">
+                    No active agent master records match this search.
                   </p>
                 )}
               </div>
@@ -2183,7 +2300,7 @@ export function ServiceRateWorkflowPanel({
 
                   <div className="mnx-crm-commercial-agent-grid">
                     {comparisonWorkspace.agentSummaries.map((summary) => (
-                      <CrmPanel key={summary.responseId} className="mnx-crm-commercial-agent-card">
+                      <div key={summary.responseId} className="mnx-crm-commercial-agent-card">
                         <div className="mnx-crm-commercial-agent-card-head">
                           <strong>{summary.vendorName}</strong>
                           <CrmStatus
@@ -2227,7 +2344,7 @@ export function ServiceRateWorkflowPanel({
                             <CrmStatus variant="accent">Recommended</CrmStatus>
                           ) : null}
                         </div>
-                      </CrmPanel>
+                      </div>
                     ))}
                   </div>
 
@@ -2610,15 +2727,15 @@ export function ServiceRateWorkflowPanel({
                   </div>
                 </div>
               ) : hasRateRequests ? (
-                <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] px-4 py-4 text-sm text-[var(--mnx-text-muted)]">
+                <div className="mnx-crm-commercial-flat-note">
                   Save at least one structured agent response to unlock comparison, recommendation,
                   and buy-rate finalization.
                 </div>
               ) : null}
-          </CrmPanel>
+          </div>
 
           {hasRateRequests && !canEditActiveTab ? (
-            <CrmPanel className="border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/30 px-4 py-3">
+            <div className="mnx-crm-commercial-flat-note is-warning">
               <div className="flex flex-wrap items-center gap-2">
                 <CrmStatus variant="warning">Restricted entry</CrmStatus>
                 <p className="text-sm text-[var(--mnx-text-muted)]">
@@ -2626,11 +2743,11 @@ export function ServiceRateWorkflowPanel({
                   {formatDepartmentName(activeTab)} charges from this queue.
                 </p>
               </div>
-            </CrmPanel>
+            </div>
           ) : null}
 
           {hasRateRequests ? (
-          <CrmPanel className="mnx-crm-panel-surface mnx-crm-commercial-sheet">
+          <div className="mnx-crm-commercial-sheet">
             <div className="mnx-crm-commercial-sheet-header">
               <div className="mnx-crm-commercial-sheet-copy">
                 <span className="mnx-crm-commercial-eyebrow">Worksheet control</span>
@@ -2774,11 +2891,11 @@ export function ServiceRateWorkflowPanel({
                 {isSaving ? "Saving..." : "Save department charges"}
               </CrmButton>
             </div>
-          </CrmPanel>
+          </div>
           ) : null}
 
           {hasFinalizedBuyRates ? (
-          <CrmPanel className="mnx-crm-panel-surface mnx-crm-commercial-compat">
+          <div className="mnx-crm-commercial-compat">
             <div className="mnx-crm-commercial-sheet-header">
               <div className="mnx-crm-commercial-sheet-copy">
                 <span className="mnx-crm-commercial-eyebrow">Phase 11</span>
@@ -2819,8 +2936,8 @@ export function ServiceRateWorkflowPanel({
                 ) : null}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-4">
-                <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] p-4">
+              <div className="mnx-crm-commercial-pricing-metrics">
+                <div className="mnx-crm-commercial-pricing-metric">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                     Buy total
                   </div>
@@ -2831,7 +2948,7 @@ export function ServiceRateWorkflowPanel({
                     )}
                   </div>
                 </div>
-                <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] p-4">
+                <div className="mnx-crm-commercial-pricing-metric">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                     Sell total
                   </div>
@@ -2842,7 +2959,7 @@ export function ServiceRateWorkflowPanel({
                     )}
                   </div>
                 </div>
-                <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] p-4">
+                <div className="mnx-crm-commercial-pricing-metric">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                     Margin amount
                   </div>
@@ -2853,7 +2970,7 @@ export function ServiceRateWorkflowPanel({
                     )}
                   </div>
                 </div>
-                <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] p-4">
+                <div className="mnx-crm-commercial-pricing-metric">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                     Margin %
                   </div>
@@ -2866,10 +2983,7 @@ export function ServiceRateWorkflowPanel({
               {currentFinalizedVersion ? (
                 <div className="space-y-3">
                   {pricingLines.map((line) => (
-                    <div
-                      key={line.finalizedLineId}
-                      className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] p-4"
-                    >
+                    <div key={line.finalizedLineId} className="mnx-crm-commercial-pricing-line">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
@@ -3007,7 +3121,7 @@ export function ServiceRateWorkflowPanel({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/25 p-4 text-sm text-[var(--mnx-text-muted)]">
+                <div className="mnx-crm-commercial-flat-note is-warning">
                   Finalize a buy-rate revision before pricing can be prepared.
                 </div>
               )}
@@ -3049,7 +3163,7 @@ export function ServiceRateWorkflowPanel({
                   </Link>
                 ) : null}
                 {pricingSnapshotStale ? (
-                  <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/25 px-4 py-3 text-sm text-[var(--mnx-text-muted)]">
+                  <div className="mnx-crm-commercial-flat-note is-warning">
                     Save the pricing worksheet again against{" "}
                     <span className="font-semibold text-[var(--mnx-text-strong)]">
                       {currentFinalizedVersion?.versionLabel || "the latest finalized revision"}
@@ -3061,7 +3175,7 @@ export function ServiceRateWorkflowPanel({
             </div>
 
             {workflow.latestQuoteVersion && changedDepartments.length > 0 ? (
-              <div className="space-y-3 rounded-[var(--mn-radius-panel)] border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/30 p-4">
+              <div className="mnx-crm-commercial-flat-note is-warning mnx-crm-commercial-flat-note-stack">
                 <div className="flex flex-wrap items-center gap-2">
                   <CrmStatus variant="warning">Recreate quotation required</CrmStatus>
                   <p className="text-sm text-[var(--mnx-text-muted)]">
@@ -3096,7 +3210,7 @@ export function ServiceRateWorkflowPanel({
             ) : null}
 
             {workflow.latestQuoteVersion && pendingDepartments.length > 0 ? (
-              <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] p-4 text-sm text-[var(--mnx-text-muted)]">
+              <div className="mnx-crm-commercial-flat-note">
                 The current quotation can continue through approval and customer sharing with the
                 already submitted department charges. The remaining department can be added later as
                 a new version.
@@ -3113,14 +3227,14 @@ export function ServiceRateWorkflowPanel({
             ) : null}
 
             {!workflow.pricingSnapshot ? (
-              <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/25 p-4 text-sm text-[var(--mnx-text-muted)]">
+              <div className="mnx-crm-commercial-flat-note is-warning">
                 Save the pricing worksheet before opening the quotation form so the quote uses the
                 stored sell-rate snapshot instead of the editable charge worksheet.
               </div>
             ) : null}
-          </CrmPanel>
+          </div>
           ) : hasStructuredResponses ? (
-            <CrmPanel className="border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] px-4 py-4">
+            <div className="mnx-crm-commercial-flat-note">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <CrmStatus variant="warning">Pricing locked</CrmStatus>
@@ -3131,7 +3245,7 @@ export function ServiceRateWorkflowPanel({
                   buy-rate revision is created from the comparison decision.
                 </p>
               </div>
-            </CrmPanel>
+            </div>
           ) : null}
         </div>
       </CrmSection>

@@ -64,86 +64,74 @@ type ChaRouteMeta = {
 const exactRouteMeta: Record<string, ChaRouteMeta> = {
   "/cha": {
     eyebrow: "Customs operations",
-    title: "CHA command centre",
-    description:
-      "Coordinate customs jobs, approvals, filing progress, customer advances, and operational exceptions.",
+    title: "CHA",
+    description: "Track customs jobs, filings, and approvals.",
     icon: Gauge,
   },
   "/cha/approvals": {
     eyebrow: "Controlled decisions",
     title: "Checklist approvals",
-    description:
-      "Review checklist submissions and job-deletion requests without bypassing approval policy.",
+    description: "Review checklist and delete requests.",
     icon: CheckSquare,
   },
   "/cha/customers": {
     eyebrow: "Customer operations",
     title: "CHA customers",
-    description:
-      "Maintain customs customer profiles, account ownership, KYC records, and portal access.",
+    description: "Manage customs customers and KYC.",
     icon: Users,
   },
   "/cha/customers/new": {
     eyebrow: "Customer onboarding",
     title: "New customer",
-    description:
-      "Create a customs customer profile with contact, finance, KYC, and portal settings.",
+    description: "Create a customs customer record.",
     icon: UserPlus,
   },
   "/cha/expenses": {
     eyebrow: "CHA finance",
     title: "CHA expenses",
-    description:
-      "Raise, review, approve, disburse, and reconcile job-linked operational expenses.",
+    description: "Track job-linked operating expenses.",
     icon: CreditCard,
   },
   "/cha/jobs": {
     eyebrow: "Customs operations",
     title: "CHA jobs",
-    description:
-      "Search and coordinate every customs-clearance job across its controlled workflow.",
+    description: "Track customs-clearance jobs.",
     icon: BriefcaseBusiness,
   },
   "/cha/jobs/new": {
     eyebrow: "Customs operations",
     title: "New CHA job",
-    description:
-      "Create a customs-clearance job with branch, customer, shipment, ownership, and assignment details.",
+    description: "Create a customs-clearance job.",
     icon: BriefcaseBusiness,
   },
   "/cha/process": {
     eyebrow: "Customs operations",
     title: "Process",
-    description:
-      "Continue downstream customs-clearance process work from this dedicated route as the workflow expands.",
+    description: "Continue customs processing work.",
     icon: Workflow,
   },
   "/cha/reports": {
     eyebrow: "Operational intelligence",
     title: "CHA reports",
-    description:
-      "Review filing delays, financial exposure, completed-job reports, and the audit feed.",
+    description: "Review delays, exposure, and outcomes.",
     icon: BarChart3,
   },
   "/cha/settings": {
     eyebrow: "CHA administration",
     title: "CHA settings",
-    description:
-      "Manage numbering, access policy, job taxonomy, teams, and document requirements.",
+    description: "Manage numbering, teams, and policy.",
     icon: Settings2,
   },
   "/cha/settings/filing-workflows": {
     eyebrow: "Workflow configuration",
     title: "Filing workflow builder",
-    description:
-      "Configure filing nodes, gates, role access, required evidence, and controlled transitions.",
+    description: "Configure filing steps and controls.",
     icon: Workflow,
   },
   "/expense": {
     eyebrow: "Expense operations",
     title: "Expense workspace",
-    description:
-      "Manage operational expense requests, approvals, payments, proofs, and reconciliation.",
+    description: "Track expense requests and reconciliation.",
     icon: CreditCard,
   },
 };
@@ -163,8 +151,7 @@ export function getChaRouteMeta(pathname: string | null): ChaRouteMeta {
     return {
       eyebrow: "Customer administration",
       title: "Edit customer",
-      description:
-        "Update customer identity, ownership, KYC, financial policy, and portal access.",
+      description: "Update customer details and access.",
       icon: Building2,
     };
   }
@@ -173,8 +160,7 @@ export function getChaRouteMeta(pathname: string | null): ChaRouteMeta {
     return {
       eyebrow: "Customs job workspace",
       title: "Job operations",
-      description:
-        "Coordinate documents, additional data, checklist decisions, filing, advances, expenses, and audit history.",
+      description: "Review documents, filing, and expenses.",
       icon: FileCog,
     };
   }

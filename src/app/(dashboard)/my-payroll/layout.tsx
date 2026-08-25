@@ -28,7 +28,7 @@ export default async function MyPayrollLayout({ children }: { children: React.Re
       <WorkspacePageHeader
         eyebrow="Employee Portal"
         title="My Payroll"
-        description="Your own payroll information — visible only to you."
+        description="Your payroll information, only for you."
         icon={<UserRound aria-hidden="true" />}
       />
       <nav aria-label="My payroll sections" className="flex flex-wrap gap-2 rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface-soft)] p-2">

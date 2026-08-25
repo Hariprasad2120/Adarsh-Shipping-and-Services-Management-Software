@@ -141,8 +141,7 @@ export function EnquiryRegisterToolbar({
   return (
     <>
       <OperationalDataTableHeader
-        eyebrow="Demand intake"
-        title="Enquiry register"
+        hideIdentity
         actions={
           <>
             <form

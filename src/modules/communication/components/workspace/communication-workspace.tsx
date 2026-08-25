@@ -52,72 +52,62 @@ type CommunicationRouteMeta = {
 const exactRouteMeta: Record<string, CommunicationRouteMeta> = {
   "/communication": {
     eyebrow: "Connected workspace",
-    title: "Communication command centre",
-    description:
-      "Coordinate mail, conversations, meetings, calendars, job spaces, and shared files from one operational workspace.",
+    title: "Communication",
+    description: "Mail, chat, meetings, and files in one place.",
     icon: Gauge,
   },
   "/communication/calendar": {
     eyebrow: "Calendar",
     title: "Workspace calendar",
-    description:
-      "Review upcoming events, attendees, conference links, and scheduling context.",
+    description: "Review events and schedules.",
     icon: CalendarDays,
   },
   "/communication/chat": {
     eyebrow: "Conversations",
     title: "Team chat",
-    description:
-      "Coordinate direct messages, team spaces, job conversations, and shared context.",
+    description: "Follow direct and team conversations.",
     icon: MessageSquareText,
   },
   "/communication/drive": {
     eyebrow: "Documents",
     title: "Job drive",
-    description:
-      "Browse and synchronise controlled Google Drive folders linked to operational jobs.",
+    description: "Browse job-linked Drive folders.",
     icon: HardDrive,
   },
   "/communication/google-chat-live-view": {
     eyebrow: "Experimental integration",
     title: "Google Chat live view",
-    description:
-      "Open the configured Google Chat workspace with connection diagnostics and safe fallbacks.",
+    description: "Open the connected Chat workspace.",
     icon: ExternalLink,
   },
   "/communication/job-spaces": {
     eyebrow: "Job collaboration",
     title: "Job spaces",
-    description:
-      "Review and provision the shared chat and Drive workspaces attached to CHA jobs.",
+    description: "Manage chat and Drive spaces for jobs.",
     icon: FolderKanban,
   },
   "/communication/mail": {
     eyebrow: "Mail",
     title: "Workspace inbox",
-    description:
-      "Read, organise, reply to, and connect Google Workspace mail with operational records.",
+    description: "Read and manage connected mail.",
     icon: Mail,
   },
   "/communication/meetings": {
     eyebrow: "Meetings",
     title: "Meeting workspace",
-    description:
-      "Schedule Google Meet sessions and review the upcoming meeting calendar.",
+    description: "Schedule and review meetings.",
     icon: Video,
   },
   "/communication/search": {
     eyebrow: "Connected search",
     title: "Workspace search",
-    description:
-      "Find mail, Drive files, and linked job context through one permission-aware search.",
+    description: "Search mail, files, and job context.",
     icon: Search,
   },
   "/communication/settings": {
     eyebrow: "Configuration",
     title: "Communication settings",
-    description:
-      "Manage the connected Google account, notification preferences, and controlled integration features.",
+    description: "Manage connected accounts and preferences.",
     icon: Settings2,
   },
 };

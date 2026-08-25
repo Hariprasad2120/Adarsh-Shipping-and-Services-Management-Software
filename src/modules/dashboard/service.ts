@@ -246,7 +246,7 @@ const MODULE_DEFINITIONS: readonly ModuleDefinition[] = [
     primaryLabel: "active jobs",
     primaryDetail: "No freight forwarding workflows are configured yet",
     secondaryLabel: "pending milestones",
-    tertiaryLabel: "ready screens",
+    tertiaryLabel: "workspace routes",
     actions: [
       { label: "Create booking", href: "/freight-forwarding/create-booking" },
       { label: "Open workspace", href: "/freight-forwarding" },

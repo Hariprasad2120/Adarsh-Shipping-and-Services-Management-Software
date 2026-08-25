@@ -605,6 +605,11 @@ export function PunchCard({
                 firstIn && effectiveOutForDay
                   ? getDurationHoursNoSeconds(firstIn, effectiveOutForDay)
                   : 0;
+              const otMinutesForDay =
+                day.ot && day.ot.otHours > 0
+                  ? Math.round(day.ot.otHours * 60)
+                  : 0;
+              const hasOt = otMinutesForDay > 0;
 
               // The live-time line is rendered once as an overlay on the full table.
               // Do not render another per-row line here, otherwise the UI shows two lines.
@@ -621,10 +626,6 @@ export function PunchCard({
                   lastOut ||
                   (lastSessionOpen ? nowState.toISOString() : firstIn);
                 const lastEndRawPct = getPercentRaw(effectiveLastOut);
-                const hasOt = !!(day.ot && day.ot.otHours > 0);
-                const otWidth = hasOt
-                  ? Math.min(28, Math.max(2, lastEndRawPct - 100))
-                  : 0;
                 const liveIndicatorPct = clampPercent(lastEndRawPct);
 
                 visualBar = (
@@ -693,18 +694,6 @@ export function PunchCard({
                             </div>
                           );
                         })()}
-
-                    {/* OT segment */}
-                    {hasOt && (
-                      <div
-                        className="absolute flex h-1 items-center rounded-r-full border-y border-r border-[var(--mnx-warning)] bg-[var(--mnx-warning-bg)]/80 animate-fade-in"
-                        style={{ left: "100%", width: `${otWidth}%` }}
-                      >
-                        {lastOut && (
-                          <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-warning)] bg-mono-card shadow-sm" />
-                        )}
-                      </div>
-                    )}
 
                     {/* Still-inside live pulse */}
                     {lastSessionOpen && (
@@ -786,6 +775,12 @@ export function PunchCard({
                         {day.dayName}
                       </span>
                     </p>
+                    {hasOt && (
+                      <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/12 px-2 py-0.5 text-[8px] font-semibold tracking-[0.12em] text-[var(--mnx-warning)]">
+                        <TrendingUp className="size-2.5" />
+                        OT DAY
+                      </span>
+                    )}
                     {inTime && (
                       <p className="mt-0.5 font-mono text-[9px] font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                         {fmt(inTime)}
@@ -798,10 +793,19 @@ export function PunchCard({
 
                   {/* OT column */}
                   <div className="text-center text-xs font-medium">
-                    {day.ot && day.ot.otHours > 0 ? (
-                      <span className="text-[var(--mnx-warning)]">
-                        {Math.round(day.ot.otHours * 60)} Mins
-                      </span>
+                    {hasOt ? (
+                      <div className="inline-flex flex-col items-center gap-1">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/12 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-[var(--mnx-warning)] shadow-sm">
+                          <span className="relative flex size-2">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--mnx-warning)] opacity-35" />
+                            <span className="relative inline-flex size-2 rounded-full bg-[var(--mnx-warning)]" />
+                          </span>
+                          +{otMinutesForDay}M
+                        </span>
+                        <span className="text-[8px] font-semibold tracking-[0.12em] text-[var(--mnx-warning)]/80">
+                          AFTER HOURS
+                        </span>
+                      </div>
                     ) : (
                       <span className="text-mono-muted">0 Mins</span>
                     )}

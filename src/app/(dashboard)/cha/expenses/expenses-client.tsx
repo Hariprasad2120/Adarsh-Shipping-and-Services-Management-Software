@@ -1929,7 +1929,7 @@ export function ExpensesClient({
                     className={`cha-expense-row mnx-expense-queue-record${isExpanded ? " is-highlighted" : ""} border-t mnx-border first:border-t-0`}
                     data-urgent={isUrgent ? "true" : "false"}
                   >
-                    <div className="mnx-expense-queue-summary grid w-full gap-3 bg-transparent px-5 py-4 md:grid-cols-[minmax(320px,1.8fr)_44px_minmax(170px,0.8fr)_minmax(130px,0.7fr)_minmax(220px,0.9fr)] md:items-center">
+                    <div className="mnx-expense-queue-summary grid w-full gap-4 bg-transparent px-5 py-4 md:grid-cols-[minmax(320px,1.7fr)_40px_minmax(180px,0.85fr)_minmax(140px,0.7fr)_minmax(240px,0.95fr)] md:items-center">
                       <button
                         type="button"
                         onClick={() =>
@@ -1974,7 +1974,7 @@ export function ExpensesClient({
                         </span>
                       </button>
 
-                      <div className="flex items-center justify-start">
+                      <div className="mnx-expense-queue-flag flex items-center justify-start">
                         {isUrgent ? (
                           <WarningIndicatorPopover
                             ariaLabel="Urgent expense action needed"
@@ -1994,7 +1994,7 @@ export function ExpensesClient({
                         ) : null}
                       </div>
 
-                      <div className="flex items-center justify-between gap-3 md:justify-center">
+                      <div className="mnx-expense-queue-status flex items-center justify-between gap-3 md:justify-center">
                         <span className="mnx-label md:hidden">Status</span>
                         <Badge
                           variant={getExpenseStatusBadgeVariant(req.status)}
@@ -2004,14 +2004,14 @@ export function ExpensesClient({
                         </Badge>
                       </div>
 
-                      <div className="flex items-center justify-between gap-3 md:block md:text-right">
+                      <div className="mnx-expense-queue-amount flex items-center justify-between gap-3 md:block md:text-right">
                         <span className="mnx-label md:hidden">Amount</span>
                         <span className="text-lg mnx-text-accent mnx-numeric">
                           ₹{sum.toLocaleString("en-IN")}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-end gap-2">
+                      <div className="mnx-expense-queue-actions flex flex-wrap items-center justify-end gap-2">
                         {canAccountsReviewThisExpense ? (
                           <>
                             <Button
@@ -2114,8 +2114,8 @@ export function ExpensesClient({
                     </div>
 
                     {isExpanded ? (
-                      <div className="mnx-expense-queue-detail border-t mnx-border mnx-bg-surface p-4">
-                        <div className="grid w-full gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)] xl:items-start">
+                      <div className="mnx-expense-queue-detail border-t mnx-border mnx-bg-surface p-5">
+                        <div className="mnx-expense-queue-detail-layout grid w-full gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.7fr)] xl:items-start">
                           <div className="min-w-0 space-y-4">
                             <section className="space-y-3">
                               <div className="flex items-center justify-between">
@@ -2365,8 +2365,8 @@ export function ExpensesClient({
                             ) : null}
                           </div>
 
-                          <aside className="grid gap-4 rounded-xl border mnx-border mnx-bg-surface p-4">
-                            <section className="space-y-3">
+                          <aside className="mnx-expense-queue-sidebar grid gap-4">
+                            <section className="mnx-expense-queue-sidebar-card space-y-3">
                               <h3 className="mnx-heading-3 mnx-text-primary">
                                 Audit Trail
                               </h3>
@@ -2399,7 +2399,7 @@ export function ExpensesClient({
                               )}
                             </section>
 
-                            <div className="space-y-5">
+                            <div className="mnx-expense-queue-sidebar-card space-y-5">
                               {canAccountsReviewThisExpense ||
                               canReviewThisExpense ||
                               canClarifyThisExpense ||

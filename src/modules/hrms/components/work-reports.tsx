@@ -566,26 +566,26 @@ export function WorkReportsView({
       </div>
 
       <div className="flex flex-col gap-6">
-        <div className="overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-card)] shadow-sm">
-          <div className="overflow-x-auto">
-            <MnxTable className="w-full border-collapse text-left text-xs">
+        <div className="mnx-people-table-shell">
+          <div className="mnx-table-wrap">
+            <MnxTable className="mnx-workspace-table w-full">
               <thead>
-                <tr className="border-b border-[var(--mnx-border)] bg-[var(--mnx-card)] text-[10px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
-                  <th className="w-12 px-5 py-3" />
-                  <th className="w-20 px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Employee</th>
-                  <th className="px-5 py-3">Report date</th>
-                  <th className="px-5 py-3">Submitted</th>
-                  <th className="px-5 py-3">Line items</th>
-                  <th className="px-5 py-3">Captured location</th>
+                <tr>
+                  <th className="mnx-people-table-head w-12" />
+                  <th className="mnx-people-table-head w-20">Status</th>
+                  <th className="mnx-people-table-head">Employee</th>
+                  <th className="mnx-people-table-head">Report date</th>
+                  <th className="mnx-people-table-head">Submitted</th>
+                  <th className="mnx-people-table-head">Line items</th>
+                  <th className="mnx-people-table-head">Captured location</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--mnx-border)]">
+              <tbody>
                 {loading && reports.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
-                      className="py-12 text-center font-medium text-[var(--mnx-muted)]"
+                      className="mnx-people-table-cell py-12 text-center font-medium text-[var(--mnx-muted)]"
                     >
                       Loading work reports…
                     </td>
@@ -594,7 +594,7 @@ export function WorkReportsView({
                   <tr>
                     <td
                       colSpan={7}
-                      className="py-12 text-center font-medium text-[var(--mnx-muted)]"
+                      className="mnx-people-table-cell py-12 text-center font-medium text-[var(--mnx-muted)]"
                     >
                       No work reports found.
                     </td>
@@ -606,11 +606,11 @@ export function WorkReportsView({
                       <tr
                         key={report.id}
                         onClick={() => setSelectedReportId(report.id)}
-                        className={`cursor-pointer transition-colors hover:bg-[var(--mnx-card)]/50 ${
-                          isSelected ? "bg-[var(--mnx-accent)]/5" : ""
+                        className={`mnx-people-table-row cursor-pointer ${
+                          isSelected ? "is-selected" : ""
                         }`}
                       >
-                        <td className="px-5 py-4">
+                        <td className="mnx-people-table-cell">
                           <MnxInput
                             type="radio"
                             name="selected-work-report"
@@ -619,25 +619,25 @@ export function WorkReportsView({
                             aria-label={`Select ${report.user.name}'s report`}
                           />
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="mnx-people-table-cell">
                           <ReportStatusIcon status={report.status} />
                         </td>
-                        <td className="px-5 py-4 font-bold text-[var(--mnx-text)]">
+                        <td className="mnx-people-table-cell font-bold text-[var(--mnx-text)]">
                           {report.user.name}
                           <span className="mt-0.5 block text-[10px] font-medium text-[var(--mnx-muted)]">
                             #{report.user.employeeNumber ?? "—"}
                           </span>
                         </td>
-                        <td className="px-5 py-4 font-semibold text-[var(--mnx-text)]">
+                        <td className="mnx-people-table-cell font-semibold text-[var(--mnx-text)]">
                           {new Date(report.date).toLocaleDateString("en-IN")}
                         </td>
-                        <td className="px-5 py-4 font-semibold text-[var(--mnx-muted)]">
+                        <td className="mnx-people-table-cell font-semibold text-[var(--mnx-muted)]">
                           {formatDateTime(report.createdAt)}
                         </td>
-                        <td className="px-5 py-4 font-semibold text-[var(--mnx-text)]">
+                        <td className="mnx-people-table-cell font-semibold text-[var(--mnx-text)]">
                           {reportItems(report).length}
                         </td>
-                        <td className="max-w-xs truncate px-5 py-4 font-semibold text-[var(--mnx-muted)]">
+                        <td className="mnx-people-table-cell max-w-xs truncate font-semibold text-[var(--mnx-muted)]">
                           {report.addedAddress ?? "Coordinates unavailable"}
                         </td>
                       </tr>
@@ -650,243 +650,252 @@ export function WorkReportsView({
         </div>
 
         {selectedReport ? (
-          <div className="grid grid-cols-1 gap-6 rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-6 shadow-sm lg:grid-cols-3">
-            <div className="space-y-6 lg:col-span-2">
-              <div className="flex items-center gap-3 border-b border-[var(--mnx-border)] pb-4">
-                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--mnx-accent)]/10 text-sm font-bold text-[var(--mnx-accent)]">
-                  {selectedReport.user.photo ? (
-                    // User photos may be stored on organisation-configured
-                    // hosts that cannot be enumerated in Next image config.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={selectedReport.user.photo}
-                      alt={selectedReport.user.name}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    selectedReport.user.name.charAt(0)
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-[var(--mnx-text)]">
-                    {selectedReport.user.employeeNumber ?? "—"} ·{" "}
-                    {selectedReport.user.name}
-                  </h3>
-                  <span
-                    className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9.5px] font-bold ${statusClass(selectedReport.status)}`}
-                  >
-                    {selectedReport.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
+          <WorkspaceDialog
+            open={Boolean(selectedReport)}
+            onClose={() => setSelectedReportId(null)}
+            eyebrow="Work report details"
+            title={`${selectedReport.user.name}'s Work Report`}
+            description={`${selectedReport.workedOn} · ${new Date(selectedReport.date).toLocaleDateString("en-IN")}`}
+            size="workspace"
+          >
+            <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className="flex items-center gap-3 border-b border-[var(--mnx-border)] pb-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--mnx-accent)]/10 text-sm font-bold text-[var(--mnx-accent)]">
+                    {selectedReport.user.photo ? (
+                      // User photos may be stored on organisation-configured
+                      // hosts that cannot be enumerated in Next image config.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selectedReport.user.photo}
+                        alt={selectedReport.user.name}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      selectedReport.user.name.charAt(0)
+                    )}
+                  </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[var(--mnx-text)]">
-                      Work completed
-                    </h4>
-                    <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
-                      {selectedReport.workedOn} ·{" "}
-                      {new Date(selectedReport.date).toLocaleDateString(
-                        "en-IN",
-                      )}
-                    </p>
+                    <h3 className="text-xs font-bold text-[var(--mnx-text)]">
+                      {selectedReport.user.employeeNumber ?? "—"} ·{" "}
+                      {selectedReport.user.name}
+                    </h3>
+                    <span
+                      className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9.5px] font-bold ${statusClass(selectedReport.status)}`}
+                    >
+                      {selectedReport.status}
+                    </span>
                   </div>
-                  <span className="mnx-badge mnx-badge-neutral">
-                    {selectedItems.length} line
-                    {selectedItems.length === 1 ? "" : "s"}
-                  </span>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/20">
-                  <div className="overflow-x-auto">
-                    <MnxTable className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-[var(--mnx-border)] bg-[var(--mnx-card)]/80 text-[9.5px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
-                          <th className="w-12 px-4 py-2">#</th>
-                          <th className="px-4 py-2">Job no. / name</th>
-                          <th className="px-4 py-2">Detailed description</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--mnx-border)]">
-                        {selectedItems.map((item, index) => (
-                          <tr key={item.id}>
-                            <td className="px-4 py-3 font-mono text-[var(--mnx-muted)]">
-                              {String(index + 1).padStart(2, "0")}
-                            </td>
-                            <td className="px-4 py-3 font-bold text-[var(--mnx-text)]">
-                              {item.jobNoName}
-                            </td>
-                            <td className="max-w-lg whitespace-pre-wrap px-4 py-3 font-medium leading-relaxed text-[var(--mnx-muted)]">
-                              {item.description}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </MnxTable>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-[var(--mnx-text)]">
+                        Work completed
+                      </h4>
+                      <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                        {selectedReport.workedOn} ·{" "}
+                        {new Date(selectedReport.date).toLocaleDateString(
+                          "en-IN",
+                        )}
+                      </p>
+                    </div>
+                    <span className="mnx-badge mnx-badge-neutral">
+                      {selectedItems.length} line
+                      {selectedItems.length === 1 ? "" : "s"}
+                    </span>
                   </div>
+
+                  <div className="overflow-hidden rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/20">
+                    <div className="overflow-x-auto">
+                      <MnxTable className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-[var(--mnx-border)] bg-[var(--mnx-card)]/80 text-[9.5px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
+                            <th className="w-12 px-4 py-2">#</th>
+                            <th className="px-4 py-2">Job no. / name</th>
+                            <th className="px-4 py-2">Detailed description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--mnx-border)]">
+                          {selectedItems.map((item, index) => (
+                            <tr key={item.id}>
+                              <td className="px-4 py-3 font-mono text-[var(--mnx-muted)]">
+                                {String(index + 1).padStart(2, "0")}
+                              </td>
+                              <td className="px-4 py-3 font-bold text-[var(--mnx-text)]">
+                                {item.jobNoName}
+                              </td>
+                              <td className="max-w-lg whitespace-pre-wrap px-4 py-3 font-medium leading-relaxed text-[var(--mnx-muted)]">
+                                {item.description}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </MnxTable>
+                    </div>
+                  </div>
+                </div>
+
+                {fields.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/30 p-4 text-xs md:grid-cols-2">
+                    {fields.map((field) => (
+                      <Metadata
+                        key={field.id}
+                        label={field.label}
+                        value={valueLabel(
+                          reportCustomValues(selectedReport)[field.key],
+                        )}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/30 p-4 text-xs md:grid-cols-2">
+                  <Metadata
+                    label="Submitted by"
+                    value={`${selectedReport.user.name} · ${selectedReport.user.employeeNumber ?? "—"}`}
+                  />
+                  <Metadata
+                    label="Saved at"
+                    value={formatDateTime(selectedReport.createdAt)}
+                  />
+                  <div className="md:col-span-2">
+                    <Metadata
+                      label="Automatically captured address"
+                      value={
+                        <span className="flex items-start gap-1">
+                          <MapPin className="mt-0.5 size-3.5 shrink-0 text-[var(--mnx-accent)]" />
+                          {selectedReport.addedAddress ??
+                            "Location was not available on this legacy report."}
+                        </span>
+                      }
+                    />
+                  </div>
+                  <Metadata
+                    label="Location saved at"
+                    value={formatDateTime(selectedReport.locationCapturedAt)}
+                  />
+                  <Metadata
+                    label="GPS accuracy"
+                    value={
+                      selectedReport.locationAccuracy === null
+                        ? "—"
+                        : `±${Math.round(selectedReport.locationAccuracy)} m`
+                    }
+                  />
                 </div>
               </div>
 
-              {fields.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/30 p-4 text-xs md:grid-cols-2">
-                  {fields.map((field) => (
-                    <Metadata
-                      key={field.id}
-                      label={field.label}
-                      value={valueLabel(
-                        reportCustomValues(selectedReport)[field.key],
-                      )}
+              <div className="space-y-4 border-[var(--mnx-border)] lg:border-l lg:pl-6">
+                <h4 className="border-b border-[var(--mnx-border)] pb-2 text-xs font-bold uppercase tracking-wider text-[var(--mnx-text)]">
+                  Approval timeline
+                </h4>
+
+                <div className="grid grid-cols-2 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/50 p-3 text-center">
+                  <Metadata
+                    label="Progress"
+                    value={
+                      approvalLevels > 0
+                        ? `${completedApprovals}/${approvalLevels} levels`
+                        : "No approval required"
+                    }
+                    centered
+                  />
+                  <Metadata
+                    label="Status"
+                    value={selectedReport.status}
+                    centered
+                  />
+                </div>
+
+                <div className="relative ml-3 space-y-5 border-l border-[var(--mnx-border)] pl-6 text-xs">
+                  <TimelineNode
+                    tone="neutral"
+                    title="Report submitted"
+                    detail={`${selectedReport.user.name} sent the report for approval.`}
+                    time={selectedReport.createdAt}
+                  />
+
+                  {selectedReport.approvals.map((approval) => (
+                    <TimelineNode
+                      key={approval.id}
+                      tone={
+                        approval.status === "APPROVED"
+                          ? "success"
+                          : approval.status === "REJECTED"
+                            ? "danger"
+                            : approval.status === "PENDING"
+                              ? "warning"
+                              : "neutral"
+                      }
+                      title={`Level ${approval.level} · ${approval.approver.name}`}
+                      detail={
+                        approval.status === "WAITING"
+                          ? "Waiting for the previous approval level."
+                          : approval.status === "PENDING"
+                            ? "Decision required."
+                            : approval.status === "CANCELLED"
+                              ? "Cancelled after an earlier rejection."
+                              : approval.comments ||
+                                `Report ${approval.status.toLowerCase()}.`
+                      }
+                      time={approval.decidedAt ?? approval.createdAt}
                     />
                   ))}
                 </div>
-              ) : null}
 
-              <div className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/30 p-4 text-xs md:grid-cols-2">
-                <Metadata
-                  label="Submitted by"
-                  value={`${selectedReport.user.name} · ${selectedReport.user.employeeNumber ?? "—"}`}
-                />
-                <Metadata
-                  label="Saved at"
-                  value={formatDateTime(selectedReport.createdAt)}
-                />
-                <div className="md:col-span-2">
-                  <Metadata
-                    label="Automatically captured address"
-                    value={
-                      <span className="flex items-start gap-1">
-                        <MapPin className="mt-0.5 size-3.5 shrink-0 text-[var(--mnx-accent)]" />
-                        {selectedReport.addedAddress ??
-                          "Location was not available on this legacy report."}
+                {canActOnSelected && currentApproval ? (
+                  <div className="space-y-3 rounded-xl border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/10 p-4">
+                    <div>
+                      <span className="text-[11px] font-bold text-[var(--mnx-text)]">
+                        Your level {currentApproval.level} decision
                       </span>
-                    }
-                  />
-                </div>
-                <Metadata
-                  label="Location saved at"
-                  value={formatDateTime(selectedReport.locationCapturedAt)}
-                />
-                <Metadata
-                  label="GPS accuracy"
-                  value={
-                    selectedReport.locationAccuracy === null
-                      ? "—"
-                      : `±${Math.round(selectedReport.locationAccuracy)} m`
-                  }
-                />
+                      <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                        Approve to continue the configured route, or reject to
+                        close it.
+                      </p>
+                    </div>
+                    <MnxTextarea
+                      placeholder="Add approval or rejection comments…"
+                      value={approvalComment}
+                      onChange={(event) => setApprovalComment(event.target.value)}
+                      className="h-20 w-full resize-none rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-2 text-xs outline-none focus:border-[var(--mnx-accent)]"
+                    />
+                    <div className="flex items-center gap-2">
+                      <MnxAction
+                        type="button"
+                        disabled={acting}
+                        onClick={() =>
+                          handleApprovalAction(selectedReport.id, "APPROVED")
+                        }
+                        className="flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--mnx-accent)] px-3 py-1.5 text-[10px] font-bold text-[var(--mnx-text)] disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="size-3.5" />
+                        Approve
+                      </MnxAction>
+                      <MnxAction
+                        type="button"
+                        disabled={acting}
+                        onClick={() =>
+                          handleApprovalAction(selectedReport.id, "REJECTED")
+                        }
+                        className="flex cursor-pointer items-center gap-1 rounded-lg border border-[var(--mnx-danger)] bg-[var(--mnx-card)] px-3 py-1.5 text-[10px] font-bold text-[var(--mnx-danger)] disabled:opacity-50"
+                      >
+                        <XCircle className="size-3.5" />
+                        Reject
+                      </MnxAction>
+                    </div>
+                  </div>
+                ) : selectedReport.status === "PENDING" && currentApproval ? (
+                  <div className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/40 p-3 text-[10px] text-[var(--mnx-muted)]">
+                    Awaiting {currentApproval.approver.name} at level{" "}
+                    {currentApproval.level}.
+                  </div>
+                ) : null}
               </div>
             </div>
-
-            <div className="space-y-4 border-[var(--mnx-border)] lg:border-l lg:pl-6">
-              <h4 className="border-b border-[var(--mnx-border)] pb-2 text-xs font-bold uppercase tracking-wider text-[var(--mnx-text)]">
-                Approval timeline
-              </h4>
-
-              <div className="grid grid-cols-2 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/50 p-3 text-center">
-                <Metadata
-                  label="Progress"
-                  value={
-                    approvalLevels > 0
-                      ? `${completedApprovals}/${approvalLevels} levels`
-                      : "No approval required"
-                  }
-                  centered
-                />
-                <Metadata
-                  label="Status"
-                  value={selectedReport.status}
-                  centered
-                />
-              </div>
-
-              <div className="relative ml-3 space-y-5 border-l border-[var(--mnx-border)] pl-6 text-xs">
-                <TimelineNode
-                  tone="neutral"
-                  title="Report submitted"
-                  detail={`${selectedReport.user.name} sent the report for approval.`}
-                  time={selectedReport.createdAt}
-                />
-
-                {selectedReport.approvals.map((approval) => (
-                  <TimelineNode
-                    key={approval.id}
-                    tone={
-                      approval.status === "APPROVED"
-                        ? "success"
-                        : approval.status === "REJECTED"
-                          ? "danger"
-                          : approval.status === "PENDING"
-                            ? "warning"
-                            : "neutral"
-                    }
-                    title={`Level ${approval.level} · ${approval.approver.name}`}
-                    detail={
-                      approval.status === "WAITING"
-                        ? "Waiting for the previous approval level."
-                        : approval.status === "PENDING"
-                          ? "Decision required."
-                          : approval.status === "CANCELLED"
-                            ? "Cancelled after an earlier rejection."
-                            : approval.comments ||
-                              `Report ${approval.status.toLowerCase()}.`
-                    }
-                    time={approval.decidedAt ?? approval.createdAt}
-                  />
-                ))}
-              </div>
-
-              {canActOnSelected && currentApproval ? (
-                <div className="space-y-3 rounded-xl border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/10 p-4">
-                  <div>
-                    <span className="text-[11px] font-bold text-[var(--mnx-text)]">
-                      Your level {currentApproval.level} decision
-                    </span>
-                    <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
-                      Approve to continue the configured route, or reject to
-                      close it.
-                    </p>
-                  </div>
-                  <MnxTextarea
-                    placeholder="Add approval or rejection comments…"
-                    value={approvalComment}
-                    onChange={(event) => setApprovalComment(event.target.value)}
-                    className="h-20 w-full resize-none rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-2 text-xs outline-none focus:border-[var(--mnx-accent)]"
-                  />
-                  <div className="flex items-center gap-2">
-                    <MnxAction
-                      type="button"
-                      disabled={acting}
-                      onClick={() =>
-                        handleApprovalAction(selectedReport.id, "APPROVED")
-                      }
-                      className="flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--mnx-accent)] px-3 py-1.5 text-[10px] font-bold text-[var(--mnx-text)] disabled:opacity-50"
-                    >
-                      <CheckCircle2 className="size-3.5" />
-                      Approve
-                    </MnxAction>
-                    <MnxAction
-                      type="button"
-                      disabled={acting}
-                      onClick={() =>
-                        handleApprovalAction(selectedReport.id, "REJECTED")
-                      }
-                      className="flex cursor-pointer items-center gap-1 rounded-lg border border-[var(--mnx-danger)] bg-[var(--mnx-card)] px-3 py-1.5 text-[10px] font-bold text-[var(--mnx-danger)] disabled:opacity-50"
-                    >
-                      <XCircle className="size-3.5" />
-                      Reject
-                    </MnxAction>
-                  </div>
-                </div>
-              ) : selectedReport.status === "PENDING" && currentApproval ? (
-                <div className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/40 p-3 text-[10px] text-[var(--mnx-muted)]">
-                  Awaiting {currentApproval.approver.name} at level{" "}
-                  {currentApproval.level}.
-                </div>
-              ) : null}
-            </div>
-          </div>
+          </WorkspaceDialog>
         ) : null}
       </div>
 

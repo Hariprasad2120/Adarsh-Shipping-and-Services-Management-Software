@@ -51,65 +51,56 @@ type AdminRouteMeta = {
 const exactRouteMeta: Record<string, AdminRouteMeta> = {
   "/admin": {
     eyebrow: "Organisation control",
-    title: "Admin command centre",
-    description:
-      "Manage organisation access, operational settings, security, diagnostics, and controlled administration tools.",
+    title: "Admin",
+    description: "Manage access, settings, and security.",
     icon: Gauge,
   },
   "/admin/data-tools": {
     eyebrow: "Controlled data operations",
     title: "Data tools",
-    description:
-      "Import organisation workbooks through validated, permission-gated administration workflows.",
+    description: "Import and validate organisation data.",
     icon: Database,
   },
   "/admin/google-chat": {
     eyebrow: "Integration administration",
     title: "Google Chat administration",
-    description:
-      "Monitor linked users, spaces, delivery state, and Google Chat connectivity.",
+    description: "Review Chat access, spaces, and delivery status.",
     icon: MessageSquareText,
   },
   "/admin/notifications": {
     eyebrow: "Notification operations",
     title: "Notification administration",
-    description:
-      "Inspect delivery state, filter organisation notifications, and retry eligible failures.",
+    description: "Review delivery issues and retry failures.",
     icon: Bell,
   },
   "/admin/passkeys": {
     eyebrow: "Access security",
     title: "Passkey resets",
-    description:
-      "Review employee reset requests and execute controlled passkey recovery actions.",
+    description: "Handle passkey reset requests.",
     icon: KeyRound,
   },
   "/admin/roles": {
     eyebrow: "Access control",
     title: "Roles and permissions",
-    description:
-      "Maintain organisation roles and their explicit permission assignments.",
+    description: "Manage roles and permissions.",
     icon: Users,
   },
   "/admin/sessions": {
     eyebrow: "Session security",
     title: "Session monitor",
-    description:
-      "Review active sessions, sign-in history, security events, and inactivity controls.",
+    description: "Review sessions and sign-in activity.",
     icon: Monitor,
   },
   "/admin/settings": {
     eyebrow: "Configuration",
     title: "Organisation settings",
-    description:
-      "Configure appraisal policy and run dedicated organisation-level administration tools such as the Accounting demo bootstrap.",
+    description: "Manage organisation-wide settings.",
     icon: Settings2,
   },
   "/admin/simulation": {
     eyebrow: "Controlled diagnostics",
     title: "Time simulation",
-    description:
-      "Freeze or advance the application clock for authorised workflow verification.",
+    description: "Test workflow timing safely.",
     icon: FlaskConical,
   },
 };

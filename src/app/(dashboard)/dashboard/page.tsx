@@ -5,7 +5,9 @@ import {
   TOGGLEABLE_MODULE_SECTION_IDS,
   type ToggleableModuleSectionId,
 } from "@/modules/core/organisation/module-config";
+import { getDashboardCommandCenterSnapshot } from "@/modules/dashboard/command-center";
 import { getDashboardModuleSnapshot } from "@/modules/dashboard/service";
+import type { DashboardCommandCenterSnapshot } from "@/modules/dashboard/types";
 import { getDashboardWidgets, getMe } from "@/modules/hrms/service";
 import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { isChaEdition } from "@/lib/app-edition";
@@ -48,6 +50,26 @@ async function getPermittedModuleSnapshot(
   };
 }
 
+async function getPermittedCommandCenterSnapshot(
+  userId: string,
+  orgId: string,
+  caps: Caps,
+  enabledModuleIds: ToggleableModuleSectionId[],
+  moduleSnapshot: Awaited<ReturnType<typeof getPermittedModuleSnapshot>>,
+): Promise<DashboardCommandCenterSnapshot> {
+  const visibleModuleSections = getVisibleSections(caps, enabledModuleIds).filter(
+    (section): section is typeof section & { id: ToggleableModuleSectionId } =>
+      TOGGLEABLE_MODULE_SET.has(section.id),
+  );
+
+  return getDashboardCommandCenterSnapshot({
+    userId,
+    orgId,
+    caps,
+    moduleSnapshot,
+  });
+}
+
 export default async function DashboardPage() {
   const context = await getDashboardContext();
   if (!context) redirect("/login");
@@ -67,6 +89,13 @@ export default async function DashboardPage() {
         enabledModuleIds,
       ),
     ]);
+  const commandCenterSnapshot = await getPermittedCommandCenterSnapshot(
+    session.user.id,
+    orgId,
+    caps,
+    enabledModuleIds,
+    permittedModuleSnapshot,
+  );
 
   const initialProfile: UserProfile = {
     ...profileData.user,
@@ -86,6 +115,7 @@ export default async function DashboardPage() {
       initialProfile={initialProfile}
       initialWidgetsData={dashboardData as DashboardWidgetsData}
       initialModuleSnapshot={permittedModuleSnapshot}
+      initialCommandCenterSnapshot={commandCenterSnapshot}
     />
   );
 }

@@ -63,183 +63,157 @@ type PeopleRouteMeta = {
 const exactRouteMeta: Record<string, PeopleRouteMeta> = {
   "/hrms": {
     eyebrow: "People operations",
-    title: "HRMS command centre",
-    description:
-      "Employees, organisation, payroll, hiring, requests, and workforce services in one operational workspace.",
+    title: "HRMS",
+    description: "Employees, hiring, payroll, and people services.",
   },
   "/hrms/approvals": {
     eyebrow: "Workflow",
-    title: "Approvals central",
-    description:
-      "Review and action employee, attendance, travel, reimbursement, and people-service requests.",
+    title: "Approvals",
+    description: "Review employee and people-service requests.",
     icon: ClipboardCheck,
   },
   "/hrms/employees": {
     eyebrow: "People directory",
     title: "Employees",
-    description:
-      "Find employee records, reporting relationships, organisation assignments, and access details.",
+    description: "Find employee records and reporting lines.",
     icon: IdCard,
   },
   "/hrms/employees/new": {
     eyebrow: "People directory",
     title: "Onboard employee",
-    description:
-      "Create the employee record, organisation placement, employment details, and initial access.",
+    description: "Create a new employee record.",
     icon: UserRoundPlus,
   },
   "/hrms/files": {
     eyebrow: "Documents",
     title: "HR document drive",
-    description:
-      "Use private employee folders, controlled reporting folders, and organisation-wide company files backed by the Shared Drive.",
+    description: "Access employee and company files.",
     icon: FolderKanban,
   },
   "/hrms/helpdesk": {
     eyebrow: "People services",
     title: "HR and IT service desk",
-    description:
-      "Run employee-facing HR and workplace-tech support through one guided internal service desk.",
+    description: "Track HR and IT support requests.",
     icon: HelpCircle,
   },
   "/hrms/incentives": {
     eyebrow: "Compensation operations",
     title: "Incentive working",
-    description:
-      "Review CRM-submitted incentive entries and process approval, rejection, and payout decisions.",
+    description: "Review incentive entries and payouts.",
     icon: BadgeCheck,
   },
   "/hrms/letters": {
     eyebrow: "Documents",
     title: "Employee letters",
-    description:
-      "Generate, review, and issue controlled employee correspondence.",
+    description: "Create and issue employee letters.",
     icon: FileText,
   },
   "/hrms/onboarding": {
     eyebrow: "Employee lifecycle",
     title: "Onboarding",
-    description:
-      "Coordinate new-joiner checklists, owners, due dates, and completion.",
+    description: "Track new-joiner onboarding tasks.",
     icon: UserRoundPlus,
   },
   "/hrms/on-duty-admin": {
     eyebrow: "Attendance workflow",
     title: "On-duty administration",
-    description:
-      "Review field-duty requests and preserve the employee attendance trail.",
+    description: "Review field-duty requests.",
     icon: MapPinned,
   },
   "/hrms/org-structure": {
     eyebrow: "Organisation",
     title: "Organisation structure",
-    description:
-      "Maintain branches, departments, divisions, and their operational hierarchy.",
+    description: "Manage branches, departments, and hierarchy.",
     icon: Network,
   },
   "/hrms/ownership": {
     eyebrow: "Organisation",
     title: "Ownership and reporting",
-    description:
-      "Assign organisational owners, managers, team leads, and employee reporting lines.",
+    description: "Manage owners, managers, and reporting lines.",
     icon: Building2,
   },
   "/hrms/payroll": {
     eyebrow: "Compensation",
     title: "Payroll operations",
-    description:
-      "Review live payroll inputs, approve period runs, and hand off immutable snapshots to Accounting.",
+    description: "Review payroll inputs and runs.",
     icon: ReceiptIndianRupee,
   },
   "/hrms/reimbursement": {
     eyebrow: "Employee finance",
     title: "Reimbursements",
-    description:
-      "Review employee expense claims, supporting records, and approval decisions.",
+    description: "Review employee expense claims.",
     icon: HandCoins,
   },
   "/hrms/salary-revisions": {
     eyebrow: "Compensation",
     title: "Salary revisions",
-    description:
-      "Review current compensation and maintain an auditable revision history.",
+    description: "Track compensation changes.",
     icon: ReceiptIndianRupee,
   },
   "/hrms/salary-structure": {
     eyebrow: "Compensation",
     title: "Salary structure",
-    description:
-      "Configure employee earnings, deductions, statutory values, and payroll metadata.",
+    description: "Manage earnings, deductions, and statutory values.",
     icon: ReceiptIndianRupee,
   },
   "/hrms/settings": {
     eyebrow: "Configuration",
     title: "HRMS settings",
-    description:
-      "Control people-service availability and organisation-wide HRMS behavior.",
+    description: "Manage HRMS settings and availability.",
     icon: Settings2,
   },
   "/hrms/tasks": {
     eyebrow: "People services",
     title: "Task checklists",
-    description:
-      "Coordinate recurring and employee-specific HR work with clear ownership.",
+    description: "Track recurring and employee HR tasks.",
     icon: ClipboardCheck,
   },
   "/hrms/tracking": {
     eyebrow: "Workforce location",
     title: "GPS tracking",
-    description:
-      "Review authorised workforce location activity, visits, and field movement.",
+    description: "Review workforce location activity.",
     icon: MapPinned,
   },
   "/hrms/travel": {
     eyebrow: "Employee services",
     title: "Travel and expenses",
-    description:
-      "Manage employee travel requests, itineraries, expenses, and approvals.",
+    description: "Manage travel requests and expenses.",
     icon: Plane,
   },
   "/hrms/users": {
     eyebrow: "Access control",
     title: "Employee user control",
-    description:
-      "Enable or suspend employee sign-in while preserving the underlying employee record.",
+    description: "Manage employee sign-in access.",
     icon: ShieldCheck,
   },
   "/hrms/work-reports": {
     eyebrow: "Workforce reporting",
     title: "Work reports",
-    description:
-      "Review daily work submissions, progress, and manager feedback.",
+    description: "Review daily work submissions.",
     icon: FileText,
   },
   "/hrms/recruit": {
     eyebrow: "Talent acquisition",
     title: "Recruitment",
-    description:
-      "Run employer hiring workflows and employee career experiences from a private workspace.",
+    description: "Manage hiring and internal career flows.",
     icon: BriefcaseBusiness,
   },
   "/hrms/recruit/audit": {
     eyebrow: "Talent acquisition",
     title: "Recruitment audit",
-    description:
-      "Inspect security and workflow events across recruitment activity.",
+    description: "Review recruitment activity and audits.",
     icon: ShieldCheck,
   },
   "/hrms/recruit/employer": {
     eyebrow: "Employer workspace",
     title: "Hiring dashboard",
-    description:
-      "Track active jobs, applications, candidates, and hiring progress.",
+    description: "Track jobs, applications, and progress.",
     icon: Gauge,
   },
   "/hrms/recruit/employer/applications": {
     eyebrow: "Employer workspace",
     title: "Applications",
-    description:
-      "Review applications, screening stages, and candidate decisions.",
+    description: "Review applications and decisions.",
     icon: ClipboardCheck,
   },
   "/hrms/recruit/employer/candidates": {
@@ -257,120 +231,103 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
   "/hrms/recruit/employer/jobs": {
     eyebrow: "Employer workspace",
     title: "Job openings",
-    description:
-      "Manage openings, publishing state, hiring owners, and application flow.",
+    description: "Manage openings and hiring owners.",
     icon: BriefcaseBusiness,
   },
   "/hrms/recruit/employer/jobs/new": {
     eyebrow: "Employer workspace",
     title: "Create job opening",
-    description:
-      "Define a role, hiring requirements, visibility, and application window.",
+    description: "Create a new job opening.",
     icon: BriefcaseBusiness,
   },
   "/hrms/recruit/career": {
     eyebrow: "Private career workspace",
     title: "Career dashboard",
-    description:
-      "Explore internal opportunities and manage private applications and career records.",
+    description: "Explore internal roles and applications.",
     icon: BriefcaseBusiness,
   },
   "/hrms/recruit/career/applications": {
     eyebrow: "Private career workspace",
     title: "My applications",
-    description:
-      "Track application progress and withdraw eligible submissions.",
+    description: "Track your application progress.",
     icon: ClipboardCheck,
   },
   "/hrms/recruit/career/assistant": {
     eyebrow: "Private career workspace",
     title: "Career assistant",
-    description:
-      "Use role and profile context to prepare for internal opportunities.",
+    description: "Prepare for internal opportunities.",
     icon: BadgeCheck,
   },
   "/hrms/recruit/career/jobs": {
     eyebrow: "Private career workspace",
     title: "Available jobs",
-    description:
-      "Browse published internal openings and start a private application.",
+    description: "Browse internal openings.",
     icon: BriefcaseBusiness,
   },
   "/hrms/recruit/career/profile": {
     eyebrow: "Private career workspace",
     title: "Career profile",
-    description:
-      "Maintain private skills, preferences, experience, and readiness information.",
+    description: "Manage skills and career preferences.",
     icon: IdCard,
   },
   "/hrms/recruit/career/resumes": {
     eyebrow: "Private career workspace",
     title: "Resumes",
-    description:
-      "Maintain private resume versions used for internal applications.",
+    description: "Manage resume versions.",
     icon: FileText,
   },
   "/hrms/recruit/settings": {
     eyebrow: "Talent acquisition",
     title: "Recruitment settings",
-    description:
-      "Configure hiring policies, privacy controls, retention, and career-workspace behavior.",
+    description: "Manage hiring and privacy settings.",
     icon: Settings2,
   },
   "/attendance": {
     eyebrow: "Workforce time",
-    title: "Attendance command centre",
-    description:
-      "Punches, leave, overtime, shifts, biometric sync, and monthly workforce reporting.",
+    title: "Attendance",
+    description: "Time, leave, overtime, and shifts.",
     icon: CalendarClock,
   },
   "/attendance/biometric-sync": {
     eyebrow: "Attendance integration",
     title: "Biometric sync",
-    description:
-      "Synchronise attendance-device records, inspect mappings, and resolve import exceptions.",
+    description: "Sync device records and resolve imports.",
     icon: Fingerprint,
   },
   "/attendance/leaves": {
     eyebrow: "Leave workflow",
     title: "Leave management",
-    description:
-      "Submit leave, review balances, and action requests within the employee permission model.",
+    description: "Review leave balances and requests.",
     icon: CalendarClock,
   },
   "/attendance/ot": {
     eyebrow: "Attendance operations",
     title: "Overtime and shifts",
-    description:
-      "Review overtime, working calendars, shifts, LOP, holidays, imports, and monthly processing.",
+    description: "Manage overtime, calendars, and shifts.",
     icon: Clock3,
   },
   "/attendance/punch": {
     eyebrow: "Attendance operations",
     title: "Punch clock",
-    description:
-      "Record authorised attendance with biometric and GPS-aware operational context.",
+    description: "Record attendance punches.",
     icon: Clock3,
   },
   "/attendance/reports": {
     eyebrow: "Attendance reporting",
     title: "Monthly attendance report",
-    description:
-      "Review employee presence totals for a selected payroll month.",
+    description: "Review monthly attendance totals.",
     icon: FileText,
   },
   "/attendance/settings": {
     eyebrow: "Attendance configuration",
     title: "Attendance settings",
-    description:
-      "Review attendance policy controls, processing workspaces, and integration touchpoints.",
+    description: "Manage attendance settings and policies.",
     icon: Settings2,
   },
   "/attendance/timesheets": {
     eyebrow: "Workforce time",
     title: "Timesheets",
-    description:
-      "Weekly submission and approval will live in this operational workspace.",
+    description: "Submit and review timesheets.",
     icon: CalendarClock,
   },
 };
@@ -390,8 +347,7 @@ export function getPeopleRouteMeta(pathname: string | null): PeopleRouteMeta {
     return {
       eyebrow: "People directory",
       title: "Employee profile",
-      description:
-        "Review employment, organisation, contact, reporting, and compensation records.",
+      description: "Review employment and reporting details.",
       icon: IdCard,
     };
   }

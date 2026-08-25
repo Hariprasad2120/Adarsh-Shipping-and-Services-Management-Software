@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SESSION_COOKIE_NAME } from "@/lib/session-config";
+import { dispatchMonaPetNotification } from "@/modules/mona/pet-events";
 
 type ToastVariant =
   | "secondary"
@@ -224,6 +225,8 @@ export function NotificationProvider({
   const router = useRouter();
   const [localToasts, setLocalToasts] = useState<LocalToast[]>([]);
   const [remoteToasts, setRemoteToasts] = useState<RemoteToast[]>([]);
+  const seenLocalToastIdsRef = useRef<Set<string>>(new Set());
+  const seenRemoteToastIdsRef = useRef<Set<string>>(new Set());
   const refreshInFlightRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const etagRef = useRef<string | null>(null);
@@ -351,6 +354,21 @@ export function NotificationProvider({
   }, [localToasts]);
 
   useEffect(() => {
+    const unseen = localToasts.filter((toast) => !seenLocalToastIdsRef.current.has(toast.id));
+    if (unseen.length === 0) return;
+
+    unseen.forEach((toast) => seenLocalToastIdsRef.current.add(toast.id));
+    const latest = unseen.at(-1);
+    if (!latest) return;
+
+    dispatchMonaPetNotification({
+      count: unseen.length,
+      title: latest.title,
+      variant: latest.variant,
+    });
+  }, [localToasts]);
+
+  useEffect(() => {
     const timers = remoteToasts
       .filter((toast) => toast.priority !== "important")
       .map((toast) =>
@@ -362,6 +380,21 @@ export function NotificationProvider({
       );
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [remoteToasts]);
+
+  useEffect(() => {
+    const unseen = remoteToasts.filter((toast) => !seenRemoteToastIdsRef.current.has(toast.id));
+    if (unseen.length === 0) return;
+
+    unseen.forEach((toast) => seenRemoteToastIdsRef.current.add(toast.id));
+    const latest = unseen.at(-1);
+    if (!latest) return;
+
+    dispatchMonaPetNotification({
+      count: unseen.length,
+      title: latest.title,
+      variant: latest.variant,
+    });
   }, [remoteToasts]);
 
   function pushToast(toast: Omit<LocalToast, "id">) {

@@ -22,7 +22,7 @@ export default async function PayrollLayout({
       <WorkspacePageHeader
         eyebrow="Standalone payroll module"
         title="Payroll"
-        description="Operate payroll as its own control tower while continuing to consume canonical HRMS employees, attendance, leave, overtime, incentives, and Accounting posting flows."
+        description="Run payroll with HRMS and Accounting inputs."
         icon={<ReceiptIndianRupee aria-hidden="true" />}
         actions={
           <div className="flex flex-wrap gap-2">

@@ -88,14 +88,14 @@ export function ServiceEnquiryQueue({
   basePath: "/crm/freight-forwarding" | "/crm/customs-clearance";
 }) {
   return (
-    <OperationalDataTable>
+    <OperationalDataTable className="mnx-crm-service-enquiry-queue">
       <OperationalDataTableHeader
-        eyebrow="Demand intake"
-        title={`${serviceLabel} queue`}
+        hideIdentity
+        infoAriaLabel={`Show ${serviceLabel.toLowerCase()} queue details`}
         actions={
           <>
-            <form method="GET" className="contents">
-              <label className="mnx-search-field">
+            <form method="GET" className="mnx-crm-service-enquiry-queue-toolbar">
+              <label className="mnx-search-field mnx-crm-service-enquiry-queue-search">
                 <Search aria-hidden="true" />
                 <Input
                   aria-label={`Search ${serviceLabel.toLowerCase()} enquiries`}
@@ -110,11 +110,8 @@ export function ServiceEnquiryQueue({
             <OperationalVisibleRecords visible={items.length} total={items.length} />
           </>
         }
-      >
-        <p>
-          Qualified CRM work items routed into the {serviceLabel.toLowerCase()} workflow.
-        </p>
-      </OperationalDataTableHeader>
+        description={`Qualified CRM work items routed into the ${serviceLabel.toLowerCase()} workflow.`}
+      />
 
       {items.length === 0 ? (
         <OperationalDataTableWrap>
@@ -139,9 +136,9 @@ export function ServiceEnquiryQueue({
             </tbody>
           </OperationalTable>
         </OperationalDataTableWrap>
-      ) : (
-        <OperationalDataTableWrap>
-          <OperationalTable>
+        ) : (
+          <OperationalDataTableWrap>
+          <OperationalTable className="mnx-crm-service-enquiry-queue-table">
             <thead>
               <tr>
                 <OperationalTableHead>Reference</OperationalTableHead>
@@ -155,8 +152,8 @@ export function ServiceEnquiryQueue({
                 <OperationalTableHead className="text-right">Open</OperationalTableHead>
               </tr>
             </thead>
-            <tbody>
-              {items.map((item) => {
+              <tbody>
+                {items.map((item) => {
                 const snapshot = item.sourceSnapshot;
                 const mode = readSnapshotValue(snapshot, "type");
                 const direction = readSnapshotValue(snapshot, "seaType");
@@ -164,12 +161,13 @@ export function ServiceEnquiryQueue({
                 const destination = readSnapshotValue(snapshot, "pod", "aod");
                 const customerName = getCustomerName(item);
 
-                return (
-                  <OperationalLinkedRow
-                    key={item.id}
-                    href={`${basePath}/${item.id}`}
-                    ariaLabel={`Open ${serviceLabel.toLowerCase()} enquiry ${item.enquiryRef || item.id}`}
-                  >
+                  return (
+                    <OperationalLinkedRow
+                      key={item.id}
+                      href={`${basePath}/${item.id}`}
+                      ariaLabel={`Open ${serviceLabel.toLowerCase()} enquiry ${item.enquiryRef || item.id}`}
+                      className="mnx-crm-service-enquiry-queue-row"
+                    >
                     <OperationalPrimaryCell
                       primary={item.enquiryRef || "Pending reference"}
                       secondary={new Date(item.updatedAt).toLocaleDateString("en-GB")}

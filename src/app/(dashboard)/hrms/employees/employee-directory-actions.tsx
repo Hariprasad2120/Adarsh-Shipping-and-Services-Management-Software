@@ -396,220 +396,235 @@ export function EmployeeDirectoryActions({
   }
 
   return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        <FilterMenu
-        activeCount={activeCount}
-        ariaLabel="Open employee filters"
-        contentClassName="w-[360px]"
-        open={open}
-        onOpenChange={(nextOpen) => {
-          if (nextOpen) {
-            setDraft(currentDraft);
-          }
-
-          setOpen(nextOpen);
-        }}
-        title="Filter employees"
-      >
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mono-muted" />
-
-            <Input
-              value={draft.search}
-              onChange={(event) => updateDraft("search", event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  applyFilters();
-                }
-              }}
-              placeholder="Name, ID, email, role…"
-              className="h-10 pl-9"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
-                Organisation
-              </p>
-
-              <div className="grid gap-3">
-                <DropdownSelect
-                  ariaLabel="Location"
-                  onValueChange={(value) => updateDraft("branchId", value)}
-                  options={[
-                    {
-                      value: "",
-                      label: "All branches",
-                    },
-                    ...(org?.branches.map((branch) => ({
-                      value: branch.id,
-                      label: branch.name,
-                    })) ?? []),
-                  ]}
-                  placeholder="Location"
-                  triggerClassName="h-10 py-2 text-sm"
-                  value={draft.branchId}
-                />
-
-                <DropdownSelect
-                  ariaLabel="Department"
-                  onValueChange={(value) => updateDraft("departmentId", value)}
-                  options={[
-                    {
-                      value: "",
-                      label: "All departments",
-                    },
-                    ...(org?.departments.map((department) => ({
-                      value: department.id,
-                      label: department.name,
-                    })) ?? []),
-                  ]}
-                  placeholder="Department"
-                  triggerClassName="h-10 py-2 text-sm"
-                  value={draft.departmentId}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
-                Access
-              </p>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <DropdownSelect
-                  ariaLabel="Role"
-                  onValueChange={(value) => updateDraft("roleId", value)}
-                  options={[
-                    {
-                      value: "",
-                      label: "All roles",
-                    },
-                    ...roles.map((role) => ({
-                      value: role.id,
-                      label: role.name,
-                    })),
-                  ]}
-                  placeholder="Role"
-                  triggerClassName="h-10 py-2 text-sm"
-                  value={draft.roleId}
-                />
-
-                <DropdownSelect
-                  ariaLabel="Account status"
-                  onValueChange={(value) => updateDraft("active", value)}
-                  options={[
-                    {
-                      value: "all",
-                      label: "All account statuses",
-                    },
-                    {
-                      value: "true",
-                      label: "Login enabled",
-                    },
-                    {
-                      value: "false",
-                      label: "Login disabled",
-                    },
-                    {
-                      value: "invited",
-                      label: "Invited",
-                    },
-                  ]}
-                  placeholder="Account status"
-                  triggerClassName="h-10 py-2 text-sm"
-                  value={draft.active}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
-                Employment
-              </p>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <DropdownSelect
-                  ariaLabel="Employee status"
-                  onValueChange={(value) =>
-                    updateDraft("employeeStatus", value)
-                  }
-                  options={[
-                    {
-                      value: "",
-                      label: "All employee statuses",
-                    },
-                    {
-                      value: "ACTIVE",
-                      label: "Active",
-                    },
-                    {
-                      value: "EXITED",
-                      label: "Exited",
-                    },
-                  ]}
-                  placeholder="Employee status"
-                  triggerClassName="h-10 py-2 text-sm"
-                  value={draft.employeeStatus}
-                />
-
-                <DropdownSelect
-                  ariaLabel="Onboarding status"
-                  onValueChange={(value) =>
-                    updateDraft("onboardingStatus", value)
-                  }
-                  options={[
-                    {
-                      value: "",
-                      label: "All onboarding statuses",
-                    },
-                    {
-                      value: "Not started",
-                      label: "Not started",
-                    },
-                    {
-                      value: "In progress",
-                      label: "In progress",
-                    },
-                    {
-                      value: "Completed",
-                      label: "Completed",
-                    },
-                    {
-                      value: "On hold",
-                      label: "On hold",
-                    },
-                  ]}
-                  placeholder="Onboarding status"
-                  triggerClassName="h-10 py-2 text-sm"
-                  value={draft.onboardingStatus}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-2">
-            <MnxAction
-              type="button"
-              onClick={clearFilters}
-              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[var(--mnx-accent)]/45 hover:text-mono-text"
-            >
-              Clear
-            </MnxAction>
-
-            <MnxAction
-              type="button"
-              onClick={applyFilters}
-              className="rounded-xl bg-[var(--mnx-accent)] px-3 py-2 text-sm font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)]"
-            >
-              Apply filters
-            </MnxAction>
-          </div>
+    <section className="mnx-employee-directory-actions">
+      <div className="mnx-toolbar">
+        <div className="mnx-toolbar-copy">
+          <h2>Filter employee directory</h2>
+          <p>Review employee records, access states, and onboarding progress.</p>
         </div>
+        <div className="mnx-toolbar-actions">
+          <span className="mnx-employee-directory-total">
+            {totalCount} visible
+          </span>
+        </div>
+      </div>
+
+      <div className="mnx-employee-directory-actions-row">
+        <FilterMenu
+          activeCount={activeCount}
+          ariaLabel="Open employee filters"
+          contentClassName="w-[360px]"
+          open={open}
+          onOpenChange={(nextOpen) => {
+            if (nextOpen) {
+              setDraft(currentDraft);
+            }
+
+            setOpen(nextOpen);
+          }}
+          title="Filter employees"
+        >
+          <div className="space-y-4">
+            <div className="relative flex items-center">
+              <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-mono-muted" />
+
+              <Input
+                value={draft.search}
+                onChange={(event) => updateDraft("search", event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    applyFilters();
+                  }
+                }}
+                placeholder="Name, ID, email, role…"
+                className="h-10 text-sm"
+                style={{ paddingLeft: "2.5rem" }}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
+                  Organisation
+                </p>
+
+                <div className="grid gap-3">
+                  <DropdownSelect
+                    ariaLabel="Location"
+                    onValueChange={(value) => updateDraft("branchId", value)}
+                    options={[
+                      {
+                        value: "",
+                        label: "All branches",
+                      },
+                      ...(org?.branches.map((branch) => ({
+                        value: branch.id,
+                        label: branch.name,
+                      })) ?? []),
+                    ]}
+                    placeholder="Location"
+                    triggerClassName="h-10 py-2 text-sm"
+                    value={draft.branchId}
+                  />
+
+                  <DropdownSelect
+                    ariaLabel="Department"
+                    onValueChange={(value) =>
+                      updateDraft("departmentId", value)
+                    }
+                    options={[
+                      {
+                        value: "",
+                        label: "All departments",
+                      },
+                      ...(org?.departments.map((department) => ({
+                        value: department.id,
+                        label: department.name,
+                      })) ?? []),
+                    ]}
+                    placeholder="Department"
+                    triggerClassName="h-10 py-2 text-sm"
+                    value={draft.departmentId}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
+                  Access
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <DropdownSelect
+                    ariaLabel="Role"
+                    onValueChange={(value) => updateDraft("roleId", value)}
+                    options={[
+                      {
+                        value: "",
+                        label: "All roles",
+                      },
+                      ...roles.map((role) => ({
+                        value: role.id,
+                        label: role.name,
+                      })),
+                    ]}
+                    placeholder="Role"
+                    triggerClassName="h-10 py-2 text-sm"
+                    value={draft.roleId}
+                  />
+
+                  <DropdownSelect
+                    ariaLabel="Account status"
+                    onValueChange={(value) => updateDraft("active", value)}
+                    options={[
+                      {
+                        value: "all",
+                        label: "All account statuses",
+                      },
+                      {
+                        value: "true",
+                        label: "Login enabled",
+                      },
+                      {
+                        value: "false",
+                        label: "Login disabled",
+                      },
+                      {
+                        value: "invited",
+                        label: "Invited",
+                      },
+                    ]}
+                    placeholder="Account status"
+                    triggerClassName="h-10 py-2 text-sm"
+                    value={draft.active}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
+                  Employment
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <DropdownSelect
+                    ariaLabel="Employee status"
+                    onValueChange={(value) =>
+                      updateDraft("employeeStatus", value)
+                    }
+                    options={[
+                      {
+                        value: "",
+                        label: "All employee statuses",
+                      },
+                      {
+                        value: "ACTIVE",
+                        label: "Active",
+                      },
+                      {
+                        value: "EXITED",
+                        label: "Exited",
+                      },
+                    ]}
+                    placeholder="Employee status"
+                    triggerClassName="h-10 py-2 text-sm"
+                    value={draft.employeeStatus}
+                  />
+
+                  <DropdownSelect
+                    ariaLabel="Onboarding status"
+                    onValueChange={(value) =>
+                      updateDraft("onboardingStatus", value)
+                    }
+                    options={[
+                      {
+                        value: "",
+                        label: "All onboarding statuses",
+                      },
+                      {
+                        value: "Not started",
+                        label: "Not started",
+                      },
+                      {
+                        value: "In progress",
+                        label: "In progress",
+                      },
+                      {
+                        value: "Completed",
+                        label: "Completed",
+                      },
+                      {
+                        value: "On hold",
+                        label: "On hold",
+                      },
+                    ]}
+                    placeholder="Onboarding status"
+                    triggerClassName="h-10 py-2 text-sm"
+                    value={draft.onboardingStatus}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <MnxAction
+                type="button"
+                onClick={clearFilters}
+                className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[var(--mnx-accent)]/45 hover:text-mono-text"
+              >
+                Clear
+              </MnxAction>
+
+              <MnxAction
+                type="button"
+                onClick={applyFilters}
+                className="rounded-xl bg-[var(--mnx-accent)] px-3 py-2 text-sm font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)]"
+              >
+                Apply filters
+              </MnxAction>
+            </div>
+          </div>
         </FilterMenu>
 
         <MnxAction
@@ -642,14 +657,14 @@ export function EmployeeDirectoryActions({
             </Link>
           </>
         ) : null}
-      </div>
 
-      <p className="text-sm text-mono-muted">
-        Total count:{" "}
-        <strong className="mnx-numeric font-semibold text-mono-text">
-          {totalCount}
-        </strong>
-      </p>
+        <p className="mnx-employee-directory-total-copy">
+          Total count:{" "}
+          <strong className="mnx-numeric font-semibold text-mono-text">
+            {totalCount}
+          </strong>
+        </p>
+      </div>
 
       <WorkspaceDialog
         description="Download the employee profile directory in your preferred spreadsheet format."
@@ -867,6 +882,6 @@ export function EmployeeDirectoryActions({
           </div>
         </form>
       </WorkspaceDialog>
-    </div>
+    </section>
   );
 }

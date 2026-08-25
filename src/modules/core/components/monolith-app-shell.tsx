@@ -13,7 +13,6 @@ import {
   Moon,
   Search,
   ShieldCheck,
-  Sparkles,
   Sun,
   UserRound,
   X,
@@ -38,6 +37,11 @@ import {
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
 import { MonolithSearchCommand } from "@/components/navigation/monolith-search-command";
 import { MonaProvider, useMonaChat } from "@/modules/mona/components";
+import { MonaDesktopPet } from "@/modules/mona/components/mona-desktop-pet";
+import {
+  MONA_PET_OPEN_SEARCH_EVENT,
+  dispatchMonaPetRoute,
+} from "@/modules/mona/pet-events";
 import { DevConsoleErrorBoundary } from "@/components/dev-console/dev-console-error-boundary";
 import { DevConsoleProfiler } from "@/components/dev-console/dev-console-profiler";
 import { markRouteChangeStart, recordRouteLoadPing } from "@/components/dev-console/dev-console-perf-tracker";
@@ -381,6 +385,7 @@ export function MonolithAppShell(props: MonolithAppShellProps) {
       <MonolithThemeProvider dashboardShell>
         <MonolithAppShellBody {...props} />
       </MonolithThemeProvider>
+      <MonaDesktopPet />
       <MonaChat />
       {props.caps["system.dev_console.access"] ? (
         <DevConsole
@@ -458,6 +463,15 @@ function MonolithAppShellBody({
   }, [toggleChat]);
 
   useEffect(() => {
+    function handleOpenSearch() {
+      setSearchOpen(true);
+    }
+
+    window.addEventListener(MONA_PET_OPEN_SEARCH_EVENT, handleOpenSearch);
+    return () => window.removeEventListener(MONA_PET_OPEN_SEARCH_EVENT, handleOpenSearch);
+  }, []);
+
+  useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
       setSidebarCollapsed(window.localStorage.getItem("sidebarCollapsed") === "true");
       setSidebarCollapsedLoaded(true);
@@ -487,6 +501,7 @@ function MonolithAppShellBody({
   useEffect(() => {
     markRouteChangeStart();
     if (caps["system.dev_console.access"]) recordRouteLoadPing(pathname);
+    dispatchMonaPetRoute({ contextLabel, pathname });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only fire on pathname change
   }, [pathname]);
 
@@ -652,17 +667,6 @@ function MonolithAppShellBody({
         </nav>
 
         <div className="mnx-sidebar-footer">
-          <button type="button" className="mnx-mona-card" onClick={toggleChat}>
-          <span>
-            <Sparkles size={14} strokeWidth={2} />
-          </span>
-          <span>
-            <b>Ask Mona</b>
-            <small>Open your workspace assistant</small>
-          </span>
-          <kbd>⌘M</kbd>
-          </button>
-
           <div className="mnx-profile-menu mnx-sidebar-profile-menu" ref={profileRef}>
           <button
             type="button"

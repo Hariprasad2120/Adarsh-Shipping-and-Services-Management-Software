@@ -7,6 +7,27 @@ import {
   MonolithSurface,
 } from "@/components/ui/foundation";
 
+function WorkspaceCardInfo({
+  ariaLabel = "Show details",
+  children,
+  className,
+}: {
+  ariaLabel?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <details className={cn("mnx-card-info", className)}>
+      <summary aria-label={ariaLabel} className="mnx-card-info-trigger">
+        <span aria-hidden="true">!</span>
+      </summary>
+      <div className="mnx-card-info-popover">
+        <div className="mnx-card-info-content">{children}</div>
+      </div>
+    </details>
+  );
+}
+
 export function WorkspacePage({
   className,
   ...props
@@ -144,6 +165,16 @@ export function WorkspaceMetric({
   value,
   ...props
 }: WorkspaceMetricProps) {
+  const metricInfo =
+    detail && !href ? (
+      <WorkspaceCardInfo
+        ariaLabel="Show metric details"
+        className="mnx-workspace-metric-info"
+      >
+        <p className="mnx-workspace-metric-detail">{detail}</p>
+      </WorkspaceCardInfo>
+    ) : null;
+
   const content = (
     <>
       <div className="mnx-workspace-metric-header">
@@ -151,15 +182,22 @@ export function WorkspaceMetric({
           {icon ? <span className="mnx-workspace-metric-icon">{icon}</span> : null}
           <MonolithSpecLabel>{label}</MonolithSpecLabel>
         </span>
-        {actionIcon ? (
-          <span className="mnx-workspace-metric-action" aria-hidden="true">
-            {actionIcon}
+        {actionIcon || metricInfo ? (
+          <span className="mnx-workspace-metric-controls">
+            {metricInfo}
+            {actionIcon ? (
+              <span className="mnx-workspace-metric-action" aria-hidden="true">
+                {actionIcon}
+              </span>
+            ) : null}
           </span>
         ) : null}
       </div>
       <div className="mnx-workspace-metric-body">
         <strong className="mnx-workspace-metric-value">{value}</strong>
-        {detail ? <p className="mnx-workspace-metric-detail">{detail}</p> : null}
+        {detail && href ? (
+          <p className="mnx-workspace-metric-detail">{detail}</p>
+        ) : null}
       </div>
     </>
   );
@@ -320,6 +358,12 @@ export function WorkspacePanelHeader({
   title,
   ...props
 }: WorkspacePanelHeaderProps) {
+  const panelInfo = description ? (
+    <WorkspaceCardInfo ariaLabel="Show card details">
+      <p>{description}</p>
+    </WorkspaceCardInfo>
+  ) : null;
+
   return (
     <header className={cn("mnx-table-toolbar", className)} {...props}>
       <div className="mnx-panel-header-copy">
@@ -327,9 +371,13 @@ export function WorkspacePanelHeader({
           <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel>
         ) : null}
         <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
       </div>
-      {actions ? <div className="mnx-panel-actions">{actions}</div> : null}
+      {panelInfo || actions ? (
+        <div className="mnx-panel-actions">
+          {panelInfo}
+          {actions}
+        </div>
+      ) : null}
     </header>
   );
 }

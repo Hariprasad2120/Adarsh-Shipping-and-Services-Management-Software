@@ -147,8 +147,8 @@ export function FreightForwardingWorkspaceClient({
         }
         description={
           section === "HOME"
-            ? "Open the dedicated create-booking page to capture one-sided or linked MBL and HBL transaction sets."
-            : `Review, create, and update ${section} transactions from the dedicated sidebar tab.`
+            ? "Track bookings and linked MBL and HBL work."
+            : `Review and update ${section} transactions.`
         }
         actions={
           <div className="ff-booking-header-actions">

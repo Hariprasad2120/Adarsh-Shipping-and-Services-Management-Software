@@ -1254,8 +1254,8 @@ export async function getTeamReportees(userId: string, orgId: string) {
       name: emp.name,
       email: emp.email,
       employeeNo: String(emp.employeeNumber ?? ""),
-      designation: emp.designation ?? "Associate",
-      location: emp.branch?.name ?? "Chennai",
+      designation: emp.designation ?? "",
+      location: emp.branch?.name ?? "",
       photo: emp.photo,
       punchStatus,
       shift: currentShift

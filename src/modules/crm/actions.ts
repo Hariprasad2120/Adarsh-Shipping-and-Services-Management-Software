@@ -2948,10 +2948,53 @@ export async function saveEnquiryRateRecommendationDecisionAction(
       },
     };
 
+    const recommendationSnapshot: RateComparisonRecommendationSnapshot = {
+      responseId: workflow.rateRecommendation.recommendedResponseId,
+      vendorName:
+        workflow.rateResponses.find(
+          (response) => response.id === workflow.rateRecommendation?.recommendedResponseId,
+        )?.vendorName ?? null,
+      totalScore:
+        typeof workflow.rateRecommendation.confidenceScore === "number"
+          ? Number((workflow.rateRecommendation.confidenceScore * 100).toFixed(1))
+          : null,
+      explanation: workflow.rateRecommendation.explanation,
+      factors: workflow.rateRecommendation.reasons.map((reason) => ({
+        key: "DATA_CONFIDENCE",
+        label: reason.label,
+        weightPct: 0,
+        scorePct: null,
+        detail: reason.detail,
+      })),
+      generatedAt: workflow.rateRecommendation.generatedAt,
+    };
+    const firstOverrideReason = nextRecommendation.decision.overrideReasons[0] ?? null;
+    const normalizedOverrideReason: RateRecommendationOverrideReason | null =
+      firstOverrideReason === "Customer preference"
+        ? "CUSTOMER_PREFERENCE"
+        : firstOverrideReason === "Preferred carrier"
+          ? "PREFERRED_CARRIER"
+          : firstOverrideReason === "Better transit"
+            ? "BETTER_TRANSIT"
+            : firstOverrideReason === "Credit terms"
+              ? "CREDIT_TERMS"
+              : firstOverrideReason === "Operational reliability"
+                ? "OPERATIONAL_RELIABILITY"
+                : firstOverrideReason === "Relationship"
+                  ? "RELATIONSHIP"
+                  : firstOverrideReason === "Management decision"
+                    ? "MANAGEMENT_DECISION"
+                    : firstOverrideReason === "Other"
+                      ? "OTHER"
+                      : null;
+
     const comparisonSelection = {
       mode: selectedMode,
       selectedResponseId: selectedMode === "ENTIRE_AGENT" ? selectedResponseId : null,
       chargeSelections: selectedMode === "PER_CHARGE" ? selectedChargeSelections : [],
+      aiRecommendation: recommendationSnapshot,
+      overrideReason: normalizedOverrideReason,
+      overrideNote: nextRecommendation.decision.overrideNote,
       savedAt: nowIso,
       savedById: session.user.id,
     };

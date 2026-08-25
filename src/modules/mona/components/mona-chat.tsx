@@ -8,10 +8,9 @@ import { useMonaChat } from "@/modules/mona/components/mona-provider";
 import { MonaAvatar } from "@/modules/mona/components/mona-avatar";
 import { MonaMessage } from "@/modules/mona/components/mona-message";
 import { MonaInput } from "@/modules/mona/components/mona-input";
-import { DevelopmentBuildWatermark } from "@/components/feedback/development-build-watermark";
 
 /**
- * The main Mona chat widget — FAB + expandable panel.
+ * The main Mona chat widget — panel only.
  *
  * Design-system compliance:
  * - bg-mono-card, bg-mono-soft for panels
@@ -31,7 +30,6 @@ export function MonaChat() {
     error,
     models,
     currentModel,
-    toggleChat,
     closeChat,
     sendMessage,
     clearChat,
@@ -40,7 +38,6 @@ export function MonaChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const portalTarget = useSyncExternalStore(
     () => () => undefined,
@@ -75,19 +72,6 @@ export function MonaChat() {
     }
   }, [messages, ttsEnabled]);
 
-  // Tooltip on first load
-  useEffect(() => {
-    const shown = sessionStorage.getItem("mona-tooltip-shown");
-    if (!shown) {
-      const timer = setTimeout(() => {
-        setShowTooltip(true);
-        sessionStorage.setItem("mona-tooltip-shown", "1");
-        setTimeout(() => setShowTooltip(false), 4000);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
   const handleSend = useCallback(
     (text: string) => sendMessage(text),
     [sendMessage],
@@ -98,65 +82,6 @@ export function MonaChat() {
 
   return createPortal(
     <>
-      {/* ─── Floating Action Button ─────────────────────────────────────── */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.div
-            className="fixed z-[9999]"
-            style={{ bottom: 24, right: 24 }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          >
-            <div className="mnx-mona-floating-stack">
-              <AnimatePresence>
-                {showTooltip && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="mnx-floating-surface mnx-floating-tooltip relative whitespace-nowrap px-4 py-2 text-[12px] font-medium"
-                  >
-                    👋 Hi! I&apos;m <strong>Mona</strong>, your AI companion
-                    <div className="mnx-floating-tooltip-arrow absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-r border-b" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <DevelopmentBuildWatermark />
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleChat}
-              className="group mnx-shadow-panel relative flex items-center justify-center rounded-full bg-mono-soft transition-shadow"
-              style={{
-                width: 56,
-                height: 56,
-                border:
-                  "2px solid color-mix(in srgb, var(--mnx-accent) 40%, transparent)",
-              }}
-              title="Chat with Mona (Ctrl+M)"
-              id="mona-fab"
-            >
-              <MonaAvatar size={48} isActive={false} showRing />
-
-              {/* Pulse ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  border:
-                    "2px solid color-mix(in srgb, var(--mnx-accent) 25%, transparent)",
-                }}
-                animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-              />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ─── Chat Panel ─────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (

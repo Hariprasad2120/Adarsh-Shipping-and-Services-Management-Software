@@ -57,7 +57,7 @@ export default async function EmployeesPage({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="mnx-employee-directory-page">
       <div className="flex items-start justify-between gap-4">
         <EmployeeDirectoryActions
           canCreateEmployee={canCreateEmployee}

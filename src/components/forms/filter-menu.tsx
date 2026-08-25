@@ -66,7 +66,7 @@ export function FilterMenu({
           ) : null}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className={`${contentClassName} !p-0`}>
+      <DropdownMenuContent align="start" side="bottom" sideOffset={8} className={cn("w-[360px] p-4 shadow-xl z-50 mnx-filter-popover", contentClassName)}>
         {children}
       </DropdownMenuContent>
     </DropdownMenu>

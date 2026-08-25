@@ -80,6 +80,7 @@ export type DashboardWidgetsData = {
     title: string;
     body: string;
     createdAt: string | Date;
+    publishedAt?: string | Date | null;
   }[];
   recentTasks: {
     id: string;

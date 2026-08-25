@@ -34,7 +34,7 @@ export function FreightForwardingWorkspace({
       <WorkspacePageHeader
         eyebrow="Freight forwarding"
         title="Freight Forwarding"
-        description="Create bookings, keep master and house bill workflows separate, and use this module as the owner surface for freight-forwarding operations."
+        description="Create bookings and manage forwarding work."
         actions={
           <ButtonLink href="/freight-forwarding/create-booking" variant="inverse">
             Create Booking

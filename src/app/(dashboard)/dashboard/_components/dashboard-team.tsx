@@ -5,6 +5,7 @@ import {
   Copy,
   Search,
   TimerOff,
+  Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { MonolithEmptyState } from "@/components/ui/foundation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { ReporteeSummary } from "./dashboard-types";
 
@@ -67,6 +69,7 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
 
   const workingCount = reportees.filter((item) => item.punchStatus === "CHECKED_IN").length;
   const breakCount = reportees.filter((item) => item.punchStatus === "ON_BREAK").length;
+  const hasReportees = reportees.length > 0;
 
   async function copyEmail(reportee: ReporteeSummary) {
     try {
@@ -104,10 +107,25 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
         description="Live attendance context for the people who report to you."
       />
 
+      {!hasReportees ? (
+        <Card className="mnx-table-card">
+          <MonolithEmptyState className="mnx-table-empty">
+            <Users size={24} />
+            <h3>No direct reportees assigned</h3>
+            <p>
+              This workspace activates when employees are mapped to you as their
+              reporting manager.
+            </p>
+          </MonolithEmptyState>
+        </Card>
+      ) : null}
+
+      {hasReportees ? (
       <Card className="mnx-table-card">
         <header className="mnx-table-toolbar mnx-table-toolbar-search">
           <div className="mnx-filter-row" role="group" aria-label="Filter reportees by attendance">
             {filters.map((item) => (
+              // eslint-disable-next-line no-restricted-syntax -- Attendance filter chips need route-local pressed-state styling and inline counts within the existing dashboard toolbar pattern.
               <button
                 type="button"
                 key={item.value}
@@ -127,7 +145,7 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
 
           <label className="mnx-search-field">
             <Search size={16} />
-            <input
+            <Input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -164,10 +182,12 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
                       </div>
                     </td>
                     <td>
-                      <b className="mnx-table-primary">{reportee.designation || "Team member"}</b>
+                      <b className="mnx-table-primary">
+                        {reportee.designation || "Designation not assigned"}
+                      </b>
                       <small>Employee {reportee.employeeNo || "—"}</small>
                     </td>
-                    <td>{reportee.location || "Head office"}</td>
+                    <td>{reportee.location || "Location not assigned"}</td>
                     <td>
                       {reportee.shift ? (
                         <>
@@ -209,6 +229,7 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
           <span>Attendance syncs after every punch action</span>
         </footer>
       </Card>
+      ) : null}
     </section>
   );
 }

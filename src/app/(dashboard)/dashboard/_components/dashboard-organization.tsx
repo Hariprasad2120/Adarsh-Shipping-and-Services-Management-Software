@@ -5,18 +5,23 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
-  Download,
+  FileText,
   Megaphone,
   Network,
+  Plus,
   Search,
+  Send,
   UserPlus,
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MonolithEmptyState } from "@/components/ui/foundation";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs } from "@/components/ui/tabs";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import {
@@ -54,6 +59,13 @@ interface NormalizedEmployee {
   dateOfBirth: Date | null;
 }
 
+interface PolicyWorkspace {
+  title: string;
+  note: string;
+  detail: string;
+  href: string;
+}
+
 const organizationTabs: {
   id: OrganizationView;
   label: string;
@@ -69,11 +81,28 @@ const organizationTabs: {
   { id: "new-hires", label: "New hires", icon: UserPlus },
 ];
 
-const policies = [
-  { title: "Code of Conduct", note: "Version 2.0 · Updated January 2026" },
-  { title: "Leave & Holiday Policy", note: "Reviewed February 2026" },
-  { title: "Information Security Policy", note: "Version 1.4 · Company-wide" },
-  { title: "Travel & Reimbursement", note: "Updated April 2026" },
+const policyWorkspaces: PolicyWorkspace[] = [
+  {
+    title: "Leave policy administration",
+    note: "Attendance module",
+    detail:
+      "Configure live leave types, versioned policy rules, eligibility, and publication states from the dedicated attendance policy workspace.",
+    href: "/attendance/leaves/policies",
+  },
+  {
+    title: "Location tracking controls",
+    note: "HRMS module",
+    detail:
+      "Review geofence and tracking-policy settings from the live location tracking workspace instead of relying on dashboard placeholders.",
+    href: "/hrms/location-tracking",
+  },
+  {
+    title: "Fuel reimbursement governance",
+    note: "HRMS module",
+    detail:
+      "Open the reimbursement control centre to review the current rate history, payout queue, and reimbursement-policy updates.",
+    href: "/hrms/reimbursement",
+  },
 ];
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -116,11 +145,11 @@ function normalizeEmployees(values: unknown[]): NormalizedEmployee[] {
     const record = asRecord(value);
     return {
       id: textValue(record, ["id", "employeeNumber", "employeeNo"], `employee-${index}`),
-      name: textValue(record, ["name", "fullName"], "Unnamed employee"),
+      name: textValue(record, ["name", "fullName"], "Name not recorded"),
       email: textValue(record, ["email", "workEmail"], "No email recorded"),
-      designation: textValue(record, ["designation", "role", "jobTitle"], "Team member"),
-      department: textValue(record, ["department", "departmentName"], "General operations"),
-      branch: textValue(record, ["branch", "branchName", "location"], "Head office"),
+      designation: textValue(record, ["designation", "role", "jobTitle"]),
+      department: textValue(record, ["department", "departmentName"]),
+      branch: textValue(record, ["branch", "branchName", "location"]),
       employeeNumber: textValue(record, ["employeeNumber", "employeeNo"], "—"),
       dateOfJoining: dateValue(record, ["dateOfJoining", "doj", "joinedAt", "createdAt"]),
       dateOfBirth: dateValue(record, ["dateOfBirth", "dob", "birthday"]),
@@ -153,6 +182,12 @@ export function DashboardOrganization({
 }: DashboardOrganizationProps) {
   const [activeView, setActiveView] = useState<OrganizationView>("overview");
   const [query, setQuery] = useState("");
+  const [announcementsList, setAnnouncementsList] = useState(data.announcements);
+  const [showPostForm, setShowPostForm] = useState(false);
+  const [postTitle, setPostTitle] = useState("");
+  const [postContent, setPostContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const normalizedEmployees = normalizeEmployees(employees);
   const organizationTreeData = {
     name: "Adarsh Shipping & Services",
@@ -160,6 +195,46 @@ export function DashboardOrganization({
     departments,
   };
   const today = new Date();
+
+  async function handleCreateAnnouncement(isDraft: boolean) {
+    if (!postTitle.trim()) {
+      toast.error("Please enter an announcement title");
+      return;
+    }
+    if (!postContent.trim()) {
+      toast.error("Please enter the announcement text body");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/hrms/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: postTitle,
+          content: postContent,
+          isDraft,
+        }),
+      });
+
+      const json = await res.json();
+      if (!json.ok) {
+        throw new Error(json.error?.message || "Failed to save announcement");
+      }
+
+      toast.success(isDraft ? "Announcement saved as draft" : "Announcement published successfully");
+      setAnnouncementsList((prev) => [json.data, ...prev]);
+      setPostTitle("");
+      setPostContent("");
+      setShowPostForm(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error saving announcement";
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredEmployees = normalizedQuery
@@ -220,6 +295,15 @@ export function DashboardOrganization({
                 aria-label="Search company directory"
               />
             </label>
+          ) : null}
+
+          {activeView === "announcements" ? (
+            <Button
+              className="mnx-button-accent-sm"
+              onClick={() => setShowPostForm((prev) => !prev)}
+            >
+              <Plus size={15} /> {showPostForm ? "Close form" : "Draft & post"}
+            </Button>
           ) : null}
         </header>
 
@@ -320,50 +404,130 @@ export function DashboardOrganization({
           ) : null}
 
           {activeView === "announcements" ? (
-            <div className="mnx-card-list">
-              {data.announcements.length > 0 ? (
-                data.announcements.map((announcement) => (
-                  <article className="mnx-inset-card" key={announcement.id}>
-                    <header>
-                      <Megaphone size={16} />
-                      <span>Company announcement</span>
-                    </header>
-                    <h3>{announcement.title}</h3>
-                    <p>{announcement.body}</p>
-                    <small>
-                      {new Date(announcement.createdAt).toLocaleDateString("en-IN")}
-                    </small>
-                  </article>
-                ))
-              ) : (
-                <div className="mnx-empty-state">
-                  <Megaphone size={24} />
-                  <h3>No announcements</h3>
-                  <p>The company broadcast feed is currently clear.</p>
+            <div className="mnx-announcements-wrapper">
+              {showPostForm ? (
+                <Card className="mnx-announcement-composer-card">
+                  <header className="mnx-composer-header">
+                    <div>
+                      <span className="mnx-spec-label">BROADCAST COMPOSER</span>
+                      <h2>Draft & post announcement</h2>
+                    </div>
+                  </header>
+
+                  <div className="mnx-composer-form">
+                    <label className="mnx-form-field">
+                      <span>Announcement Title *</span>
+                      <Input
+                        placeholder="e.g., Q3 All-Hands Meeting & Annual Holiday Schedule"
+                        value={postTitle}
+                        onChange={(e) => setPostTitle(e.target.value)}
+                        disabled={isSubmitting}
+                      />
+                    </label>
+
+                    <label className="mnx-form-field">
+                      <span>Announcement Content *</span>
+                      <Textarea
+                        placeholder="Write detailed company broadcast text..."
+                        rows={4}
+                        value={postContent}
+                        onChange={(e) => setPostContent(e.target.value)}
+                        disabled={isSubmitting}
+                      />
+                    </label>
+
+                    <div className="mnx-composer-actions">
+                      <Button
+                        disabled={isSubmitting}
+                        onClick={() => handleCreateAnnouncement(false)}
+                      >
+                        <Send size={14} /> Post Announcement
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={isSubmitting}
+                        onClick={() => handleCreateAnnouncement(true)}
+                      >
+                        <FileText size={14} /> Save as Draft
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={isSubmitting}
+                        onClick={() => setShowPostForm(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ) : null}
+
+              {announcementsList.length > 0 ? (
+                <div className="mnx-card-list">
+                  {announcementsList.map((announcement) => {
+                    const isDraft = !announcement.publishedAt;
+                    return (
+                      <article className="mnx-inset-card" key={announcement.id}>
+                        <header>
+                          <div className="mnx-announcement-header-left">
+                            <Megaphone size={16} />
+                            <span>Company announcement</span>
+                          </div>
+                          <Badge className={isDraft ? "mnx-badge-neutral" : "mnx-badge-accent"}>
+                            {isDraft ? "DRAFT" : "PUBLISHED"}
+                          </Badge>
+                        </header>
+                        <h3>{announcement.title}</h3>
+                        <p>{announcement.body}</p>
+                        <small>
+                          {announcement.publishedAt
+                            ? `Published ${new Date(announcement.publishedAt).toLocaleDateString("en-IN")}`
+                            : `Created ${new Date(announcement.createdAt).toLocaleDateString("en-IN")}`}
+                        </small>
+                      </article>
+                    );
+                  })}
                 </div>
+              ) : (
+                <MonolithEmptyState>
+                  <Megaphone size={24} />
+                  <h3>No announcements posted yet</h3>
+                  <p>Click &quot;Draft &amp; post&quot; above to issue your first company broadcast.</p>
+                </MonolithEmptyState>
               )}
             </div>
           ) : null}
 
           {activeView === "policies" ? (
             <div className="mnx-policy-grid">
-              {policies.map((policy) => (
-                <article key={policy.title}>
+              <article>
+                <span>
+                  <BookOpen size={18} />
+                </span>
+                <div>
+                  <h3>Central company policy library is not connected here yet</h3>
+                  <p>
+                    The dashboard no longer shows synthetic handbook entries. Use the
+                    live operational policy workspaces below until a real company-wide
+                    document register is available.
+                  </p>
+                </div>
+              </article>
+
+              {policyWorkspaces.map((workspace) => (
+                <article key={workspace.href}>
                   <span>
                     <BookOpen size={18} />
                   </span>
                   <div>
-                    <h3>{policy.title}</h3>
-                    <p>{policy.note}</p>
+                    <h3>{workspace.title}</h3>
+                    <p>{workspace.note}</p>
+                    <p>{workspace.detail}</p>
                   </div>
-                  <Button
-                    mode="icon"
-                    size="sm"
-                    variant="outline"
-                    aria-label={`Download ${policy.title}`}
-                  >
-                    <Download size={15} />
-                  </Button>
+                  <ButtonLink href={workspace.href} variant="outline">
+                    Open
+                    <ArrowUpRight size={15} />
+                  </ButtonLink>
                 </article>
               ))}
             </div>
@@ -376,10 +540,12 @@ export function DashboardOrganization({
                   <span className="mnx-person-avatar">{initials(employee.name)}</span>
                   <div>
                     <h3>{employee.name}</h3>
-                    <p>{employee.designation}</p>
+                    <p>{employee.designation || "Designation not assigned"}</p>
                     <small>{employee.email}</small>
                   </div>
-                  <span className="mnx-directory-location">{employee.branch}</span>
+                  <span className="mnx-directory-location">
+                    {employee.branch || "Location not assigned"}
+                  </span>
                 </article>
               ))}
               {filteredEmployees.length === 0 ? (
@@ -443,8 +609,8 @@ function PeopleMoment({
           <span className="mnx-person-avatar">{initials(employee.name)}</span>
           <div>
             <h3>{employee.name}</h3>
-            <p>{employee.designation}</p>
-            <small>{employee.department}</small>
+            <p>{employee.designation || "Designation not assigned"}</p>
+            <small>{employee.department || "Department not assigned"}</small>
           </div>
           <Button
             mode="icon"

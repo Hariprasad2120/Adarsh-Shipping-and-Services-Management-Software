@@ -3,13 +3,13 @@
 import {
   PerformanceControlButton,
   PerformanceTableRow,
+  PerformanceSection,
+  PerformanceSectionHeader,
 } from "@/modules/performance/components/performance-workspace";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
-  OperationalDataTable,
-  OperationalDataTableHeader,
   OperationalDataTableWrap,
   OperationalTable,
   OperationalTableCell,
@@ -68,10 +68,11 @@ export function CyclesClient({
   }
 
   return (
-    <OperationalDataTable>
-      <OperationalDataTableHeader
+    <PerformanceSection>
+      <PerformanceSectionHeader
         eyebrow="Performance cycles"
         title="All Cycles"
+        description="Create, activate, and close appraisal periods from a full-width governance table."
         actions={
           <PerformanceControlButton
             onClick={createCycle}
@@ -142,6 +143,6 @@ export function CyclesClient({
           </tbody>
         </OperationalTable>
       </OperationalDataTableWrap>
-    </OperationalDataTable>
+    </PerformanceSection>
   );
 }

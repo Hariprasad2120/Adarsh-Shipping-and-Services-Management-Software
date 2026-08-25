@@ -77,332 +77,285 @@ type CrmRouteMeta = {
 const exactRouteMeta: Record<string, CrmRouteMeta> = {
   "/crm": {
     eyebrow: "Customer operations",
-    title: "CRM command centre",
-    description:
-      "Coordinate acquisition, customer relationships, commercial documents, service activity, and sales outcomes.",
+    title: "CRM",
+    description: "Track customers, sales, and service work.",
     icon: Gauge,
   },
   "/crm/dashboard": {
     eyebrow: "Customer operations",
-    title: "CRM command centre",
-    description:
-      "Monitor relationship health, active opportunities, commercial activity, and follow-up signals.",
+    title: "CRM",
+    description: "Review pipeline, activity, and follow-ups.",
     icon: Gauge,
   },
   "/crm/approvals": {
     eyebrow: "Commercial control",
     title: "Approvals",
-    description:
-      "Review quotes, invoices, and sales orders through the configured commercial approval workflow.",
+    description: "Review quotes, invoices, and sales orders.",
     icon: ClipboardCheck,
   },
   "/crm/calls": {
     eyebrow: "Relationship activity",
     title: "Calls",
-    description:
-      "Review customer conversations, recording outcomes, follow-ups, and owner activity.",
+    description: "Review calls and follow-ups.",
     icon: Phone,
   },
   "/crm/campaigns": {
     eyebrow: "Demand generation",
     title: "Campaigns",
-    description:
-      "Coordinate campaigns, acquisition channels, trade-show activity, and return on sales investment.",
+    description: "Track campaigns and sales response.",
     icon: Megaphone,
   },
   "/crm/contacts": {
     eyebrow: "Relationship directory",
     title: "Contacts",
-    description:
-      "Maintain people, roles, communication details, ownership, and account relationships.",
+    description: "Manage contacts and account links.",
     icon: ContactRound,
   },
   "/crm/contacts/new": {
     eyebrow: "Relationship directory",
     title: "New contact",
-    description:
-      "Create a contact and connect the person to an account, owner, and communication context.",
+    description: "Create a new contact.",
     icon: UserPlus,
   },
   "/crm/customers": {
     eyebrow: "Account operations",
     title: "Customers",
-    description:
-      "Maintain customer accounts, relationship ownership, portal access, and commercial context.",
+    description: "Manage customer accounts and ownership.",
     icon: Building2,
   },
   "/crm/customers/new": {
     eyebrow: "Account operations",
     title: "New customer",
-    description:
-      "Create an account with its identity, contacts, ownership, addresses, and commercial settings.",
+    description: "Create a new customer account.",
     icon: Building2,
   },
   "/crm/deals": {
     eyebrow: "Sales pipeline",
     title: "Deals",
-    description:
-      "Manage qualified opportunities, stages, value, probability, ownership, and expected close dates.",
+    description: "Track opportunities, stages, and value.",
     icon: Handshake,
   },
   "/crm/deals/new": {
     eyebrow: "Sales pipeline",
     title: "New deal",
-    description:
-      "Open a qualified opportunity with the account, owner, value, stage, and forecast context.",
+    description: "Create a new deal.",
     icon: CircleDollarSign,
   },
   "/crm/documents": {
     eyebrow: "Relationship records",
     title: "Documents",
-    description:
-      "Keep agreements, proposals, operating documents, and customer records in one controlled workspace.",
+    description: "Store customer and commercial documents.",
     icon: FolderKanban,
   },
   "/crm/efficiency": {
     eyebrow: "Sales intelligence",
     title: "Sales efficiency",
-    description:
-      "Review conversion, response, ownership, activity, and commercial performance across the CRM team.",
+    description: "Review CRM team performance.",
     icon: BarChart3,
   },
   "/crm/enquiries": {
     eyebrow: "Demand intake",
     title: "Enquiries",
-    description:
-      "Qualify incoming customer requests and coordinate their conversion into active sales work.",
+    description: "Qualify and track incoming enquiries.",
     icon: Inbox,
   },
   "/crm/freight-forwarding": {
     eyebrow: "Demand intake",
     title: "Freight forwarding",
-    description:
-      "Track qualified freight forwarding work items routed from CRM leads and direct enquiries.",
+    description: "Track freight enquiries and handoffs.",
     icon: Truck,
   },
   "/crm/customs-clearance": {
     eyebrow: "Demand intake",
     title: "Customs clearance",
-    description:
-      "Track qualified customs clearance work items routed from CRM leads and direct enquiries.",
+    description: "Track customs enquiries and handoffs.",
     icon: ClipboardCheck,
   },
   "/crm/events": {
     eyebrow: "Relationship activity",
     title: "Events",
-    description:
-      "Plan customer meetings, site visits, reviews, and commercial coordination checkpoints.",
+    description: "Track meetings, visits, and reviews.",
     icon: CalendarClock,
   },
   "/crm/forecasts": {
     eyebrow: "Sales intelligence",
     title: "Forecasts",
-    description:
-      "Review weighted pipeline, expected revenue, team targets, and closing confidence.",
+    description: "Review pipeline and revenue outlook.",
     icon: Target,
   },
   "/crm/incentives": {
     eyebrow: "Sales incentives",
     title: "Incentives",
-    description:
-      "Capture CRM-side incentive inputs and hand them into the HRMS review, approval, and payout workflow.",
+    description: "Track incentive inputs for payout review.",
     icon: CircleDollarSign,
   },
   "/crm/invoices": {
     eyebrow: "Commercial documents",
     title: "Invoices",
-    description:
-      "Prepare, approve, issue, and track customer invoices without losing their commercial audit trail.",
+    description: "Prepare and track customer invoices.",
     icon: ReceiptIndianRupee,
   },
   "/crm/invoices/new": {
     eyebrow: "Commercial documents",
     title: "New invoice",
-    description:
-      "Prepare a customer invoice with controlled items, tax, terms, ownership, and approval context.",
+    description: "Create a new invoice.",
     icon: ReceiptIndianRupee,
   },
   "/crm/items": {
     eyebrow: "Commercial catalogue",
     title: "Items",
-    description:
-      "Maintain saleable and purchasable items, pricing, logistics, inventory, and tax metadata.",
+    description: "Manage items, pricing, and tax setup.",
     icon: Boxes,
   },
   "/crm/items/new": {
     eyebrow: "Commercial catalogue",
     title: "New item",
-    description:
-      "Create a catalogue item with its commercial, inventory, purchasing, and logistics settings.",
+    description: "Create a new item.",
     icon: PackageSearch,
   },
   "/crm/lead-sources": {
     eyebrow: "Demand intake",
     title: "Lead sources",
-    description:
-      "Configure acquisition sources, imports, integration state, and ingestion history.",
+    description: "Manage sources and imports.",
     icon: Settings2,
   },
   "/crm/lead-sources/justdial": {
     eyebrow: "Demand integration",
     title: "JustDial configuration",
-    description:
-      "Configure controlled JustDial lead ingestion, ownership, scheduling, and duplicate policy.",
+    description: "Manage JustDial lead intake.",
     icon: Settings2,
   },
   "/crm/lead-sources/logs": {
     eyebrow: "Demand integration",
     title: "Import history",
-    description:
-      "Review lead-import runs, outcomes, duplicate handling, and integration errors.",
+    description: "Review import runs and errors.",
     icon: FileText,
   },
   "/crm/leads": {
     eyebrow: "Demand qualification",
     title: "Leads",
-    description:
-      "Prioritise new prospects, follow-up windows, qualification status, ownership, and conversion.",
+    description: "Track prospects and qualification.",
     icon: Users,
     hideHeaderIcon: true,
   },
   "/crm/leads/new": {
     eyebrow: "Demand qualification",
     title: "New lead",
-    description:
-      "Create a prospective relationship with its source, ownership, contact details, and qualification context.",
+    description: "Create a new lead.",
     icon: UserPlus,
   },
   "/crm/price-books": {
     eyebrow: "Commercial catalogue",
     title: "Price books",
-    description:
-      "Maintain reusable customer tariffs, freight lanes, service bundles, and negotiated rate schedules.",
+    description: "Manage tariffs and rate books.",
     icon: BookOpen,
   },
   "/crm/masters": {
     eyebrow: "Master data",
     title: "Masters",
-    description:
-      "Manage shared CRM master records that support commercial, relationship, and service workflows.",
+    description: "Manage shared CRM master data.",
     icon: Settings2,
   },
   "/crm/products": {
     eyebrow: "Commercial catalogue",
     title: "Products and services",
-    description:
-      "Maintain the sellable product and service catalogue used by opportunities and commercial documents.",
+    description: "Manage products and services.",
     icon: PackageSearch,
   },
   "/crm/projects": {
     eyebrow: "Customer delivery",
     title: "Projects",
-    description:
-      "Coordinate customer projects, accountable owners, dates, value, and delivery status.",
+    description: "Track customer projects and owners.",
     icon: FolderKanban,
   },
   "/crm/purchase-orders": {
     eyebrow: "Commercial documents",
     title: "Purchase orders",
-    description:
-      "Coordinate approved supplier purchases, outsourced services, and carrier allocations.",
+    description: "Track supplier purchases and allocations.",
     icon: Truck,
   },
   "/crm/quotes": {
     eyebrow: "Commercial documents",
     title: "Quotes",
-    description:
-      "Prepare, approve, issue, and track customer proposals with controlled pricing and tax calculations.",
+    description: "Prepare and track customer quotes.",
     icon: FileText,
   },
   "/crm/quotes/new": {
     eyebrow: "Commercial documents",
     title: "New quote",
-    description:
-      "Prepare a proposal with customer, service, pricing, tax, terms, and approval context.",
+    description: "Create a new quote.",
     icon: FileText,
   },
   "/crm/sales-inbox": {
     eyebrow: "Relationship communication",
     title: "Sales inbox",
-    description:
-      "Coordinate customer email threads with their account, contact, lead, and owner context.",
+    description: "Review customer email threads.",
     icon: Mail,
   },
   "/crm/sales-orders": {
     eyebrow: "Commercial documents",
     title: "Sales orders",
-    description:
-      "Manage approved customer orders and the transition from commercial commitment to fulfilment.",
+    description: "Track customer orders and fulfilment.",
     icon: ShoppingCart,
   },
   "/crm/services": {
     eyebrow: "Customer delivery",
     title: "Services",
-    description:
-      "Coordinate recurring logistics services and managed offerings attached to customer accounts.",
+    description: "Track managed services and accounts.",
     icon: Headphones,
   },
   "/crm/settings": {
     eyebrow: "Commercial configuration",
     title: "CRM settings",
-    description:
-      "Review master-data controls, source configuration, pricing foundations, and service governance.",
+    description: "Manage CRM settings and controls.",
     icon: Settings2,
   },
   "/crm/social": {
     eyebrow: "Relationship communication",
     title: "Social channels",
-    description:
-      "Track customer communication across messaging channels and operational notifications.",
+    description: "Track customer messaging channels.",
     icon: Share2,
   },
   "/crm/solutions": {
     eyebrow: "Customer service",
     title: "Solutions",
-    description:
-      "Maintain reusable answers, operating procedures, customs guidance, and customer service knowledge.",
+    description: "Manage reusable customer guidance.",
     icon: Sparkles,
   },
   "/crm/tasks": {
     eyebrow: "Relationship activity",
     title: "Tasks",
-    description:
-      "Coordinate follow-ups, owner assignments, due dates, priorities, and sales action items.",
+    description: "Track follow-ups and action items.",
     icon: CheckSquare,
   },
   "/crm/tickets": {
     eyebrow: "Customer service",
     title: "Support cases",
-    description:
-      "Triage customer issues, ownership, priority, status, communication, and resolution history.",
+    description: "Track customer issues and resolution.",
     icon: TicketCheck,
   },
   "/crm/tickets/new": {
     eyebrow: "Customer service",
     title: "New support case",
-    description:
-      "Register a customer issue with its account, requester, severity, owner, and initial evidence.",
+    description: "Create a new support case.",
     icon: TicketCheck,
   },
   "/crm/vendors": {
     eyebrow: "Partner directory",
     title: "Vendors",
-    description:
-      "Maintain suppliers, carriers, service partners, ownership, contact details, and commercial context.",
+    description: "Manage vendors and service partners.",
     icon: Truck,
   },
   "/crm/visits": {
     eyebrow: "Relationship activity",
     title: "Visits",
-    description:
-      "Coordinate customer meetings, site inspections, field outcomes, and relationship touchpoints.",
+    description: "Track visits and field outcomes.",
     icon: MapPin,
   },
   "/crm/voc": {
     eyebrow: "Customer intelligence",
     title: "Voice of customer",
-    description:
-      "Capture satisfaction, pain points, service feedback, and accountable improvement opportunities.",
+    description: "Track feedback and improvement items.",
     icon: MessageSquareText,
   },
 };
@@ -422,8 +375,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Relationship directory",
       title: "Edit contact",
-      description:
-        "Update the contact, account relationship, ownership, communication details, and role.",
+      description: "Update contact details and links.",
       icon: ContactRound,
     };
   }
@@ -431,8 +383,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Relationship record",
       title: "Contact detail",
-      description:
-        "Review relationship context, activity, notes, attachments, and account connections.",
+      description: "Review contact activity and details.",
       icon: ContactRound,
     };
   }
@@ -440,8 +391,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Account operations",
       title: "Edit customer",
-      description:
-        "Update identity, ownership, contacts, addresses, portal access, and commercial settings.",
+      description: "Update customer details and access.",
       icon: Building2,
     };
   }
@@ -449,8 +399,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Account record",
       title: "Customer detail",
-      description:
-        "Review contacts, opportunities, activity, notes, attachments, and relationship history.",
+      description: "Review customer activity and history.",
       icon: Building2,
     };
   }
@@ -458,8 +407,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Sales pipeline",
       title: "Edit deal",
-      description:
-        "Update qualification, account, owner, value, stage, probability, and closing context.",
+      description: "Update deal stage and details.",
       icon: Handshake,
     };
   }
@@ -467,8 +415,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Opportunity record",
       title: "Deal detail",
-      description:
-        "Review stage, value, customer context, activity, notes, attachments, and commercial history.",
+      description: "Review deal progress and history.",
       icon: Handshake,
     };
   }
@@ -476,8 +423,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Demand record",
       title: "Enquiry detail",
-      description:
-        "Review the request, ownership, qualification, communication, and conversion context.",
+      description: "Review enquiry details and ownership.",
       icon: Inbox,
     };
   }
@@ -485,8 +431,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Demand record",
       title: "Freight forwarding enquiry",
-      description:
-        "Review the normalized freight forwarding service enquiry, assignment, and workflow links.",
+      description: "Review the freight enquiry and links.",
       icon: Truck,
     };
   }
@@ -494,8 +439,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Demand record",
       title: "Customs clearance enquiry",
-      description:
-        "Review the normalized customs clearance service enquiry, assignment, and workflow links.",
+      description: "Review the customs enquiry and links.",
       icon: ClipboardCheck,
     };
   }
@@ -503,8 +447,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Commercial document",
       title: "Invoice detail",
-      description:
-        "Review customer, items, tax, totals, approval state, communication, and audit history.",
+      description: "Review invoice totals and status.",
       icon: ReceiptIndianRupee,
     };
   }
@@ -512,8 +455,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Commercial catalogue",
       title: "Item detail",
-      description:
-        "Review pricing, inventory, purchasing, logistics, tax, and catalogue configuration.",
+      description: "Review item pricing and setup.",
       icon: Boxes,
     };
   }
@@ -521,8 +463,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Demand qualification",
       title: "Edit lead",
-      description:
-        "Update identity, source, owner, contact details, status, and qualification context.",
+      description: "Update lead details and status.",
       icon: Users,
     };
   }
@@ -530,8 +471,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Prospect record",
       title: "Lead detail",
-      description:
-        "Coordinate qualification, calls, remarks, follow-ups, conversion, notes, and relationship history.",
+      description: "Review lead activity and progress.",
       icon: Users,
     };
   }
@@ -539,8 +479,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Commercial document",
       title: "Edit quote",
-      description:
-        "Update customer, items, pricing, tax, terms, attachments, and approval context.",
+      description: "Update quote details and pricing.",
       icon: FileText,
     };
   }
@@ -548,8 +487,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Commercial document",
       title: "Quote detail",
-      description:
-        "Review the proposal, customer, line items, totals, approval state, delivery, and audit history.",
+      description: "Review quote totals and status.",
       icon: FileText,
     };
   }
@@ -557,8 +495,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
     return {
       eyebrow: "Customer service record",
       title: "Support case detail",
-      description:
-        "Coordinate the issue, priority, ownership, communication, status, and resolution history.",
+      description: "Review issue status and history.",
       icon: TicketCheck,
     };
   }
@@ -566,8 +503,7 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
   return {
     eyebrow: "Customer operations",
     title: "CRM workspace",
-    description:
-      "Coordinate relationship, commercial, and service work through the shared customer operations system.",
+    description: "Track customer, sales, and service work.",
     icon: Landmark,
   };
 }

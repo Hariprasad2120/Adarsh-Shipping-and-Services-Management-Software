@@ -30,6 +30,7 @@ export type QuoteProcessRecord = {
   weight: string | null;
   containerType: string | null;
   numberOfContainers: number | null;
+  sourceSnapshot: Record<string, unknown> | null;
   workflowContext: QuoteProcessWorkflowContext | null;
   createdAt: string;
 };
@@ -81,6 +82,12 @@ function toProcessRecord(row: {
     weight: row.weight,
     containerType: row.containerType,
     numberOfContainers: row.numberOfContainers,
+    sourceSnapshot:
+      row.sourceQuotationSnapshot &&
+      typeof row.sourceQuotationSnapshot === "object" &&
+      !Array.isArray(row.sourceQuotationSnapshot)
+        ? (row.sourceQuotationSnapshot as Record<string, unknown>)
+        : null,
     workflowContext: readWorkflowContext(row.sourceQuotationSnapshot),
     createdAt: row.createdAt.toISOString(),
   } satisfies QuoteProcessRecord;

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   WorkspaceMetric,
+  WorkspacePanelHeader,
   WorkspaceProgress,
   WorkspaceSectionHeading,
 } from "@/components/layout/workspace";
@@ -72,6 +73,35 @@ describe("Monolith workspace states", () => {
     expect(metric).toContain("mnx-workspace-metric-action");
     expect(metric).toContain("mnx-workspace-metric-body");
     expect(metric).toContain("mnx-workspace-metric-value");
+    expect(metric).toContain("Shared components");
+  });
+
+  it("renders non-link metric details through the shared info disclosure", () => {
+    const metric = renderToStaticMarkup(
+      <WorkspaceMetric
+        label="Capture health"
+        value="1"
+        detail="Watch who is already captured today and who is still missing."
+      />,
+    );
+
+    expect(metric).toContain("mnx-workspace-metric-info");
+    expect(metric).toContain("mnx-card-info-trigger");
+    expect(metric).toContain("Watch who is already captured today and who is still missing.");
+  });
+
+  it("renders panel descriptions through the shared card disclosure", () => {
+    const header = renderToStaticMarkup(
+      <WorkspacePanelHeader
+        eyebrow="Attendance"
+        title="Capture health"
+        description="Watch who is already captured today, who is still missing, and whether entries came through sync."
+      />,
+    );
+
+    expect(header).toContain("mnx-panel-actions");
+    expect(header).toContain("mnx-card-info-trigger");
+    expect(header).toContain("mnx-card-info-content");
   });
 
   it("renders the numbered section heading contract", () => {

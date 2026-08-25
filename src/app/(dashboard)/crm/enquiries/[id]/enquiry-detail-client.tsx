@@ -86,6 +86,18 @@ export function EnquiryDetailClient({
 
   const [localCalls, setLocalCalls] = useState(calls);
 
+  const sharedContextTabs = [
+    { key: "OVERVIEW", label: "Summary", count: null },
+    { key: "NOTES", label: "Notes", count: notes.length },
+    { key: "ACTIVITIES", label: "Tasks", count: activities.length },
+    { key: "TIMELINE", label: "Audit", count: null },
+    { key: "TIME_TRACKER", label: "Time", count: workTimeLogs.length },
+    { key: "CALLS", label: "Calls", count: localCalls.length },
+  ] as const;
+
+  const activeSharedContext =
+    sharedContextTabs.find((tab) => tab.key === activeTab) ?? sharedContextTabs[0];
+
   useEffect(() => {
     setLocalCalls(calls);
   }, [calls]);
@@ -1185,68 +1197,35 @@ export function EnquiryDetailClient({
       )}
 
       <CrmSection
+        className="mnx-crm-enquiry-context-section"
         eyebrow="Shared context"
         title="Notes, activity, audit, and calls"
-        description="Keep secondary information in one full-width section so the primary workflow stays readable."
+        description="Keep notes, tasks, audit history, time, and calls in one familiar detail workspace."
       >
-        <CrmTabs className="flex-wrap gap-2 border-none bg-transparent p-0">
-          <CrmButton
-            onClick={() => setActiveTab("OVERVIEW")}
-            variant={activeTab === "OVERVIEW" ? "primary" : "secondary"}
-            size="compact"
-            role="tab"
-            aria-selected={activeTab === "OVERVIEW"}
-          >
-            Summary
-          </CrmButton>
-          <CrmButton
-            onClick={() => setActiveTab("NOTES")}
-            variant={activeTab === "NOTES" ? "primary" : "secondary"}
-            size="compact"
-            role="tab"
-            aria-selected={activeTab === "NOTES"}
-          >
-            Notes ({notes.length})
-          </CrmButton>
-          <CrmButton
-            onClick={() => setActiveTab("ACTIVITIES")}
-            variant={activeTab === "ACTIVITIES" ? "primary" : "secondary"}
-            size="compact"
-            role="tab"
-            aria-selected={activeTab === "ACTIVITIES"}
-          >
-            Tasks ({activities.length})
-          </CrmButton>
-          <CrmButton
-            onClick={() => setActiveTab("TIMELINE")}
-            variant={activeTab === "TIMELINE" ? "primary" : "secondary"}
-            size="compact"
-            role="tab"
-            aria-selected={activeTab === "TIMELINE"}
-          >
-            Audit
-          </CrmButton>
-          <CrmButton
-            onClick={() => setActiveTab("TIME_TRACKER")}
-            variant={activeTab === "TIME_TRACKER" ? "primary" : "secondary"}
-            size="compact"
-            role="tab"
-            aria-selected={activeTab === "TIME_TRACKER"}
-          >
-            Time Tracker ({workTimeLogs.length})
-          </CrmButton>
-          <CrmButton
-            onClick={() => setActiveTab("CALLS")}
-            variant={activeTab === "CALLS" ? "primary" : "secondary"}
-            size="compact"
-            role="tab"
-            aria-selected={activeTab === "CALLS"}
-          >
-            Calls ({calls.length})
-          </CrmButton>
-        </CrmTabs>
-
-        <div className="space-y-3 px-1 text-xs">
+        <div className="mnx-crm-enquiry-context-shell">
+          <div className="mnx-crm-enquiry-context-header">
+            <div className="mnx-crm-enquiry-context-active">
+              <span>Context</span>
+              <strong>{activeSharedContext.label}</strong>
+            </div>
+            <CrmTabs className="mnx-crm-enquiry-context-nav">
+              {sharedContextTabs.map((tab) => (
+                <CrmButton
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  variant={activeTab === tab.key ? "primary" : "secondary"}
+                  size="compact"
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  className="mnx-crm-enquiry-context-tab"
+                >
+                  <span>{tab.label}</span>
+                  {tab.count !== null ? <small>{tab.count}</small> : null}
+                </CrmButton>
+              ))}
+            </CrmTabs>
+          </div>
+          <div className="mnx-crm-enquiry-context-body space-y-3 text-xs">
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-3">
                   <div className="rounded-xl border border-[var(--mnx-border)]/30 bg-[var(--mnx-surface)]/50 p-3.5 space-y-2">
@@ -1682,6 +1661,7 @@ export function EnquiryDetailClient({
                   )}
                 </div>
               )}
+          </div>
         </div>
       </CrmSection>
 

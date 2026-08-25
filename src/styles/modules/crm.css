@@ -128,6 +128,99 @@
   padding: var(--mn-space-5);
 }
 
+.mnx-crm-enquiry-context-shell {
+  display: grid;
+  gap: var(--mn-space-4);
+  min-width: 0;
+}
+
+.mnx-crm-enquiry-context-header {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding-bottom: var(--mn-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 68%, transparent);
+}
+
+.mnx-crm-enquiry-context-active {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--mn-space-2);
+  padding: 0.375rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 80%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-surface-soft) 74%, transparent);
+  white-space: nowrap;
+}
+
+.mnx-crm-enquiry-context-active span {
+  color: var(--mnx-text-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mnx-crm-enquiry-context-active strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+}
+
+.mnx-crm-enquiry-context-nav {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  overflow: visible;
+  gap: var(--mn-space-2);
+  padding: 0 0 var(--mn-space-1);
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--mnx-border) 68%, transparent);
+  border-radius: 0;
+  background: transparent;
+}
+
+.mnx-crm-enquiry-context-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-width: 0;
+  padding-block: 0.35rem;
+  padding-inline: 0.85rem;
+  white-space: nowrap;
+}
+
+.mnx-crm-enquiry-context-tab small {
+  display: inline-flex;
+  min-width: 1.15rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-border) 22%, transparent);
+  color: var(--mnx-text-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mnx-crm-enquiry-context-tab[aria-selected="true"] small {
+  background: color-mix(in srgb, var(--mnx-surface) 24%, transparent);
+  color: currentColor;
+}
+
+.mnx-crm-enquiry-context-body {
+  padding-top: 0;
+}
+
+@media (max-width: 960px) {
+  .mnx-crm-enquiry-context-nav {
+    gap: 0.5rem;
+  }
+}
+
 .mnx-crm-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -174,17 +267,98 @@
   color: var(--mnx-accent-text);
 }
 
+.mnx-crm-service-enquiry-queue .mnx-operational-table-header {
+  align-items: start;
+}
+
+.mnx-crm-service-enquiry-queue-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-service-enquiry-queue-search {
+  width: clamp(15rem, 22vw, 21rem);
+  min-width: 0;
+}
+
+.mnx-crm-service-enquiry-queue-table {
+  border-collapse: collapse;
+}
+
+.mnx-crm-service-enquiry-queue-table tbody tr td {
+  padding: 0.95rem 1rem !important;
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  vertical-align: top !important;
+}
+
+.mnx-crm-service-enquiry-queue-table tbody tr:last-child td {
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
+}
+
+.mnx-crm-service-enquiry-queue-table tbody tr:hover td,
+.mnx-crm-service-enquiry-queue-table tbody tr:focus-visible td,
+.mnx-crm-service-enquiry-queue-table tbody tr.mnx-operational-linked-row:focus-visible td {
+  background: color-mix(in srgb, var(--mnx-accent-soft) 30%, transparent) !important;
+  border-color: color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border)) !important;
+}
+
+.mnx-crm-service-enquiry-queue-table tbody tr:hover td:first-child,
+.mnx-crm-service-enquiry-queue-table tbody tr:focus-visible td:first-child,
+.mnx-crm-service-enquiry-queue-table tbody tr.mnx-operational-linked-row:focus-visible td:first-child {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--mnx-accent) 56%, white) !important;
+}
+
+.mnx-crm-service-enquiry-queue-table .mnx-operational-table-status {
+  background: transparent;
+  border: 0;
+  padding-inline: 0;
+  min-height: 0;
+}
+
+.mnx-crm-service-enquiry-queue-table .mnx-button[data-size="sm"] {
+  min-height: 2.2rem;
+  padding-inline: 0.95rem;
+}
+
 .mnx-crm-leads-company,
 .mnx-crm-leads-contact-item {
   display: flex;
-  align-items: center;
-  gap: var(--mn-space-1_5);
+  align-items: flex-start;
+  gap: var(--mn-space-2);
 }
 
 .mnx-crm-leads-company,
 .mnx-crm-leads-contact,
 .mnx-crm-leads-contact-item {
   min-width: 0;
+}
+
+.mnx-crm-leads-company {
+  padding-block: 0.125rem;
+}
+
+.mnx-crm-leads-company svg,
+.mnx-crm-leads-contact-item svg {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.mnx-crm-leads-company span,
+.mnx-crm-leads-contact-item span {
+  display: block;
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mnx-crm-leads-company,
@@ -196,18 +370,16 @@
 .mnx-crm-leads-contact,
 .mnx-crm-leads-timer {
   display: grid;
-  gap: var(--mn-space-1);
+  gap: var(--mn-space-1_5);
 }
 
 .mnx-crm-leads-contact-item {
   font-size: var(--mn-font-size-xs);
+  padding-block: 0.0625rem;
 }
 
 .mnx-crm-leads-contact-item span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .mnx-crm-leads-source,
@@ -266,7 +438,82 @@
   padding: var(--mn-space-5);
 }
 
+.mnx-crm-masters-summary-strip {
+  margin-bottom: var(--mn-space-5);
+}
+
+.mnx-crm-masters-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-masters-workspace-card {
+  display: grid;
+  gap: var(--mn-space-3);
+  width: 100%;
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  color: var(--mnx-text);
+  text-align: left;
+  font: inherit;
+  background: var(--mnx-surface);
+  appearance: none;
+  cursor: pointer;
+  transition:
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast);
+}
+
+.mnx-crm-masters-workspace-card:hover,
+.mnx-crm-masters-workspace-card:focus-visible,
+.mnx-crm-masters-workspace-card.is-active {
+  border-color: color-mix(in srgb, var(--mnx-accent) 40%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 6%, var(--mnx-surface));
+}
+
+.mnx-crm-masters-workspace-card-topline,
+.mnx-crm-masters-workspace-card-footer,
+.mnx-crm-masters-ops-card-header,
+.mnx-crm-masters-watchlist-meta,
+.mnx-crm-masters-table-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-masters-workspace-card-topline span,
+.mnx-crm-masters-governance-card span,
+.mnx-crm-masters-ops-card-header span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-crm-masters-workspace-card-topline strong,
+.mnx-crm-masters-governance-card strong,
+.mnx-crm-masters-watchlist-copy strong,
+.mnx-crm-masters-table-caption strong {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-masters-workspace-card p,
+.mnx-crm-masters-workspace-card small,
+.mnx-crm-masters-governance-card p,
+.mnx-crm-masters-note,
+.mnx-crm-masters-watchlist-copy p,
+.mnx-crm-masters-table-caption span {
+  color: var(--mnx-text-muted);
+}
+
 .mnx-crm-masters-embedded-workspace {
+  display: grid;
+  gap: var(--mn-space-4);
   min-width: 0;
 }
 
@@ -300,11 +547,92 @@
   color: var(--mnx-text-muted);
 }
 
+.mnx-crm-masters-item-shell {
+  padding-bottom: var(--mn-space-4);
+}
+
+.mnx-crm-masters-item-governance-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .mnx-crm-masters-dialog-footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--mn-space-2);
+}
+
+.mnx-crm-masters-governance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+  margin-top: var(--mn-space-5);
+}
+
+.mnx-crm-masters-governance-card,
+.mnx-crm-masters-ops-card,
+.mnx-crm-masters-watchlist-card {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface);
+}
+
+.mnx-crm-masters-ops-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 0.9fr);
+  gap: var(--mn-space-4);
+  margin-top: var(--mn-space-5);
+}
+
+.mnx-crm-masters-ops-rail,
+.mnx-crm-masters-watchlist {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-masters-ops-card-header {
+  align-items: flex-start;
+}
+
+.mnx-crm-masters-ops-card-header h4,
+.mnx-crm-masters-import-summary-header h4 {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-masters-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 14rem);
+  gap: var(--mn-space-3);
+  align-items: end;
+}
+
+.mnx-crm-masters-search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  padding: 0 var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface);
+}
+
+.mnx-crm-masters-search-field svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-masters-search-field .mnx-field-control {
+  border: 0;
+  padding-inline: 0;
+  background: transparent;
+}
+
+.mnx-crm-masters-search-field .mnx-field-control:focus {
+  box-shadow: none;
 }
 
 .mnx-crm-masters-focus-grid {
@@ -476,6 +804,24 @@
   margin-top: var(--mn-space-6);
 }
 
+.mnx-crm-masters-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-masters-tag-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
+  border-radius: 999px;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  background: var(--mnx-surface-soft);
+}
+
 .mnx-crm-masters-import-summary-header {
   display: flex;
   flex-wrap: wrap;
@@ -601,6 +947,18 @@
   gap: var(--mn-space-2);
 }
 
+.mnx-crm-commercial-summary-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.9fr);
+  gap: var(--mn-space-4);
+  align-items: start;
+  padding: var(--mn-space-5);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background: color-mix(in srgb, var(--mnx-surface) 98%, white 2%);
+  box-shadow: none;
+}
+
 .mnx-crm-commercial-summary-heading,
 .mnx-crm-commercial-stage-header {
   display: flex;
@@ -622,9 +980,60 @@
   color: var(--mnx-text-muted);
 }
 
+.mnx-crm-commercial-summary-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-commercial-summary-inline-card,
+.mnx-crm-commercial-command-head,
+.mnx-crm-commercial-command-metric {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 52%, var(--mnx-surface));
+}
+
+.mnx-crm-commercial-summary-inline-card span,
+.mnx-crm-commercial-command-head span,
+.mnx-crm-commercial-command-metric span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-crm-commercial-summary-inline-card strong,
+.mnx-crm-commercial-command-head strong,
+.mnx-crm-commercial-command-metric strong {
+  color: var(--mnx-text-strong);
+  font-size: 0.95rem;
+}
+
+.mnx-crm-commercial-command-board {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-commercial-command-head p,
+.mnx-crm-commercial-command-metric small {
+  margin: 0;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-commercial-command-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+}
+
 .mnx-crm-commercial-mailer-grid {
   display: grid;
-  grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 1.28fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--mn-space-5);
 }
 
@@ -700,6 +1109,99 @@
   gap: var(--mn-space-2);
 }
 
+.mnx-crm-commercial-suggestion-dock {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-5);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background: color-mix(in srgb, var(--mnx-surface) 98%, white 2%);
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-suggestion-dock-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mn-space-3);
+  align-items: start;
+}
+
+.mnx-crm-commercial-suggestion-dock-heading strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-font-size-sm);
+}
+
+.mnx-crm-commercial-suggestion-dock-heading p,
+.mnx-crm-commercial-suggestion-dock-card p,
+.mnx-crm-commercial-suggestion-dock-insight small {
+  margin: 0;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-commercial-suggestion-dock-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(18rem, 20rem);
+  gap: var(--mn-space-3);
+  overflow-x: auto;
+  padding-bottom: var(--mn-space-1);
+  scroll-snap-type: x proximity;
+}
+
+.mnx-crm-commercial-suggestion-dock-card {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 52%, var(--mnx-surface));
+  text-align: left;
+  scroll-snap-align: start;
+  transition:
+    border-color var(--mn-motion-fast),
+    background var(--mn-motion-fast);
+}
+
+.mnx-crm-commercial-suggestion-dock-card:hover,
+.mnx-crm-commercial-suggestion-dock-card:focus-visible {
+  border-color: color-mix(in srgb, var(--mnx-accent) 32%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent-soft) 28%, var(--mnx-surface));
+  outline: none;
+}
+
+.mnx-crm-commercial-suggestion-dock-card[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--mnx-success) 34%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-success-bg) 70%, var(--mnx-surface));
+}
+
+.mnx-crm-commercial-suggestion-dock-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mnx-crm-commercial-suggestion-dock-card-head strong {
+  color: var(--mnx-text-strong);
+  font-size: 0.86rem;
+}
+
+.mnx-crm-commercial-suggestion-dock-card > span {
+  color: var(--mnx-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mnx-crm-commercial-suggestion-dock-insight {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding-top: var(--mn-space-1);
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 84%, transparent);
+}
+
 .mnx-crm-commercial-badge-row,
 .mnx-crm-commercial-compose-actions,
 .mnx-crm-commercial-history-header,
@@ -755,37 +1257,83 @@
   gap: var(--mn-space-4);
 }
 
-.mnx-crm-commercial-compose-shell {
+.mnx-crm-commercial-compose-sheet {
+  display: grid;
+  gap: var(--mn-space-3);
+  width: 100%;
+  padding: var(--mn-space-5) var(--mn-space-6) var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 84%, transparent);
+  border-radius: calc(var(--mn-radius-panel) + 0.35rem);
+  background: var(--mnx-surface);
+  box-shadow:
+    0 1.5rem 3rem color-mix(in srgb, var(--mnx-shadow-color, rgb(15 23 42 / 0.12)) 100%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mnx-border) 52%, transparent);
+}
+
+.mnx-crm-commercial-compose-sheet-header,
+.mnx-crm-commercial-compose-sheet-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-commercial-compose-sheet-header {
+  min-height: 2.5rem;
+  padding-bottom: var(--mn-space-2);
+}
+
+.mnx-crm-commercial-compose-sheet-title,
+.mnx-crm-commercial-compose-sheet-window-actions,
+.mnx-crm-commercial-compose-footer-primary,
+.mnx-crm-commercial-compose-footer-tools,
+.mnx-crm-commercial-compose-address-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-commercial-compose-sheet-title h3 {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-title-size);
+  font-weight: 500;
+}
+
+.mnx-crm-commercial-compose-sheet-window-actions {
+  margin-left: auto;
+}
+
+.mnx-crm-commercial-compose-inline-toggle {
+  min-height: auto;
+  padding: 0.2rem 0.4rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-commercial-compose-fields {
   display: grid;
   gap: 0;
-  border: 1px solid color-mix(in srgb, var(--mnx-border) 88%, transparent);
-  border-radius: calc(var(--mn-radius-panel) + 0.1rem);
-  background: color-mix(in srgb, var(--mnx-surface) 94%, white 6%);
-  overflow: hidden;
 }
 
-.mnx-crm-commercial-compose-row {
-  display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
-  align-items: start;
-  gap: var(--mn-space-3);
-  padding: var(--mn-space-3) var(--mn-space-4);
-  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+.mnx-crm-commercial-compose-address-row {
+  align-items: flex-start;
+  min-height: 2.8rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--mnx-border);
 }
 
-.mnx-crm-commercial-compose-row:last-child {
-  border-bottom: 0;
-}
-
-.mnx-crm-commercial-compose-label {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
+.mnx-crm-commercial-compose-address-label {
+  flex: 0 0 2.5rem;
+  padding-top: 0.7rem;
   color: var(--mnx-text-muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+}
+
+.mnx-crm-commercial-compose-address-stack {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--mn-space-2);
+  min-width: 0;
+  padding: 0.15rem 0 0.55rem;
 }
 
 .mnx-crm-commercial-compose-recipients,
@@ -794,13 +1342,15 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--mn-space-2);
-  min-height: 2.5rem;
+  min-height: 2.8rem;
 }
 
 .mnx-crm-commercial-compose-recipient-stack {
   display: grid;
+  flex: 1 1 auto;
   gap: var(--mn-space-2);
   min-width: 0;
+  padding: 0.15rem 0 0.55rem;
 }
 
 .mnx-crm-commercial-recipient-pill {
@@ -845,7 +1395,7 @@
 .mnx-crm-commercial-compose-inline-input {
   flex: 1 1 14rem;
   min-width: 12rem;
-  min-height: 2.4rem;
+  min-height: 2.8rem;
   border: 0;
   background: transparent;
   color: var(--mnx-text);
@@ -932,16 +1482,45 @@
 
 .mnx-crm-commercial-compose-pane-priority .mnx-field-control,
 .mnx-crm-commercial-compose-pane-priority .mnx-field-textarea {
-  background: color-mix(in srgb, var(--mnx-surface) 86%, white 14%);
+  background: transparent;
+  box-shadow: none;
 }
 
-.mnx-crm-commercial-compose-pane-priority .mnx-field-textarea {
+.mnx-crm-commercial-compose-subject.mnx-field-control,
+.mnx-crm-commercial-compose-notes.mnx-field-control,
+.mnx-crm-commercial-compose-editor.mnx-field-control {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-compose-subject.mnx-field-control {
+  min-height: 2.8rem;
+  padding-inline: 0;
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-crm-commercial-compose-note-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-3) 0 0.1rem;
+}
+
+.mnx-crm-commercial-compose-notes.mnx-field-control {
   min-height: 8rem;
+  padding: var(--mn-space-3) 0;
+  border-bottom: 1px solid var(--mnx-border);
+  resize: vertical;
 }
 
-.mnx-crm-commercial-body-field .mnx-field-textarea {
-  min-height: 26rem;
+.mnx-crm-commercial-compose-editor.mnx-field-control {
+  min-height: 24rem;
+  padding: var(--mn-space-5) 0;
   line-height: 1.65;
+  resize: vertical;
 }
 
 .mnx-crm-commercial-reporting-list {
@@ -1273,7 +1852,7 @@
 .mnx-crm-commercial-meta-grid > div,
 .mnx-crm-commercial-stage-card {
   display: grid;
-  gap: var(--mn-space-1);
+  gap: var(--mn-space-2);
   padding: var(--mn-space-4);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mn-radius-control);
@@ -1298,6 +1877,32 @@
 .mnx-crm-commercial-additional-copy strong,
 .mnx-crm-commercial-stage-card strong {
   color: var(--mnx-text-strong);
+}
+
+.mnx-crm-commercial-stage-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  min-height: 0;
+}
+
+.mnx-crm-commercial-stage-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent-soft) 76%, var(--mnx-surface));
+  color: var(--mnx-accent-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.mnx-crm-commercial-stage-copy {
+  display: grid;
+  gap: var(--mn-space-1);
+  min-width: 0;
 }
 
 .mnx-crm-commercial-sheet-header,
@@ -1367,6 +1972,266 @@
   color: var(--mnx-warning);
 }
 
+.mnx-crm-commercial-page {
+  width: 100%;
+}
+
+.mnx-crm-commercial-workbench {
+  width: 100%;
+  gap: clamp(1.5rem, 2vw, 2.5rem);
+}
+
+.mnx-crm-commercial-summary,
+.mnx-crm-commercial-mailer,
+.mnx-crm-commercial-sheet,
+.mnx-crm-commercial-compat,
+.mnx-crm-commercial-preview-shell,
+.mnx-crm-commercial-suggestion-dock,
+.mnx-crm-commercial-history-shell,
+.mnx-crm-commercial-manual-shell,
+.mnx-crm-commercial-comparison-shell {
+  display: grid;
+  gap: var(--mn-space-4);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-summary,
+.mnx-crm-commercial-mailer,
+.mnx-crm-commercial-sheet,
+.mnx-crm-commercial-compat,
+.mnx-crm-commercial-history-shell,
+.mnx-crm-commercial-comparison-shell {
+  padding-top: var(--mn-space-4);
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-summary-shell,
+.mnx-crm-commercial-sheet-header,
+.mnx-crm-commercial-history-heading,
+.mnx-crm-commercial-recommendation-header {
+  column-gap: clamp(1rem, 2vw, 2rem);
+}
+
+.mnx-crm-commercial-summary-inline-card,
+.mnx-crm-commercial-command-head,
+.mnx-crm-commercial-command-metric,
+.mnx-crm-commercial-preview-card,
+.mnx-crm-commercial-history-card,
+.mnx-crm-commercial-reporting-card,
+.mnx-crm-commercial-suggestion-dock-card,
+.mnx-crm-commercial-line-card,
+.mnx-crm-commercial-parser-summary,
+.mnx-crm-commercial-line-evidence,
+.mnx-crm-commercial-comparison-summary > div,
+.mnx-crm-commercial-agent-card,
+.mnx-crm-commercial-recommendation-summary,
+.mnx-crm-commercial-recommendation-empty,
+.mnx-crm-commercial-recommendation-decision,
+.mnx-crm-commercial-recommendation-reason,
+.mnx-crm-commercial-pricing-metric,
+.mnx-crm-commercial-pricing-line,
+.mnx-crm-commercial-flat-note {
+  padding: var(--mn-space-3) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-summary-inline-card,
+.mnx-crm-commercial-command-metric,
+.mnx-crm-commercial-preview-card,
+.mnx-crm-commercial-history-card,
+.mnx-crm-commercial-reporting-card,
+.mnx-crm-commercial-suggestion-dock-card,
+.mnx-crm-commercial-line-card,
+.mnx-crm-commercial-parser-summary,
+.mnx-crm-commercial-line-evidence,
+.mnx-crm-commercial-comparison-summary > div,
+.mnx-crm-commercial-agent-card,
+.mnx-crm-commercial-recommendation-summary,
+.mnx-crm-commercial-recommendation-empty,
+.mnx-crm-commercial-recommendation-decision,
+.mnx-crm-commercial-recommendation-reason,
+.mnx-crm-commercial-pricing-metric,
+.mnx-crm-commercial-pricing-line,
+.mnx-crm-commercial-flat-note {
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 58%, transparent);
+}
+
+.mnx-crm-commercial-flat-note {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-sm);
+}
+
+.mnx-crm-commercial-flat-note.is-warning {
+  color: color-mix(in srgb, var(--mnx-warning) 82%, var(--mnx-text));
+  border-top-color: color-mix(in srgb, var(--mnx-warning) 36%, var(--mnx-border));
+}
+
+.mnx-crm-commercial-flat-note-stack {
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-commercial-stage-grid {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-crm-commercial-stage-card {
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 52%, var(--mnx-surface));
+}
+
+.mnx-crm-commercial-stage-step {
+  width: auto;
+  min-height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-commercial-sheet-copy h3,
+.mnx-crm-commercial-compose-sheet-title h3 {
+  font-size: clamp(1.1rem, 1.3vw, 1.35rem);
+  font-weight: 600;
+}
+
+.mnx-crm-commercial-compose-sheet {
+  padding: var(--mn-space-5);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-panel);
+  background: color-mix(in srgb, var(--mnx-surface) 98%, white 2%);
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-compose-sheet-header {
+  padding-bottom: var(--mn-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-compose-sheet-footer {
+  padding-top: var(--mn-space-3);
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-compose-address-row,
+.mnx-crm-commercial-compose-subject.mnx-field-control,
+.mnx-crm-commercial-compose-notes.mnx-field-control {
+  border-bottom-color: color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-compose-note-bar {
+  padding-top: var(--mn-space-4);
+}
+
+.mnx-crm-commercial-compose-subject.mnx-field-control {
+  padding-inline: var(--mn-space-3);
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 52%, var(--mnx-surface));
+}
+
+.mnx-crm-commercial-compose-editor.mnx-field-control {
+  min-height: 26rem;
+  padding-top: var(--mn-space-4);
+}
+
+.mnx-crm-commercial-preview-list,
+.mnx-crm-commercial-reporting-list {
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-commercial-suggestion-dock {
+  padding-top: var(--mn-space-4);
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-suggestion-dock-card:hover,
+.mnx-crm-commercial-suggestion-dock-card:focus-visible,
+.mnx-crm-commercial-suggestion-dock-card[data-selected="true"] {
+  border-top-color: color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-response-table-shell,
+.mnx-crm-commercial-comparison-table-shell {
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.mnx-crm-commercial-response-table th,
+.mnx-crm-commercial-comparison-table th {
+  background: transparent;
+}
+
+.mnx-crm-commercial-comparison-cell {
+  padding: var(--mn-space-2) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-crm-commercial-comparison-cell:hover:enabled,
+.mnx-crm-commercial-comparison-cell.is-selected {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--mnx-accent-text);
+}
+
+.mnx-crm-commercial-recommendation-panel {
+  gap: var(--mn-space-4);
+  padding-top: var(--mn-space-4);
+  border-top-color: color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-recommendation-reasons {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.mnx-crm-commercial-sheet-footer,
+.mnx-crm-commercial-charge-row,
+.mnx-crm-commercial-additional-shell {
+  border-top-color: color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-crm-commercial-charge-list {
+  gap: 0;
+}
+
+.mnx-crm-commercial-charge-row {
+  padding: var(--mn-space-4) 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.mnx-crm-commercial-pricing-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-crm-commercial-pricing-line {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
 .mnx-crm-document {
   --mnx-document-paper: var(--mn-color-document-paper, var(--mnx-surface));
   --mnx-document-ink: var(--mn-color-document-ink, var(--mnx-text-strong));
@@ -1389,6 +2254,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mnx-crm-masters-workspace-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mnx-crm-enquiry-dialog {
     width: min(1040px, 100%);
   }
@@ -1397,10 +2266,15 @@
     align-items: stretch;
   }
 
+  .mnx-crm-masters-governance-grid,
+  .mnx-crm-masters-ops-grid,
   .mnx-crm-masters-upload-meta,
   .mnx-crm-masters-result-grid,
   .mnx-crm-masters-mapping-grid,
   .mnx-crm-masters-entry-grid,
+  .mnx-crm-commercial-summary-inline,
+  .mnx-crm-commercial-command-grid,
+  .mnx-crm-commercial-pricing-metrics,
   .mnx-crm-commercial-manual-grid,
   .mnx-crm-commercial-line-grid,
   .mnx-crm-commercial-meta-grid,
@@ -1408,6 +2282,10 @@
   .mnx-crm-commercial-comparison-summary,
   .mnx-crm-commercial-agent-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mnx-crm-commercial-summary-shell {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mnx-crm-commercial-additional-grid {
@@ -1451,6 +2329,18 @@
     width: 100%;
   }
 
+  .mnx-crm-service-enquiry-queue-toolbar {
+    justify-content: stretch;
+  }
+
+  .mnx-crm-service-enquiry-queue-toolbar > * {
+    width: 100%;
+  }
+
+  .mnx-crm-service-enquiry-queue-search {
+    width: 100%;
+  }
+
   .mnx-crm-tabs {
     scroll-snap-type: x proximity;
   }
@@ -1461,6 +2351,11 @@
 
   .mnx-crm-masters-panel {
     padding: var(--mn-space-4);
+  }
+
+  .mnx-crm-masters-workspace-grid,
+  .mnx-crm-masters-filter-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mnx-crm-masters-action-row {
@@ -1485,6 +2380,10 @@
   .mnx-crm-masters-mapping-grid,
   .mnx-crm-masters-entry-grid,
   .mnx-crm-commercial-mailer-grid,
+  .mnx-crm-commercial-suggestion-dock-heading,
+  .mnx-crm-commercial-summary-inline,
+  .mnx-crm-commercial-command-grid,
+  .mnx-crm-commercial-pricing-metrics,
   .mnx-crm-commercial-manual-grid,
   .mnx-crm-commercial-line-grid,
   .mnx-crm-commercial-meta-grid,
@@ -1497,13 +2396,21 @@
   .mnx-crm-commercial-sheet-header,
   .mnx-crm-commercial-sheet-footer,
   .mnx-crm-commercial-charge-row,
-  .mnx-crm-commercial-history-heading {
+  .mnx-crm-commercial-history-heading,
+  .mnx-crm-commercial-suggestion-dock-heading {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .mnx-crm-commercial-sheet-status,
   .mnx-crm-commercial-charge-amount {
     justify-items: stretch;
+  }
+
+  .mnx-crm-commercial-suggestion-dock-rail {
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: visible;
   }
 
   .mnx-crm-commercial-compose-actions {
@@ -1514,13 +2421,31 @@
     width: 100%;
   }
 
-  .mnx-crm-commercial-compose-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--mn-space-2);
+  .mnx-crm-commercial-compose-sheet {
+    padding: var(--mn-space-4);
   }
 
-  .mnx-crm-commercial-compose-label {
-    min-height: auto;
+  .mnx-crm-commercial-compose-sheet-header,
+  .mnx-crm-commercial-compose-sheet-footer,
+  .mnx-crm-commercial-compose-address-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mnx-crm-commercial-compose-address-label {
+    flex-basis: auto;
+    padding-top: 0;
+  }
+
+  .mnx-crm-commercial-compose-sheet-window-actions,
+  .mnx-crm-commercial-compose-footer-tools,
+  .mnx-crm-commercial-compose-footer-primary {
+    width: 100%;
+  }
+
+  .mnx-crm-commercial-compose-footer-tools .mnx-button,
+  .mnx-crm-commercial-compose-footer-primary .mnx-button {
+    width: 100%;
   }
 
   .mnx-crm-commercial-charge-amount .mnx-field-control {

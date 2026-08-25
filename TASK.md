@@ -1,6 +1,6 @@
 # Automated Enquiry Rate Acquisition & Pricing Intelligence
 
-Last updated: 2026-08-24
+Last updated: 2026-08-25
 Current phase: `Phase 12 — pricing governance and quote approval traceability`
 Overall program status: `Phase 12 completed`
 Program progress: `██████████ 100%`
@@ -29,7 +29,7 @@ Execution rule: Stop here until explicit `CONTINUE TO NEXT PHASE`.
 | Phase 11 implementation | Complete | The enquiry workflow now stores a pricing worksheet tied to the current finalized buy-rate revision, captures sell-rate and margin decisions line by line, and seeds new quotations from that saved pricing snapshot. |
 | Phase 12 implementation | Complete | Quote creation and quote approval now preserve pricing traceability, block stale pricing flow, and surface whether a quotation still matches the current enquiry pricing worksheet. |
 | UI migration docs/audits | Complete | Route/status and ownership audits regenerated after the CRM commercial batch. |
-| Validation | Complete with noted limits | Focused CRM Phase 12 lint passed and `npm run design-system:verify` passed again on Monday, August 24, 2026. Full repo `tsc --noEmit` is currently blocked by the unchanged generated `.next` route-validator baseline around `/my-payroll`. `src/modules/crm/actions.ts` still carries an unchanged repo-wide `no-explicit-any` baseline if linted as a whole file. Runtime browser verification across Light, Night, and Violet themes remains pending. Vitest is still blocked by the existing `.env.staging.local` guard. |
+| Validation | Complete with noted limits | Focused ESLint passed for `src/modules/crm/services/best-rate-recommendation.service.ts` and `src/modules/crm/rate-workflow.ts` on Tuesday, August 25, 2026. Full repo `tsc --noEmit` is currently blocked by the unchanged generated `.next/dev/types/validator.ts` baseline. `src/modules/crm/actions.ts` still carries an unchanged repo-wide `no-explicit-any` baseline if linted as a whole file. Runtime browser verification across Light, Night, and Violet themes remains pending. Vitest is still blocked by the existing `.env.staging.local` guard. |
 
 ## Confirmed findings
 
@@ -58,7 +58,7 @@ Execution rule: Stop here until explicit `CONTINUE TO NEXT PHASE`.
 - The existing agent-recipient loader now computes contextual recommendation profiles from historical CRM enquiry workflow data and returns explanation-first metrics like requests, response rate, median response time, completeness, competitiveness, selection rate, booking rate, operational outcome rate, and validity quality.
 - The agent-recipient cards in the enquiry composer now surface rank, recommendation reason, similar-enquiry count, response history, and competitiveness directly where the salesperson chooses whom to email.
 - Phase 8 recommendation ranking now prefers concrete factors such as similar-enquiry history, response quality, competitiveness, selection history, booking outcomes, and recency instead of showing an opaque black-box score.
-- The comparison workspace now includes a dedicated Phase 9 recommendation layer that scores whole-agent and mixed-charge options against configurable landed-cost, completeness, validity, response-speed, and historical-reliability weights.
+- The comparison workspace now includes a dedicated Phase 9 recommendation layer that scores whole-agent and mixed-charge options against configurable landed buy cost, completeness, validity, response time, operational reliability, historical competitiveness, booking history, and data-confidence weights.
 - Users can now generate a best-rate recommendation, review explanation-first reasoning, and explicitly accept or override the recommendation without finalizing buy rates yet.
 - Recommendation acceptance and override decisions are now stored inside `lead.enquiryDetails.rateWorkflow`, including override reason and note capture for future learning loops.
 - Accepted or overridden recommendation decisions can now be converted into immutable finalized buy-rate revisions like `R1`, with line-level source response provenance, normalized totals, revision notes, and a current-version pointer stored inside `lead.enquiryDetails.rateWorkflow`.
@@ -83,7 +83,7 @@ Execution rule: Stop here until explicit `CONTINUE TO NEXT PHASE`.
 - Phase 6 standard-master acceptance still needs live-reply verification for `standard charges applicable`, `as agreed`, expired standards, multiple revisions, and explicit-overrides-on-top-of-standard-reference behavior.
 - Phase 7 comparison acceptance still needs live-reply verification for mixed-currency comparisons with manually configured exchange rates, W/M quantity realism on production enquiry shapes, and salesperson review of whole-agent versus mixed recommendations on actual agent mail.
 - Phase 8 recommendation acceptance still needs larger production-history validation for ranking quality, operational-outcome signal quality, and availability of future dispute or billing-variance evidence.
-- Phase 9 recommendation acceptance still needs manual verification for whole-agent vs mixed recommendation quality, decision-capture ergonomics, and override-reason usefulness on real enquiries.
+- Phase 9 recommendation acceptance still needs manual verification for whole-agent vs mixed recommendation quality, weighted-factor tuning on real history, decision-capture ergonomics, and override-reason usefulness on real enquiries.
 - Phase 10 finalized-snapshot acceptance still needs manual verification for repeated revision history creation, override-based finalization, costing unlock behavior, and downstream pricing consumption of the current finalized version.
 - Phase 11 pricing acceptance still needs manual verification for pricing edits on real enquiries, saved worksheet refresh after a new finalized revision, and quote seeding from the pricing snapshot.
 - Phase 12 pricing-governance acceptance still needs manual verification for stale-pricing blocking across quote creation, manager approval, and customer decision capture after live re-pricing on a linked enquiry.

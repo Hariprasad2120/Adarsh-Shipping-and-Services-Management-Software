@@ -431,15 +431,21 @@ export function QuoteDetailsPage({
       : null;
 
   return (
-    <div className="flex min-w-0 flex-col gap-6 text-[var(--mnx-text-strong)]">
-      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
+    <div className="flex min-w-0 flex-col gap-4 text-[var(--mnx-text-strong)]">
+      <div
+        className="grid min-w-0 items-start gap-4 lg:grid-cols-[var(--mnx-quote-sidebar-width)_minmax(0,1fr)]"
+        style={
+          {
+            "--mnx-quote-sidebar-width": isSidebarCollapsed ? "64px" : "300px",
+          } as React.CSSProperties
+        }
+      >
         <aside
           className={cn(
             "sticky top-0 flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] transition-all mnx-shadow-panel",
-            isSidebarCollapsed ? "lg:w-[132px]" : "lg:w-full",
           )}
         >
-          <div className="border-b border-[var(--mnx-border)] px-4 py-4">
+          <div className="border-b border-[var(--mnx-border)] px-3 py-3">
             {!isSidebarCollapsed ? (
               <div ref={filterRef} className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -533,72 +539,68 @@ export function QuoteDetailsPage({
                 ) : null}
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-3 py-1">
-                <div className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-3 text-center text-sm font-semibold text-[var(--mnx-text-strong)]">
-                  Quotes
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <CrmButton
-                    type="button"
-                    onClick={() => setIsSidebarCollapsed(false)}
-                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
-                    aria-label="Expand quote sidebar"
-                    title="Expand quote sidebar"
-                  >
-                    <ChevronRight className="size-4" />
-                  </CrmButton>
-                  <Link
-                    href="/crm/quotes/new"
-                    className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] transition-colors hover:bg-[var(--mnx-accent)]/90"
-                    aria-label="Create quote"
-                  >
-                    <Plus className="size-4" />
-                  </Link>
-                  <QuoteMoreActionsMenu
-                    items={[
-                      {
-                        key: "duplicate",
-                        label: isDuplicating ? "Duplicating..." : "Duplicate quote",
-                        icon: Copy,
-                        disabled: isDuplicating,
-                        onClick: handleDuplicate,
-                      },
-                      {
-                        key: "print",
-                        label: "Print",
-                        icon: Printer,
-                        onClick: () =>
-                          window.open(`/api/crm/quotes/${quote.id}/pdf`, "_blank"),
-                      },
-                      ...(quote.status === "draft"
-                        ? [
-                            {
-                              key: "delete",
-                              label: isDeleting ? "Deleting..." : "Delete draft",
-                              icon: Trash2,
-                              disabled: isDeleting,
-                              danger: true,
-                              onClick: handleDelete,
-                            },
-                          ]
-                        : []),
-                    ]}
-                    triggerClassName="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
-                  />
-                </div>
+              <div className="flex flex-col items-center gap-2">
+                <CrmButton
+                  type="button"
+                  onClick={() => setIsSidebarCollapsed(false)}
+                  className="inline-flex size-9 items-center justify-center rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
+                  aria-label="Expand quote sidebar"
+                  title="Expand quote sidebar"
+                >
+                  <ChevronRight className="size-4" />
+                </CrmButton>
+                <Link
+                  href="/crm/quotes/new"
+                  className="inline-flex size-9 items-center justify-center rounded-lg bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] transition-colors hover:bg-[var(--mnx-accent)]/90"
+                  aria-label="Create quote"
+                  title="Create quote"
+                >
+                  <Plus className="size-4" />
+                </Link>
+                <QuoteMoreActionsMenu
+                  items={[
+                    {
+                      key: "duplicate",
+                      label: isDuplicating ? "Duplicating..." : "Duplicate quote",
+                      icon: Copy,
+                      disabled: isDuplicating,
+                      onClick: handleDuplicate,
+                    },
+                    {
+                      key: "print",
+                      label: "Print",
+                      icon: Printer,
+                      onClick: () =>
+                        window.open(`/api/crm/quotes/${quote.id}/pdf`, "_blank"),
+                    },
+                    ...(quote.status === "draft"
+                      ? [
+                          {
+                            key: "delete",
+                            label: isDeleting ? "Deleting..." : "Delete draft",
+                            icon: Trash2,
+                            disabled: isDeleting,
+                            danger: true,
+                            onClick: handleDelete,
+                          },
+                        ]
+                      : []),
+                  ]}
+                  triggerClassName="inline-flex size-9 items-center justify-center rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]"
+                />
               </div>
             )}
           </div>
 
           {!isSidebarCollapsed ? (
-            <div className="border-b border-[var(--mnx-border)] px-4 py-4">
+            <div className="border-b border-[var(--mnx-border)] px-3 py-3">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[var(--mnx-text-muted)]" />
+                <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--mnx-text-muted)]" />
                 <CrmInput
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search quotes"
-                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
+                  className="h-9 w-full rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-9 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
                 />
               </div>
             </div>
@@ -613,19 +615,19 @@ export function QuoteDetailsPage({
                   key={record.id}
                   href={`/crm/quotes/${record.id}`}
                   className={cn(
-                    "block border-b border-[var(--mnx-border)] px-4 py-4 transition-colors",
+                    "block border-b border-[var(--mnx-border)] px-3 py-2.5 transition-colors",
                     active
                       ? "bg-[var(--mnx-accent)]/5 mnx-shadow-panel"
                       : "hover:bg-[var(--mnx-surface)]",
                   )}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2.5">
                     <span
-                      className="mt-1 block size-4 rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)]"
+                      className="mt-1 block size-3.5 rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)]"
                       aria-hidden="true"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-2">
                         <p className="truncate text-sm font-semibold text-[var(--mnx-text-strong)]">
                           {record.customerName}
                         </p>
@@ -640,10 +642,10 @@ export function QuoteDetailsPage({
                         <span className="size-1 rounded-full bg-[var(--mnx-border)]" />
                         <span>{formatDate(record.date)}</span>
                       </div>
-                      <div className="mt-3">
+                      <div className="mt-2">
                         <span
                           className={cn(
-                            "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             statusTone[
                               record.status as Exclude<QuoteListStatus, "all">
                             ],
@@ -661,37 +663,52 @@ export function QuoteDetailsPage({
             })}
             </div>
           ) : (
-            <div className="flex flex-1 items-start justify-center px-3 py-4 xl:py-6">
-              <div className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
-                List
-              </div>
+            <div className="flex flex-1 flex-col items-center gap-1.5 overflow-y-auto px-1.5 py-3">
+              {filteredQuotes.slice(0, 12).map((record) => {
+                const active = record.id === quote.id;
+                return (
+                  <Link
+                    key={record.id}
+                    href={`/crm/quotes/${record.id}`}
+                    title={`${record.customerName} · ${record.quoteNumber}`}
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold uppercase transition-colors",
+                      active
+                        ? "border-[var(--mnx-accent)] bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
+                        : "border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-border)]/35",
+                    )}
+                  >
+                    {record.customerName.slice(0, 2)}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </aside>
 
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-4">
           <CrmPanel
             className={cn(
               "relative overflow-visible border border-[var(--mnx-border)] bg-[var(--mnx-surface)]",
               actionsOpen ? "z-20" : "",
             )}
           >
-            <div className="border-b border-[var(--mnx-border)] px-4 py-5 sm:px-6">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="border-b border-[var(--mnx-border)] px-4 py-3 sm:px-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="flex items-start gap-3">
                   <Link
                     href="/crm/quotes"
-                    className="mt-1 inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] transition-colors hover:bg-[var(--mnx-border)]/35"
+                    className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] transition-colors hover:bg-[var(--mnx-border)]/35"
                     aria-label="Back to quote list"
                   >
                     <ArrowLeft className="size-4" />
                   </Link>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                       Location: {quote.location}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-3">
-                      <h1 className="text-[clamp(1.8rem,3vw,2.5rem)] font-semibold tracking-[-0.03em] text-[var(--mnx-text-strong)]">
+                    <div className="mt-1 flex flex-wrap items-center gap-2.5">
+                      <h1 className="text-[clamp(1.2rem,1.8vw,1.6rem)] font-semibold tracking-[-0.02em] text-[var(--mnx-text-strong)]">
                         {quote.quoteNumber}
                       </h1>
                       <span
@@ -713,15 +730,15 @@ export function QuoteDetailsPage({
 
             <div
               className={cn(
-                "px-4 py-4 sm:px-6",
-                actionsOpen ? "pb-28" : "",
+                "px-4 py-3 sm:px-5",
+                actionsOpen ? "pb-24" : "",
               )}
             >
               <div className="flex flex-wrap items-center gap-2 text-[var(--mnx-text-muted)]">
                 {quote.status === "draft" ? (
                   <Link
                     href={`/crm/quotes/${quote.id}/edit`}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
                   >
                     <Pencil className="size-4 text-[var(--mnx-text-muted)]" />
                     <span>Edit</span>
@@ -730,7 +747,7 @@ export function QuoteDetailsPage({
                   <CrmButton
                     disabled
                     type="button"
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm opacity-50 cursor-not-allowed"
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm opacity-50 cursor-not-allowed"
                   >
                     <Pencil className="size-4 text-[var(--mnx-text-muted)]" />
                     <span>Edit</span>
@@ -744,7 +761,7 @@ export function QuoteDetailsPage({
                   }}
                   disabled={!canSubmitForApproval}
                   className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-medium shadow-sm",
+                    "inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium shadow-sm",
                     canSubmitForApproval
                       ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-accent)]/90"
                       : "cursor-not-allowed border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] opacity-50",
@@ -775,13 +792,13 @@ export function QuoteDetailsPage({
                   <CrmButton
                     type="button"
                     onClick={() => setActionsOpen((current) => !current)}
-                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
+                    className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
                     aria-label="More quote actions"
                   >
                     <MoreHorizontal className="size-4" />
                   </CrmButton>
                   {actionsOpen ? (
-                    <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] mnx-shadow-panel">
+                    <div className="absolute right-0 top-11 z-30 w-60 overflow-hidden rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] mnx-shadow-panel">
                       {quote.status === "draft" && (
                         <ActionMenuButton
                           icon={Trash2}
@@ -871,8 +888,8 @@ export function QuoteDetailsPage({
             </CrmDialog>
           ) : null}
 
-          <div className="space-y-6">
-            <div className="grid gap-6">
+          <div className="space-y-4">
+            <div className="grid gap-4">
               {quote.versionNumber ? (
                 <CrmSection
                   title="Versioning"
@@ -1013,7 +1030,7 @@ export function QuoteDetailsPage({
                 </div>
               </CrmSection>
 
-              <div className="grid gap-6 xl:grid-cols-2">
+              <div className="grid gap-4 xl:grid-cols-2">
                 <InfoPanel
                   title="Manager Approval Details"
                   icon={UserCheck}
@@ -1075,7 +1092,7 @@ export function QuoteDetailsPage({
                 />
               </div>
 
-              <section className="grid gap-6 xl:grid-cols-2">
+              <section className="grid gap-4 xl:grid-cols-2">
                 <InfoPanel
                   title="Booking And Job Conversion Status"
                   icon={ShipWheel}
@@ -1278,7 +1295,7 @@ export function QuoteDetailsPage({
                       } as React.CSSProperties
                     }
                   >
-                    <div className="space-y-6 p-5">
+                    <div className="space-y-4 p-4">
                       {(quote.status === "sent" ||
                         quote.status === "customer-viewed") &&
                         quote.slaDeadline &&
@@ -1334,7 +1351,7 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
+                      <section className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
                         <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
                           Customer Details
                         </div>
@@ -1365,7 +1382,7 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
+                      <section className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
                         <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
                           Logistics Details
                         </div>
@@ -1428,10 +1445,10 @@ export function QuoteDetailsPage({
                           </p>
                         </section>
                       ) : (
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]">
-                        <div className="flex items-center justify-between border-b border-[var(--mnx-border)] px-5 py-4">
+                      <section className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]">
+                        <div className="flex items-center justify-between border-b border-[var(--mnx-border)] px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--mnx-text-strong)]">
+                            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--mnx-text-strong)]">
                               Items
                             </h2>
                             <span className="rounded-full bg-[var(--mnx-accent)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--mnx-accent)]">
@@ -1450,12 +1467,12 @@ export function QuoteDetailsPage({
                           <CrmTable className="w-full min-w-[760px]">
                             <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                               <tr>
-                                <th className="px-5 py-3">S.No</th>
-                                <th className="px-5 py-3">Item</th>
-                                <th className="px-5 py-3">HSN/SAC</th>
-                                <th className="px-5 py-3 text-right">Qty</th>
-                                <th className="px-5 py-3 text-right">Price</th>
-                                <th className="px-5 py-3 text-right">Amount</th>
+                                <th className="px-4 py-2.5">S.No</th>
+                                <th className="px-4 py-2.5">Item</th>
+                                <th className="px-4 py-2.5">HSN/SAC</th>
+                                <th className="px-4 py-2.5 text-right">Qty</th>
+                                <th className="px-4 py-2.5 text-right">Price</th>
+                                <th className="px-4 py-2.5 text-right">Amount</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--mnx-border)] text-sm">
@@ -1496,10 +1513,10 @@ export function QuoteDetailsPage({
 
                                 return (
                                   <tr key={item.id}>
-                                    <td className="px-5 py-4 text-[var(--mnx-text-muted)]">
+                                    <td className="px-4 py-3 text-[var(--mnx-text-muted)]">
                                       {index + 1}
                                     </td>
-                                    <td className="px-5 py-4">
+                                    <td className="px-4 py-3">
                                       <div className="font-medium text-[var(--mnx-text-strong)]">
                                         {item.name}
                                       </div>
@@ -1515,16 +1532,16 @@ export function QuoteDetailsPage({
                                         </div>
                                       )}
                                     </td>
-                                    <td className="px-5 py-4 text-[var(--mnx-text-muted)]">
+                                    <td className="px-4 py-3 text-[var(--mnx-text-muted)]">
                                       {item.hsnSac || "—"}
                                     </td>
-                                    <td className="px-5 py-4 text-right text-[var(--mnx-text-muted)]">
+                                    <td className="px-4 py-3 text-right text-[var(--mnx-text-muted)]">
                                       {item.quantity}
                                     </td>
-                                    <td className="px-5 py-4 text-right text-[var(--mnx-text-muted)] font-mono">
+                                    <td className="px-4 py-3 text-right text-[var(--mnx-text-muted)] font-mono">
                                       {formattedPrice}
                                     </td>
-                                    <td className="px-5 py-4 text-right font-medium text-[var(--mnx-text-strong)] font-mono">
+                                    <td className="px-4 py-3 text-right font-medium text-[var(--mnx-text-strong)] font-mono">
                                       {formattedAmountVal}
                                     </td>
                                   </tr>
@@ -1534,7 +1551,7 @@ export function QuoteDetailsPage({
                           </CrmTable>
                         </div>
 
-                        <div className="border-t border-[var(--mnx-border)] px-5 py-5">
+                        <div className="border-t border-[var(--mnx-border)] px-4 py-4">
                           <div className="ml-auto w-full max-w-[360px] space-y-3 text-sm">
                             <SummaryRow
                               label="Sub Total"
@@ -1569,8 +1586,8 @@ export function QuoteDetailsPage({
                       </section>
                       )}
 
-                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
-                        <div className="grid gap-6 xl:grid-cols-2">
+                      <section className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
+                        <div className="grid gap-4 xl:grid-cols-2">
                           <div>
                             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
                               Notes
@@ -1735,7 +1752,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Icon className="size-4 text-[var(--mnx-text-muted)]" />
       <span>{label}</span>
@@ -1789,25 +1806,25 @@ function InfoPanel({
 }) {
   const safeRows = rows.length ? rows : [["Status", "No details available"]];
   return (
-    <CrmPanel className="p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]">
+    <CrmPanel className="p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]">
           <Icon className="size-4" />
         </span>
-        <h2 className="text-base font-semibold text-[var(--mnx-text-strong)]">
+        <h2 className="text-sm font-semibold text-[var(--mnx-text-strong)]">
           {title}
         </h2>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {safeRows.map(([label, value]) => (
           <div
             key={`${title}-${label}`}
-            className="flex flex-col gap-1 rounded-xl bg-[var(--mnx-surface)] px-4 py-3"
+            className="flex flex-col gap-0.5 rounded-lg bg-[var(--mnx-surface)] px-3 py-2"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--mnx-text-muted)]">
               {label}
             </span>
-            <span className="text-sm text-[var(--mnx-text-strong)]">
+            <span className="text-sm text-[var(--mnx-text-strong)] break-words">
               {value}
             </span>
           </div>
@@ -1819,11 +1836,11 @@ function InfoPanel({
 
 function DetailPair({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-[var(--mnx-surface)] px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+    <div className="rounded-lg bg-[var(--mnx-surface)] px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--mnx-text-muted)]">
         {label}
       </div>
-      <div className="mt-1 text-sm font-medium text-[var(--mnx-text-strong)]">
+      <div className="mt-0.5 text-sm font-medium text-[var(--mnx-text-strong)] break-words">
         {value}
       </div>
     </div>
@@ -1832,11 +1849,11 @@ function DetailPair({ label, value }: { label: string; value: string }) {
 
 function AddressBlock({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="rounded-2xl bg-[var(--mnx-surface)] px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+    <div className="rounded-lg bg-[var(--mnx-surface)] px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--mnx-text-muted)]">
         {label}
       </div>
-      <div className="mt-2 text-sm leading-6 text-[var(--mnx-text-muted)]">
+      <div className="mt-1 text-sm leading-6 text-[var(--mnx-text-muted)] break-words">
         {value || "-"}
       </div>
     </div>
@@ -1880,9 +1897,46 @@ function QuotePdfPreview({
   const isSameState =
     supplierStateCode && supplierStateCode === quote.placeOfSupply;
 
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [fit, setFit] = useState({ scale: 1, width: 0, height: 0 });
+
+  useEffect(() => {
+    const outer = outerRef.current;
+    const content = contentRef.current;
+    if (!outer || !content) return;
+
+    const update = () => {
+      const naturalWidth = content.scrollWidth;
+      const naturalHeight = content.scrollHeight;
+      const availableWidth = outer.clientWidth;
+      if (!naturalWidth || !naturalHeight || !availableWidth) return;
+      const scale = Math.min(1, availableWidth / naturalWidth);
+      setFit({
+        scale,
+        width: naturalWidth * scale,
+        height: naturalHeight * scale,
+      });
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(outer);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="overflow-auto bg-[var(--mnx-surface)] p-6 sm:p-8">
-      <div className=" mx-auto w-full max-w-[1120px] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-6 mnx-shadow-panel sm:p-10">
+    <div ref={outerRef} className="bg-[var(--mnx-surface)]">
+      <div
+        className="mx-auto overflow-hidden"
+        style={{ width: fit.width || undefined, height: fit.height || undefined }}
+      >
+        <div
+          ref={contentRef}
+          className="w-[1120px] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-6 mnx-shadow-panel sm:p-10"
+          style={{ transform: `scale(${fit.scale})`, transformOrigin: "top left" }}
+        >
         <div className="relative mx-auto max-w-[920px] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] overflow-hidden">
           <StatusWatermark status={quote.status} />
 
@@ -2205,6 +2259,7 @@ function QuotePdfPreview({
               </div>
             );
           })()}
+        </div>
         </div>
       </div>
     </div>

@@ -10,11 +10,14 @@ import type { RateComparisonWorkspace } from "./rate-comparison.service";
 
 type RecommendationSettings = {
   weights: {
-    landedCost: number;
+    landedBuyCost: number;
     completeness: number;
     validity: number;
-    responseSpeed: number;
-    historicalReliability: number;
+    responseTime: number;
+    operationalReliability: number;
+    historicalCompetitiveness: number;
+    bookingHistory: number;
+    dataConfidence: number;
   };
   mixedSelectionPenalty: number;
   minimumConfidence: number;
@@ -81,6 +84,20 @@ function getHistoricalReliability(profile: AgentRecommendationProfile | null | u
   );
 }
 
+function getHistoricalCompetitiveness(profile: AgentRecommendationProfile | null | undefined) {
+  if (!profile || typeof profile.metrics.competitivenessPct !== "number") {
+    return 0.35;
+  }
+  return clamp01(profile.metrics.competitivenessPct / 100);
+}
+
+function getBookingHistoryScore(profile: AgentRecommendationProfile | null | undefined) {
+  if (!profile) return 0.35;
+  return clamp01(
+    average([profile.metrics.selectionRatePct, profile.metrics.bookingRatePct]) / 100,
+  );
+}
+
 function getResponseSpeedScore(profile: AgentRecommendationProfile | null | undefined) {
   const medianMinutes = profile?.metrics.medianResponseMinutes;
   if (typeof medianMinutes !== "number" || medianMinutes <= 0) return 0.35;
@@ -120,6 +137,33 @@ function getValidityScoreAndDays(response: AgentRateResponseRecord | null) {
     score: clamp01(diffDays / 30),
     days: diffDays,
   };
+}
+
+function getDataConfidenceScore(response: AgentRateResponseRecord | null) {
+  if (!response) {
+    return 0.35;
+  }
+
+  const parserConfidence =
+    typeof response.overallConfidence === "number"
+      ? clamp01(response.overallConfidence)
+      : response.parserStatus === "AUTO_MAPPED"
+        ? 0.8
+        : response.parserStatus === "MANUAL"
+          ? 0.7
+          : 0.5;
+  const warningPenalty = Math.min(response.warnings.length * 0.08, 0.3);
+  const reviewPenalty = Math.min(
+    response.lines.filter(
+      (line) =>
+        line.reviewStatus === "REVIEW_REQUIRED" ||
+        line.missingFields.length > 0 ||
+        line.amountMissing,
+    ).length * 0.06,
+    0.3,
+  );
+
+  return clamp01(parserConfidence - warningPenalty - reviewPenalty);
 }
 
 function buildWholeAgentCandidate(params: {
@@ -164,13 +208,19 @@ function buildWholeAgentCandidate(params: {
   const validity = getValidityScoreAndDays(bestResponse);
   const responseSpeed = getResponseSpeedScore(profile);
   const reliability = getHistoricalReliability(profile);
+  const competitiveness = getHistoricalCompetitiveness(profile);
+  const bookingHistory = getBookingHistoryScore(profile);
+  const dataConfidence = getDataConfidenceScore(bestResponse);
 
   const score =
-    settings.weights.landedCost * costScore +
+    settings.weights.landedBuyCost * costScore +
     settings.weights.completeness * 1 +
     settings.weights.validity * validity.score +
-    settings.weights.responseSpeed * responseSpeed +
-    settings.weights.historicalReliability * reliability;
+    settings.weights.responseTime * responseSpeed +
+    settings.weights.operationalReliability * reliability +
+    settings.weights.historicalCompetitiveness * competitiveness +
+    settings.weights.bookingHistory * bookingHistory +
+    settings.weights.dataConfidence * dataConfidence;
 
   const deltaToNext =
     typeof nextBest?.comparableTotalInBaseCurrency === "number" &&
@@ -193,6 +243,20 @@ function buildWholeAgentCandidate(params: {
           ? `${profile.metrics.responseRatePct}% response rate with ${profile.metrics.completeRatePct ?? "N/A"}% complete-response quality.`
           : "Limited historical reliability data is available, so cost/completeness carried more weight.",
     },
+    {
+      label: "Historical competitiveness",
+      detail:
+        profile && typeof profile.metrics.competitivenessPct === "number"
+          ? `${profile.metrics.competitivenessPct}% of comparable charges were historically among the strongest offers.`
+          : "Historical competitiveness evidence is still limited for this vendor.",
+    },
+    {
+      label: "Booking history",
+      detail:
+        profile && typeof profile.metrics.bookingRatePct === "number"
+          ? `${profile.metrics.bookingRatePct}% of previously selected similar offers converted into booking outcomes.`
+          : "Booking-history evidence is still limited, so it carried a lighter weight.",
+    },
   ];
 
   if (typeof validity.days === "number" && validity.days > 0) {
@@ -202,6 +266,14 @@ function buildWholeAgentCandidate(params: {
     });
   }
 
+  reasons.push({
+    label: "Data confidence",
+    detail:
+      bestResponse && bestResponse.warnings.length > 0
+        ? `The current structured response is usable, but ${bestResponse.warnings.length} warning(s) reduced confidence.`
+        : "The current structured response carries a stronger data-confidence signal.",
+  });
+
   return {
     mode: "ENTIRE_AGENT",
     responseId: best.responseId,
@@ -209,11 +281,20 @@ function buildWholeAgentCandidate(params: {
     totalInBaseCurrency: best.comparableTotalInBaseCurrency,
     vendorIds: bestResponse?.vendorId ? [bestResponse.vendorId] : [],
     score,
-    confidence: clamp01((1 + reliability + responseSpeed + validity.score) / 4),
+    confidence: clamp01(
+      (1 +
+        reliability +
+        responseSpeed +
+        validity.score +
+        competitiveness +
+        bookingHistory +
+        dataConfidence) /
+        7,
+    ),
     explanation:
       deltaToNext && deltaToNext > 0
-        ? `Recommended ${best.vendorName} because it has the lowest complete landed buy cost, stays ${formatCurrencyAmount(deltaToNext, params.workspace.baseCurrency)} below the next complete offer, and carries stronger historical reliability.`
-        : `Recommended ${best.vendorName} because it provides the lowest complete landed buy cost with usable validity and stronger historical reliability.`,
+        ? `Recommended ${best.vendorName} because it has the lowest complete landed buy cost, stays ${formatCurrencyAmount(deltaToNext, params.workspace.baseCurrency)} below the next complete offer, and still scores better on reliability, competitiveness, booking history, and data confidence.`
+        : `Recommended ${best.vendorName} because it provides the strongest weighted balance across landed buy cost, completeness, validity, response speed, reliability, competitiveness, booking history, and data confidence.`,
     reasons,
   } satisfies Candidate;
 }
@@ -248,15 +329,31 @@ function buildMixedCandidate(params: {
       getHistoricalReliability(params.profileByVendorId.get(vendorId)),
     ),
   );
+  const competitiveness = average(
+    uniqueVendorIds.map((vendorId) =>
+      getHistoricalCompetitiveness(params.profileByVendorId.get(vendorId)),
+    ),
+  );
+  const bookingHistory = average(
+    uniqueVendorIds.map((vendorId) =>
+      getBookingHistoryScore(params.profileByVendorId.get(vendorId)),
+    ),
+  );
   const validity = average(
     uniqueResponses.map((response) => getValidityScoreAndDays(response).score),
   );
+  const dataConfidence = average(
+    uniqueResponses.map((response) => getDataConfidenceScore(response)),
+  );
   const score =
-    settings.weights.landedCost * 1 +
+    settings.weights.landedBuyCost * 1 +
     settings.weights.completeness * 1 +
     settings.weights.validity * validity +
-    settings.weights.responseSpeed * responseSpeed +
-    settings.weights.historicalReliability * reliability -
+    settings.weights.responseTime * responseSpeed +
+    settings.weights.operationalReliability * reliability +
+    settings.weights.historicalCompetitiveness * competitiveness +
+    settings.weights.bookingHistory * bookingHistory +
+    settings.weights.dataConfidence * dataConfidence -
     Math.max(0, uniqueVendorIds.length - 1) * settings.mixedSelectionPenalty;
 
   return {
@@ -266,11 +363,14 @@ function buildMixedCandidate(params: {
     totalInBaseCurrency: params.workspace.recommendedMixedTotalInBaseCurrency,
     vendorIds: uniqueVendorIds,
     score,
-    confidence: clamp01((1 + reliability + responseSpeed + validity) / 4),
+    confidence: clamp01(
+      (1 + reliability + responseSpeed + validity + competitiveness + bookingHistory + dataConfidence) /
+        7,
+    ),
     explanation:
       uniqueVendorIds.length > 1
-        ? "Recommended a mixed charge strategy because it produces the best complete landed buy cost while still using the strongest historical vendors charge by charge."
-        : "Recommended a mixed charge strategy because the deterministic comparison already converges on a single vendor path with the best complete landed buy cost.",
+        ? "Recommended a mixed charge strategy because it produces the best complete landed buy cost while still balancing historical competitiveness, booking history, operational reliability, and response confidence charge by charge."
+        : "Recommended a mixed charge strategy because the deterministic comparison converges on the strongest weighted result even after historical and confidence factors are applied.",
     reasons: [
       {
         label: "Best normalized total",
@@ -279,6 +379,10 @@ function buildMixedCandidate(params: {
       {
         label: "Coverage quality",
         detail: `All mandatory charges have a comparable recommended source across ${uniqueVendorIds.length} vendor option(s).`,
+      },
+      {
+        label: "Historical intelligence",
+        detail: "The mixed recommendation also checks response speed, operational reliability, competitiveness, booking history, and current data confidence before winning.",
       },
     ],
   } satisfies Candidate;

@@ -125,7 +125,7 @@ export default function ProductCataloguePage() {
         eyebrow="Enterprise system manual"
         title="Product Catalogue"
         icon={<BookOpen size={21} aria-hidden="true" />}
-        description="Explore the platform’s modules, operational workflows, backend mutations, RBAC controls, integrations, and business outcomes."
+        description="Browse modules, workflows, controls, and outcomes."
         actions={
           <WorkspaceAction
             className="mnx-no-print"

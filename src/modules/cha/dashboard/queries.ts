@@ -2,66 +2,97 @@ import "server-only";
 
 import { db } from "@/lib/db";
 
-type ChaDashboardAggregate = {
-  activeJobs: bigint;
-  pendingChecklists: bigint;
-  pendingFilings: bigint;
-  urgentExpenses: bigint;
-  outstandingAdvance: unknown;
-};
-
 /**
- * One parameterized organization-scoped read replaces the dashboard's metric
- * count fan-out and advance/receipt materialization.
+ * Keep the dashboard metrics on typed Prisma delegates so transient raw-query
+ * transport issues do not take down the route during page load.
  */
 export async function getChaDashboardMetrics(orgId: string) {
-  const [row] = await db.$queryRaw<ChaDashboardAggregate[]>`
-    SELECT
-      (SELECT COUNT(*)
-       FROM "ChaJob" j
-       WHERE j."orgId" = ${orgId}
-         AND j."deletedAt" IS NULL
-         AND j.status = 'ACTIVE'
-         AND j.stage <> 'FILED') AS "activeJobs",
-      (SELECT COUNT(*)
-       FROM "ChaChecklistImport" c
-       INNER JOIN "ChaJob" j ON j.id = c."jobId"
-       WHERE j."orgId" = ${orgId}
-         AND j."deletedAt" IS NULL
-         AND c.status = 'PENDING_APPROVAL') AS "pendingChecklists",
-      (SELECT COUNT(*)
-       FROM "ChaFiling" f
-       INNER JOIN "ChaJob" j ON j.id = f."jobId"
-       WHERE j."orgId" = ${orgId}
-         AND j."deletedAt" IS NULL
-         AND f.status = 'PENDING') AS "pendingFilings",
-      (SELECT COUNT(*)
-       FROM "ChaExpenseRequest" e
-       LEFT JOIN "ChaJob" j ON j.id = e."jobId"
-       WHERE e."orgId" = ${orgId}
-         AND (j.id IS NULL OR j."deletedAt" IS NULL)
-         AND e.status = 'URGENT_PAYMENT_REQUIRED') AS "urgentExpenses",
-      COALESCE((
-        SELECT SUM(GREATEST(0, a."expectedAmount" - COALESCE(r.received, 0)))
-        FROM "ChaCustomerAdvance" a
-        INNER JOIN "ChaJob" j ON j.id = a."jobId"
-        LEFT JOIN (
-          SELECT "advanceId", SUM(amount) AS received
-          FROM "ChaCustomerAdvanceReceipt"
-          GROUP BY "advanceId"
-        ) r ON r."advanceId" = a.id
-        WHERE j."orgId" = ${orgId}
-          AND j."deletedAt" IS NULL
-          AND a.status IN ('FOLLOW_UP', 'PARTIALLY_RECEIVED')
-      ), 0) AS "outstandingAdvance"
-  `;
+  const [
+    activeJobs,
+    pendingChecklists,
+    pendingFilings,
+    urgentExpenses,
+    outstandingAdvances,
+  ] = await Promise.all([
+    db.chaJob.count({
+      where: {
+        orgId,
+        deletedAt: null,
+        status: "ACTIVE",
+        NOT: { stage: "FILED" },
+      },
+    }),
+    db.chaChecklistImport.count({
+      where: {
+        status: "PENDING_APPROVAL",
+        job: {
+          orgId,
+          deletedAt: null,
+        },
+      },
+    }),
+    db.chaFiling.count({
+      where: {
+        status: "PENDING",
+        job: {
+          orgId,
+          deletedAt: null,
+        },
+      },
+    }),
+    db.chaExpenseRequest.count({
+      where: {
+        orgId,
+        isUrgent: true,
+        status: {
+          in: [
+            "UNDER_REVIEW",
+            "ACCOUNTS_REVIEW",
+            "CLARIFICATION_REQUIRED",
+            "APPROVED",
+            "READY_FOR_DISBURSEMENT",
+            "QUERY_RAISED",
+          ],
+        },
+        OR: [
+          { jobId: null },
+          { job: { deletedAt: null } },
+        ],
+      },
+    }),
+    db.chaCustomerAdvance.findMany({
+      where: {
+        status: { in: ["FOLLOW_UP", "PARTIALLY_RECEIVED"] },
+        job: {
+          orgId,
+          deletedAt: null,
+        },
+      },
+      select: {
+        expectedAmount: true,
+        receipts: {
+          select: {
+            amount: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const outstandingAdvance = outstandingAdvances.reduce((total, advance) => {
+    const receivedAmount = advance.receipts.reduce((sum, receipt) => {
+      return sum + Number(receipt.amount ?? 0);
+    }, 0);
+
+    return total + Math.max(0, Number(advance.expectedAmount ?? 0) - receivedAmount);
+  }, 0);
 
   return {
-    activeJobs: Number(row?.activeJobs ?? 0),
-    pendingChecklists: Number(row?.pendingChecklists ?? 0),
-    pendingFilings: Number(row?.pendingFilings ?? 0),
-    urgentExpenses: Number(row?.urgentExpenses ?? 0),
-    outstandingAdvance: Number(row?.outstandingAdvance ?? 0),
+    activeJobs,
+    pendingChecklists,
+    pendingFilings,
+    urgentExpenses,
+    outstandingAdvance,
   };
 }
 

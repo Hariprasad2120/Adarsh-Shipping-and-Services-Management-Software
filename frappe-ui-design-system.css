@@ -269,25 +269,25 @@
   --frappe-shadow-lg: inset 0px 0.5px 1.5px 0.5px #ffffff0a, 0px 0px 16px 0px #0000001a, 0px 18px 20px -8px #00000085;
   --frappe-focus-ring: 0px 0px 0px 3px #0e3d62cc;
 
-  --frappe-bg: var(--frappe-gray-950);
-  --frappe-bg-subtle: var(--frappe-gray-900);
-  --frappe-bg-muted: var(--frappe-gray-800);
-  --frappe-surface: var(--frappe-gray-900);
-  --frappe-surface-raised: var(--frappe-gray-800);
-  --frappe-surface-hover: var(--frappe-gray-700);
-  --frappe-surface-selected: #0a2e5c;
-  --frappe-sidebar-bg: transparent;
-  --frappe-navbar-bg: var(--frappe-gray-950);
+  --frappe-bg: #090a0c;
+  --frappe-bg-subtle: #14171f;
+  --frappe-bg-muted: #1c202a;
+  --frappe-surface: #181b22;
+  --frappe-surface-raised: #20242e;
+  --frappe-surface-hover: #282e3b;
+  --frappe-surface-selected: #123020;
+  --frappe-sidebar-bg: #090a0c;
+  --frappe-navbar-bg: #090a0c;
 
-  --frappe-border: var(--frappe-gray-700);
-  --frappe-border-strong: var(--frappe-gray-600);
-  --frappe-border-subtle: #ffffff14;
+  --frappe-border: #353a47;
+  --frappe-border-strong: #484f60;
+  --frappe-border-subtle: #272b36;
 
-  --frappe-text: var(--frappe-gray-50);
-  --frappe-text-muted: var(--frappe-gray-200);
-  --frappe-text-soft: var(--frappe-gray-300);
-  --frappe-text-inverse: var(--frappe-gray-950);
-  --frappe-link: var(--frappe-blue-500);
+  --frappe-text: #ffffff;
+  --frappe-text-muted: #e2e8f0;
+  --frappe-text-soft: #cbd5e1;
+  --frappe-text-inverse: #090a0c;
+  --frappe-link: #22c55e;
 
   --frappe-primary: var(--frappe-blue-500);
   --frappe-primary-hover: var(--frappe-blue-400);

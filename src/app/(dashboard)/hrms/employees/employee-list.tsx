@@ -120,7 +120,7 @@ const GROUP_ORDER: UserRoleName[] = [
 ];
 
 const HEADER_CELL_CLASS =
-  "px-5 py-3 text-xs font-medium uppercase tracking-[0.14em] text-mono-muted";
+  "px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em]";
 
 function employeeNumberFor(user: User) {
   return (
@@ -266,8 +266,8 @@ function SectionTable({
   users: User[];
 }) {
   return (
-    <OperationalDataTableWrap>
-      <OperationalTable className="w-full min-w-[1280px] table-fixed text-sm">
+    <OperationalDataTableWrap className="mnx-employee-directory-table-wrap">
+      <OperationalTable className="mnx-employee-directory-table w-full min-w-[1280px] table-fixed text-sm">
         <colgroup>
           <col className="w-[22%]" />
           <col className="w-[10%]" />
@@ -279,7 +279,7 @@ function SectionTable({
           <col className="w-[7%]" />
           <col className="w-[9%]" />
         </colgroup>
-        <thead className="border-b border-mono-border/40 bg-mono-soft text-mono-text">
+        <thead className="mnx-employee-directory-table-head">
           <tr>
             <th className={`${HEADER_CELL_CLASS} text-left`}>
               Basic Information
@@ -304,14 +304,11 @@ function SectionTable({
             const accountStatus = accountStatusFor(user);
 
             return (
-            <tr
-              key={user.id}
-              className="group transition-colors hover:bg-mono-soft/80"
-            >
+            <tr key={user.id} className="mnx-employee-directory-row group">
               <OperationalTableCell className="px-0 py-0">
                 <Link
                   href={`/hrms/employees/${user.id}`}
-                  className="flex min-w-0 items-center gap-3 px-5 py-3.5 no-underline hover:no-underline"
+                  className="mnx-employee-directory-person flex min-w-0 items-center gap-3 px-4 py-3 no-underline hover:no-underline"
                 >
                   <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--frappe-radius-md)] border border-[var(--frappe-border)] bg-[var(--frappe-bg-subtle)] text-xs font-semibold text-[var(--frappe-text-muted)]">
                     {user.photo ? (
@@ -344,11 +341,11 @@ function SectionTable({
                 </Link>
               </OperationalTableCell>
 
-              <td className="mnx-numeric px-5 py-3 text-sm text-mono-muted">
+              <td className="mnx-numeric px-4 py-3 text-sm text-mono-muted">
                 {formatDate(user.employmentRecord?.joinDate)}
               </td>
 
-              <td className="px-5 py-3">
+              <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
                   {user.roles.length === 0 ? (
                     <span className="text-sm text-mono-muted">-</span>
@@ -367,15 +364,15 @@ function SectionTable({
                 </div>
               </td>
 
-              <td className="px-5 py-3 text-sm text-mono-muted">
+              <td className="px-4 py-3 text-sm text-mono-muted">
                 {toDisplayTitleCase(user.department?.name ?? user.designation)}
               </td>
 
-              <td className="px-5 py-3 text-sm text-mono-muted">
+              <td className="px-4 py-3 text-sm text-mono-muted">
                 {toDisplayTitleCase(user.branch?.name)}
               </td>
 
-              <td className="px-5 py-3">
+              <td className="px-4 py-3">
                 <Badge
                   className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold ${
                     employeeStatusFor(user).toLowerCase() === "active"
@@ -387,7 +384,7 @@ function SectionTable({
                 </Badge>
               </td>
 
-              <td className="px-5 py-3">
+              <td className="px-4 py-3">
                 <Badge
                   className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold ${accountStatus.className}`}
                 >
@@ -395,7 +392,7 @@ function SectionTable({
                 </Badge>
               </td>
 
-              <td className="mnx-numeric px-5 py-3 text-sm text-mono-muted">
+              <td className="mnx-numeric px-4 py-3 text-sm text-mono-muted">
                 {user.employmentRecord?.ctc == null
                   ? "-"
                   : `Rs ${Number(user.employmentRecord.ctc).toLocaleString(
@@ -403,7 +400,7 @@ function SectionTable({
                     )}`}
               </td>
 
-              <td className="px-5 py-3 text-right">
+              <td className="px-4 py-3 text-right">
                 <EmployeeAccountActions
                   active={user.active}
                   employeeId={user.id}
@@ -449,28 +446,27 @@ export function EmployeeList({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {users.length === 0 ? (
-        <Card className="w-full border-mono-border shadow-sm dark:border-[var(--mnx-accent)]/25">
+        <Card className="mnx-employee-directory-section w-full border-mono-border shadow-none dark:border-[var(--mnx-accent)]/25">
           <CardContent className="py-10 text-center text-sm text-mono-muted">
             No employees found.
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-7">
+        <div className="mnx-employee-directory-stream">
           {groupedUsers.map((section) => (
             <Card
               key={section.key}
-              className="w-full overflow-hidden border-mono-border shadow-ambient dark:border-[var(--mnx-accent)]/25"
+              className="mnx-employee-directory-section w-full overflow-hidden border-mono-border shadow-none dark:border-[var(--mnx-accent)]/25"
             >
-              <CardHeader className="bg-mono-card px-5 pb-4 pt-5">
-                <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-[var(--mnx-text)]">
+              <CardHeader className="mnx-employee-directory-section-header">
+                <CardTitle className="mnx-employee-directory-section-title">
                   {section.label}
-
-                  <span className="ml-3 text-sm font-normal tracking-normal text-[var(--mnx-muted)]">
-                    ({section.users.length})
-                  </span>
                 </CardTitle>
+                <span className="mnx-employee-directory-section-count">
+                  {section.users.length} visible
+                </span>
               </CardHeader>
 
               <CardContent className="!space-y-0 !p-0">
@@ -483,14 +479,14 @@ export function EmployeeList({
           ))}
 
           {uncategorizedUsers.length > 0 ? (
-            <Card className="w-full overflow-hidden border-mono-border shadow-ambient dark:border-[var(--mnx-accent)]/25">
-              <CardHeader className="bg-mono-card px-5 pb-4 pt-5">
-                <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-[var(--mnx-text)]">
+            <Card className="mnx-employee-directory-section w-full overflow-hidden border-mono-border shadow-none dark:border-[var(--mnx-accent)]/25">
+              <CardHeader className="mnx-employee-directory-section-header">
+                <CardTitle className="mnx-employee-directory-section-title">
                   Other Roles
-                  <span className="ml-3 text-sm font-normal tracking-normal text-[var(--mnx-muted)]">
-                    ({uncategorizedUsers.length})
-                  </span>
                 </CardTitle>
+                <span className="mnx-employee-directory-section-count">
+                  {uncategorizedUsers.length} visible
+                </span>
               </CardHeader>
 
               <CardContent className="!space-y-0 !p-0">

@@ -59,8 +59,8 @@ html[data-theme="dark"] {
   --mn-heading-to-panel-gap: var(--frappe-space-3);
   --mn-layout-workspace-stack-gap: 1.25rem;
   --mn-layout-workspace-stack-gap-mobile: 1rem;
-  --mn-layout-page-max: 80rem;
-  --mn-layout-workspace-max: 80rem;
+  --mn-layout-page-max: 100%;
+  --mn-layout-workspace-max: 100%;
   --mn-layout-page-gutter: clamp(1.5rem, 2.2vw, 2.25rem);
   --mn-layout-page-gutter-tablet: 1.5rem;
   --mn-layout-page-gutter-mobile: 1rem;
@@ -189,6 +189,15 @@ html[data-theme="light"] {
 
 html.theme-night,
 html.theme-violet,
-html[data-theme="dark"] {
+html[data-theme="dark"],
+.dark {
   color-scheme: dark;
+  --mn-color-canvas: #090a0c;
+  --mn-color-surface: #181b22;
+  --mn-color-surface-soft: #20242e;
+  --mn-color-border: #353a47;
+  --mn-color-glass-border: #484f60;
+  --mn-color-text: #ffffff;
+  --mn-color-text-strong: #ffffff;
+  --mn-color-text-muted: #e2e8f0;
 }

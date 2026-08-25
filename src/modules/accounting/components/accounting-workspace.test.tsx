@@ -14,7 +14,7 @@ import {
 
 describe("Accounting production components", () => {
   it("maps all route families including dynamic details", () => {
-    expect(getAccountingRouteMeta("/accounting").title).toBe("Accounting command centre");
+    expect(getAccountingRouteMeta("/accounting").title).toBe("Accounting");
     expect(getAccountingRouteMeta("/accounting/readiness").title).toBe("Accounting readiness evidence");
     expect(getAccountingRouteMeta("/accounting/items/item-1").title).toBe("Item details");
     expect(getAccountingRouteMeta("/accounting/journal-entries/jv-1").title).toBe("Journal entry details");
@@ -27,7 +27,7 @@ describe("Accounting production components", () => {
 
   it("builds compact route-aware breadcrumbs", () => {
     expect(getAccountingBreadcrumbs("/accounting")).toEqual([
-      { label: "Accounting command centre" },
+      { label: "Accounting" },
     ]);
     expect(getAccountingBreadcrumbs("/accounting/sales-invoices")).toEqual([
       { href: "/accounting", label: "Accounting" },

@@ -1,6 +1,25 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+function OperationalTableInfoDisclosure({
+  ariaLabel = "Show table details",
+  children,
+}: {
+  ariaLabel?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="mnx-card-info">
+      <summary aria-label={ariaLabel} className="mnx-card-info-trigger">
+        <span aria-hidden="true">!</span>
+      </summary>
+      <div className="mnx-card-info-popover">
+        <div className="mnx-card-info-content">{children}</div>
+      </div>
+    </details>
+  );
+}
+
 export function OperationalDataTable({
   className,
   children,
@@ -17,22 +36,49 @@ export function OperationalDataTableHeader({
   actions,
   children,
   className,
+  description,
   eyebrow,
+  hideIdentity = false,
+  infoAriaLabel = "Show table details",
   title,
   ...props
 }: Omit<React.HTMLAttributes<HTMLElement>, "title"> & {
   actions?: React.ReactNode;
-  eyebrow: React.ReactNode;
-  title: React.ReactNode;
+  description?: React.ReactNode;
+  eyebrow?: React.ReactNode;
+  hideIdentity?: boolean;
+  infoAriaLabel?: string;
+  title?: React.ReactNode;
 }) {
+  const infoContent = description ?? children;
+
   return (
-    <header className={cn("mnx-operational-table-header", className)} {...props}>
-      <div>
-        <span>{eyebrow}</span>
-        <h3>{title}</h3>
-        {children}
-      </div>
-      {actions ? <div className="mnx-operational-table-actions">{actions}</div> : null}
+    <header
+      className={cn(
+        "mnx-operational-table-header",
+        hideIdentity ? "is-identity-hidden" : null,
+        className,
+      )}
+      {...props}
+    >
+      {!hideIdentity && (eyebrow || title) ? (
+        <div>
+          {eyebrow ? <span>{eyebrow}</span> : null}
+          {title ? <h3>{title}</h3> : null}
+        </div>
+      ) : (
+        <div aria-hidden="true" />
+      )}
+      {infoContent || actions ? (
+        <div className="mnx-operational-table-actions">
+          {actions}
+          {infoContent ? (
+            <OperationalTableInfoDisclosure ariaLabel={infoAriaLabel}>
+              {typeof infoContent === "string" ? <p>{infoContent}</p> : infoContent}
+            </OperationalTableInfoDisclosure>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -123,7 +169,7 @@ export function OperationalTable({
   className,
   ...props
 }: React.TableHTMLAttributes<HTMLTableElement>) {
-  return <table className={cn("mnx-operational-table", className)} {...props} />;
+  return <table className={cn("mnx-operational-table w-full", className)} {...props} />;
 }
 
 export function OperationalTableHead({

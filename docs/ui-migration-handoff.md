@@ -2,6 +2,776 @@
 
 Last updated: 2026-08-25
 
+## 2026-08-25 Queue header deduplication handoff
+
+Removed the repeated secondary queue heading pattern from freight-style
+operational table pages so routes keep one primary page title while additional
+helper copy moves behind the shared `!` disclosure.
+
+Delivered:
+
+- updated `src/components/data-display/operational-data-table.tsx` so
+  `OperationalDataTableHeader` now supports:
+  - `hideIdentity` for action-only/supplemental headers;
+  - a shared inline `!` disclosure for table helper copy through the existing
+    Monolith `mnx-card-info` treatment;
+  - optional description/info content without forcing a second visible title
+    block;
+- updated `src/modules/crm/components/service-enquiries/service-enquiry-queue.tsx`
+  so CRM freight/customs queue tables no longer repeat the queue name and
+  eyebrow inside the table header when the page already provides that identity;
+- updated `src/app/(dashboard)/freight-forwarding/process/page.tsx` so the
+  freight forwarding process queue now keeps the single page header and exposes
+  the workflow explanation through the `!` disclosure instead of a second
+  visible heading stack.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd "src/components/layout/workspace.tsx" "src/components/data-display/operational-data-table.tsx" "src/modules/crm/components/service-enquiries/service-enquiry-queue.tsx" "src/app/(dashboard)/freight-forwarding/process/page.tsx" --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- this pass fixes the shared operational queue/table-header pattern, but other
+  pages that still intentionally compose `WorkspacePageHeader` plus their own
+  distinct section headings may need separate review if the second heading is
+  not actually redundant;
+- runtime browser verification for representative queue pages in Light, Night,
+  and Violet themes is still pending in this Codex session.
+
+## 2026-08-25 HRMS employee directory notifications-style alignment handoff
+
+Aligned `/hrms/employees` to the flatter notifications-centre presentation so
+the employee directory now uses tighter stacked section cards, solid header
+bands, and denser employee rows instead of the older roomy grouped table cards.
+
+Delivered:
+
+- updated `src/app/(dashboard)/hrms/employees/page.tsx` so the route now uses a
+  dedicated employee-directory page container with tighter vertical rhythm;
+- updated `src/app/(dashboard)/hrms/employees/employee-directory-actions.tsx`
+  so the directory controls now render as a dedicated filter/action panel with:
+  - a notifications-style toolbar heading and helper copy;
+  - a compact visible-count pill in the panel header;
+  - the existing filter menu, export action, quick-add action, and full
+    onboarding action preserved;
+  - the total count moved into the same compact toolbar row instead of floating
+    separately;
+- updated `src/app/(dashboard)/hrms/employees/employee-list.tsx` so grouped
+  employee sections now:
+  - stack with a smaller gap between cards;
+  - use solid shared header bands for each role group;
+  - show compact `visible` count pills instead of bracketed counts;
+  - use tighter table cell padding and flatter section framing;
+- updated `src/styles/modules/people.css` with route-owned employee directory
+  styling for:
+  - the new filter/action panel shell;
+  - compact section-card spacing;
+  - solid grey/light muted section headers and theme-aware inverse behavior in
+    darker themes through shared header tokens;
+  - flatter employee row hover treatment and reduced row padding.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd "src/app/(dashboard)/hrms/employees/page.tsx" "src/app/(dashboard)/hrms/employees/employee-list.tsx" "src/app/(dashboard)/hrms/employees/employee-directory-actions.tsx" --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- runtime browser verification for `/hrms/employees` in Light, Night, and
+  Violet themes is still pending in this Codex session;
+- this pass preserves the grouped employee-by-role directory structure and does
+  not convert the page into one single ungrouped stream, since the role-group
+  segmentation appears intentional for HR operations.
+
+## 2026-08-25 Todo notifications-centre alignment handoff
+
+Reworked `/todo` so the personal task workspace now uses the same general
+filter-and-stream composition as the notifications centre, with a denser card
+stack and more compact task records.
+
+Delivered:
+
+- updated `src/app/(dashboard)/todo/todo-client.tsx` so the route now:
+  - uses a notifications-style page header and removes the older hero graphic
+    and top metrics strip;
+  - introduces a dedicated `Filter task history` panel with shared Monolith
+    fields for task status, reminder state, and free-text search;
+  - renders the task stream through a notifications-style result panel with
+    compact status chips, record metadata, right-aligned actions, and an
+    expandable detail section for reminder and checklist content;
+  - keeps all existing task CRUD, completion toggles, reminder handling, and
+    checklist editing behavior intact while shifting the visual composition;
+- updated `src/styles/monolith-system.css` so:
+  - todo and notification card stacks now use a tighter shared vertical gap;
+  - shared card-like list items use a smaller bottom margin for denser stacking;
+  - todo record detail spacing is reduced and the expanded section now uses a
+    cleaner divider treatment;
+  - the todo filter shell now aligns with the shared notifications filter form.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd "src/app/(dashboard)/todo/todo-client.tsx" --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- runtime browser verification for `/todo` against the notifications route in
+  Light, Night, and Violet themes is still pending in this Codex session;
+- older focused UI tests that assert the previous todo hero graphic/header
+  composition will need updating in a follow-up test-maintenance pass if they
+  are still intentionally enforcing the pre-alignment design.
+
+## 2026-08-25 Shared header card and alignment normalization handoff
+
+Standardized the shared Monolith page and table header treatment so table
+column headers render as a dedicated 2D header band and route headers align
+more consistently with the content beneath them.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so:
+  - shared workspace and dashboard pages now define one `--mnx-content-edge`
+    spacing token for top-level header alignment;
+  - `mnx-page-header`, `mnx-toolbar`, `mnx-table-toolbar`,
+    `mnx-operational-table-header`, `mnx-table-card > header`,
+    `mnx-panel-heading`, and `mnx-organization-header` now inherit that shared
+    content edge instead of some routes collapsing all header padding to zero;
+  - shared table column headers for `mnx-workspace-table`,
+    `mnx-accounting-table`, and `mnx-table-card` now render as a dedicated
+    theme-aware 2D header band with its own surface, border, and rounded outer
+    corners;
+  - Light theme uses the new muted grey header-card treatment with darker text,
+    while Night and Violet inherit the inverse darker surface plus lighter text
+    through the same shared variables.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- runtime browser verification across representative routes with large table
+  surfaces and custom module headers is still pending in this Codex session;
+- routes with intentionally module-owned custom list/grid compositions that do
+  not use the shared table primitives will need separate follow-up if they
+  should adopt the same header-card language.
+
+## 2026-08-25 Shared Monolith table row normalization handoff
+
+Normalized the shared Monolith table presentation so operational and workspace
+tables across the app use the flatter continuous-row format instead of the
+later floating-card row treatment.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` in the shared table styling layer so:
+  - `mnx-workspace-table`, `mnx-table-card`, and related people-table row cells
+    no longer render as individually rounded floating cards;
+  - shared table rows now use continuous horizontal separators, transparent row
+    surfaces, and no cell box-shadows by default;
+  - first and last table cells no longer force rounded outside corners or side
+    borders;
+  - the shared hover state keeps the accent-highlight behavior, but now reads
+    as a flat row highlight rather than a lifted card;
+  - Night and Violet themes inherit the same flatter row structure through the
+    same shared token-driven border treatment;
+- this change is intended to propagate the same row format across Monolith
+  table-driven surfaces such as queues, approval tables, notifications lists
+  that use the shared table primitives, and other operational workspace tables
+  instead of requiring route-by-route overrides.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- runtime browser verification across representative routes such as `/todo`,
+  `/notifications`, approval workspaces, and queue pages is still pending in
+  this Codex session;
+- routes that do not use the shared Monolith table primitives and instead
+  render custom card lists will keep their existing module-owned layouts until
+  separately migrated.
+
+## 2026-08-25 Shared card info-disclosure handoff
+
+Moved shared card helper copy behind a small in-card `!` disclosure so
+functional explanations no longer stay permanently expanded inside panel and
+metric cards across the Monolith workspace system.
+
+Delivered:
+
+- updated `src/components/layout/workspace.tsx` so:
+  - `WorkspacePanelHeader` now renders card descriptions through a shared
+    `!` disclosure in the card action corner instead of always showing the
+    helper paragraph under the title;
+  - non-link `WorkspaceMetric` cards now render their helper/detail text
+    through the same shared disclosure control;
+  - linked/actionable metric cards keep their inline detail copy so the
+    shared metric link remains valid and does not nest a second interactive
+    control inside the clickable surface;
+- updated `src/styles/monolith-system.css` with the shared Monolith disclosure
+  trigger and popover treatment, including the compact circular `!` control,
+  floating explanatory surface, and mobile alignment behavior;
+- updated `src/components/layout/workspace.test.tsx` with focused coverage for
+  the shared metric and panel disclosure markup;
+- regenerated:
+  - `docs/ui-route-audit.md`
+  - `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/components/layout/workspace.tsx' 'src/components/layout/workspace.test.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- focused Vitest for `src/components/layout/workspace.test.tsx` could not run
+  because repository test startup is guarded by the existing
+  `.env.staging.local` requirement in `vitest.config.ts`;
+- repo TypeScript was already green earlier in this session after the header
+  simplification batch, and this disclosure batch is limited to the shared
+  workspace primitives plus stylesheet/test updates.
+
+## 2026-08-25 Freight forwarding queue visual alignment handoff
+
+Aligned `/freight-forwarding/process` to the approved demand-intake queue composition so the route now reads like the provided reference instead of a generic quote handoff table.
+
+Delivered:
+
+- rebuilt `src/app/(dashboard)/freight-forwarding/process/page.tsx` so the route now:
+  - uses the demand-intake page-header copy shown in the reference;
+  - renders a search + apply toolbar and visible-records summary inside the shared `OperationalDataTableHeader`;
+  - presents the queue in the same higher-density column structure as the reference: `Reference`, `Customer`, `Mode`, `Direction`, `Route`, `Commodity`, `Assignment`, `Status`, and `Open`;
+  - keeps the queue truthful by deriving `Mode`, `Direction`, and processing status from the existing quote snapshot and workflow-conversion data instead of inventing new backend fields;
+  - supports server-rendered filtering through the `search` query parameter;
+- extended `src/modules/crm/quote-process.ts` so queue rows retain the existing raw quote snapshot alongside the workflow context, allowing the freight queue to display shipment metadata already captured by CRM;
+- updated `src/styles/modules/freight-forwarding.css` with freight-owned queue styling for:
+  - the process-toolbar layout;
+  - the compact `Open` row action treatment;
+  - the soft highlighted first-row state that matches the provided reference more closely.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd "src/app/(dashboard)/freight-forwarding/process/page.tsx" "src/modules/crm/quote-process.ts" --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated `docs/ui-component-and-style-ownership-audit.md`.
+
+Known limits:
+
+- runtime browser verification for `/freight-forwarding/process` across Light, Night, and Violet themes is still pending in this Codex session;
+- the screenshot includes slightly richer queue-language examples such as explicit `Quote Draft` and `Rates Requested` states, but this pass intentionally keeps status labels bounded to the real freight conversion workflow data already stored on the quote.
+
+## 2026-08-25 Monolith header copy simplification handoff
+
+Shortened the shared Monolith page-header copy so route titles and descriptions
+read faster and stop repeating the same module language across the app shell.
+
+Delivered:
+
+- updated the shared route metadata in:
+  - `src/modules/admin/components/admin-workspace.tsx`
+  - `src/modules/cha/components/workspace/cha-workspace.tsx`
+  - `src/modules/communication/components/workspace/communication-workspace.tsx`
+  - `src/modules/performance/components/performance-workspace.tsx`
+  - `src/modules/people/components/people-workspace.tsx`
+  - `src/modules/crm/components/workspace/crm-workspace.tsx`
+  - `src/modules/accounting/components/accounting-workspace.tsx`
+- simplified top-level hub titles such as `Admin`, `CRM`, `Accounting`,
+  `HRMS`, `Attendance`, `Communication`, `Appraisals`, and `Learning` in place
+  of longer `command centre` phrasing;
+- shortened route descriptions across the shared workspaces to compact
+  task-first summaries instead of long repeated operational sentences;
+- tightened standalone route headers in:
+  - `src/app/(dashboard)/payroll/layout.tsx`
+  - `src/app/(dashboard)/my-payroll/layout.tsx`
+  - `src/app/(dashboard)/notifications/page.tsx`
+  - `src/app/(dashboard)/product-catalogue/page.tsx`
+  - `src/app/(dashboard)/todo/todo-client.tsx`
+  - `src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx`
+  - `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`
+- updated the focused workspace metadata tests so the shared title assertions
+  match the new shorter headers.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+- focused ESLint on the touched files completed with no errors, but still
+  reports pre-existing shared-workspace warnings for intentional/raw controls in:
+  `src/app/(dashboard)/todo/todo-client.tsx`,
+  `src/modules/accounting/components/accounting-workspace.tsx`,
+  `src/modules/admin/components/admin-workspace.tsx`,
+  `src/modules/cha/components/workspace/cha-workspace.test.tsx`,
+  `src/modules/communication/components/workspace/communication-workspace.tsx`,
+  `src/modules/crm/components/workspace/crm-workspace.tsx`, and
+  `src/modules/performance/components/performance-workspace.tsx`;
+- focused Vitest for the touched workspace metadata tests could not run because
+  repository test startup is guarded by the existing `.env.staging.local`
+  requirement in `vitest.config.ts`.
+
+## 2026-08-25 Dashboard shell truthfulness sweep handoff
+
+Completed another dashboard truthfulness pass across the shared shell pieces
+that sit above and around the three main dashboard workspaces.
+
+Delivered:
+
+- updated `src/app/(dashboard)/dashboard/portal-client.tsx` and
+  `src/app/(dashboard)/dashboard/_components/attendance-command.tsx` so the
+  attendance hero now:
+  - receives the live module snapshot and only shows the `Product Catalogue`
+    action lane when that module is actually visible to the current role;
+  - replaces invented hero fallbacks such as `Team member`,
+    `General operations`, and `Head office` with explicit neutral states:
+    `Designation not assigned`, `Department not assigned`, and
+    `Branch not assigned`;
+- updated
+  `src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx` so
+  the organization directory and people moments no longer imply synthetic
+  organization data:
+  - employee names now fall back to `Name not recorded`;
+  - designation, department, and branch values are left blank until rendered,
+    where the UI now says `Designation not assigned`,
+    `Department not assigned`, and `Location not assigned` instead of
+    inventing role/office defaults;
+- updated
+  `src/app/(dashboard)/dashboard/_components/module-command-center.tsx` so the
+  zero-module state is now a neutral `No dashboard modules are enabled yet`
+  message instead of implying the workspace is already ready;
+- updated `src/modules/dashboard/service.ts` so the freight-forwarding module
+  summary now uses the more truthful tertiary metric label `workspace routes`
+  instead of `ready screens`.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/app/(dashboard)/dashboard/portal-client.tsx' 'src/app/(dashboard)/dashboard/_components/attendance-command.tsx' 'src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx' 'src/app/(dashboard)/dashboard/_components/module-command-center.tsx' 'src/modules/dashboard/service.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  currently fails on missing generated Prisma model files under
+  `src/generated/prisma/models/**`, which is a repository environment/state
+  issue outside this dashboard UI batch.
+
+## 2026-08-25 Dashboard team truthfulness handoff
+
+Tightened the `/dashboard` `Team` workspace so it no longer invents team
+directory values and now distinguishes a genuinely empty reporting line from a
+search result that simply returned no matches.
+
+Delivered:
+
+- updated `src/modules/hrms/service.ts` so `getTeamReportees(...)` no longer
+  fabricates fallback team values:
+  - removed the hardcoded `"Chennai"` branch fallback;
+  - stopped forcing a synthetic `"Associate"` designation when the employee
+    record has no designation assigned;
+- updated
+  `src/app/(dashboard)/dashboard/_components/dashboard-team.tsx` so the team
+  tab now:
+  - shows a truthful `No direct reportees assigned` empty state when the user
+    has no current reportees instead of rendering an empty filterable table;
+  - preserves the existing `No matching reportees` search/filter empty state
+    only for the case where live team data exists but the current query/filter
+    removes all rows;
+  - renders `Designation not assigned` and `Location not assigned` in the table
+    when the underlying employee records are incomplete instead of implying a
+    default team role or office;
+  - uses the shared `Input` primitive for the search field and documents the
+    intentional raw filter-chip buttons used for the current pressed-state
+    dashboard pattern.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/app/(dashboard)/dashboard/_components/dashboard-team.tsx' 'src/modules/hrms/service.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+## 2026-08-25 Dashboard organization policies truthfulness handoff
+
+Removed the remaining synthetic policy-document placeholders from the
+`Organization` workspace inside `/dashboard` so the route no longer pretends a
+central company handbook library exists when the dashboard has no live source
+for it yet.
+
+Delivered:
+
+- updated
+  `src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx` so the
+  `Policies` tab no longer renders the earlier fake downloadable policy list;
+- replaced that list with a truthful dashboard policy hub that:
+  - explicitly states that a centralized company policy library is not yet
+    connected to the dashboard;
+  - links users to the live operational policy workspaces that actually exist
+    today:
+    `/attendance/leaves/policies`,
+    `/hrms/location-tracking`, and
+    `/hrms/reimbursement`;
+  - keeps the organization workspace inside the current Monolith shared card,
+    button, and content patterns instead of introducing a one-off treatment.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the unchanged repository-wide button-variant mismatch in
+  `src/modules/payroll/components/report-toolbar.tsx` (`"secondary"` is no
+  longer a valid shared button variant at lines 89 and 101).
+
+Known limits:
+
+- the dashboard still does not have a live centralized company policy-document
+  datasource; this batch makes that absence explicit instead of masking it with
+  placeholders;
+- browser verification for this dashboard route was reported complete by the
+  user outside this Codex run and was therefore not repeated in-tool here.
+
+## 2026-08-25 Dashboard command-center data foundation handoff
+
+Extended `/dashboard` so the main `My space` workspace now pulls from a
+dedicated dashboard command-center aggregation layer instead of relying only on
+the earlier personal HR landing widgets.
+
+Delivered:
+
+- added `src/modules/dashboard/command-center.ts` as a server-only shared
+  dashboard aggregation layer that now prepares:
+  - a live `Needs your attention` queue from overdue personal To-Do tasks,
+    important personal notifications, urgent open help-desk items, and pending
+    leave or OT approvals when the user can act on them;
+  - a permission-aware `Organization pulse` metric strip derived from the
+    existing role-visible module snapshot;
+  - live AMS stage distribution counts for the active appraisal workflow;
+  - live attendance signals for checked-in staff, active breaks, pending leave
+    queue pressure, and upcoming holidays;
+  - a recent activity feed combining announcements, personal notifications, and
+    recent appraisal audit movement when AMS is visible;
+- extended `src/modules/dashboard/types.ts` with typed command-center snapshot
+  contracts so the dashboard route no longer passes this batch as ad hoc data;
+- updated `src/app/(dashboard)/dashboard/page.tsx` so `/dashboard` now loads the
+  new command-center snapshot on the server beside the existing user profile,
+  widgets, and module snapshot data;
+- updated `src/app/(dashboard)/dashboard/portal-client.tsx` and
+  `src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx` so the
+  `My space` tab now:
+  - shows the live attention queue, org pulse, appraisal pipeline, attendance
+    pulse, and recent activity sections through the existing dashboard insight
+    and workspace primitives;
+  - removes the earlier synthetic weekly schedule output from the main overview
+    tab and replaces it with live module-coverage and quick-launch framing;
+- updated `src/app/(dashboard)/dashboard/module-dashboard.test.ts` so the
+  focused dashboard guardrail reflects the new command-center data flow and the
+  removal of the synthetic schedule helper.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/dashboard/command-center.ts' 'src/modules/dashboard/types.ts' 'src/app/(dashboard)/dashboard/page.tsx' 'src/app/(dashboard)/dashboard/portal-client.tsx' 'src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx' 'src/app/(dashboard)/dashboard/module-dashboard.test.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the unchanged repository-wide `src/components/monolith`
+  ownership baseline outside this dashboard batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/app/(dashboard)/dashboard/module-dashboard.test.ts' --reporter verbose`:
+  still fails at startup on the unchanged repository guard that requires
+  `.env.staging.local`.
+
+Known limits:
+
+- runtime browser verification for `/dashboard` across Light, Night, and Violet
+  themes is still pending in this Codex session;
+- the dashboard route still retains broader migration debt in the `Team` and
+  `Organization` tabs, including the current organization policies view, which
+  still needs a non-placeholder backing source or a stricter truthful empty
+  state before the full route can be considered complete;
+- the new command-center batch intentionally reuses current workflow routes for
+  drill-downs and does not yet add dedicated deep-link filtered search-parameter
+  routes for every attention item or appraisal stage.
+
+## 2026-08-25 Multi-theme token-driven sidebar tint & hoverable-card handoff
+
+Refactored the navigation sidebar background tint and item hoverable-card lift interaction in `src/styles/monolith-system.css` using semantic design tokens (`var(--mnx-accent)`, `var(--mnx-accent-soft)`, `var(--mnx-card)`, `var(--mnx-surface)`, `var(--mnx-border)`) to ensure automatic, seamless color styling across **Light, Night/Dark, and Violet themes**.
+
+Delivered:
+- updated `.mnx-sidebar` container background to use `color-mix(in srgb, var(--mnx-accent-soft) 32%, var(--mnx-surface))` gradient tint and border-right `color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border))`;
+- updated `.mnx-sidebar-entry`, `.mnx-sidebar-subnav > a`, `.mnx-sidebar-subnav-item > a`, `.mnx-mona-card`, and `.mnx-sidebar-user` to use token-based gradient card backgrounds and borders;
+- verified `@tailwindcss/postcss` compilation and `npm run design-system:verify` with 0 errors across Light, Night, and Violet theme variants.
+
+## 2026-08-25 Mona desktop pet handoff
+
+Added a live Mona desktop-pet layer to the authenticated Monolith shell so the
+existing assistant now behaves more like a dynamic workspace companion instead
+of only a floating FAB plus chat panel.
+
+Delivered:
+
+- added `src/modules/mona/components/mona-desktop-pet.tsx` as a Mona-owned
+  floating companion that:
+  - renders a theme-aware animated pseudo-3D pet with layered orbit rings,
+    bobbing motion, a speech bubble, and a draggable docked surface;
+  - persists its dragged position locally so the pet behaves like a desktop
+    companion across Monolith workspaces;
+  - exposes quick controls for `Assist here`, workspace search, chat toggle,
+    and notifications access from the same floating control layer;
+  - can open the existing Mona chat and send a route-specific help prompt so
+    the pet can immediately assist with the active workspace context;
+- added `src/modules/mona/pet-events.ts` as the small client-side event bridge
+  for route-awareness, notification reactions, and shell search opening;
+- updated `src/modules/core/components/monolith-app-shell.tsx` so the shell now:
+  - mounts the desktop pet beside the existing Mona chat;
+  - dispatches route-context updates to the pet whenever the active Monolith
+    workspace changes;
+  - listens for the pet search-open event so the existing workspace search
+    command can be triggered from the pet controls;
+- updated `src/modules/notifications/components/notification-provider.tsx` so
+  newly surfaced local or remote notification toasts emit pet reaction events,
+  allowing Mona to switch into an alert/help posture when new Monolith activity
+  arrives;
+- updated `src/styles/monolith-system.css` with shared Monolith styling for the
+  new desktop-pet shell, bubble, animated pseudo-3D body, utility controls,
+  and responsive floating layout.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/mona/components/mona-desktop-pet.tsx' 'src/modules/mona/pet-events.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- this pass keeps Mona’s new desktop-pet interactions client-side and
+  route-aware, but it does not introduce deeper server-side action execution
+  for every Monolith module beyond opening chat, surfacing notifications,
+  triggering workspace search, and sending route-specific assistance prompts;
+- the shell and notification provider still contain older raw-button lint
+  warnings if linted as whole files with `--max-warnings=0`; those warnings were
+  not introduced by this desktop-pet batch;
+- manual runtime browser verification across Light, Night, and Violet themes is
+  still pending in this Codex session.
+
+## 2026-08-25 Sidebar container mint tint & hoverable-card item lift handoff
+
+Applied a distinct soft mint color tint to the entire navigation sidebar container (`.mnx-sidebar`) and scoped the signature hoverable card effect (`background: linear-gradient(180deg, #eefaf3, #f7fcf9)`, border `#d8e9dd`, shadow `0 10px 24px rgba(16,24,40,0.06), 0 1px 2px rgba(16,24,40,0.04)`, `translateY(-1px)`) specifically to the interactive sidebar items.
+
+Delivered:
+- updated `.mnx-sidebar` in `src/styles/monolith-system.css` with a soft mint background gradient (`linear-gradient(180deg, #f7fcf9 0%, #edf7f1 100%)`) and border-right `#d8e9dd` to make the sidebar stand out distinctly from the main page area;
+- applied plain resting state and lift-to-card hover/focus interactions across `.mnx-sidebar-entry`, `.mnx-sidebar-subnav > a`, `.mnx-sidebar-subnav-item > a`, `.mnx-mona-card`, and `.mnx-sidebar-user`;
+- verified PostCSS compilation and design system coverage (`npm run design-system:verify`) with 0 errors.
+
+## 2026-08-25 CRM masters command-centre rework handoff
+
+Reworked `/crm/masters` from a basic tab-plus-table page into a fuller masters
+command centre with flatter 2D surfaces, non-scrolling workspace switching,
+and stronger governance framing inspired by current Zoho-style ERP master-data
+management patterns while preserving the existing CRM item embed plus the
+current structured import and manual-entry behavior.
+
+Delivered:
+
+- rebuilt `src/modules/crm/components/masters/crm-masters-workspace.tsx` so the
+  page now:
+  - keeps the existing master tabs, item workspace embedding, spreadsheet
+    upload, template download, export, import mapping, import progress, and
+    single-entry creation flows intact;
+  - replaces the old horizontal tab rail with a wrapped workspace-card switcher
+    so tabs do not rely on horizontal scrolling;
+  - adds a top summary strip for structured-master coverage, managed record
+    volume, embedded item scale, and latest-import visibility;
+  - reframes each structured master as a managed register with coverage,
+    data-quality, and import-discipline cards plus a search or status-filter
+    workbench;
+  - adds an attention queue for inactive or incomplete records and clearer
+    reference-management guidance so operators can see cleanup needs faster;
+  - keeps the overall surface treatment plain and flat instead of using glossy
+    or elevated card styling;
+- updated `src/styles/modules/crm.css` with CRM-owned styling for:
+  - the wrapped workspace-card grid;
+  - flat governance and operations cards;
+  - the masters search field, attention rail, focus tags, and responsive
+    no-scroll workspace layout;
+- regenerated:
+  - `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+  - `docs/ui-route-audit.md`;
+  - `docs/ui-component-and-style-ownership-audit.md`.
+
+ERP/reference framing used in this batch:
+
+- official Zoho Inventory and Zoho CRM help or product pages reviewed on
+  Tuesday, August 25, 2026 informed the added import-mapping emphasis,
+  duplicate-aware bulk maintenance posture, process-specific module framing,
+  and item or inventory-management signals.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/crm/components/masters/crm-masters-workspace.tsx' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit plus migration status docs;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session;
+- this pass improves framing, filtering, visibility, and operator guidance for
+  the Masters route without introducing persistent backend models for approval
+  workflows, ownership assignments, or master-record history beyond the current
+  in-memory client-side behaviors already used by the page.
+
+## 2026-08-25 CHA dashboard hoverable job-row handoff
+
+Adjusted the shared operational table interaction so linked shipment rows in the
+CHA dashboard read as plain table rows at rest and lift into a hoverable-card
+treatment on pointer or keyboard focus.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so shared
+  `.mnx-operational-linked-row` rows inside `.mnx-table-card` now:
+  - remain visually flat when idle;
+  - switch to per-cell surface fill, rounded outer corners, and a soft bordered
+    hover/focus shell when the row is interactive;
+  - preserve the existing semantic table structure, keyboard navigation, and
+    `OperationalLinkedRow` click behavior without changing CHA business logic.
+
+Verification on Tuesday, August 25, 2026:
+
+- source inspection only in this Codex session; no targeted runtime browser
+  verification or automated CSS visual test was run after the stylesheet change.
+
+Known limits:
+
+- the hoverable-card treatment applies to shared operational linked rows, so any
+  other route using the same canonical linked-row pattern inside
+  `OperationalDataTable` will inherit the same interaction;
+- Light, Night, and Violet runtime verification is still pending in this Codex
+  session.
+
+## 2026-08-25 CRM enquiry commercial-summary compaction handoff
+
+Refined the CRM enquiry commercial worksheet header so the rate-acquisition area
+uses a denser control-strip composition instead of the earlier oversized summary
+plus flat status-card layout.
+
+Delivered:
+
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx` so the
+  enquiry commercial surface now:
+  - keeps the existing business logic, workflow statuses, and rate-request data;
+  - compresses the oversized worksheet summary into a two-part command strip
+    with inline pending-department and next-milestone context;
+  - adds a compact right-side control board for requests, responses, finalized
+    buy-rate snapshots, and costing state;
+  - converts the workflow stage cards into numbered mini-stage panels so the
+    progression reads faster while consuming less vertical space;
+  - rebuilds the enquiry mail composer into a communication-style full-width
+    compose sheet with header controls, address rows, subject line, note strip,
+    larger message editor, and a footer send bar while preserving CRM-specific
+    recipient chips, reporting-CC handling, template reset, and send-to-agents
+    workflow behavior;
+  - updated `src/styles/modules/crm.css` with CRM module-owned styles for the new
+  summary shell, command-board tiles, compact stage-step presentation, and the
+  communication-inspired enquiry compose sheet plus bottom suggestion dock.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed.
+
+Known limits:
+
+- this pass intentionally focuses on visual density and workflow readability for
+  the CRM enquiry commercial header area; it does not change the downstream
+  mail composer, response capture, comparison logic, or pricing workflow;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
+## 2026-08-25 CRM enquiry full-width cardless workspace handoff
+
+Flattened the CRM enquiry commercial workflow so the page reads as one full-width
+ operating workspace instead of a stack of boxed cards.
+
+Delivered:
+
+- updated `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx` so the
+  enquiry workflow now:
+  - removes the remaining `CrmPanel` card wrappers from the commercial summary,
+    stage tracker, composer, worksheet, comparison, pricing, and pricing-lock
+    sections;
+  - swaps the remaining rounded bordered pricing and warning tiles inside the
+    enquiry workflow for flat section bands and metric rows;
+  - keeps all existing CRM enquiry functionality, rate workflow actions,
+    comparison logic, recommendation flow, pricing controls, and quotation
+    creation behavior intact while changing the visual composition only;
+- updated `src/styles/modules/crm.css` so the CRM enquiry workflow now:
+  - uses full-width section spacing, lighter dividers, and flatter vertical
+    rhythm instead of repeated card shells;
+  - flattens suggestion, preview, response, comparison, recommendation, and
+    pricing sub-surfaces into aligned rows and section bands;
+  - preserves responsive behavior while letting the pricing metrics and enquiry
+    workflow sections use more of the available width.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\\node_modules\\.bin\\eslint.cmd 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  passed.
+
+Known limits:
+
+- this pass focuses on removing card-heavy treatment and improving spacing,
+  typography rhythm, and section alignment inside the CRM enquiry page without
+  changing any business logic;
+- runtime browser verification across Light, Night, and Violet themes is still
+  pending in this Codex session.
+
 ## 2026-08-25 Attendance command centre rework handoff
 
 Reworked `/attendance` from a lightweight attendance summary page into a fuller
@@ -9589,3 +10359,34 @@ Known limits:
 - broader repo baselines outside this AMS batch remain unchanged, including the
   previously known `architecture:check` and `design-system:verify` failures
   noted earlier in the migration stream.
+
+## 2026-08-25 CRM enquiry shared-context compact rail handoff
+
+What changed:
+
+- `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` now renders
+  the shared-context navigation from the `CrmSection` header actions so Notes,
+  Tasks, Audit, Time, and Calls sit in a compact top-right utility rail instead
+  of consuming a full-width row;
+- the active context is surfaced in a small status pill while the existing tab
+  content panels remain unchanged below, preserving all notes, activity, audit,
+  time-tracker, and call behavior;
+- `src/styles/modules/crm.css` adds route-local styling for the compact rail,
+  pill counters, and mobile fallback so the control stays small on desktop and
+  reflows cleanly on narrower widths.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd 'src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' --max-warnings=0`:
+  failed because `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`
+  already has pre-existing `@typescript-eslint/no-explicit-any` and
+  `react-hooks/set-state-in-effect` violations in untouched areas of the file.
+
+Known limits:
+
+- no manual browser/runtime verification was completed in this Codex session, so
+  final visual confirmation for the compact top-right rail across Light, Night,
+  and Violet themes is still pending;
+- the enquiry detail client still carries older lint debt unrelated to this
+  layout adjustment, so a repo-clean lint pass will need a separate cleanup
+  batch for that route.

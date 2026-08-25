@@ -57,7 +57,7 @@ export default async function NotificationsPage({
         eyebrow="Personal inbox"
         title="Notifications"
         icon={<Bell size={21} aria-hidden="true" />}
-        description="Review operational updates, required acknowledgements, reminders, and linked workspace activity."
+        description="Review updates, reminders, and acknowledgements."
       />
 
       <WorkspacePanel>

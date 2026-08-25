@@ -59,135 +59,116 @@ type PerformanceRouteMeta = {
 const exactRouteMeta: Record<string, PerformanceRouteMeta> = {
   "/ams": {
     eyebrow: "Performance operations",
-    title: "Appraisal command centre",
-    description:
-      "Coordinate appraisal cycles, employee reviews, evaluation criteria, and performance outcomes.",
+    title: "Appraisals",
+    description: "Track cycles, reviews, and outcomes.",
     icon: Gauge,
   },
   "/ams/appraisals": {
     eyebrow: "Appraisal operations",
     title: "Appraisals",
-    description:
-      "Assign, monitor, and advance employee appraisals through every controlled review stage.",
+    description: "Assign and track employee appraisals.",
     icon: ClipboardCheck,
   },
   "/ams/assets": {
     eyebrow: "Asset operations",
     title: "Asset register",
-    description:
-      "Track company assets, assignments, depreciation, and service history.",
+    description: "Track assets, assignments, and depreciation.",
     icon: PackageSearch,
   },
   "/ams/criteria": {
     eyebrow: "Appraisal configuration",
     title: "Evaluation criteria",
-    description:
-      "Build the question, scoring, and reviewer structure used by appraisal forms.",
+    description: "Manage forms, scoring, and reviewers.",
     icon: FileText,
   },
   "/ams/cycles": {
     eyebrow: "Appraisal configuration",
     title: "Appraisal cycles",
-    description:
-      "Create and maintain the annual periods that govern employee appraisals.",
+    description: "Manage appraisal periods.",
     icon: CalendarClock,
   },
   "/ams/extensions": {
     eyebrow: "Appraisal operations",
     title: "Deadline extensions",
-    description:
-      "Request and decide controlled extensions without losing the appraisal audit trail.",
+    description: "Review appraisal deadline extensions.",
     icon: FileClock,
   },
   "/ams/history": {
     eyebrow: "Performance reporting",
     title: "Appraisal history",
-    description:
-      "Review completed cycles, scores, reviewer outcomes, and historical decisions.",
+    description: "Review completed cycles and results.",
     icon: Archive,
   },
   "/ams/kpi": {
     eyebrow: "Performance configuration",
     title: "Department KPI",
-    description:
-      "Maintain department performance templates and evaluate measurable outcomes.",
+    description: "Manage department KPI templates.",
     icon: BarChart3,
   },
   "/ams/my-appraisal": {
     eyebrow: "Personal performance",
     title: "My appraisal",
-    description:
-      "Track your active appraisal journey and complete assigned self-assessments.",
+    description: "Track your appraisal and self-assessment.",
     icon: UserCheck,
   },
   "/ams/my-reviews": {
     eyebrow: "Reviewer workspace",
     title: "My reviews",
-    description:
-      "Complete assigned employee reviews and keep feedback moving before its deadline.",
+    description: "Complete assigned employee reviews.",
     icon: Users,
   },
   "/ams/pms": {
     eyebrow: "Continuous performance",
     title: "Goals and feedback",
-    description:
-      "Maintain goals, skills, and constructive performance feedback between appraisal cycles.",
+    description: "Track goals, skills, and feedback.",
     icon: Target,
   },
   "/ams/slabs": {
     eyebrow: "Compensation configuration",
     title: "Increment slabs",
-    description:
-      "Maintain the grade and score bands used by controlled appraisal hike calculations.",
+    description: "Manage score and increment bands.",
     icon: Layers3,
   },
   "/ams/settings": {
     eyebrow: "Performance configuration",
     title: "AMS settings",
-    description:
-      "Review appraisal-governance controls, scoring structures, and supporting configuration workspaces.",
+    description: "Manage appraisal settings and controls.",
     icon: Sparkles,
   },
   "/lms": {
     eyebrow: "Learning operations",
-    title: "Learning command centre",
-    description:
-      "Discover training, manage enrolment, and track progress toward course completion.",
+    title: "Learning",
+    description: "Track courses, enrolment, and progress.",
     icon: GraduationCap,
   },
   "/lms/courses": {
     eyebrow: "Learning catalogue",
     title: "Courses",
-    description:
-      "Browse available training and enrol in courses relevant to your role.",
+    description: "Browse and enrol in courses.",
     icon: BookOpen,
   },
   "/lms/my-learning": {
     eyebrow: "Personal learning",
     title: "My learning",
-    description:
-      "Continue enrolled courses and keep your completion progress current.",
+    description: "Continue your enrolled courses.",
     icon: GraduationCap,
   },
   "/lms/assignments": {
     eyebrow: "Learning operations",
     title: "Assignments",
-    description:
-      "Review assigned learning work and the courses attached to your role.",
+    description: "Review assigned learning work.",
     icon: ClipboardCheck,
   },
   "/lms/reports": {
     eyebrow: "Learning reporting",
     title: "Learning reports",
-    description:
-      "Review enrolment, progress, and completion signals from the learning catalogue.",
+    description: "Review enrolment and completion trends.",
     icon: BarChart3,
   },
   "/lms/settings": {
     eyebrow: "Learning configuration",
     title: "LMS settings",
-    description:
-      "Review course-governance, assignment administration, and completion-monitoring workspaces.",
+    description: "Manage course and assignment settings.",
     icon: Sparkles,
   },
 };
@@ -209,8 +190,7 @@ export function getPerformanceRouteMeta(
     return {
       eyebrow: "Appraisal setup",
       title: "Assign appraisal",
-      description:
-        "Confirm the employee schedule, reviewer group, and appraisal context before creation.",
+      description: "Confirm the schedule and reviewers.",
       icon: UserCheck,
     };
   }
@@ -219,8 +199,7 @@ export function getPerformanceRouteMeta(
     return {
       eyebrow: "Management review",
       title: "Management calibration",
-      description:
-        "Review submitted evidence, calibrate scores, and record the controlled management decision.",
+      description: "Calibrate scores and record the decision.",
       icon: Award,
     };
   }
@@ -229,8 +208,7 @@ export function getPerformanceRouteMeta(
     return {
       eyebrow: "Appraisal record",
       title: "Appraisal detail",
-      description:
-        "Review participants, evidence, stage progress, meetings, scores, and final outcomes.",
+      description: "Review progress, evidence, and scores.",
       icon: ClipboardCheck,
     };
   }
@@ -239,8 +217,7 @@ export function getPerformanceRouteMeta(
     return {
       eyebrow: "Personal performance",
       title: "Self-assessment",
-      description:
-        "Record evidence and ratings against the active appraisal criteria before submission.",
+      description: "Record evidence and ratings.",
       icon: Sparkles,
     };
   }
@@ -249,8 +226,7 @@ export function getPerformanceRouteMeta(
     return {
       eyebrow: "Reviewer workspace",
       title: "Employee review",
-      description:
-        "Review employee evidence, record ratings, and submit feedback within your assigned role.",
+      description: "Review evidence and submit feedback.",
       icon: Users,
     };
   }
@@ -259,8 +235,7 @@ export function getPerformanceRouteMeta(
     return {
       eyebrow: "Asset record",
       title: "Asset detail",
-      description:
-        "Review assignment, financial, depreciation, and service information for this asset.",
+      description: "Review assignment and service details.",
       icon: PackageSearch,
     };
   }

@@ -1,9 +1,8 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/modules/crm/components";
+import { CrmButton, CrmInput, CrmRecordLink, CrmTable } from "@/modules/crm/components";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import { Package, Search } from "lucide-react";
 import type { ItemListItem } from "@/lib/items/types";
 import { formatINRCompact } from "@/lib/items/formatters";
@@ -25,7 +24,6 @@ export function ItemsTable({
   basePath = "/crm/items",
   onEditItem,
 }: ItemsTableProps) {
-  const router = useRouter();
   const allSelected = items.length > 0 && items.every((i) => selectedIds.has(i.id));
   const someSelected = items.some((i) => selectedIds.has(i.id));
 
@@ -70,7 +68,7 @@ export function ItemsTable({
             <th className="px-3 py-2 text-left whitespace-nowrap">
               Usage Unit
             </th>
-            <th className="w-10 px-3 py-2 text-center">
+            <th className="w-20 min-w-[5rem] px-3 py-2 text-center whitespace-nowrap">
               <CrmButton
                 className="text-mono-muted hover:text-mono-text"
                 aria-label="Advanced search"
@@ -106,17 +104,17 @@ export function ItemsTable({
                     aria-label={`Select ${item.name}`}
                   />
                 </td>
-                <td className="px-3 py-1.5 whitespace-nowrap">
-                  <div className="flex items-center gap-1.5">
-                    <span className="flex-shrink-0 w-5 h-5 rounded border border-[var(--color-outline-variant)] bg-mono-soft flex items-center justify-center text-mono-muted">
+                <td className="px-3 py-1.5 align-top">
+                  <div className="flex items-start gap-1.5 min-w-0">
+                    <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border border-[var(--color-outline-variant)] bg-mono-soft flex items-center justify-center text-mono-muted">
                       <Package size={10} />
                     </span>
-                    <CrmButton
-                      onClick={() => router.push(`${basePath}/${item.id}`)}
-                      className="text-[var(--mnx-accent)] hover:underline font-medium text-left"
+                    <CrmRecordLink
+                      href={`${basePath}/${item.id}`}
+                      className="block min-w-0 max-w-full whitespace-normal break-words text-left leading-snug"
                     >
                       {item.name}
-                    </CrmButton>
+                    </CrmRecordLink>
                   </div>
                 </td>
                 <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.sku || "—"}</td>
@@ -134,7 +132,7 @@ export function ItemsTable({
                 </td>
                 <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.hsnSac || "—"}</td>
                 <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.usageUnit || "—"}</td>
-                <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                <td className="w-20 min-w-[5rem] px-3 py-1.5 text-center align-top whitespace-nowrap">
                   {onEditItem && (
                     <CrmButton
                       type="button"
@@ -142,7 +140,7 @@ export function ItemsTable({
                         e.stopPropagation();
                         onEditItem(item);
                       }}
-                      className="text-[var(--mnx-accent)] hover:text-[var(--mnx-accent)] font-medium transition-colors cursor-pointer"
+                      className="inline-flex whitespace-nowrap text-[var(--mnx-accent)] hover:text-[var(--mnx-accent)] font-medium transition-colors cursor-pointer"
                       title="Edit item"
                     >
                       Edit

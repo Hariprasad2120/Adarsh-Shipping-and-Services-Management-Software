@@ -130,13 +130,12 @@ export function LeadRegisterToolbar({
   return (
     <>
       <OperationalDataTableHeader
-        eyebrow="Demand qualification"
-        title="Lead register"
+        hideIdentity
         actions={
           <>
             <form
               method="GET"
-              className="contents"
+              className="mnx-operational-toolbar-search"
               onSubmit={(event) => {
                 event.preventDefault();
                 pushFilters({ nextSearch: searchDraft });

@@ -7,7 +7,10 @@ import {
   WorkspaceErrorState,
   WorkspaceLoadingState,
 } from "@/components/feedback/workspace-states";
-import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
+import type {
+  DashboardCommandCenterSnapshot,
+  DashboardModuleSnapshot,
+} from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { AttendanceCommand } from "./_components/attendance-command";
 import { DashboardOrganization } from "./_components/dashboard-organization";
@@ -24,6 +27,7 @@ interface HrmsPortalClientProps {
   initialProfile: UserProfile;
   initialWidgetsData: DashboardWidgetsData;
   initialModuleSnapshot: DashboardModuleSnapshot;
+  initialCommandCenterSnapshot: DashboardCommandCenterSnapshot;
 }
 
 type ProfilePayload = {
@@ -138,6 +142,7 @@ export function HrmsPortalClient({
   initialProfile,
   initialWidgetsData,
   initialModuleSnapshot,
+  initialCommandCenterSnapshot,
 }: HrmsPortalClientProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("myspace");
   const [profile, setProfile] = useState(initialProfile);
@@ -146,11 +151,11 @@ export function HrmsPortalClient({
   const [teamError, setTeamError] = useState<string | null>(null);
   const [widgets, setWidgets] = useState(initialWidgetsData);
   const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
+  const [commandCenterSnapshot] = useState(initialCommandCenterSnapshot);
   const [organization, setOrganization] = useState<OrganizationPayload | null>(null);
   const [organizationError, setOrganizationError] = useState<string | null>(null);
   const organizationRequestRef = useRef(false);
   const teamRequestRef = useRef(false);
-  const activeTabMeta = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
   useEffect(() => {
     if (activeTab !== "team" || reportees || teamRequestRef.current) return;
@@ -256,6 +261,7 @@ export function HrmsPortalClient({
     <MonolithPage className="mnx-dashboard-page-shell">
       <AttendanceCommand
         profile={profile}
+        moduleSnapshot={moduleSnapshot}
         loading={attendanceLoading}
         onPunchAction={handlePunchAction}
       />
@@ -265,6 +271,7 @@ export function HrmsPortalClient({
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
+            // eslint-disable-next-line no-restricted-syntax -- Dashboard workspace tabs require native button semantics with route-local active-state styling.
             <button
               type="button"
               key={tab.id}
@@ -279,12 +286,6 @@ export function HrmsPortalClient({
         })}
       </nav>
 
-      <section className="mnx-dashboard-tab-intro" aria-label="Active dashboard workspace">
-        <span>{activeTabMeta.label}</span>
-        <strong>{activeTabMeta.detail}</strong>
-        <p>Switch between personal execution, team visibility, and organization-wide context without leaving the dashboard.</p>
-      </section>
-
       <div className="mnx-dashboard-tab-content">
         {activeTab === "myspace" ? (
           <DashboardOverview
@@ -292,6 +293,7 @@ export function HrmsPortalClient({
             sessionUser={sessionUser}
             data={widgets}
             moduleSnapshot={moduleSnapshot}
+            commandCenterSnapshot={commandCenterSnapshot}
           />
         ) : null}
         {activeTab === "team" && reportees ? <DashboardTeam reportees={reportees} /> : null}

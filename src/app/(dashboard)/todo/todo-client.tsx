@@ -11,21 +11,22 @@ import {
   BellRing,
   CalendarClock,
   CheckCircle2,
-  ChevronDown,
+  ExternalLink,
   ListChecks,
   Pencil,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
-import { WorkspaceAction, WorkspaceBadge, WorkspaceCheckbox, WorkspaceField, WorkspaceInput, WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspacePanelHeader, WorkspaceProgress, WorkspaceSelect, WorkspaceTextarea } from "@/components/layout/workspace";
+import { WorkspaceAction, WorkspaceBadge, WorkspaceCheckbox, WorkspaceField, WorkspaceInput, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspacePanelHeader, WorkspaceProgress, WorkspaceSelect, WorkspaceTextarea } from "@/components/layout/workspace";
 import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
+import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/modules/notifications/components/notification-provider";
-import { TodoHeaderGraphic } from "./graphics/TodoHeaderGraphic";
 
 type TodoStatus = "PENDING" | "COMPLETED";
 type TodoFilter = "ALL" | "PENDING" | "COMPLETED" | "UPCOMING_ALERTS";
+type TodoReminderFilter = "ALL" | "REMINDER_ON" | "REMINDER_OFF";
 
 type TodoSubtaskRow = {
   id: string;
@@ -192,6 +193,9 @@ export function TodoClient({
   const { success, error } = useNotifications();
   const [tasks, setTasks] = useState<TodoTaskRow[]>(initialTasks);
   const [filter, setFilter] = useState<TodoFilter>("ALL");
+  const [reminderFilter, setReminderFilter] =
+    useState<TodoReminderFilter>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [draft, setDraft] = useState<TodoDraft>(() => createEmptyDraft());
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -212,23 +216,42 @@ export function TodoClient({
   }, [highlightedTaskId, initialTasks]);
 
   const filteredTasks = useMemo(() => {
-    if (filter === "PENDING") {
-      return tasks.filter((task) => task.status === "PENDING");
-    }
-    if (filter === "COMPLETED") {
-      return tasks.filter((task) => task.status === "COMPLETED");
-    }
-    if (filter === "UPCOMING_ALERTS") {
-      return tasks.filter(
-        (task) =>
+    return tasks.filter((task) => {
+      if (filter === "PENDING" && task.status !== "PENDING") return false;
+      if (filter === "COMPLETED" && task.status !== "COMPLETED") return false;
+      if (
+        filter === "UPCOMING_ALERTS"
+        && !(
           task.status === "PENDING"
           && task.reminderEnabled
           && task.alertAt
-          && new Date(task.alertAt).getTime() >= clockNow,
-      );
-    }
-    return tasks;
-  }, [clockNow, filter, tasks]);
+          && new Date(task.alertAt).getTime() >= clockNow
+        )
+      ) {
+        return false;
+      }
+
+      if (reminderFilter === "REMINDER_ON" && !task.reminderEnabled) return false;
+      if (reminderFilter === "REMINDER_OFF" && task.reminderEnabled) return false;
+
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase();
+        const haystack = [
+          task.title,
+          task.description,
+          task.createdBy.name,
+          ...task.subtasks.map((subtask) => subtask.label),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!haystack.includes(query)) return false;
+      }
+
+      return true;
+    });
+  }, [clockNow, filter, reminderFilter, searchQuery, tasks]);
 
   const stats = useMemo(() => {
     const checklistItems = tasks.flatMap((task) => task.subtasks);
@@ -264,6 +287,12 @@ export function TodoClient({
   function closeTaskForm() {
     resetForm();
     setIsTaskFormOpen(false);
+  }
+
+  function clearFilters() {
+    setFilter("ALL");
+    setReminderFilter("ALL");
+    setSearchQuery("");
   }
 
   function beginEdit(task: TodoTaskRow) {
@@ -413,62 +442,37 @@ export function TodoClient({
     <WorkspacePage>
       <WorkspacePageHeader
         eyebrow="Personal work queue"
-        title="To-Do"
-        graphic={<TodoHeaderGraphic />}
-        description={`Plan follow-ups, reminders, and nested checklists for ${currentUserName}.`}
+        title="Tasks"
+        icon={<ListChecks size={21} aria-hidden="true" />}
+        description={`Review tasks, reminders, and checklists for ${currentUserName}.`}
       />
 
-      <section className="mnx-workspace-metrics" aria-label="Task summary">
-        <WorkspaceMetric
-          icon={<ListChecks size={17} aria-hidden="true" />}
-          label="Total tasks"
-          value={stats.total}
-          detail="All personal tasks"
-        />
-        <WorkspaceMetric
-          icon={<CalendarClock size={17} aria-hidden="true" />}
-          label="Pending"
-          value={stats.pending}
-          detail="Still in progress"
-        />
-        <WorkspaceMetric
-          icon={<CheckCircle2 size={17} aria-hidden="true" />}
-          label="Completed"
-          value={stats.completed}
-          detail={`${stats.checklistCompleted}/${stats.checklistTotal} checklist items done`}
-        />
-        <WorkspaceMetric
-          icon={<BellRing size={17} aria-hidden="true" />}
-          label="Upcoming alerts"
-          value={stats.upcomingAlerts}
-          detail="Scheduled reminders ahead"
-        />
-      </section>
-
-      {stats.total > 0 ? (
-        <section className="mnx-todo-overall-progress" aria-label="Overall task progress">
-          <div className="mnx-todo-overall-progress-header">
-            <span>Overall progress</span>
-            <b>
-              {stats.completed}/{stats.total} tasks ({stats.overallPercent}%)
-            </b>
-          </div>
-          <WorkspaceProgress
-            label={`Overall task progress: ${stats.completed} of ${stats.total} tasks completed`}
-            value={stats.overallPercent}
-          />
-        </section>
-      ) : null}
-
       <WorkspacePanel>
-        <WorkspacePanelHeader
-          eyebrow="Task ledger"
-          title="Your tasks"
-          description="Expand a task to review its checklist, reminder, and actions."
-          actions={
-            <>
+        <form className="mnx-todo-filters">
+          <div className="mnx-toolbar">
+            <div className="mnx-toolbar-copy">
+              <h2>Filter task history</h2>
+              <p>Use one or more fields to narrow your personal task stream.</p>
+            </div>
+            <div className="mnx-toolbar-actions">
+              <WorkspaceAction
+                type="button"
+                size="compact"
+                variant="secondary"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </WorkspaceAction>
+              <WorkspaceAction type="button" size="compact" onClick={openCreateTask}>
+                <Plus size={14} aria-hidden="true" />
+                Create task
+              </WorkspaceAction>
+            </div>
+          </div>
+          <div className="mnx-filter-grid mnx-filter-grid-wide">
+            <WorkspaceField label="Status" htmlFor="todo-status">
               <WorkspaceSelect
-                aria-label="Task filter"
+                id="todo-status"
                 value={filter}
                 onChange={(event) => setFilter(event.target.value as TodoFilter)}
               >
@@ -478,10 +482,41 @@ export function TodoClient({
                   </option>
                 ))}
               </WorkspaceSelect>
-              <WorkspaceAction onClick={openCreateTask}>
-                <Plus size={15} aria-hidden="true" />
-                Create task
-              </WorkspaceAction>
+            </WorkspaceField>
+            <WorkspaceField label="Reminder" htmlFor="todo-reminder">
+              <WorkspaceSelect
+                id="todo-reminder"
+                value={reminderFilter}
+                onChange={(event) =>
+                  setReminderFilter(event.target.value as TodoReminderFilter)}
+              >
+                <option value="ALL">All tasks</option>
+                <option value="REMINDER_ON">Reminder enabled</option>
+                <option value="REMINDER_OFF">No reminder</option>
+              </WorkspaceSelect>
+            </WorkspaceField>
+            <WorkspaceField label="Search" htmlFor="todo-search">
+              <WorkspaceInput
+                id="todo-search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search titles, notes, or checklist items"
+              />
+            </WorkspaceField>
+          </div>
+        </form>
+      </WorkspacePanel>
+
+      <WorkspacePanel>
+        <WorkspacePanelHeader
+          eyebrow="Task stream"
+          title={`${filteredTasks.length} result${filteredTasks.length === 1 ? "" : "s"}`}
+          description="Only tasks created for your account appear here."
+          actions={
+            <>
+              <WorkspaceBadge variant="neutral">{stats.pending} pending</WorkspaceBadge>
+              <WorkspaceBadge variant="success">{stats.completed} completed</WorkspaceBadge>
+              <WorkspaceBadge variant="accent">{stats.upcomingAlerts} alerts</WorkspaceBadge>
             </>
           }
         />
@@ -498,67 +533,101 @@ export function TodoClient({
             {filteredTasks.map((task) => {
               const isExpanded = expandedTaskId === task.id;
               const isHighlighted = highlightedTaskId === task.id;
+              const statusVariant =
+                task.status === "COMPLETED" ? "success" : "warning";
+              const progressLabel =
+                task.progress.total > 0
+                  ? `${task.progress.completed}/${task.progress.total} checklist items done`
+                  : "No checklist";
 
               return (
                 <Fragment key={task.id}>
                   <article
                     className={`mnx-todo-record${isHighlighted ? " is-highlighted" : ""}`}
                   >
-                    <button
-                      type="button"
-                      className="mnx-todo-summary"
-                      onClick={() =>
-                        setExpandedTaskId(isExpanded ? null : task.id)
-                      }
-                      aria-expanded={isExpanded}
-                    >
-                      <span className="mnx-todo-check">
+                    <div className="mnx-record-layout mnx-todo-record-layout">
+                      <span className="mnx-record-icon mnx-todo-check">
                         {task.status === "COMPLETED" ? (
                           <CheckCircle2 size={18} aria-hidden="true" />
                         ) : (
-                          <ListChecks size={18} aria-hidden="true" />
+                          <BellRing size={18} aria-hidden="true" />
                         )}
                       </span>
-                      <span className="mnx-todo-primary">
-                        <b>{task.title}</b>
-                        <small>
-                          Updated {formatDateTime(task.updatedAt)}
-                        </small>
-                      </span>
-                      <span className="mnx-todo-progress">
-                        <b>
-                          {task.progress.total > 0
-                            ? `${task.progress.completed}/${task.progress.total}`
-                            : "No checklist"}
-                        </b>
-                        <WorkspaceProgress
-                          label={`${task.title} checklist progress`}
-                          value={task.progress.percent}
-                        />
-                      </span>
-                      <span className="mnx-todo-date">
-                        <CalendarClock size={13} aria-hidden="true" />
-                        {formatDate(task.dueDate)}
-                      </span>
-                      <WorkspaceBadge
-                        variant={task.status === "COMPLETED" ? "success" : "warning"}
-                      >
-                        {task.status === "COMPLETED" ? "Completed" : "Pending"}
-                      </WorkspaceBadge>
-                      <ChevronDown
-                        size={16}
-                        className={isExpanded ? "is-open" : ""}
-                        aria-hidden="true"
-                      />
-                    </button>
+                      <div className="mnx-record-copy">
+                        <div className="mnx-chip-row">
+                          <WorkspaceBadge variant={statusVariant}>
+                            {task.status === "COMPLETED" ? "Completed" : "Pending"}
+                          </WorkspaceBadge>
+                          {task.reminderEnabled ? (
+                            <WorkspaceBadge variant="accent">Reminder on</WorkspaceBadge>
+                          ) : (
+                            <WorkspaceBadge variant="neutral">No reminder</WorkspaceBadge>
+                          )}
+                          <WorkspaceBadge variant="neutral">{progressLabel}</WorkspaceBadge>
+                        </div>
+                        <h2>{task.title}</h2>
+                        <p>{task.description || "No task notes added."}</p>
+                        <div className="mnx-record-meta">
+                          <span>
+                            <CalendarClock size={12} aria-hidden="true" />
+                            Due {formatDate(task.dueDate)}
+                          </span>
+                          <span>Updated {formatDateTime(task.updatedAt)}</span>
+                          <span>{task.createdBy.name}</span>
+                        </div>
+                        {task.progress.total > 0 ? (
+                          <div className="mnx-todo-progress-inline">
+                            <WorkspaceProgress
+                              label={`${task.title} checklist progress`}
+                              value={task.progress.percent}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="mnx-record-actions">
+                        <WorkspaceAction
+                          size="compact"
+                          variant="secondary"
+                          onClick={() =>
+                            setExpandedTaskId(isExpanded ? null : task.id)}
+                        >
+                          <ExternalLink size={14} aria-hidden="true" />
+                          {isExpanded ? "Hide details" : "View details"}
+                        </WorkspaceAction>
+                        <WorkspaceAction
+                          size="compact"
+                          variant="secondary"
+                          onClick={() => beginEdit(task)}
+                        >
+                          <Pencil size={14} aria-hidden="true" />
+                          Edit
+                        </WorkspaceAction>
+                        <WorkspaceAction
+                          size="compact"
+                          onClick={() =>
+                            void updateStatus(
+                              task.id,
+                              task.status === "COMPLETED"
+                                ? "PENDING"
+                                : "COMPLETED",
+                            )}
+                        >
+                          {task.status === "COMPLETED" ? "Reopen" : "Complete"}
+                        </WorkspaceAction>
+                        <WorkspaceAction
+                          size="compact"
+                          variant="destructive"
+                          onClick={() => void removeTask(task.id)}
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                          Delete
+                        </WorkspaceAction>
+                      </div>
+                    </div>
 
                     {isExpanded ? (
                       <div className="mnx-todo-detail">
-                        <p>{task.description || "No description added."}</p>
                         <div className="mnx-chip-row">
-                          {task.reminderEnabled ? (
-                            <WorkspaceBadge variant="accent">Reminder on</WorkspaceBadge>
-                          ) : null}
                           {task.alertTriggeredAt ? (
                             <WorkspaceBadge variant="success">Alert sent</WorkspaceBadge>
                           ) : null}
@@ -591,39 +660,6 @@ export function TodoClient({
                         ) : (
                           <p>No checklist added.</p>
                         )}
-
-                        <div className="mnx-record-actions">
-                          <WorkspaceAction
-                            size="compact"
-                            variant="secondary"
-                            onClick={() => beginEdit(task)}
-                          >
-                            <Pencil size={14} aria-hidden="true" />
-                            Edit
-                          </WorkspaceAction>
-                          <WorkspaceAction
-                            size="compact"
-                            variant="secondary"
-                            onClick={() =>
-                              void updateStatus(
-                                task.id,
-                                task.status === "COMPLETED"
-                                  ? "PENDING"
-                                  : "COMPLETED",
-                              )
-                            }
-                          >
-                            {task.status === "COMPLETED" ? "Reopen" : "Complete"}
-                          </WorkspaceAction>
-                          <WorkspaceAction
-                            size="compact"
-                            variant="destructive"
-                            onClick={() => void removeTask(task.id)}
-                          >
-                            <Trash2 size={14} aria-hidden="true" />
-                            Delete
-                          </WorkspaceAction>
-                        </div>
                       </div>
                     ) : null}
                   </article>
@@ -755,14 +791,17 @@ export function TodoClient({
                     }
                     placeholder={`Checklist item ${index + 1}`}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="inverse"
+                    size="sm"
+                    mode="icon"
                     className="mnx-draft-remove"
                     onClick={() => removeDraftSubtask(subtask.localId)}
                     aria-label={`Remove checklist item ${index + 1}`}
                   >
                     <X size={15} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>

@@ -30,6 +30,7 @@ describe("module-aware main dashboard", () => {
     expect(pageSource).toContain("getDashboardContext");
     expect(pageSource).toContain("getVisibleSections(caps, enabledModuleIds)");
     expect(pageSource).toContain("getDashboardModuleSnapshot");
+    expect(pageSource).toContain("getDashboardCommandCenterSnapshot");
     expect(pageSource).toContain("permittedHrefsByModule");
     expect(portalSource).toContain("setModuleSnapshot");
     expect(portalSource).toContain('fetch("/api/hrms/team/reportees")');
@@ -107,9 +108,9 @@ describe("module-aware main dashboard", () => {
     expect(portalSource).not.toContain('<div className="mnx-dashboard-page">');
     expect(attendanceSource).toContain("<Button");
     expect(attendanceSource).toContain("<Badge");
-    expect(overviewSource).toContain("<Card");
-    expect(overviewSource).toContain('].join("-")');
-    expect(overviewSource).not.toContain("key: date.toISOString()");
+    expect(overviewSource).toContain("<DashboardInsightGrid>");
+    expect(overviewSource).toContain("commandCenterSnapshot");
+    expect(overviewSource).not.toContain("buildWeeklySchedule");
     expect(teamSource).toContain("<WorkspaceSectionHeading");
     expect(teamSource).toContain(
       'className="mnx-dashboard-metrics mnx-team-metrics"',

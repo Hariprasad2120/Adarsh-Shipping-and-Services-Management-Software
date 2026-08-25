@@ -2,21 +2,33 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, FileSpreadsheet, LoaderCircle, Plus } from "lucide-react";
+import {
+  Boxes,
+  CheckCircle2,
+  CircleAlert,
+  FileSpreadsheet,
+  LoaderCircle,
+  Plus,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { getAllItems } from "@/lib/items/item-store";
+import { cn } from "@/lib/utils";
 import {
   CrmButton,
   CrmDialog,
   CrmEmptyTableRow,
   CrmField,
   CrmInput,
+  CrmMetric,
+  CrmMetrics,
   CrmPanel,
   CrmSection,
   CrmSelect,
   CrmStatus,
   CrmTable,
-  CrmTabs,
   CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
 import { ItemsListPage } from "@/modules/items/components/ItemsListPage";
@@ -81,6 +93,11 @@ type ActiveImport = {
   skippedCount: number;
   logs: ImportLogEntry[];
 };
+
+type MasterStatusFilter = "all" | "active" | "inactive" | "attention";
+
+const MASTER_RECORDS_STORAGE_KEY = "crm_structured_master_records_v1";
+const MASTER_IMPORT_RUNS_STORAGE_KEY = "crm_structured_master_import_runs_v1";
 
 const AGENT_MASTER_HEADINGS = [
   "AG_ID",
@@ -260,6 +277,159 @@ function chooseFieldControl(heading: string) {
   return "text";
 }
 
+function getRelevantHeadings(headings: readonly string[]) {
+  return headings.filter((heading) => heading !== "Notes");
+}
+
+function getRecordCompletionPercent(headings: readonly string[], record: MasterRecord) {
+  const relevantHeadings = getRelevantHeadings(headings);
+  if (relevantHeadings.length === 0) return 100;
+  const completedFields = relevantHeadings.filter((heading) => (record[heading] ?? "").trim().length > 0).length;
+  return Math.round((completedFields / relevantHeadings.length) * 100);
+}
+
+function isAttentionRecord(headings: readonly string[], record: MasterRecord) {
+  const status = (record.Status ?? "").trim().toLowerCase();
+  return status === "inactive" || getRecordCompletionPercent(headings, record) < 65;
+}
+
+function getRecordTitle(tab: StructuredMasterTab, record: MasterRecord) {
+  const preferredHeadings = tab.headings.slice(1);
+  return (
+    preferredHeadings.map((heading) => record[heading]?.trim()).find((value) => value && value.length > 0) ??
+    record[tab.headings[0]] ??
+    "Untitled record"
+  );
+}
+
+function getRecordSubtitle(tab: StructuredMasterTab, record: MasterRecord) {
+  const metadata = tab.headings
+    .filter((heading) => heading !== tab.headings[0] && heading !== "Notes")
+    .map((heading) => record[heading]?.trim())
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 2);
+  return metadata.join(" · ");
+}
+
+function getStatusCount(records: MasterRecord[], expectedStatus: "active" | "inactive") {
+  return records.filter((record) => (record.Status ?? "").trim().toLowerCase() === expectedStatus).length;
+}
+
+function getImportSuccessRate(run: MasterImportRun | null) {
+  if (!run) return 0;
+  const total = run.successCount + run.failedCount + run.skippedCount;
+  if (total === 0) return 0;
+  return Math.round((run.successCount / total) * 100);
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "No imports yet";
+  return new Date(value).toLocaleString("en-IN");
+}
+
+function readStoredJson<T>(storageKey: string, fallback: T) {
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStoredJson<T>(storageKey: string, value: T) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+  } catch {
+    // Ignore storage quota or serialization failures and keep the UI usable.
+  }
+}
+
+function sanitizeMasterRecords(
+  candidate: unknown,
+  structuredTabs: StructuredMasterTab[],
+): Record<string, MasterRecord[]> {
+  const fallback = Object.fromEntries(structuredTabs.map((tab) => [tab.id, []])) as Record<string, MasterRecord[]>;
+
+  if (!candidate || typeof candidate !== "object") {
+    return fallback;
+  }
+
+  const source = candidate as Record<string, unknown>;
+
+  return Object.fromEntries(
+    structuredTabs.map((tab) => {
+      const rawRecords = source[tab.id];
+      if (!Array.isArray(rawRecords)) {
+        return [tab.id, []];
+      }
+
+      const records = rawRecords
+        .filter((record): record is Record<string, unknown> => Boolean(record) && typeof record === "object")
+        .map((record) =>
+          Object.fromEntries(
+            tab.headings.map((heading) => [heading, String(record[heading] ?? "").trim()]),
+          ) as MasterRecord,
+        );
+
+      return [tab.id, records];
+    }),
+  ) as Record<string, MasterRecord[]>;
+}
+
+function sanitizeImportRuns(
+  candidate: unknown,
+  structuredTabs: StructuredMasterTab[],
+): Record<string, MasterImportRun | null> {
+  const fallback = Object.fromEntries(structuredTabs.map((tab) => [tab.id, null])) as Record<
+    string,
+    MasterImportRun | null
+  >;
+
+  if (!candidate || typeof candidate !== "object") {
+    return fallback;
+  }
+
+  const source = candidate as Record<string, unknown>;
+
+  return Object.fromEntries(
+    structuredTabs.map((tab) => {
+      const rawRun = source[tab.id];
+
+      if (!rawRun || typeof rawRun !== "object") {
+        return [tab.id, null];
+      }
+
+      const run = rawRun as Record<string, unknown>;
+      const rawLogs = Array.isArray(run.logs) ? run.logs : [];
+
+      return [
+        tab.id,
+        {
+          fileName: String(run.fileName ?? ""),
+          completedAt: String(run.completedAt ?? ""),
+          successCount: Number(run.successCount ?? 0),
+          failedCount: Number(run.failedCount ?? 0),
+          skippedCount: Number(run.skippedCount ?? 0),
+          logs: rawLogs
+            .filter((log): log is Record<string, unknown> => Boolean(log) && typeof log === "object")
+            .map((log) => ({
+              rowNumber: Number(log.rowNumber ?? 0),
+              status:
+                log.status === "success" || log.status === "failed" || log.status === "skipped"
+                  ? log.status
+                  : "failed",
+              remark: String(log.remark ?? ""),
+            })),
+        } satisfies MasterImportRun,
+      ];
+    }),
+  ) as Record<string, MasterImportRun | null>;
+}
+
 function buildInitialMapping(headings: readonly string[], sourceHeaders: string[]) {
   const sourceLookup = new Map(sourceHeaders.map((header) => [toNormalizedKey(header), header]));
   return Object.fromEntries(
@@ -333,28 +503,44 @@ export function CrmMastersWorkspace() {
 
   const activeTab = MASTER_TABS.find((tab) => tab.id === requestedTabId) ?? MASTER_TABS[0];
   const activeStructuredTab = activeTab.view === "structured" ? activeTab : null;
+  const structuredTabs = React.useMemo(
+    () => MASTER_TABS.filter((tab): tab is StructuredMasterTab => tab.view === "structured"),
+    [],
+  );
+  const emptyStructuredRecords = React.useMemo(
+    () => Object.fromEntries(structuredTabs.map((tab) => [tab.id, []])) as Record<string, MasterRecord[]>,
+    [structuredTabs],
+  );
+  const emptyImportRuns = React.useMemo(
+    () =>
+      Object.fromEntries(structuredTabs.map((tab) => [tab.id, null])) as Record<string, MasterImportRun | null>,
+    [structuredTabs],
+  );
 
   const [masterRecords, setMasterRecords] = React.useState<Record<string, MasterRecord[]>>(() =>
-    Object.fromEntries(
-      MASTER_TABS.filter((tab): tab is StructuredMasterTab => tab.view === "structured").map((tab) => [
-        tab.id,
-        [],
-      ]),
-    ),
+    sanitizeMasterRecords(readStoredJson(MASTER_RECORDS_STORAGE_KEY, emptyStructuredRecords), structuredTabs),
   );
   const [pendingImport, setPendingImport] = React.useState<PendingImport | null>(null);
   const [activeImport, setActiveImport] = React.useState<ActiveImport | null>(null);
   const [lastImportRuns, setLastImportRuns] = React.useState<Record<string, MasterImportRun | null>>(
-    () =>
-      Object.fromEntries(
-        MASTER_TABS.filter((tab): tab is StructuredMasterTab => tab.view === "structured").map((tab) => [
-          tab.id,
-          null,
-        ]),
-      ),
+    () => sanitizeImportRuns(readStoredJson(MASTER_IMPORT_RUNS_STORAGE_KEY, emptyImportRuns), structuredTabs),
   );
   const [singleEntryTabId, setSingleEntryTabId] = React.useState<string | null>(null);
   const [singleEntryValues, setSingleEntryValues] = React.useState<MasterRecord>({});
+  const [recordSearch, setRecordSearch] = React.useState<Record<string, string>>(() =>
+    Object.fromEntries(MASTER_TABS.map((tab) => [tab.id, ""])),
+  );
+  const [statusFilters, setStatusFilters] = React.useState<Record<string, MasterStatusFilter>>(() =>
+    Object.fromEntries(MASTER_TABS.map((tab) => [tab.id, "all"])),
+  );
+
+  React.useEffect(() => {
+    writeStoredJson(MASTER_RECORDS_STORAGE_KEY, masterRecords);
+  }, [masterRecords]);
+
+  React.useEffect(() => {
+    writeStoredJson(MASTER_IMPORT_RUNS_STORAGE_KEY, lastImportRuns);
+  }, [lastImportRuns]);
 
   const handleTabChange = React.useCallback(
     (tabId: string) => {
@@ -436,6 +622,20 @@ export function CrmMastersWorkspace() {
     setSingleEntryValues((current) => ({
       ...current,
       [heading]: value,
+    }));
+  }, []);
+
+  const handleRecordSearchChange = React.useCallback((tabId: string, value: string) => {
+    setRecordSearch((current) => ({
+      ...current,
+      [tabId]: value,
+    }));
+  }, []);
+
+  const handleStatusFilterChange = React.useCallback((tabId: string, value: MasterStatusFilter) => {
+    setStatusFilters((current) => ({
+      ...current,
+      [tabId]: value,
     }));
   }, []);
 
@@ -643,6 +843,74 @@ export function CrmMastersWorkspace() {
     activeStructuredTab && activeTab.view === "structured" ? masterRecords[activeStructuredTab.id] ?? [] : [];
   const currentImportRun =
     activeStructuredTab && activeTab.view === "structured" ? lastImportRuns[activeStructuredTab.id] : null;
+  const itemMasterCount = React.useMemo(() => getAllItems().length, []);
+  const workspaceCounts = React.useMemo(
+    () =>
+      Object.fromEntries(
+        MASTER_TABS.map((tab) => [
+          tab.id,
+          tab.view === "items" ? itemMasterCount : (masterRecords[tab.id] ?? []).length,
+        ]),
+      ),
+    [itemMasterCount, masterRecords],
+  );
+  const totalStructuredRecords = React.useMemo(
+    () => structuredTabs.reduce((sum, tab) => sum + (masterRecords[tab.id] ?? []).length, 0),
+    [masterRecords, structuredTabs],
+  );
+  const readyStructuredMasters = React.useMemo(
+    () => structuredTabs.filter((tab) => (masterRecords[tab.id] ?? []).length > 0).length,
+    [masterRecords, structuredTabs],
+  );
+  const latestImportAt = React.useMemo(() => {
+    const timestamps = Object.values(lastImportRuns)
+      .flatMap((run) => (run?.completedAt ? [new Date(run.completedAt).getTime()] : []))
+      .sort((left, right) => right - left);
+    return timestamps[0] ? new Date(timestamps[0]).toISOString() : null;
+  }, [lastImportRuns]);
+  const activeSearch = recordSearch[activeTab.id] ?? "";
+  const activeStatusFilter = statusFilters[activeTab.id] ?? "all";
+  const filteredRecords =
+    activeStructuredTab && activeTab.view === "structured"
+      ? currentRecords.filter((record) => {
+          const query = activeSearch.trim().toLowerCase();
+          const searchableText = activeStructuredTab.headings
+            .map((heading) => record[heading] ?? "")
+            .join(" ")
+            .toLowerCase();
+
+          if (query && !searchableText.includes(query)) {
+            return false;
+          }
+
+          if (activeStatusFilter === "active") {
+            return (record.Status ?? "").trim().toLowerCase() === "active";
+          }
+
+          if (activeStatusFilter === "inactive") {
+            return (record.Status ?? "").trim().toLowerCase() === "inactive";
+          }
+
+          if (activeStatusFilter === "attention") {
+            return isAttentionRecord(activeStructuredTab.headings, record);
+          }
+
+          return true;
+        })
+      : [];
+  const activeAttentionRecords =
+    activeStructuredTab && activeTab.view === "structured"
+      ? currentRecords.filter((record) => isAttentionRecord(activeStructuredTab.headings, record)).slice(0, 4)
+      : [];
+  const activeAverageCompletion =
+    activeStructuredTab && activeTab.view === "structured" && currentRecords.length > 0
+      ? Math.round(
+          currentRecords.reduce(
+            (sum, record) => sum + getRecordCompletionPercent(activeStructuredTab.headings, record),
+            0,
+          ) / currentRecords.length,
+        )
+      : 0;
 
   return (
     <>
@@ -650,26 +918,67 @@ export function CrmMastersWorkspace() {
         title="Master workspaces"
         description="Switch between the CRM master-data areas used by commercial, relationship, and operational records."
       >
-        <CrmTabs aria-label="CRM masters tabs">
+        <CrmMetrics className="mnx-crm-masters-summary-strip">
+          <CrmMetric
+            icon={<Boxes aria-hidden="true" />}
+            label="Structured masters"
+            value={structuredTabs.length}
+            detail={`${readyStructuredMasters} with records`}
+          />
+          <CrmMetric
+            icon={<ShieldCheck aria-hidden="true" />}
+            label="Managed records"
+            value={totalStructuredRecords}
+            detail="Across structured registers"
+          />
+          <CrmMetric
+            icon={<CheckCircle2 aria-hidden="true" />}
+            label="Item catalogue"
+            value={itemMasterCount}
+            detail="Embedded live item master"
+          />
+          <CrmMetric
+            icon={<FileSpreadsheet aria-hidden="true" />}
+            label="Latest import"
+            value={latestImportAt ? "Tracked" : "Pending"}
+            detail={formatDateTime(latestImportAt)}
+          />
+        </CrmMetrics>
+
+        <div className="mnx-crm-masters-workspace-grid" role="tablist" aria-label="CRM masters tabs">
           {MASTER_TABS.map((tab) => {
             const isActive = tab.id === activeTab.id;
+            const tabCount = workspaceCounts[tab.id] ?? 0;
 
             return (
-              <CrmButton
+              // eslint-disable-next-line no-restricted-syntax -- This is an intentional tab widget, not a form/action button.
+              <button
                 key={tab.id}
                 id={`${tab.id}-tab`}
                 role="tab"
                 type="button"
-                variant={isActive ? "primary" : "secondary"}
+                className={cn("mnx-crm-masters-workspace-card", isActive && "is-active")}
                 aria-selected={isActive}
                 aria-controls={`${tab.id}-panel`}
                 onClick={() => handleTabChange(tab.id)}
               >
-                {tab.label}
-              </CrmButton>
+                <div className="mnx-crm-masters-workspace-card-topline">
+                  <span>{tab.label}</span>
+                  <strong>{tabCount}</strong>
+                </div>
+                <p>{tab.summary}</p>
+                <div className="mnx-crm-masters-workspace-card-footer">
+                  <small>{tab.view === "items" ? "Transaction-ready item register" : "Structured reference master"}</small>
+                  <div className="mnx-crm-masters-tag-row">
+                    {tab.focusAreas.slice(0, 2).map((focus) => (
+                      <span key={`${tab.id}-${focus}`}>{focus}</span>
+                    ))}
+                  </div>
+                </div>
+              </button>
             );
           })}
-        </CrmTabs>
+        </div>
 
         {activeTab.view === "items" ? (
           <div
@@ -678,6 +987,31 @@ export function CrmMastersWorkspace() {
             aria-labelledby={`${activeTab.id}-tab`}
             className="mnx-crm-masters-embedded-workspace"
           >
+            <CrmPanel className="mnx-crm-masters-panel mnx-crm-masters-item-shell">
+              <div className="mnx-crm-masters-panel-copy">
+                <div className="mnx-crm-masters-panel-copy-block">
+                  <CrmStatus variant="success">Commercial item control</CrmStatus>
+                  <div className="mnx-crm-masters-panel-copy-stack">
+                    <h3>{activeTab.label}</h3>
+                    <p>{activeTab.summary}</p>
+                    <p>{activeTab.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mnx-crm-masters-governance-grid mnx-crm-masters-item-governance-grid">
+                <div className="mnx-crm-masters-governance-card">
+                  <span>Record scale</span>
+                  <strong>{itemMasterCount} live items</strong>
+                  <p>Use the embedded item workspace to manage pricing, HSN or SAC mapping, stock posture, and commercial readiness.</p>
+                </div>
+                <div className="mnx-crm-masters-governance-card">
+                  <span>Operator posture</span>
+                  <strong>Direct register control</strong>
+                  <p>Filters, actions, and pagination stay available inside the catalogue so users can manage items without leaving Masters.</p>
+                </div>
+              </div>
+            </CrmPanel>
             <ItemsListPage basePath="/crm/items" />
           </div>
         ) : (
@@ -698,7 +1032,7 @@ export function CrmMastersWorkspace() {
               </div>
 
               <div className="mnx-crm-masters-action-row">
-                <input
+                <CrmInput
                   ref={uploadInputRef}
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -722,35 +1056,151 @@ export function CrmMastersWorkspace() {
               </div>
             </div>
 
-            <div className="mnx-crm-masters-table-wrap">
-              <CrmTable className="mnx-crm-masters-table">
-                <thead>
-                  <tr>
-                    {activeTab.headings.map((heading) => (
-                      <th key={heading} className="mnx-crm-masters-header-cell">
-                        <span>{heading}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentRecords.length > 0 ? (
-                    currentRecords.map((record, index) => (
-                      <tr key={`${activeTab.id}-row-${index}`}>
+            <div className="mnx-crm-masters-governance-grid">
+              <div className="mnx-crm-masters-governance-card">
+                <span>Coverage</span>
+                <strong>{currentRecords.length} records</strong>
+                <p>{getStatusCount(currentRecords, "active")} active and ready for downstream CRM references.</p>
+              </div>
+              <div className="mnx-crm-masters-governance-card">
+                <span>Data quality</span>
+                <strong>{activeAverageCompletion}% average completion</strong>
+                <p>{activeAttentionRecords.length} records currently need attention because they are inactive or only partially filled.</p>
+              </div>
+              <div className="mnx-crm-masters-governance-card">
+                <span>Import discipline</span>
+                <strong>{getImportSuccessRate(currentImportRun)}% last success rate</strong>
+                <p>{currentImportRun ? `${currentImportRun.fileName} on ${formatDateTime(currentImportRun.completedAt)}` : "No spreadsheet import has been completed for this master yet."}</p>
+              </div>
+            </div>
+
+            <div className="mnx-crm-masters-ops-grid">
+              <div className="mnx-crm-masters-ops-card">
+                <div className="mnx-crm-masters-ops-card-header">
+                  <div>
+                    <span>Management workbench</span>
+                    <h4>Control records without leaving the master</h4>
+                  </div>
+                </div>
+
+                <div className="mnx-crm-masters-filter-row">
+                  <label className="mnx-crm-masters-search-field" htmlFor={`${activeTab.id}-search`}>
+                    <Search aria-hidden="true" />
+                    <CrmInput
+                      id={`${activeTab.id}-search`}
+                      type="search"
+                      value={activeSearch}
+                      onChange={(event) => handleRecordSearchChange(activeTab.id, event.target.value)}
+                      placeholder={`Search ${activeTab.label.toLowerCase()} records`}
+                    />
+                  </label>
+
+                  <CrmField label="View">
+                    <CrmSelect
+                      value={activeStatusFilter}
+                      onChange={(event) =>
+                        handleStatusFilterChange(activeTab.id, event.target.value as MasterStatusFilter)
+                      }
+                    >
+                      <option value="all">All records</option>
+                      <option value="active">Active only</option>
+                      <option value="inactive">Inactive only</option>
+                      <option value="attention">Attention queue</option>
+                    </CrmSelect>
+                  </CrmField>
+                </div>
+
+                <div className="mnx-crm-masters-table-caption">
+                  <strong>{filteredRecords.length}</strong>
+                  <span>records visible in the current operating view</span>
+                </div>
+
+                <div className="mnx-crm-masters-table-wrap">
+                  <CrmTable className="mnx-crm-masters-table">
+                    <thead>
+                      <tr>
                         {activeTab.headings.map((heading) => (
-                          <td key={`${activeTab.id}-${index}-${heading}`} className="mnx-crm-masters-data-cell">
-                            {record[heading] || "-"}
-                          </td>
+                          <th key={heading} className="mnx-crm-masters-header-cell">
+                            <span>{heading}</span>
+                          </th>
                         ))}
                       </tr>
-                    ))
+                    </thead>
+                    <tbody>
+                      {filteredRecords.length > 0 ? (
+                        filteredRecords.map((record, index) => (
+                          <tr key={`${activeTab.id}-row-${index}`}>
+                            {activeTab.headings.map((heading) => (
+                              <td key={`${activeTab.id}-${index}-${heading}`} className="mnx-crm-masters-data-cell">
+                                {record[heading] || "-"}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      ) : (
+                        <CrmEmptyTableRow colSpan={activeTab.headings.length}>
+                          No records match the current search or status view.
+                        </CrmEmptyTableRow>
+                      )}
+                    </tbody>
+                  </CrmTable>
+                </div>
+              </div>
+
+              <div className="mnx-crm-masters-ops-rail">
+                <div className="mnx-crm-masters-ops-card">
+                  <div className="mnx-crm-masters-ops-card-header">
+                    <div>
+                      <span>Attention queue</span>
+                      <h4>Records needing cleanup</h4>
+                    </div>
+                    <CircleAlert aria-hidden="true" />
+                  </div>
+
+                  {activeAttentionRecords.length > 0 ? (
+                    <div className="mnx-crm-masters-watchlist">
+                      {activeAttentionRecords.map((record, index) => (
+                        <div key={`${activeTab.id}-attention-${index}`} className="mnx-crm-masters-watchlist-card">
+                          <div className="mnx-crm-masters-watchlist-copy">
+                            <strong>{getRecordTitle(activeTab, record)}</strong>
+                            <p>{getRecordSubtitle(activeTab, record) || record[activeTab.headings[0]] || "Reference pending"}</p>
+                          </div>
+                          <div className="mnx-crm-masters-watchlist-meta">
+                            <CrmStatus variant={(record.Status ?? "").trim().toLowerCase() === "inactive" ? "warning" : "accent"}>
+                              {(record.Status ?? "").trim() || "Incomplete"}
+                            </CrmStatus>
+                            <small>{getRecordCompletionPercent(activeTab.headings, record)}% complete</small>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <CrmEmptyTableRow colSpan={activeTab.headings.length}>
-                      No records yet. Add a single entry or bulk upload an Excel file to populate this master.
-                    </CrmEmptyTableRow>
+                    <p className="mnx-crm-masters-note">
+                      No records are currently flagged for attention in this master.
+                    </p>
                   )}
-                </tbody>
-              </CrmTable>
+                </div>
+
+                <div className="mnx-crm-masters-ops-card">
+                  <div className="mnx-crm-masters-ops-card-header">
+                    <div>
+                      <span>Reference framing</span>
+                      <h4>How this master should be managed</h4>
+                    </div>
+                    <ShieldCheck aria-hidden="true" />
+                  </div>
+
+                  <div className="mnx-crm-masters-tag-row">
+                    {activeTab.focusAreas.map((focus) => (
+                      <span key={`${activeTab.id}-focus-${focus}`}>{focus}</span>
+                    ))}
+                  </div>
+
+                  <p className="mnx-crm-masters-note">
+                    Maintain a clean identifier on the first column, keep Status current, and use mapped spreadsheet imports when doing bulk refreshes from external systems.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {currentImportRun ? (
@@ -759,8 +1209,7 @@ export function CrmMastersWorkspace() {
                   <div>
                     <h4>Last import run</h4>
                     <p>
-                      {currentImportRun.fileName} completed on{" "}
-                      {new Date(currentImportRun.completedAt).toLocaleString()}
+                      {currentImportRun.fileName} completed on {formatDateTime(currentImportRun.completedAt)}
                     </p>
                   </div>
                 </div>
@@ -794,9 +1243,7 @@ export function CrmMastersWorkspace() {
                         <tr key={`${currentImportRun.fileName}-${log.rowNumber}-${log.status}`}>
                           <td>{log.rowNumber}</td>
                           <td>
-                            <span className={`mnx-crm-masters-log-badge is-${log.status}`}>
-                              {log.status}
-                            </span>
+                            <span className={`mnx-crm-masters-log-badge is-${log.status}`}>{log.status}</span>
                           </td>
                           <td>{log.remark}</td>
                         </tr>

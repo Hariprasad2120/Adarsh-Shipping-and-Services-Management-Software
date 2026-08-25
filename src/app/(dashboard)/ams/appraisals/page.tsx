@@ -1,10 +1,18 @@
 import { PerformanceTableRow } from "@/modules/performance/components/performance-workspace";
 import {
+  PerformanceSummary,
+  PerformanceSummaryGrid,
   PerformanceSection,
   PerformanceSectionHeader,
 } from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronRight,
+  ClipboardCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -139,9 +147,41 @@ export default async function AppraisalsPage({
   const eligibleRowsToShow = isDueFilterApplied
     ? eligibleDueRowsSafe
     : allEmployeesRows;
+  const activeCycles = (cycles as Cycles).filter((cycle) => cycle.status === "ACTIVE").length;
 
   return (
     <div className="space-y-8">
+      <PerformanceSummaryGrid>
+        <PerformanceSummary
+          icon={<CalendarClock aria-hidden="true" />}
+          label="Due this month"
+          value={dueThisMonthRowsSafe.length}
+          detail={`Items scheduled for ${MONTH_NAMES[defaultMonth]} ${defaultYear}`}
+        />
+        <PerformanceSummary
+          icon={<ClipboardCheck aria-hidden="true" />}
+          label="In progress"
+          value={appraisals.length}
+          detail="Appraisals currently moving through review stages"
+        />
+        <PerformanceSummary
+          icon={<Users aria-hidden="true" />}
+          label={isDueFilterApplied ? "Eligible employees" : "Visible employees"}
+          value={eligibleRowsToShow.length}
+          detail={
+            isDueFilterApplied
+              ? `Employees eligible in ${MONTH_NAMES[month]} ${year}`
+              : "Employees available for appraisal readiness review"
+          }
+        />
+        <PerformanceSummary
+          icon={<Sparkles aria-hidden="true" />}
+          label="Active cycles"
+          value={activeCycles}
+          detail="Cycle configurations currently driving appraisal flow"
+        />
+      </PerformanceSummaryGrid>
+
       <PerformanceSection>
         <PerformanceSectionHeader
           eyebrow="Urgent workload"
@@ -203,7 +243,7 @@ export default async function AppraisalsPage({
         />
 
         {sp.cycleId || sp.stage ? (
-          <div className="flex flex-wrap gap-2 px-5">
+          <div className="flex flex-wrap gap-2 px-4 sm:px-6">
             {sp.cycleId ? (
               <Badge className="bg-mono-accent/10 text-mono-accent">
                 Cycle:{" "}
@@ -298,7 +338,7 @@ export default async function AppraisalsPage({
         />
 
         {eligibleRowsToShow.length > 0 ? (
-          <div className="px-5">
+          <div className="px-4 sm:px-6">
             <WorkspaceBadge variant="accent">
               {eligibleRowsToShow.length} visible
             </WorkspaceBadge>

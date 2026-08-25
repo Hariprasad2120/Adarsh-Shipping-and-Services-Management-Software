@@ -20,7 +20,7 @@ import { WorkspaceBadge as AdminBadge } from "@/components/layout/workspace";
 describe("Communication and administration production components", () => {
   it("maps every route in both workspace families", () => {
     expect(getCommunicationRouteMeta("/communication").title).toBe(
-      "Communication command centre",
+      "Communication",
     );
     expect(getCommunicationRouteMeta("/communication/mail").title).toBe(
       "Workspace inbox",
@@ -32,7 +32,7 @@ describe("Communication and administration production components", () => {
       "Communication settings",
     );
 
-    expect(getAdminRouteMeta("/admin").title).toBe("Admin command centre");
+    expect(getAdminRouteMeta("/admin").title).toBe("Admin");
     expect(getAdminRouteMeta("/admin/roles").title).toBe(
       "Roles and permissions",
     );

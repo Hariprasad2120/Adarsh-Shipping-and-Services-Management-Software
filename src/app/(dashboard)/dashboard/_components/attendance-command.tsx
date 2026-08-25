@@ -16,11 +16,13 @@ import { toast } from "sonner";
 import { MonolithSpecLabel } from "@/components/ui/foundation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { UserProfile } from "@/modules/hrms/types";
 import type { PunchAction } from "./dashboard-types";
 
 interface AttendanceCommandProps {
   profile: UserProfile;
+  moduleSnapshot: DashboardModuleSnapshot;
   loading: boolean;
   onPunchAction: (action: PunchAction) => Promise<void>;
 }
@@ -124,6 +126,7 @@ function initials(name: string) {
 
 export function AttendanceCommand({
   profile,
+  moduleSnapshot,
   loading,
   onPunchAction,
 }: AttendanceCommandProps) {
@@ -132,6 +135,9 @@ export function AttendanceCommand({
   const [lastPunchAction, setLastPunchAction] = useState<PunchAction | null>(null);
   const status = attendanceCopy[profile.attendanceStatus];
   const pending = profile.pendingCounts ?? { tasks: 0, leaves: 0, cases: 0 };
+  const productCatalogueVisible = moduleSnapshot.modules.some(
+    (module) => module.id === "product-catalogue" && module.available,
+  );
   const actionItems: DashboardActionItem[] = [
     {
       module: "To-Do",
@@ -169,12 +175,14 @@ export function AttendanceCommand({
       meta: "Service desk",
       signal: pending.cases > 0 ? `${pending.cases} active` : "Watching",
     },
-    {
-      module: "Product Catalogue",
-      task: "Validate module updates before the next handoff",
-      meta: "Workspace sync",
-      signal: "Monitoring",
-    },
+    ...(productCatalogueVisible
+      ? [{
+          module: "Product Catalogue",
+          task: "Validate module updates before the next handoff",
+          meta: "Workspace sync",
+          signal: "Monitoring",
+        }]
+      : []),
   ];
   const [featuredAction, ...queuedActions] = actionItems;
   const insightItems: DashboardInsightItem[] = [
@@ -221,13 +229,6 @@ export function AttendanceCommand({
 
   return (
     <section className={`mnx-dashboard-hero ${celebrating ? "is-celebrating" : ""}`}>
-      <div className="mnx-dashboard-hero-graphic" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <i />
-        <i />
-      </div>
       <div className="mnx-dashboard-hero-stage">
         <div className="mnx-dashboard-identity-card">
           <div className="mnx-dashboard-hero-header">
@@ -247,7 +248,7 @@ export function AttendanceCommand({
                 <p className="mnx-dashboard-welcome">Welcome back,</p>
                 <h1>{profile.name}</h1>
                 <p className="mnx-dashboard-role">
-                  {profile.designation || "Team member"}
+                  {profile.designation || "Designation not assigned"}
                   {profile.employeeNo ? ` · Employee ${profile.employeeNo}` : ""}
                 </p>
               </div>
@@ -265,40 +266,9 @@ export function AttendanceCommand({
           </div>
 
           <div className="mnx-dashboard-context" aria-label="Workspace context">
-            <span><BriefcaseBusiness size={14} />{profile.department || "General operations"}</span>
-            <span><ShieldCheck size={14} />{profile.branch || "Head office"}</span>
+            <span><BriefcaseBusiness size={14} />{profile.department || "Department not assigned"}</span>
+            <span><ShieldCheck size={14} />{profile.branch || "Branch not assigned"}</span>
             {profile.manager ? <span><Sparkles size={14} />Reports to {profile.manager}</span> : null}
-          </div>
-
-          <div className="mnx-dashboard-action-showcase" aria-label="Actions needing attention">
-            <article className="mnx-dashboard-action-feature">
-              <div className="mnx-dashboard-action-feature-head">
-                <span>Primary pulse</span>
-                <b>{featuredAction.signal}</b>
-              </div>
-              <strong>{featuredAction.task}</strong>
-              <p>{featuredAction.meta}</p>
-              <small>{featuredAction.module}</small>
-            </article>
-
-            <div className="mnx-dashboard-action-window">
-              <div className="mnx-dashboard-action-header">
-                <p>Action queue</p>
-                <span>{queuedActions.length} live updates</span>
-              </div>
-              <div className="mnx-dashboard-action-list">
-                {queuedActions.map((item) => (
-                  <article key={`${item.module}-${item.task}`}>
-                    <div className="mnx-dashboard-action-row">
-                      <span>{item.module}</span>
-                      <b>{item.signal}</b>
-                    </div>
-                    <strong>{item.task}</strong>
-                    <small>{item.meta}</small>
-                  </article>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 

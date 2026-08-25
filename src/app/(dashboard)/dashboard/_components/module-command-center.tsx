@@ -127,15 +127,14 @@ function ModuleGraphic({ visual }: { visual: ModuleVisual }) {
 
 export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
   const availableCount = snapshot.modules.filter((module) => module.available).length;
-  const spotlightModules = snapshot.modules.slice(0, 3);
 
   return (
     <section className="mnx-module-command-section" aria-label="Module command center">
       <header className="mnx-module-command-header">
         <WorkspaceSectionHeading
-          index="03"
+          index="05"
           title="Module command center"
-          description="A live pulse from the workspaces enabled for your organization and available to your role."
+          description="Live pulse from enabled workspaces available to your role."
         />
         <div className="mnx-module-command-status" title={`Updated at ${formatSnapshotTime(snapshot.generatedAt)}`}>
           <span><i />{availableCount} live</span>
@@ -143,85 +142,50 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
         </div>
       </header>
 
-      {spotlightModules.length > 0 ? (
-        <div className="mnx-module-command-spotlight" aria-label="Highlighted modules">
-          {spotlightModules.map((module) => (
-            <article key={`spotlight-${module.id}`}>
-              <span>{module.eyebrow}</span>
-              <strong>{module.title}</strong>
-              <p>{module.primaryMetric.label}: {module.primaryMetric.value}</p>
-            </article>
-          ))}
-        </div>
-      ) : null}
-
       <div className="mnx-module-command">
         {snapshot.modules.length > 0 ? (
           <div className="mnx-module-grid">
-            {snapshot.modules.map((module, index) => {
-              const layout = getModuleLayout(module.id, index);
+            {snapshot.modules.map((module) => {
               const visual = getModuleVisual(module.id);
               return (
                 <Link
-                  className="mnx-module-card"
+                  className="mnx-module-card mnx-module-card-compact"
                   data-available={module.available ? "true" : "false"}
-                  data-layout={layout}
                   data-visual={visual}
                   href={module.href}
                   key={module.id}
                 >
-                  <div className="mnx-module-card-art" aria-hidden="true">
-                    <ModuleGraphic visual={visual} />
-                  </div>
-                  <div className="mnx-module-card-copy">
-                    <header>
-                      <span>{module.eyebrow}</span>
-                      <h3>{module.title}</h3>
-                    </header>
-
-                    <p className="mnx-module-description">{module.description}</p>
-
-                    <div className="mnx-module-card-meta">
-                      <span>{module.available ? "Live workspace" : "Counts unavailable"}</span>
-                      <span>Updated {formatSnapshotTime(snapshot.generatedAt)}</span>
+                  <header className="mnx-module-card-head">
+                    <div className="mnx-module-badge-wrap">
+                      <span className="mnx-module-eyebrow-tag">{module.eyebrow}</span>
+                      <strong className="mnx-module-stat-badge" title={module.primaryMetric.label}>
+                        {String(module.primaryMetric.value).padStart(2, "0")}
+                      </strong>
                     </div>
+                    <h3>{module.title}</h3>
+                  </header>
 
-                    <div className="mnx-module-primary-stat">
-                      <strong>{String(module.primaryMetric.value).padStart(2, "0")}</strong>
-                      <div>
-                        <span>{module.primaryMetric.label}</span>
-                        <small>{module.primaryMetric.detail}</small>
-                      </div>
+                  <p className="mnx-module-description">{module.description}</p>
+
+                  {module.supportingMetrics.length > 0 ? (
+                    <div className="mnx-module-compact-metrics">
+                      {module.supportingMetrics.slice(0, 2).map((metric) => (
+                        <span key={metric.label}>
+                          <small>{metric.label}:</small>
+                          <b>{String(metric.value).padStart(2, "0")}</b>
+                        </span>
+                      ))}
                     </div>
+                  ) : null}
 
-                    {module.supportingMetrics.length > 0 ? (
-                      <dl className="mnx-module-supporting-stats">
-                        {module.supportingMetrics.map((metric) => (
-                          <div key={metric.label}>
-                            <dt>{metric.label}</dt>
-                            <dd>{String(metric.value).padStart(2, "0")}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    ) : (
-                      <div className="mnx-module-unavailable-note">
-                        Live counts could not be loaded. You can still open the workspace.
-                      </div>
-                    )}
-
-                    <footer>
-                      <span className="mnx-module-open-link">
-                        Open module <ArrowUpRight size={14} />
-                      </span>
-                      <div className="mnx-module-secondary-links">
-                        {module.actions.slice(1, 3).map((action) => (
-                          <span className="mnx-module-secondary-link" key={action.href}>
-                            {action.label}
-                          </span>
-                        ))}
-                      </div>
-                    </footer>
-                  </div>
+                  <footer className="mnx-module-compact-footer">
+                    <span className="mnx-module-status-pill">
+                      {module.available ? "Live" : "Unavailable"}
+                    </span>
+                    <span className="mnx-module-open-link">
+                      Open <ArrowUpRight size={14} />
+                    </span>
+                  </footer>
                 </Link>
               );
             })}
@@ -229,8 +193,8 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
         ) : (
           <div className="mnx-module-empty">
             <ShieldCheck size={24} />
-            <h3>Your core workspace is ready</h3>
-            <p>Enable operational modules in Admin settings to add their live dashboard panels.</p>
+            <h3>No dashboard modules are enabled yet</h3>
+            <p>Enable operational modules in Admin settings before this command center can surface live workspace panels.</p>
             <Link href="/admin/settings">
               Review module settings <ArrowUpRight size={14} />
             </Link>
