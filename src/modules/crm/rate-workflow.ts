@@ -195,10 +195,48 @@ export type RateComparisonChargeSelection = {
   lineId: string | null;
 };
 
+export type RateRecommendationOverrideReason =
+  | "CUSTOMER_PREFERENCE"
+  | "PREFERRED_CARRIER"
+  | "BETTER_TRANSIT"
+  | "CREDIT_TERMS"
+  | "OPERATIONAL_RELIABILITY"
+  | "RELATIONSHIP"
+  | "MANAGEMENT_DECISION"
+  | "OTHER";
+
+export type RateComparisonRecommendationFactor = {
+  key:
+    | "LANDED_BUY_COST"
+    | "COMPLETENESS"
+    | "VALIDITY"
+    | "RESPONSE_TIME"
+    | "OPERATIONAL_RELIABILITY"
+    | "HISTORICAL_COMPETITIVENESS"
+    | "BOOKING_HISTORY"
+    | "DATA_CONFIDENCE";
+  label: string;
+  weightPct: number;
+  scorePct: number | null;
+  detail: string;
+};
+
+export type RateComparisonRecommendationSnapshot = {
+  responseId: string | null;
+  vendorName: string | null;
+  totalScore: number | null;
+  explanation: string | null;
+  factors: RateComparisonRecommendationFactor[];
+  generatedAt: string | null;
+};
+
 export type RateComparisonSelectionRecord = {
   mode: RateComparisonSelectionMode;
   selectedResponseId: string | null;
   chargeSelections: RateComparisonChargeSelection[];
+  aiRecommendation: RateComparisonRecommendationSnapshot;
+  overrideReason: RateRecommendationOverrideReason | null;
+  overrideNote: string | null;
   savedAt: string | null;
   savedById: string | null;
 };
@@ -1033,6 +1071,50 @@ function normalizeStoredComparisonSelection(raw: unknown): RateComparisonSelecti
         )
     : [];
 
+  const recommendationRecord = asRecord(record.aiRecommendation);
+  const recommendationFactors = Array.isArray(recommendationRecord.factors)
+    ? recommendationRecord.factors
+        .map((entry) => {
+          const item = asRecord(entry);
+          const key = String(item.key ?? "").trim().toUpperCase();
+          const label = String(item.label ?? "").trim();
+          const detail = String(item.detail ?? "").trim();
+          const weightPct = Number(item.weightPct);
+          const scorePctRaw = item.scorePct;
+
+          if (!key || !label || !detail || !Number.isFinite(weightPct)) {
+            return null;
+          }
+
+          return {
+            key:
+              key === "LANDED_BUY_COST" ||
+              key === "COMPLETENESS" ||
+              key === "VALIDITY" ||
+              key === "RESPONSE_TIME" ||
+              key === "OPERATIONAL_RELIABILITY" ||
+              key === "HISTORICAL_COMPETITIVENESS" ||
+              key === "BOOKING_HISTORY" ||
+              key === "DATA_CONFIDENCE"
+                ? key
+                : null,
+            label,
+            weightPct,
+            scorePct: Number.isFinite(Number(scorePctRaw)) ? Number(scorePctRaw) : null,
+            detail,
+          };
+        })
+        .filter(
+          (
+            entry,
+          ): entry is RateComparisonRecommendationFactor => Boolean(entry?.key),
+        )
+        .map((entry) => ({
+          ...entry,
+          key: entry.key as RateComparisonRecommendationFactor["key"],
+        }))
+    : [];
+
   return {
     mode: record.mode === "ENTIRE_AGENT" ? "ENTIRE_AGENT" : "PER_CHARGE",
     selectedResponseId:
@@ -1040,6 +1122,45 @@ function normalizeStoredComparisonSelection(raw: unknown): RateComparisonSelecti
         ? record.selectedResponseId
         : null,
     chargeSelections,
+    aiRecommendation: {
+      responseId:
+        typeof recommendationRecord.responseId === "string" && recommendationRecord.responseId.trim()
+          ? recommendationRecord.responseId
+          : null,
+      vendorName:
+        typeof recommendationRecord.vendorName === "string" && recommendationRecord.vendorName.trim()
+          ? recommendationRecord.vendorName
+          : null,
+      totalScore: Number.isFinite(Number(recommendationRecord.totalScore))
+        ? Number(recommendationRecord.totalScore)
+        : null,
+      explanation:
+        typeof recommendationRecord.explanation === "string" &&
+        recommendationRecord.explanation.trim()
+          ? recommendationRecord.explanation
+          : null,
+      factors: recommendationFactors,
+      generatedAt:
+        typeof recommendationRecord.generatedAt === "string" &&
+        recommendationRecord.generatedAt.trim()
+          ? recommendationRecord.generatedAt
+          : null,
+    },
+    overrideReason:
+      record.overrideReason === "CUSTOMER_PREFERENCE" ||
+      record.overrideReason === "PREFERRED_CARRIER" ||
+      record.overrideReason === "BETTER_TRANSIT" ||
+      record.overrideReason === "CREDIT_TERMS" ||
+      record.overrideReason === "OPERATIONAL_RELIABILITY" ||
+      record.overrideReason === "RELATIONSHIP" ||
+      record.overrideReason === "MANAGEMENT_DECISION" ||
+      record.overrideReason === "OTHER"
+        ? record.overrideReason
+        : null,
+    overrideNote:
+      typeof record.overrideNote === "string" && record.overrideNote.trim()
+        ? record.overrideNote.trim()
+        : null,
     savedAt: typeof record.savedAt === "string" && record.savedAt.trim() ? record.savedAt : null,
     savedById:
       typeof record.savedById === "string" && record.savedById.trim() ? record.savedById : null,
