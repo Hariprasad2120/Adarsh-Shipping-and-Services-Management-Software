@@ -96,6 +96,21 @@ export default async function PayrollSettingsPage() {
               <Link className="mnx-button mnx-button-secondary" href="/payroll/settings/automation">
                 Automation
               </Link>
+              <Link className="mnx-button mnx-button-secondary" href="/payroll/settings/data-backup">
+                Data backup / export
+              </Link>
+              <Link className="mnx-button mnx-button-secondary" href="/payroll/settings/loan-custom-fields">
+                Loan custom fields
+              </Link>
+              <Link className="mnx-button mnx-button-secondary" href="/payroll/settings/portal-preferences">
+                Portal preferences
+              </Link>
+              <Link className="mnx-button mnx-button-secondary" href="/payroll/settings/org-profile">
+                Organisation profile
+              </Link>
+              <Link className="mnx-button mnx-button-secondary" href="/payroll/settings/reporting-tags">
+                Reporting tags
+              </Link>
             </div>
           }
         />
