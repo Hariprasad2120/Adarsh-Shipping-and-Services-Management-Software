@@ -92,6 +92,7 @@ async function verifySecondFactor(userId: string): Promise<boolean> {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   // Monolith-isolated cookies. Prevents AMS (or any other app on the same
   // host) from reading — or being read by — a Monolith session. Production
   // uses the __Host- prefix (Secure, Path=/, no Domain).
