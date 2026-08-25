@@ -27,6 +27,8 @@ import {
   suggestCanonicalCharge,
   type RateComparisonSelectionMode,
   type CrmRateDepartment,
+  type RateComparisonRecommendationSnapshot,
+  type RateRecommendationOverrideReason,
 } from "./rate-workflow";
 import type { QuoteWorkflowContext } from "./components/quotes/lib/types";
 import { parseAgentRateReply } from "./services/rate-response-parser.service";
@@ -2477,6 +2479,9 @@ export async function saveEnquiryRateComparisonSelectionAction(
       responseId: string;
       lineId?: string | null;
     }>;
+    aiRecommendation?: RateComparisonRecommendationSnapshot | null;
+    overrideReason?: RateRecommendationOverrideReason | null;
+    overrideNote?: string | null;
   },
 ): Promise<ActionResponse> {
   try {
@@ -2525,6 +2530,66 @@ export async function saveEnquiryRateComparisonSelectionAction(
       validResponseIds.has(payload.selectedResponseId.trim())
         ? payload.selectedResponseId.trim()
         : null;
+    const aiRecommendation =
+      payload.aiRecommendation &&
+      typeof payload.aiRecommendation.responseId === "string" &&
+      validResponseIds.has(payload.aiRecommendation.responseId)
+        ? {
+            responseId: payload.aiRecommendation.responseId,
+            vendorName: payload.aiRecommendation.vendorName?.trim() || null,
+            totalScore:
+              typeof payload.aiRecommendation.totalScore === "number" &&
+              Number.isFinite(payload.aiRecommendation.totalScore)
+                ? Number(payload.aiRecommendation.totalScore.toFixed(1))
+                : null,
+            explanation: payload.aiRecommendation.explanation?.trim() || null,
+            factors: Array.isArray(payload.aiRecommendation.factors)
+              ? payload.aiRecommendation.factors
+                  .filter(
+                    (factor) =>
+                      factor &&
+                      typeof factor.key === "string" &&
+                      typeof factor.label === "string" &&
+                      typeof factor.detail === "string" &&
+                      typeof factor.weightPct === "number" &&
+                      Number.isFinite(factor.weightPct),
+                  )
+                  .map((factor) => ({
+                    key: factor.key,
+                    label: factor.label.trim(),
+                    weightPct: Number(factor.weightPct.toFixed(1)),
+                    scorePct:
+                      typeof factor.scorePct === "number" && Number.isFinite(factor.scorePct)
+                        ? Number(factor.scorePct.toFixed(1))
+                        : null,
+                    detail: factor.detail.trim(),
+                  }))
+              : [],
+            generatedAt: payload.aiRecommendation.generatedAt?.trim() || nowIso,
+          }
+        : {
+            responseId: null,
+            vendorName: null,
+            totalScore: null,
+            explanation: null,
+            factors: [],
+            generatedAt: nowIso,
+          };
+    const overrideReason =
+      payload.overrideReason === "CUSTOMER_PREFERENCE" ||
+      payload.overrideReason === "PREFERRED_CARRIER" ||
+      payload.overrideReason === "BETTER_TRANSIT" ||
+      payload.overrideReason === "CREDIT_TERMS" ||
+      payload.overrideReason === "OPERATIONAL_RELIABILITY" ||
+      payload.overrideReason === "RELATIONSHIP" ||
+      payload.overrideReason === "MANAGEMENT_DECISION" ||
+      payload.overrideReason === "OTHER"
+        ? payload.overrideReason
+        : null;
+    const overrideNote =
+      typeof payload.overrideNote === "string" && payload.overrideNote.trim()
+        ? payload.overrideNote.trim().slice(0, 500)
+        : null;
 
     const comparisonSelection = {
       mode: payload.mode === "ENTIRE_AGENT" ? "ENTIRE_AGENT" : "PER_CHARGE",
@@ -2533,6 +2598,9 @@ export async function saveEnquiryRateComparisonSelectionAction(
         payload.mode === "PER_CHARGE"
           ? normalizedSelections
           : [],
+      aiRecommendation,
+      overrideReason,
+      overrideNote,
       savedAt: nowIso,
       savedById: session.user.id,
     };
@@ -2584,6 +2652,8 @@ export async function saveEnquiryRateComparisonSelectionAction(
         mode: comparisonSelection.mode,
         selectedResponseId: comparisonSelection.selectedResponseId,
         selectedChargeCount: comparisonSelection.chargeSelections.length,
+        recommendedResponseId: comparisonSelection.aiRecommendation.responseId,
+        overrideReason: comparisonSelection.overrideReason,
         savedAt: nowIso,
       } as any,
       createdById: session.user.id,
@@ -2598,6 +2668,8 @@ export async function saveEnquiryRateComparisonSelectionAction(
         mode: comparisonSelection.mode,
         selectedResponseId: comparisonSelection.selectedResponseId,
         selectedChargeCount: comparisonSelection.chargeSelections.length,
+        recommendedResponseId: comparisonSelection.aiRecommendation.responseId,
+        overrideReason: comparisonSelection.overrideReason,
       },
     };
   } catch (err: any) {

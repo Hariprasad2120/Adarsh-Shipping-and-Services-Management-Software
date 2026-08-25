@@ -389,34 +389,30 @@ export function PayRunSummaryClient({
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <select
+              <NativeSelect
                 value={employeeFilter}
                 onChange={(event) => setEmployeeFilter(event.target.value as "ALL" | "READY" | "REVIEW")}
-                className="mnx-select h-9 rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-sm text-[var(--mnx-text)]"
+                className="h-9"
               >
                 <option value="ALL">All Employees</option>
                 <option value="READY">Ready</option>
                 <option value="REVIEW">Review</option>
-              </select>
+              </NativeSelect>
               <div className="relative">
                 <Search
-                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[var(--mnx-muted)]"
+                  className="pointer-events-none absolute left-2.5 top-1/2 z-10 size-4 -translate-y-1/2 text-[var(--mnx-muted)]"
                   aria-hidden="true"
                 />
-                <input
+                <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search Employee"
-                  className="h-9 rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] pl-8 pr-3 text-sm text-[var(--mnx-text)]"
+                  className="h-9 pl-8"
                 />
               </div>
-              <button
-                type="button"
-                title="Filter"
-                className="inline-flex size-9 items-center justify-center rounded-[var(--mn-radius-control)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] hover:text-[var(--mnx-text)]"
-              >
+              <Button variant="outline" mode="icon" title="Filter">
                 <SlidersHorizontal className="size-4" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
             <ButtonLink href="/payroll/employees/import" variant="outline">
               Import / Export
@@ -428,7 +424,7 @@ export function PayRunSummaryClient({
               <thead>
                 <tr className="border-b border-[var(--mnx-border)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--mnx-muted)]">
                   <th className="w-10 px-3 py-2">
-                    <input type="checkbox" aria-label="Select all employees" />
+                    <Input type="checkbox" aria-label="Select all employees" />
                   </th>
                   <th className="px-3 py-2">Employee Name</th>
                   <th className="px-3 py-2">Paid Days</th>
@@ -450,14 +446,13 @@ export function PayRunSummaryClient({
                   </tr>
                 ) : (
                   filteredRows.map((row) => (
-                    // eslint-disable-next-line no-restricted-syntax -- table row acts as a clickable list item opening the detail drawer
                     <tr
                       key={row.employeeId}
                       onClick={() => setSelectedRow(row)}
                       className="cursor-pointer border-b border-[var(--mnx-border)] last:border-b-0 hover:bg-[var(--mnx-surface-soft)]"
                     >
                       <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
-                        <input type="checkbox" aria-label={`Select ${row.employeeName}`} />
+                        <Input type="checkbox" aria-label={`Select ${row.employeeName}`} />
                       </td>
                       <td className="px-3 py-2">
                         <span className="font-medium text-[var(--mnx-accent-strong)]">{row.employeeName}</span>{" "}
@@ -477,14 +472,15 @@ export function PayRunSummaryClient({
                       <td className="px-3 py-2 text-[var(--mnx-text)]">{formatMoney(row.reimbursements)}</td>
                       <td className="px-3 py-2 font-semibold text-[var(--mnx-text)]">{formatMoney(row.netPay)}</td>
                       <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
-                        <button
-                          type="button"
+                        <Button
+                          variant="outline"
+                          mode="icon"
+                          className="size-7"
                           title="Row actions"
-                          className="inline-flex size-7 items-center justify-center rounded text-[var(--mnx-muted)] hover:text-[var(--mnx-text)]"
                           onClick={() => setSelectedRow(row)}
                         >
                           <MoreHorizontal className="size-4" aria-hidden="true" />
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -604,14 +600,9 @@ function EmployeeDrawer({
                 <p className="text-xs font-medium uppercase tracking-wide text-[var(--mnx-muted)]">Net Pay</p>
                 <p className="text-lg font-semibold text-[var(--mnx-text)]">{formatMoney(row.netPay)}</p>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--mnx-muted)] hover:bg-[var(--mnx-surface-soft)] hover:text-[var(--mnx-text)]"
-              >
+              <Button variant="outline" mode="icon" onClick={onClose} aria-label="Close" className="shrink-0 rounded-full">
                 <X className="size-4" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
