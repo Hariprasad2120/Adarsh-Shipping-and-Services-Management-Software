@@ -1,0 +1,11 @@
+{
+  "weights": {
+    "landedCost": 0.42,
+    "completeness": 0.2,
+    "validity": 0.08,
+    "responseSpeed": 0.08,
+    "historicalReliability": 0.22
+  },
+  "mixedSelectionPenalty": 0.04,
+  "minimumConfidence": 0.55
+}
