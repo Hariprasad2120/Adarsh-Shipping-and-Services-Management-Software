@@ -358,6 +358,17 @@ model User {
   bankAccount    String?
   ifsc           String?
 
+  // Payroll-owned statutory identifiers (Zoho Payroll "Edit Statutory
+  // Details" parity). Father's Name / Differently Abled Type / Personal
+  // Email / Residential Address are NOT duplicated here — they already
+  // live on EmployeeHrmsProfile.data (see employeeHrmsProfileDataSchema in
+  // src/modules/hrms/employee-profile.ts) and are reused as-is by the new
+  // payroll edit-personal-details flow to avoid a second source of truth.
+  pfAccountNumber      String?
+  esiInsuranceNumber   String?
+  contributeToEps      Boolean @default(true)
+  professionalTaxOptIn Boolean @default(true)
+
   org        Organisation? @relation(fields: [orgId], references: [id])
   branch     Branch?       @relation(fields: [branchId], references: [id])
   department Department?   @relation(fields: [departmentId], references: [id])
@@ -6429,6 +6440,13 @@ model PayrollBatch {
   sourceSnapshotId String?
   sourceRunId      String?
   sourceRunVersion Int?
+  // Phase 34 (Zoho pay-run parity): per-employee breakdown for OFF_CYCLE /
+  // TERMINATION / BULK_TERMINATION batches (name, LWD, payable days, net pay,
+  // deductions, notice pay) — the aggregate GL lines on these batch types
+  // never carried employee-level detail, so this is captured at creation time
+  // purely for display (pay-run summary table, bank advice, list-card
+  // employee counts). Not read by the accounting posting boundary.
+  metadata         Json?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -6440,6 +6458,30 @@ model PayrollBatch {
   @@unique([orgId, sourceRunId, sourceRunVersion])
   @@index([orgId])
   @@index([sourceSnapshotId])
+}
+
+// Phase 34: pre-finalize draft for a termination / final-settlement pay run
+// (Zoho reference page 00068's Edit screen). Termination batches otherwise
+// post to Accounting immediately on creation (acceptApprovedPayrollRun is an
+// immutable, hash-verified GL boundary — intentionally not reused as a draft
+// store). This table lets a preparer compose/save-draft/edit LWD, base/payable
+// days, additional earnings, deductions, and notice pay BEFORE that posting
+// happens; "Save and Continue" finalizes it into a real PayrollBatch via the
+// existing termination-payroll service, after which this draft is closed out.
+model TerminationPayrollDraft {
+  id          String    @id @default(cuid())
+  orgId       String
+  status      String    @default("DRAFT") // DRAFT | FINALIZED
+  payDate     DateTime? @db.Date
+  notes       String?
+  entries     Json // TerminationDraftEntry[] — see src/modules/hrms/termination-payroll.ts
+  batchId     String? // set once finalized
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([orgId])
+  @@index([batchId])
 }
 
 model Asset {

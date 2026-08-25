@@ -33,6 +33,11 @@ export default async function PayrollPayRunsPage() {
     listExitingEmployees(orgId),
   ]);
 
+  // Phase 34: a not-yet-processed regular pay run only ever exists as this
+  // pre-batch `regularCard` shape (workspace has no persisted "draft in
+  // progress but not yet approved" state — see EmployeeDrawer's save-stub
+  // note in pay-run-summary-client.tsx), so this is always the Zoho "READY"
+  // state, never Zoho's separate "DRAFT already started" state.
   const regularCard: RegularCard | null =
     workspace.hasApprovedBatch || workspace.hasPostedBatch
       ? null
@@ -45,15 +50,28 @@ export default async function PayrollPayRunsPage() {
           href: `/payroll/pay-runs/regular?period=${workspace.period.key}`,
         };
 
-  const toCard = (batch: { id: string; month: Date; status: string; totalAmount: unknown }, title: string): BatchCard => {
+  const toCard = (
+    batch: { id: string; month: Date; status: string; totalAmount: unknown; metadata: unknown },
+    title: string,
+  ): BatchCard => {
     const overdueDays = batch.month < now && batch.status !== "PAID" ? Math.floor((now.getTime() - batch.month.getTime()) / 86_400_000) : 0;
+    // No off-cycle/termination batch in this system currently tracks a
+    // payment-failure state (grepped prisma/schema.prisma and
+    // off-cycle-payroll.ts/termination-payroll.ts for "FAILED" — no hits),
+    // only DRAFT/APPROVED_HRMS/FINALIZED/PAID — so PAYMENT_FAILED stays
+    // unreachable here pending a real failure-tracking field.
+    const metadataEntries = (batch.metadata as { entries?: Array<{ employeeName?: string; employeeNumber?: string }> } | null)
+      ?.entries;
+    const singleEntry = Array.isArray(metadataEntries) && metadataEntries.length === 1 ? metadataEntries[0] : null;
     return {
       id: batch.id,
       title,
       status: batch.status === "PAID" ? "PAID" : "PAYMENT_DUE",
       totalAmount: Number(batch.totalAmount),
       paymentDate: batch.month.toISOString(),
-      employeeCount: null,
+      employeeCount: Array.isArray(metadataEntries) ? metadataEntries.length : null,
+      singleEmployeeName: singleEntry?.employeeName ?? null,
+      singleEmployeeNumber: singleEntry?.employeeNumber ?? null,
       overdueDays,
     };
   };
@@ -62,8 +80,11 @@ export default async function PayrollPayRunsPage() {
     .filter((b) => b.status !== "PAID")
     .map((b) => toCard(b, "Off Cycle Payroll"));
   const terminationCards = terminationBatches
-    .filter((b) => b.status !== "PAID")
+    .filter((b) => b.status !== "PAID" && b.type === "TERMINATION")
     .map((b) => toCard(b, "Final Settlement Payroll"));
+  const bulkTerminationCards = terminationBatches
+    .filter((b) => b.status !== "PAID" && b.type === "BULK_TERMINATION")
+    .map((b) => toCard(b, "Bulk Termination Payroll"));
 
   const employeeOptions = employees.map((e) => ({
     id: e.id,
@@ -86,6 +107,7 @@ export default async function PayrollPayRunsPage() {
         regularCard={regularCard}
         offCycleCards={offCycleCards}
         terminationCards={terminationCards}
+        bulkTerminationCards={bulkTerminationCards}
         employees={employeeOptions}
         exitingEmployees={exitingEmployeeOptions}
       />

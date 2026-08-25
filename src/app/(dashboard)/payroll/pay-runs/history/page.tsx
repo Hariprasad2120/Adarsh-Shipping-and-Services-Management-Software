@@ -19,8 +19,11 @@ const TYPE_LABELS: Record<string, string> = {
   REGULAR: "Regular Payroll",
   OFF_CYCLE: "Off-Cycle Payroll",
   TERMINATION: "Final Settlement Payroll",
+  BULK_TERMINATION: "Bulk Termination Payroll",
   BONUS: "Statutory Bonus",
 };
+
+type BatchMetadataEntry = { employeeName?: string; employeeNumber?: string };
 
 // Matches captured Payroll History tab exactly
 // (docs/payroll/ZOHO_PAYROLL_REFERENCE_MANIFEST.md, page 00066).
@@ -51,6 +54,7 @@ export default async function PayrollHistoryPage({
           <option value="REGULAR">Regular Payroll</option>
           <option value="OFF_CYCLE">Off-Cycle Payroll</option>
           <option value="TERMINATION">Final Settlement Payroll</option>
+          <option value="BULK_TERMINATION">Bulk Termination Payroll</option>
           <option value="BONUS">Statutory Bonus</option>
         </NativeSelect>
         <Button type="submit" variant="inverse" size="sm">
@@ -81,9 +85,22 @@ export default async function PayrollHistoryPage({
                       {formatPayrollDate(batch.month.toISOString())}
                     </Link>
                   ) : (
-                    <Link href={`/payroll/pay-runs/${batch.id}`} className="text-[var(--mnx-accent-strong)] hover:underline">
-                      {formatPayrollDate(batch.month.toISOString())}
-                    </Link>
+                    <div>
+                      <Link href={`/payroll/pay-runs/${batch.id}`} className="text-[var(--mnx-accent-strong)] hover:underline">
+                        {formatPayrollDate(batch.month.toISOString())}
+                      </Link>
+                      {(() => {
+                        const entries = (batch.metadata as { entries?: BatchMetadataEntry[] } | null)?.entries;
+                        if (!Array.isArray(entries) || entries.length === 0) return null;
+                        return (
+                          <div className="text-xs text-[var(--mnx-muted)]">
+                            {entries.length === 1
+                              ? `Employee: ${entries[0]!.employeeName ?? "-"}`
+                              : `No. of Employees: ${entries.length}`}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   )}
                 </PeopleTableCell>
                 <PeopleTableCell>

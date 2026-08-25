@@ -29,6 +29,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { finalizePayrollBatchAction } from "@/modules/accounting/actions";
 import { approvePayrollRunAction } from "@/modules/hrms/payroll-actions";
 import type { PayrollEmployeeRow, PayrollWorkspaceData } from "@/modules/hrms/payroll";
+import { SummaryCardGrid, PeriodCostCard, PayDayCard, TaxesDeductionsCard } from "@/modules/payroll/components/pay-run-summary-header";
 
 function formatMoney(value: number) {
   return `₹${value.toLocaleString("en-IN", {
@@ -326,54 +327,16 @@ export function PayRunSummaryClient({
         </WorkspaceAlert>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
-          <div className="flex items-center gap-2 text-sm text-[var(--mnx-muted)]">
-            <span>
-              Period: {formatDate(workspace.period.start)} - {formatDate(workspace.period.end)} |{" "}
-              {workspace.period.daysInMonth} Base Days
-            </span>
-            <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl font-semibold text-[var(--mnx-text)]">{formatMoney(payrollCost)}</p>
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--mnx-muted)]">Payroll Cost</p>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl font-semibold text-[var(--mnx-text)]">
-              {formatMoney(workspace.summary.netPayroll)}
-            </p>
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--mnx-muted)]">Total Net Pay</p>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-[var(--mnx-muted)]">Pay Day</p>
-          <p className="mt-1 text-3xl font-semibold text-[var(--mnx-text)]">{payDay.day}</p>
-          <p className="text-sm text-[var(--mnx-muted)]">{payDay.monthYear}</p>
-          <p className="mt-3 text-sm text-[var(--mnx-text)]">
-            {workspace.summary.employeesInPayroll} Employees
-          </p>
-        </div>
-
-        <div className="rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
-          <p className="text-sm font-semibold text-[var(--mnx-text)]">Taxes &amp; Deductions</p>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <dt className="text-[var(--mnx-muted)]">Taxes</dt>
-              <dd className="font-medium text-[var(--mnx-text)]">{formatMoney(taxesTotal)}</dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-[var(--mnx-muted)]">Benefits</dt>
-              <dd className="font-medium text-[var(--mnx-text)]">{formatMoney(benefitsTotal)}</dd>
-            </div>
-            <div className="flex items-center justify-between border-t border-[var(--mnx-border)] pt-2">
-              <dt className="text-[var(--mnx-muted)]">Total Deductions</dt>
-              <dd className="font-medium text-[var(--mnx-text)]">{formatMoney(otherDeductionsTotal)}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
+      <SummaryCardGrid>
+        <PeriodCostCard
+          periodLabel={`Period: ${formatDate(workspace.period.start)} - ${formatDate(workspace.period.end)}`}
+          baseDays={workspace.period.daysInMonth}
+          payrollCost={payrollCost}
+          totalNetPay={workspace.summary.netPayroll}
+        />
+        <PayDayCard day={payDay.day} monthYear={payDay.monthYear} employeeCount={workspace.summary.employeesInPayroll} />
+        <TaxesDeductionsCard taxesTotal={taxesTotal} benefitsTotal={benefitsTotal} otherDeductionsTotal={otherDeductionsTotal} />
+      </SummaryCardGrid>
 
       <Tabs
         items={[

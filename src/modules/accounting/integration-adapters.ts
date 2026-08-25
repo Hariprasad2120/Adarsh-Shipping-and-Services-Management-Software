@@ -554,6 +554,11 @@ export type ApprovedPayrollRunInput = {
   // Keeps regular and off-cycle/termination runs from colliding on the
   // PayrollBatch(orgId, month, type) unique constraint.
   payrollType?: string;
+  // Phase 34: optional per-employee display metadata for OFF_CYCLE /
+  // TERMINATION / BULK_TERMINATION batches (name, LWD, payable days, net pay,
+  // etc.) — stored on PayrollBatch.metadata purely for UI (pay-run summary
+  // table, list-card employee counts). Never read by this posting boundary.
+  metadata?: Prisma.InputJsonValue;
   lines: Array<{
     employeeId?: string | null;
     componentCode: string;
@@ -640,7 +645,11 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
     });
     if (existing) {
       if (existing.sourceSnapshot.payloadHash !== hash) throw new Error("Payroll run version payload conflict");
-      return existing;
+      const existingBatch = await tx.payrollBatch.findFirst({
+        where: { sourceSnapshotId: existing.sourceSnapshotId },
+        select: { id: true },
+      });
+      return { ...existing, batchId: existingBatch?.id ?? null };
     }
     const existingCompatibilityBatch = await tx.payrollBatch.findUnique({
       where: {
@@ -690,7 +699,7 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
         approvedAt: validDate(input.approvedAt, "approvedAt"),
       },
     });
-    await tx.payrollBatch.create({
+    const batch = await tx.payrollBatch.create({
       data: {
         orgId: input.orgId,
         month: start,
@@ -700,6 +709,7 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
         sourceSnapshotId: snapshot.id,
         sourceRunId: input.runId,
         sourceRunVersion: input.runVersion,
+        metadata: input.metadata ?? undefined,
       },
     });
     await tx.accountingIntegrationInbox.create({
@@ -719,7 +729,7 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
         status: "PENDING",
       },
     });
-    return payrollSnapshot;
+    return { ...payrollSnapshot, batchId: batch.id };
   });
 }
 

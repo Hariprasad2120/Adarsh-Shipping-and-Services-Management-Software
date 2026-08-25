@@ -16,11 +16,35 @@ export type OffCycleEntryInput = {
   componentLabel: string;
 };
 
+// Phase 34: per-employee display metadata persisted on PayrollBatch.metadata
+// for off-cycle batches (docs/payroll/ZOHO_PAYROLL_REFERENCE_MANIFEST.md,
+// page 00009/00066) — the GL lines this batch type posts stay aggregate
+// (v1 simplification noted above), so this is the only place employee-level
+// detail exists for these batches.
+export type OffCycleBatchMetadata = {
+  reason: string;
+  payDate: string;
+  entries: Array<{
+    employeeId: string;
+    employeeName: string;
+    employeeNumber: string;
+    componentLabel: string;
+    amount: number;
+  }>;
+};
+
 export async function listOffCyclePayrollBatches(orgId: string) {
   return db.payrollBatch.findMany({
     where: { orgId, type: "OFF_CYCLE" },
     include: { journalEntry: { select: { id: true, voucherNo: true } } },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getOffCyclePayrollBatch(orgId: string, batchId: string) {
+  return db.payrollBatch.findFirst({
+    where: { id: batchId, orgId, type: "OFF_CYCLE" },
+    include: { journalEntry: { select: { id: true, voucherNo: true } } },
   });
 }
 
@@ -44,9 +68,10 @@ export async function createOffCyclePayrollRun(
   const employeeIds = input.entries.map((e) => e.employeeId);
   const employees = await db.user.findMany({
     where: { id: { in: employeeIds }, orgId },
-    select: { id: true },
+    select: { id: true, name: true, employeeNumber: true },
   });
   const validIds = new Set(employees.map((e) => e.id));
+  const employeeById = new Map(employees.map((e) => [e.id, e]));
   for (const entry of input.entries) {
     if (!validIds.has(entry.employeeId)) {
       throw new Error("One or more employees do not belong to this organisation.");
@@ -82,6 +107,21 @@ export async function createOffCyclePayrollRun(
     },
   ];
 
+  const metadata: OffCycleBatchMetadata = {
+    reason: input.reason,
+    payDate: payDate.toISOString(),
+    entries: input.entries.map((entry) => {
+      const employee = employeeById.get(entry.employeeId);
+      return {
+        employeeId: entry.employeeId,
+        employeeName: employee?.name ?? "Unknown",
+        employeeNumber: employee?.employeeNumber == null ? "-" : String(employee.employeeNumber),
+        componentLabel: entry.componentLabel,
+        amount: entry.amount,
+      };
+    }),
+  };
+
   return acceptApprovedPayrollRun({
     orgId,
     actorId,
@@ -96,5 +136,6 @@ export async function createOffCyclePayrollRun(
     runId: `HRMS-PAYROLL-OFFCYCLE-${runKey}`,
     runVersion: 1,
     payrollType: "OFF_CYCLE",
+    metadata,
   });
 }

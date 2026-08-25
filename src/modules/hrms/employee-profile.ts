@@ -33,6 +33,7 @@ const repeatableRowSchema = z.object({
 export const employeeHrmsProfileDataSchema = z.object({
   nickname: optionalText,
   fatherName: optionalText,
+  differentlyAbledType: optionalText,
   businessUnit: optionalText,
   location: optionalText,
   streams: optionalText,

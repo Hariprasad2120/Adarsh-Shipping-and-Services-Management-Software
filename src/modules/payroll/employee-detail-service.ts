@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getSalaryRevisionSummaryForUser } from "@/modules/hrms/salary-revisions";
+import { employeeHrmsProfileDataSchema } from "@/modules/hrms/employee-profile";
 
 function asNumber(value: unknown) {
   if (value == null) return 0;
@@ -51,6 +52,11 @@ export async function getPayrollEmployeeDetail(orgId: string, employeeId: string
       bankName: true,
       bankAccount: true,
       ifsc: true,
+      pfAccountNumber: true,
+      esiInsuranceNumber: true,
+      contributeToEps: true,
+      professionalTaxOptIn: true,
+      employeeProfile: { select: { data: true } },
       branch: { select: { name: true } },
       department: { select: { name: true } },
       employmentRecord: {
@@ -75,6 +81,7 @@ export async function getPayrollEmployeeDetail(orgId: string, employeeId: string
 
   const payrollMeta = (employee.employmentRecord?.payrollMeta ?? {}) as PayrollMeta;
   const breakup = payrollMeta.breakup ?? {};
+  const profile = employeeHrmsProfileDataSchema.parse(employee.employeeProfile?.data ?? {});
 
   const monthlyComponents = [
     { label: "Basic", monthly: asNumber(employee.employmentRecord?.basic) },
@@ -108,14 +115,28 @@ export async function getPayrollEmployeeDetail(orgId: string, employeeId: string
     pan: employee.pan,
     uan: employee.uan,
     aadhaarMasked: maskSuffix(employee.aadhaar),
-    paymentMode: payrollMeta.paymentMode ?? null,
+    paymentMode: payrollMeta.paymentMode ?? profile.paymentMode ?? null,
     bankName: employee.bankName,
     bankAccountMasked: maskSuffix(employee.bankAccount),
     ifsc: employee.ifsc,
+    bankHolderName: profile.bankHolderName || null,
+    bankAccountType: profile.accountType || null,
+    // Personal details owned by EmployeeHrmsProfile.data — reused as-is so
+    // the payroll edit-personal-details flow never duplicates the HRMS
+    // profile record (see src/modules/hrms/employee-profile.ts).
+    fatherName: profile.fatherName || null,
+    personalEmail: profile.personalEmail || null,
+    differentlyAbledType: profile.differentlyAbledType || null,
+    residentialAddress: profile.presentAddress || null,
+    residentialStateCode: profile.presentStateCode || null,
+    // Statutory identifiers owned by User (payroll-side, alongside pan/uan/aadhaar).
+    pfAccountNumber: employee.pfAccountNumber,
+    esiInsuranceNumber: employee.esiInsuranceNumber,
+    contributeToEps: employee.contributeToEps,
     statutory: {
       epfEnabled: asNumber(breakup.employeePF) > 0,
       esiEnabled: asNumber(breakup.esi) > 0,
-      professionalTaxEnabled: asNumber(breakup.professionalTax) > 0,
+      professionalTaxEnabled: employee.professionalTaxOptIn,
       tdsMonthly: asNumber(breakup.tax),
     },
     salary: {
