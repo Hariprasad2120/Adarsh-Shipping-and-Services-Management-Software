@@ -2365,159 +2365,173 @@ export function ExpensesClient({
                             ) : null}
                           </div>
 
-                          <aside className="mnx-expense-queue-sidebar grid gap-4">
-                            <section className="mnx-expense-queue-sidebar-card space-y-3">
-                              <h3 className="mnx-heading-3 mnx-text-primary">
-                                Audit Trail
-                              </h3>
-                              {req.statusHistory?.length ? (
-                                <div className="max-h-72 space-y-3 overflow-y-auto pr-2">
-                                  {req.statusHistory.map((entry: any) => (
-                                    <div
-                                      key={entry.id}
-                                      className="border-l-2 mnx-border pl-3 text-xs"
-                                    >
-                                      <p className="font-medium mnx-text-primary">
-                                        {formatChaBadgeLabel(entry.status)}
-                                      </p>
-                                      <p className="mt-1 mnx-text-muted">
-                                        {entry.remarks ||
-                                          "No remarks recorded."}
-                                      </p>
-                                      <p className="mt-1 text-[10px] mnx-text-muted mnx-numeric">
-                                        {new Date(
-                                          entry.createdAt,
-                                        ).toLocaleString("en-IN")}
+                          <aside className="mnx-expense-queue-sidebar">
+                            <section className="mnx-expense-queue-sidebar-card mnx-expense-queue-sidebar-panel">
+                              <div className="mnx-expense-queue-sidebar-section">
+                                <div className="mnx-expense-queue-sidebar-heading">
+                                  <h3 className="mnx-heading-3 mnx-text-primary">
+                                    Audit Trail
+                                  </h3>
+                                  <p className="mnx-expense-queue-sidebar-caption">
+                                    Review the latest approval movement and recorded notes.
+                                  </p>
+                                </div>
+                                {req.statusHistory?.length ? (
+                                  <div className="mnx-expense-queue-audit-list max-h-72 overflow-y-auto pr-2">
+                                    {req.statusHistory.map((entry: any) => (
+                                      <div
+                                        key={entry.id}
+                                        className="mnx-expense-queue-audit-entry"
+                                      >
+                                        <p className="mnx-expense-queue-audit-status font-medium mnx-text-primary">
+                                          {formatChaBadgeLabel(entry.status)}
+                                        </p>
+                                        <p className="mnx-expense-queue-audit-remark mnx-text-muted">
+                                          {entry.remarks ||
+                                            "No remarks recorded."}
+                                        </p>
+                                        <p className="mnx-expense-queue-audit-time text-[10px] mnx-text-muted mnx-numeric">
+                                          {new Date(
+                                            entry.createdAt,
+                                          ).toLocaleString("en-IN")}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs mnx-text-muted">
+                                    No audit entries recorded yet.
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="mnx-expense-queue-sidebar-divider" />
+
+                              <div className="mnx-expense-queue-sidebar-section">
+                                {canAccountsReviewThisExpense ||
+                                canReviewThisExpense ||
+                                canClarifyThisExpense ||
+                                canMarkReadyThisExpense ||
+                                canPayThisExpense ? (
+                                  <section className="space-y-3">
+                                    <div className="mnx-expense-queue-sidebar-heading">
+                                      <h3 className="mnx-heading-3 mnx-text-primary">
+                                        Permitted Actions
+                                      </h3>
+                                      <p className="mnx-expense-queue-sidebar-caption">
+                                        Use the next valid workflow actions for this request.
                                       </p>
                                     </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-xs mnx-text-muted">
-                                  No audit entries recorded yet.
-                                </p>
-                              )}
-                            </section>
-
-                            <div className="mnx-expense-queue-sidebar-card space-y-5">
-                              {canAccountsReviewThisExpense ||
-                              canReviewThisExpense ||
-                              canClarifyThisExpense ||
-                              canMarkReadyThisExpense ||
-                              canPayThisExpense ? (
-                                <section className="space-y-3">
-                                  <h3 className="mnx-heading-3 mnx-text-primary">
-                                    Permitted Actions
-                                  </h3>
-                                  <div className="flex flex-wrap gap-2">
-                                    {canAccountsReviewThisExpense ? (
-                                      <>
+                                    <div className="mnx-expense-queue-action-grid">
+                                      {canAccountsReviewThisExpense ? (
+                                        <>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              handleRouteToManager(req.id)
+                                            }
+                                            className="text-xs"
+                                            disabled={loading !== null}
+                                          >
+                                            Route to Manager
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            onClick={() =>
+                                              handleAccountsApprove(req.id)
+                                            }
+                                            className="text-xs"
+                                            disabled={loading !== null}
+                                          >
+                                            Approve from Accounts
+                                          </Button>
+                                        </>
+                                      ) : null}
+                                      {canReviewThisExpense ? (
+                                        <>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              openReviewForm(
+                                                "CLARIFICATION_REQUIRED",
+                                              )
+                                            }
+                                            className="text-xs"
+                                          >
+                                            Require Clarification
+                                          </Button>
+                                          <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() =>
+                                              openReviewForm("REJECTED")
+                                            }
+                                            className="text-xs"
+                                          >
+                                            Reject
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            onClick={() =>
+                                              handleReviewDecision(
+                                                req.id,
+                                                "APPROVED",
+                                              )
+                                            }
+                                            className="text-xs"
+                                            disabled={loading !== null}
+                                          >
+                                            Approve
+                                          </Button>
+                                        </>
+                                      ) : null}
+                                      {canClarifyThisExpense ? (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setClarificationRequestId(req.id);
+                                            setClarificationText(
+                                              req.clarificationResponse || "",
+                                            );
+                                          }}
+                                          className="text-xs"
+                                        >
+                                          Submit Clarification
+                                        </Button>
+                                      ) : null}
+                                      {canMarkReadyThisExpense ? (
                                         <Button
                                           variant="outline"
                                           size="sm"
                                           onClick={() =>
-                                            handleRouteToManager(req.id)
+                                            handleReadyForDisbursement(req.id)
                                           }
                                           className="text-xs"
                                           disabled={loading !== null}
                                         >
-                                          Route to Manager
+                                          Ready for Disbursement
                                         </Button>
+                                      ) : null}
+                                      {canPayThisExpense ? (
                                         <Button
                                           size="sm"
-                                          onClick={() =>
-                                            handleAccountsApprove(req.id)
-                                          }
-                                          className="text-xs"
-                                          disabled={loading !== null}
-                                        >
-                                          Approve from Accounts
-                                        </Button>
-                                      </>
-                                    ) : null}
-                                    {canReviewThisExpense ? (
-                                      <>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            openReviewForm(
-                                              "CLARIFICATION_REQUIRED",
-                                            )
-                                          }
+                                          onClick={openPaymentForm}
                                           className="text-xs"
                                         >
-                                          Require Clarification
+                                          Register Payout
                                         </Button>
-                                        <Button
-                                          variant="destructive"
-                                          size="sm"
-                                          onClick={() =>
-                                            openReviewForm("REJECTED")
-                                          }
-                                          className="text-xs"
-                                        >
-                                          Reject
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          onClick={() =>
-                                            handleReviewDecision(
-                                              req.id,
-                                              "APPROVED",
-                                            )
-                                          }
-                                          className="text-xs"
-                                          disabled={loading !== null}
-                                        >
-                                          Approve
-                                        </Button>
-                                      </>
-                                    ) : null}
-                                    {canClarifyThisExpense ? (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setClarificationRequestId(req.id);
-                                          setClarificationText(
-                                            req.clarificationResponse || "",
-                                          );
-                                        }}
-                                        className="text-xs"
-                                      >
-                                        Submit Clarification
-                                      </Button>
-                                    ) : null}
-                                    {canMarkReadyThisExpense ? (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleReadyForDisbursement(req.id)
-                                        }
-                                        className="text-xs"
-                                        disabled={loading !== null}
-                                      >
-                                        Ready for Disbursement
-                                      </Button>
-                                    ) : null}
-                                    {canPayThisExpense ? (
-                                      <Button
-                                        size="sm"
-                                        onClick={openPaymentForm}
-                                        className="text-xs"
-                                      >
-                                        Register Payout
-                                      </Button>
-                                    ) : null}
-                                  </div>
-                                </section>
-                              ) : (
-                                <p className="text-xs mnx-text-muted">
-                                  You have view-only access for this expense.
-                                </p>
-                              )}
+                                      ) : null}
+                                    </div>
+                                  </section>
+                                ) : (
+                                  <p className="text-xs mnx-text-muted">
+                                    You have view-only access for this expense.
+                                  </p>
+                                )}
+                              </div>
 
                               {canReviewThisExpense &&
                               reviewRequestId === req.id ? (
@@ -2735,7 +2749,7 @@ export function ExpensesClient({
                                   </div>
                                 </form>
                               ) : null}
-                            </div>
+                            </section>
                           </aside>
                         </div>
                       </div>

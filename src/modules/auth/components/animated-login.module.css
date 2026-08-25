@@ -13,15 +13,20 @@
   --acid: #d0d91a;
   --muted: #77786f;
   --line: #dedfd8;
+  --login-shell-width: 1000px;
   position: fixed;
   inset: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--login-shell-width)) minmax(
+      0,
+      1fr
+    );
   width: 100vw;
   height: 100svh;
   min-height: 0;
   overflow: hidden;
   overscroll-behavior: none;
-  place-items: center;
+  align-items: center;
   padding: clamp(12px, 3vmin, 32px);
   color: var(--ink);
   background:
@@ -44,12 +49,13 @@
 
 .loginCard {
   display: grid;
-  grid-template-columns: minmax(300px, 46%) minmax(320px, 54%);
-  width: min(
-    760px,
-    calc(100vw - 180px)
-  );
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 2;
+  width: 100%;
+  max-width: 100%;
   max-height: min(620px, calc(100svh - 104px));
+  justify-self: center;
+  margin-inline: auto;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -62,6 +68,7 @@
 
 .mascotPanel {
   position: relative;
+  min-width: 0;
   min-height: 0;
   height: 100%;
   overflow: hidden;
@@ -553,6 +560,7 @@
 .formPanel {
   position: relative;
   display: grid;
+  min-width: 0;
   align-content: center;
   justify-items: center;
   min-height: 0;
@@ -561,7 +569,7 @@
 }
 
 .formInner {
-  width: min(100%, 360px);
+  width: min(100%, 300px);
 }
 
 .mobileBrand {
@@ -1219,9 +1227,12 @@
 }
 
 @media (max-width: 900px) {
+  .loginPage {
+    --login-shell-width: min(560px, calc(100vw - 72px));
+  }
+
   .loginCard {
-    grid-template-columns: 44% 56%;
-    width: min(720px, calc(100vw - 72px));
+    grid-template-columns: 1fr 1fr;
     max-height: min(580px, calc(100svh - 72px));
   }
 
@@ -1246,12 +1257,15 @@
 
 @media (max-width: 820px) {
   .loginPage {
+    --login-shell-width: 100%;
     padding: 0;
+    grid-template-columns: 1fr;
     background: var(--paper);
   }
 
   .loginCard {
     --mobile-mascot-height: clamp(160px, 27svh, 230px);
+    grid-column: 1;
     grid-template-columns: 1fr;
     grid-template-rows: var(--mobile-mascot-height) minmax(0, 1fr);
     width: 100%;
@@ -1350,9 +1364,12 @@
 }
 
 @media (max-height: 620px) and (min-width: 821px) {
+  .loginPage {
+    --login-shell-width: min(540px, calc(100vw - 72px));
+  }
+
   .loginCard {
-    grid-template-columns: 46% 54%;
-    width: min(700px, calc(100vw - 72px));
+    grid-template-columns: 1fr 1fr;
     max-height: min(520px, calc(100svh - 32px));
   }
 

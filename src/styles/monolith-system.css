@@ -5681,7 +5681,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.4rem;
   flex: 0 0 auto;
 }
 
@@ -6952,6 +6952,33 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 
+.mnx-expense-queue-sidebar-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.mnx-expense-queue-sidebar-section {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.mnx-expense-queue-sidebar-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mnx-expense-queue-sidebar-caption {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.mnx-expense-queue-sidebar-divider {
+  height: 1px;
+  background: var(--mnx-border);
+}
+
 .mnx-expense-queue-sidebar-card h3 {
   margin: 0;
 }
@@ -6959,6 +6986,18 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-expense-queue-sidebar-card .mnx-button,
 .mnx-expense-queue-sidebar-card button {
   min-height: 2.4rem;
+}
+
+.mnx-expense-queue-action-grid {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.mnx-expense-queue-action-grid .mnx-button,
+.mnx-expense-queue-action-grid button {
+  width: 100%;
+  justify-content: center;
 }
 
 .mnx-expense-queue-sidebar-card .flex.flex-wrap.items-center.justify-end {
@@ -6971,6 +7010,29 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-expense-queue-sidebar-card .max-h-72 {
   padding-right: 0.25rem;
+}
+
+.mnx-expense-queue-audit-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mnx-expense-queue-audit-entry {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.125rem 0 0.125rem 0.9rem;
+  border-left: 2px solid var(--mnx-border);
+}
+
+.mnx-expense-queue-audit-status,
+.mnx-expense-queue-audit-remark,
+.mnx-expense-queue-audit-time {
+  margin: 0;
+}
+
+.mnx-expense-queue-audit-remark {
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .mnx-checklist-item .mnx-checkbox {
@@ -15827,8 +15889,8 @@ button.mnx-accounting-record-card {
 .mnx-panel-heading,
 .mnx-organization-header {
   min-width: 0;
-  gap: 1rem;
-  padding: 1.15rem 1.35rem;
+  gap: 0.75rem;
+  padding: 0.95rem 1.1rem;
 }
 
 .mnx-toolbar-copy h2,
@@ -15838,7 +15900,7 @@ button.mnx-accounting-record-card {
 .mnx-table-toolbar h2,
 .mnx-organization-header h2 {
   margin: 0;
-  font-size: 1.18rem;
+  font-size: 1.04rem;
   font-weight: 580;
   line-height: 1.25;
   letter-spacing: -0.02em;
@@ -15849,8 +15911,8 @@ button.mnx-accounting-record-card {
 .mnx-toolbar-copy p,
 .mnx-table-toolbar > div > p,
 .mnx-organization-header > div > p {
-  margin-top: 0.25rem;
-  font-size: var(--mn-type-helper-size);
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -16180,6 +16242,11 @@ button.mnx-accounting-record-card {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.mnx-workspace-page[data-workspace-surface="single"] > .mnx-panel,
+.mnx-workspace-page[data-workspace-surface="single"] > .mnx-table-card {
+  padding-block: 0.2rem;
 }
 
 .mnx-workspace-page[data-workspace-surface="single"] > .mnx-page-header::before,

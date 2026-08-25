@@ -2,6 +2,43 @@
 
 Last updated: 2026-08-25
 
+## 2026-08-25 Shared disclosure auto-close and compact card rhythm handoff
+
+Tightened the shared Monolith `!` info-disclosure pattern so it behaves more
+like a transient helper and reduced the visual bulk of shared metric/panel
+cards now that helper copy is hidden behind the disclosure.
+
+Delivered:
+
+- updated `src/components/layout/workspace.tsx` so shared disclosure controls:
+  - close automatically when the pointer leaves the disclosure region;
+  - close when focus moves outside the disclosure;
+- updated `src/styles/monolith-system.css` so:
+  - the shared `!` trigger and popover are smaller and less visually heavy;
+  - shared workspace metric cards use tighter padding, shorter header/body
+    heights, smaller control icons, and denser copy spacing;
+  - shared page/panel/table header action groups use smaller gaps;
+  - shared panel/header padding and title sizing are reduced for a more minimal
+    card rhythm;
+  - flat single-surface workspace panels and table cards use slightly tighter
+    vertical spacing.
+
+Verification on Tuesday, August 25, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd "src/components/layout/workspace.tsx" --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- a full repository `npx tsc --noEmit --pretty false` session was started for
+  this pass but did not return output before manual cancellation after repeated
+  empty polls in this Codex session, so this specific batch does not have a
+  fresh completed TypeScript confirmation yet;
+- runtime browser verification of the compact metric/panel rhythm across
+  representative pages is still pending in this Codex session.
+
 ## 2026-08-25 Queue header deduplication handoff
 
 Removed the repeated secondary queue heading pattern from freight-style
