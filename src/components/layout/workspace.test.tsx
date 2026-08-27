@@ -104,7 +104,7 @@ describe("Monolith workspace states", () => {
     expect(header).toContain("mnx-card-info-content");
   });
 
-  it("renders the numbered section heading contract", () => {
+  it("renders the section heading contract", () => {
     const heading = renderToStaticMarkup(
       <WorkspaceSectionHeading
         index="02"
@@ -114,7 +114,7 @@ describe("Monolith workspace states", () => {
     );
 
     expect(heading).toContain("mnx-section-heading");
-    expect(heading).toContain("02");
+    expect(heading).not.toContain("mnx-section-heading-index");
     expect(heading).toContain("Typography");
     expect(heading).toContain("Large, light headlines carry confidence.");
   });
@@ -134,7 +134,7 @@ describe("Monolith workspace states", () => {
 
     expect(heading).toContain('id="custom-heading"');
     expect(heading).toContain("<h3>");
-    expect(heading).toContain("mnx-section-heading-index");
+    expect(heading).not.toContain("mnx-section-heading-index");
     expect(heading).toContain("mnx-section-heading-badge");
     expect(heading).toContain("mnx-section-heading-actions");
   });

@@ -74,8 +74,6 @@ export default async function JournalEntriesPage({
         }
       />
       <AccountingSection
-        eyebrow="Journal register"
-        title="Manual journal register"
         description={`${journals.total} journal entr${journals.total === 1 ? "y" : "ies"} match the current filters. Visible amount reflects the balanced debit total for each journal.`}
       >
         <form method="GET">

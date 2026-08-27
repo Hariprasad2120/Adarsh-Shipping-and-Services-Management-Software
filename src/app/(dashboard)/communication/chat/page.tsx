@@ -1342,7 +1342,7 @@ export default function MonolithMessenger() {
           </div>
             <CommunicationButton
             onClick={() => setActiveShortcut("home")}
-            className={`w-full justify-between gap-3 rounded-2xl px-3 py-2.5 text-[0.9375rem] font-medium transition-all ${
+            className={`w-full justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all ${
               activeShortcut === "home" ? "bg-mono-card text-mono-text" : "text-mono-muted hover:bg-mono-card"
             }`}
           >
@@ -1354,7 +1354,7 @@ export default function MonolithMessenger() {
           </CommunicationButton>
           <CommunicationButton
             onClick={() => setActiveShortcut("home")}
-            className="mt-1 w-full justify-between gap-3 rounded-2xl px-3 py-2.5 text-[0.9375rem] font-medium text-mono-muted transition-all hover:bg-mono-card"
+            className="mt-1 w-full justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-mono-muted transition-all hover:bg-mono-card"
           >
             <span className="flex items-center gap-3">
               <AtSign className="size-4" />
@@ -1364,7 +1364,7 @@ export default function MonolithMessenger() {
           </CommunicationButton>
           <CommunicationButton
             onClick={() => setActiveShortcut("starred")}
-            className={`mt-1 w-full justify-between gap-3 rounded-2xl px-3 py-2.5 text-[0.9375rem] font-medium transition-all ${
+            className={`mt-1 w-full justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all ${
               activeShortcut === "starred" ? "bg-mono-card text-mono-text" : "text-mono-muted hover:bg-mono-card"
             }`}
           >
@@ -1377,7 +1377,7 @@ export default function MonolithMessenger() {
         </div>
 
         {/* Collapsible channels / lists */}
-        <div data-communication-chat-rail="true" className="flex-1 overflow-y-auto p-2 space-y-4 scrollbar-thin select-none">
+        <div data-communication-chat-rail="true" className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin select-none">
           
           {/* Direct Messages */}
           <div className="space-y-0.5">
@@ -1389,7 +1389,7 @@ export default function MonolithMessenger() {
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.dms ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="mnx-communication-label text-[9px] font-bold tracking-wider">Direct Messages</span>
+                <span className="mnx-communication-label">Direct Messages</span>
                 {filteredDMs.length > 0 && (
                   <span className="text-[9px] font-semibold text-mono-muted">{filteredDMs.length}</span>
                 )}
@@ -1434,7 +1434,7 @@ export default function MonolithMessenger() {
                           key={entry.spaceId}
                           onClick={() => handleSelectSpace(entry.spaceId, entryEmployee?.name || entry.name, "DM", null, entryEmployee)}
                           data-selected={isSelected ? "true" : undefined}
-                          className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm text-left transition-all ${
+                          className={`w-full flex items-center gap-3 px-2 py-1.5 rounded-lg text-sm text-left transition-all ${
                             isSelected ? "bg-mono-card text-mono-text" : "hover:bg-mono-soft"
                           }`}
                         >
@@ -1490,7 +1490,7 @@ export default function MonolithMessenger() {
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.jobSpaces ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="mnx-communication-label text-[9px] font-bold tracking-wider">Job Spaces</span>
+                <span className="mnx-communication-label">Job Spaces</span>
               </button>
             </div>
 
@@ -1551,7 +1551,7 @@ export default function MonolithMessenger() {
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.spaces ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="mnx-communication-label text-[9px] font-bold tracking-wider">Spaces</span>
+                <span className="mnx-communication-label">Spaces</span>
               </button>
               <CommunicationButton
                 onClick={() => setShowCreateSpaceModal(true)} 
@@ -1618,7 +1618,7 @@ export default function MonolithMessenger() {
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.apps ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="mnx-communication-label text-[9px] font-bold tracking-wider">Workspace Apps</span>
+                <span className="mnx-communication-label">Workspace Apps</span>
               </button>
             </div>
 
@@ -2063,7 +2063,7 @@ export default function MonolithMessenger() {
             </div>
 
             {/* Slack StyleComposer */}
-            <div data-communication-chat-composer="true" className="p-4 border-t border-mono-border bg-mono-card shrink-0">
+            <div data-communication-chat-composer="true" className="p-3 border-t border-mono-border bg-mono-card shrink-0">
               
               {/* Draft edit pane */}
               {editingMessageName ? (

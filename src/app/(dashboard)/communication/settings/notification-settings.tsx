@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Monitor, Volume2, VolumeX } from "lucide-react";
+import { Monitor, Volume2, VolumeX } from "lucide-react";
 import { CommunicationBadge, CommunicationButton, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
 import { WorkspaceAlert } from "@/components/layout/workspace";
 
@@ -42,11 +42,7 @@ export function NotificationSettings() {
 
   return (
     <CommunicationPanel>
-      <CommunicationPanelHeader
-        eyebrow="Preferences"
-        title="Chat notifications"
-        actions={<Bell aria-hidden="true" />}
-      />
+      <CommunicationPanelHeader eyebrow="Preferences" title="Chat notifications" />
       <div className="mnx-communication-panel-body">
         <div className="mnx-communication-setting-row">
           <Volume2 aria-hidden="true" />

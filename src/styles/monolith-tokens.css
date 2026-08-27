@@ -43,6 +43,21 @@ html[data-theme="dark"] {
   --mn-type-numeric-tracking: -0.04em;
   --mn-type-numeric-weight: var(--frappe-font-weight-semibold);
 
+  /*
+   * Numeric font-size scale aliases. Module stylesheets (communication, admin,
+   * crm, people) reference this `--mn-font-size-*` family; without these
+   * definitions those `font-size` declarations were no-ops and small text
+   * (eyebrow labels, table headers, meta) inherited the body size.
+   */
+  --mn-font-size-xs: var(--frappe-font-size-2xs);
+  --mn-font-size-sm: var(--frappe-font-size-xs);
+  --mn-font-size-md: var(--frappe-font-size-sm);
+  --mn-font-size-lg: var(--frappe-font-size-base);
+  --mn-font-size-xl: var(--frappe-font-size-md);
+  --mn-font-size-2xl: var(--frappe-font-size-lg);
+  --mn-font-size-label: var(--frappe-font-size-2xs);
+  --mn-font-size-heading-3: var(--frappe-font-size-2xl);
+
   --mn-space-1: var(--frappe-space-1);
   --mn-space-2: var(--frappe-space-2);
   --mn-space-3: var(--frappe-space-3);

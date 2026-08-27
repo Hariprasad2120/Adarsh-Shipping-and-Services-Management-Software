@@ -564,16 +564,19 @@ export function MonaDesktopPet() {
         >
           <span className="mnx-mona-pet-halo" aria-hidden="true" />
           <span className="mnx-mona-pet-shell" aria-hidden="true">
-            <span className="mnx-mona-pet-face">
-              <span className="mnx-mona-pet-eye" />
-              <span className="mnx-mona-pet-eye" />
-              <span className="mnx-mona-pet-smile" />
+            <span className="mnx-mona-pet-glass" />
+            <span className="mnx-mona-pet-chat mnx-mona-pet-chat-back" />
+            <span className="mnx-mona-pet-orbit-ring">
+              <span className="mnx-mona-pet-orbit-node" />
             </span>
-            <span className="mnx-mona-pet-paw mnx-mona-pet-paw-a" />
-            <span className="mnx-mona-pet-paw mnx-mona-pet-paw-b" />
-            <span className="mnx-mona-pet-orbit mnx-mona-pet-orbit-a" />
-            <span className="mnx-mona-pet-orbit mnx-mona-pet-orbit-b" />
-            <span className="mnx-mona-pet-orbit mnx-mona-pet-orbit-c" />
+            <span className="mnx-mona-pet-chat mnx-mona-pet-chat-front">
+              <span className="mnx-mona-pet-chat-gloss" />
+              <span className="mnx-mona-pet-chat-dots">
+                <span />
+                <span />
+                <span />
+              </span>
+            </span>
           </span>
           <span className="mnx-mona-pet-badge">
             <Sparkles size={14} />

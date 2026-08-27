@@ -566,7 +566,7 @@
 .mnx-cha-job-meta-board {
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-border));
-  border-radius: 24px;
+  border-radius: 14px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--mnx-accent) 8%, transparent), transparent 42%),
     color-mix(in srgb, var(--mnx-card) 82%, var(--mnx-accent) 5%);
@@ -576,64 +576,69 @@
 
 .mnx-cha-job-meta-grid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1px;
   background: color-mix(in srgb, var(--mnx-accent) 14%, var(--mnx-border));
 }
 
 .mnx-cha-job-meta-card {
   min-width: 0;
-  min-height: 118px;
-  grid-column: span 3;
+  grid-column: auto;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
   background: color-mix(in srgb, var(--mnx-surface) 88%, transparent);
 }
 
 .mnx-cha-job-meta-card-featured {
-  grid-column: span 6;
+  grid-column: auto;
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--mnx-accent) 12%, transparent), transparent 48%),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--mnx-accent) 10%, transparent), transparent 60%),
     color-mix(in srgb, var(--mnx-surface) 90%, transparent);
 }
 
 .mnx-cha-job-meta-icon {
   flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 20%, var(--mnx-border));
-  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-border));
+  border-radius: 9px;
   color: var(--mnx-accent-text);
   background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-card));
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--mnx-shadow-color, rgb(15 23 42 / 0.16)) 24%, transparent);
+}
+
+.mnx-cha-job-meta-icon > svg {
+  width: 15px;
+  height: 15px;
 }
 
 .mnx-cha-job-meta-value {
-  margin: 6px 0 0;
+  margin: 1px 0 0;
   color: var(--mnx-text-strong);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.35;
   word-break: break-word;
 }
 
 .mnx-cha-job-meta-secondary {
-  margin: 4px 0 0;
+  margin: 1px 0 0;
+  overflow: hidden;
   color: var(--mnx-muted);
-  font-size: 12px;
-  line-height: 1.55;
-  word-break: break-word;
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mnx-cha-job-meta-action {
-  min-height: 28px;
-  margin-top: 12px;
-  padding: 0 12px;
+  min-height: 22px;
+  margin-top: 6px;
+  padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 26%, var(--mnx-border));
   border-radius: 999px;
   color: var(--mnx-accent-text);
@@ -642,190 +647,6 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-}
-
-.mnx-cha-document-flow {
-  display: grid;
-  gap: 1rem;
-}
-
-.mnx-cha-document-category-tabs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.75rem;
-}
-
-.mnx-cha-document-category-tab {
-  min-height: 5.25rem;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.95rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 12%, var(--mnx-border));
-  border-radius: 1.1rem;
-  background: color-mix(in srgb, var(--mnx-card) 86%, transparent);
-  text-align: left;
-}
-
-.mnx-cha-document-category-tab-active {
-  border-color: color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--mnx-accent) 11%, transparent), transparent 58%),
-    color-mix(in srgb, var(--mnx-surface) 94%, transparent);
-  box-shadow: var(--mnx-shadow);
-}
-
-.mnx-cha-document-category-tab-copy {
-  min-width: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.mnx-cha-document-category-tab-title {
-  color: var(--mnx-text-strong);
-  font-size: 0.92rem;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.mnx-cha-document-category-tab-meta {
-  color: var(--mnx-text-muted);
-  font-size: 0.76rem;
-  line-height: 1.45;
-}
-
-.mnx-cha-document-category-tab-badges {
-  flex: 0 0 auto;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.mnx-cha-document-category-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.5rem;
-  padding: 0.22rem 0.55rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mnx-success) 12%, var(--mnx-surface));
-  color: var(--mnx-success);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.mnx-cha-document-category-count-pending {
-  background: color-mix(in srgb, var(--mnx-warning) 12%, var(--mnx-surface));
-  color: var(--mnx-warning);
-}
-
-.mnx-cha-document-workspace {
-  min-width: 0;
-}
-
-.mnx-cha-document-stage-panel {
-  display: grid;
-  gap: 1rem;
-}
-
-.mnx-cha-document-stage-panel-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.mnx-cha-document-stage-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.mnx-cha-document-stage-summary-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2rem;
-  padding: 0 0.8rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface));
-  color: var(--mnx-accent-text);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.mnx-cha-document-requirement-tabs {
-  display: flex;
-  gap: 0.7rem;
-  overflow-x: auto;
-  padding-bottom: 0.15rem;
-}
-
-.mnx-cha-document-requirement-tab {
-  min-width: 14rem;
-  min-height: 4.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  padding: 0.85rem 0.95rem;
-  border: 1px solid var(--mnx-border);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--mnx-card) 90%, transparent);
-  text-align: left;
-}
-
-.mnx-cha-document-requirement-tab-active {
-  border-color: color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--mnx-accent) 11%, transparent), transparent 60%),
-    color-mix(in srgb, var(--mnx-surface) 95%, transparent);
-  box-shadow: var(--mnx-shadow);
-}
-
-.mnx-cha-document-requirement-tab-copy {
-  min-width: 0;
-  display: grid;
-  gap: 0.22rem;
-}
-
-.mnx-cha-document-requirement-tab-title {
-  overflow: hidden;
-  color: var(--mnx-text-strong);
-  font-size: 0.88rem;
-  font-weight: 700;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mnx-cha-document-requirement-tab-meta {
-  color: var(--mnx-text-muted);
-  font-size: 0.74rem;
-  line-height: 1.4;
-}
-
-.mnx-cha-document-requirement-dot {
-  flex: 0 0 auto;
-  width: 0.68rem;
-  height: 0.68rem;
-  border-radius: 999px;
-}
-
-.mnx-cha-document-requirement-dot-success {
-  background: var(--mnx-success);
-}
-
-.mnx-cha-document-requirement-dot-warning {
-  background: var(--mnx-warning);
-}
-
-.mnx-cha-document-requirement-dot-muted {
-  background: var(--mnx-muted);
 }
 
 .mnx-cha-panel-actions-row {
@@ -982,31 +803,8 @@
     justify-content: flex-start;
   }
 
-  .mnx-cha-job-meta-card,
-  .mnx-cha-job-meta-card-featured {
-    grid-column: span 12;
-  }
-
-  .mnx-cha-document-category-tabs {
-    grid-template-columns: 1fr;
-  }
-
-  .mnx-cha-document-stage-panel-header {
-    flex-direction: column;
-  }
-
-  .mnx-cha-document-requirement-tab {
-    min-width: 12.5rem;
-  }
-}
-
-@media (min-width: 48.001rem) and (max-width: 79.999rem) {
-  .mnx-cha-job-meta-card {
-    grid-column: span 6;
-  }
-
-  .mnx-cha-job-meta-card-featured {
-    grid-column: span 12;
+  .mnx-cha-job-meta-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
 

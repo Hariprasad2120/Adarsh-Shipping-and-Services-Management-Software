@@ -384,8 +384,7 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
         />
         <OperationalDataTable>
           <OperationalDataTableHeader
-            eyebrow="Shipment register"
-            title="Active clearance jobs"
+            hideIdentity
             actions={
               <>
                 <ChaDashboardSearchAction value={assignedSearch} />

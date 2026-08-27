@@ -268,7 +268,7 @@ export function ChaSection({
   className?: string;
   description?: ReactNode;
   index?: ReactNode;
-  title: ReactNode;
+  title?: ReactNode;
 }) {
   return (
     <section className="mnx-cha-section-block">

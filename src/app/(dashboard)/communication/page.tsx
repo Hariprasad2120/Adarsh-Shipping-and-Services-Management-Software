@@ -543,16 +543,6 @@ export default async function CommunicationDashboard() {
         value: String(sentEmailDates.length),
       },
       {
-        helper: "Threads currently flagged unread in the connected inbox.",
-        label: "Mail requiring review",
-        points: buildTrendCounts(emailTrendDates),
-        trendLabel:
-          unreadMailCount > 0
-            ? `${unreadMailCount} unread thread${unreadMailCount === 1 ? "" : "s"}`
-            : "Inbox review is clear right now",
-        value: String(unreadMailCount),
-      },
-      {
         helper: "Distinct Google Chat spaces currently visible to the connected user.",
         label: "Active chats",
         points: buildTrendCounts(
@@ -560,16 +550,6 @@ export default async function CommunicationDashboard() {
         ),
         trendLabel: `${chatSignals.length} active space${chatSignals.length === 1 ? "" : "s"} sampled`,
         value: String(chatSpaces.length),
-      },
-      {
-        helper: "Meetings scheduled between August 19, 2026 and August 26, 2026.",
-        label: "Upcoming meetings",
-        points: buildTrendCounts(meetingTrendDates, { direction: "future" }),
-        trendLabel:
-          meetingsWithinSevenDays.length > 0
-            ? `${meetingsWithinSevenDays.length} meeting${meetingsWithinSevenDays.length === 1 ? "" : "s"} in the next 7 days`
-            : "No meetings booked for the next 7 days",
-        value: String(meetingsWithinSevenDays.length),
       },
       {
         helper: "Drive-backed job workspaces available to the operations team.",
@@ -591,14 +571,6 @@ export default async function CommunicationDashboard() {
     activityRangeLabel: "Current sync window",
     alerts,
     chats: recentChats,
-    connectionLabel:
-      connection?.status === "connected"
-        ? `Connected as ${connection.googleEmail}`
-        : "Google Workspace connection unavailable",
-    connectionState:
-      connection?.status === "connected" && alerts.every((alert) => alert.severity !== "danger")
-        ? "connected"
-        : "attention",
     driveOverview:
       activeJobCount > 0
         ? {

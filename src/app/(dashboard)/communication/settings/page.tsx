@@ -1,14 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  RefreshCw,
-  Server,
-  Settings,
-  Shield,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { NotificationSettings } from "./notification-settings";
 import { GoogleChatLiveViewSettings } from "@/modules/communication/components/google-chat-live-view-settings";
 import { CommunicationBadge, CommunicationButton, CommunicationField, CommunicationInput, CommunicationPanel, CommunicationPanelHeader, CommunicationTextarea } from "@/modules/communication/components/workspace/communication-workspace";
@@ -119,7 +112,6 @@ export default async function CommunicationSettings() {
             eyebrow="Identity"
             title="Workspace domain"
             description="Control the approved OAuth domain and background automation identity."
-            actions={<Shield aria-hidden="true" />}
           />
           <div className="mnx-communication-panel-body">
             <div className="mnx-communication-field-grid">
@@ -158,7 +150,6 @@ export default async function CommunicationSettings() {
             eyebrow="Storage"
             title="Shared Drive"
             description="Set the corporate Drive and optional managed jobs root."
-            actions={<Server aria-hidden="true" />}
           />
           <div className="mnx-communication-panel-body">
             <div className="mnx-communication-field-grid">
@@ -193,7 +184,6 @@ export default async function CommunicationSettings() {
             eyebrow="Provisioning"
             title="Job workspace templates"
             description="Define the naming pattern and category folders created for each job."
-            actions={<Settings aria-hidden="true" />}
           />
           <div className="mnx-communication-panel-body">
             <CommunicationField
@@ -236,11 +226,7 @@ export default async function CommunicationSettings() {
 
       <aside className="mnx-communication-settings-aside">
         <CommunicationPanel>
-          <CommunicationPanelHeader
-            eyebrow="OAuth"
-            title="Connection health"
-            actions={<RefreshCw aria-hidden="true" />}
-          />
+          <CommunicationPanelHeader eyebrow="OAuth" title="Connection health" />
           <div className="mnx-communication-panel-body">
             {connection ? (
               <>

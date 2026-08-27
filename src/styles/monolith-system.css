@@ -49,6 +49,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
   --mnx-radius-md: var(--mn-radius-panel);
   --mnx-radius-lg: var(--mn-radius-feature);
   --mnx-shadow: var(--mn-shadow-panel);
+  --mnx-shadow-soft: var(--frappe-shadow-sm, var(--mn-shadow-panel));
   --mnx-page-gradient: var(--mn-gradient-canvas);
   --mnx-surface-gradient: var(--mn-gradient-surface);
   --mnx-surface-gradient-strong: var(--mn-gradient-surface-strong);
@@ -91,7 +92,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
     var(--mnx-accent) 36%,
     var(--mnx-border)
   );
-  --mnx-focus-ring: var(--frappe-focus-ring);
+  --mnx-focus-ring: 0 0 0 3px color-mix(in srgb, var(--mnx-accent) 24%, transparent);
   --mnx-page-max: var(--mn-layout-page-max);
   --mnx-workspace-max: var(--mn-layout-workspace-max);
   --mnx-page-gutter: var(--mn-layout-page-gutter);
@@ -1156,17 +1157,18 @@ html[data-dashboard-shell="true"] body {
 
 .mnx-mona-pet[data-mona-appearance="aurora"] .mnx-mona-pet-shell {
   background:
-    radial-gradient(circle at 28% 24%, color-mix(in srgb, white 78%, transparent), transparent 28%),
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, white 82%, transparent), transparent 16%),
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, white 68%, transparent), transparent 18%),
     linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-surface)),
-      color-mix(in srgb, var(--mnx-info) 18%, var(--mnx-surface-soft)) 48%,
-      color-mix(in srgb, var(--mnx-accent-soft) 72%, var(--mnx-surface-soft))
+      180deg,
+      color-mix(in srgb, white 70%, var(--mnx-surface)) 0%,
+      color-mix(in srgb, var(--mnx-info) 14%, var(--mnx-surface-soft)) 48%,
+      color-mix(in srgb, var(--mnx-accent-soft) 26%, var(--mnx-surface-soft)) 100%
     );
 }
 
 .mnx-mona-pet[data-mona-type="scout"] .mnx-mona-pet-shell {
-  border-radius: 1.3rem 1.3rem 1.85rem 1.85rem;
+  border-radius: 1.9rem;
 }
 
 .mnx-mona-pet[data-mona-type="scout"] .mnx-mona-pet-badge {
@@ -1209,8 +1211,8 @@ html[data-dashboard-shell="true"] body {
 
 .mnx-mona-pet-stage {
   position: relative;
-  width: 11rem;
-  min-height: 5.9rem;
+  width: 8rem;
+  min-height: 4.7rem;
   display: grid;
   place-items: center;
 }
@@ -1219,8 +1221,8 @@ html[data-dashboard-shell="true"] body {
   position: absolute;
   left: 50%;
   bottom: 0.1rem;
-  width: 7.4rem;
-  height: 0.34rem;
+  width: 5.6rem;
+  height: 0.26rem;
   border-radius: 999px;
   background: linear-gradient(
     90deg,
@@ -1235,11 +1237,11 @@ html[data-dashboard-shell="true"] body {
 .mnx-mona-pet-shadow {
   position: absolute;
   bottom: 0.34rem;
-  width: 5.2rem;
-  height: 0.78rem;
+  width: 4.6rem;
+  height: 0.76rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--mnx-accent) 22%, transparent);
-  filter: blur(10px);
+  filter: blur(14px);
 }
 
 .mnx-mona-pet-shadow.is-alert {
@@ -1248,8 +1250,8 @@ html[data-dashboard-shell="true"] body {
 
 .mnx-mona-pet-core {
   position: relative;
-  width: 6.25rem;
-  height: 6.25rem;
+  width: 4.5rem;
+  height: 4.5rem;
   display: grid;
   place-items: center;
   border: 0;
@@ -1265,30 +1267,32 @@ html[data-dashboard-shell="true"] body {
 
 .mnx-mona-pet-halo {
   position: absolute;
-  inset: 0.35rem;
-  border-radius: 999px;
+  inset: 0.1rem;
+  border-radius: 1.55rem;
   background:
-    radial-gradient(circle at 35% 30%, color-mix(in srgb, white 68%, transparent), transparent 38%),
-    radial-gradient(circle at 70% 75%, color-mix(in srgb, var(--mnx-accent) 26%, transparent), transparent 46%);
-  filter: blur(8px);
-  opacity: 0.9;
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--mnx-accent) 32%, transparent), transparent 58%),
+    radial-gradient(circle at 30% 24%, color-mix(in srgb, white 50%, transparent), transparent 28%);
+  filter: blur(12px);
+  opacity: 0.95;
 }
 
 .mnx-mona-pet-shell {
   position: relative;
-  width: 5.15rem;
-  height: 5.15rem;
+  width: 3.95rem;
+  height: 3.95rem;
   display: grid;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 26%, var(--mnx-border));
-  border-radius: 1.65rem 1.65rem 1.9rem 1.9rem;
+  border-radius: 1.35rem;
   background:
-    radial-gradient(circle at 35% 28%, color-mix(in srgb, white 72%, transparent), transparent 30%),
-    linear-gradient(160deg, color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-surface)), color-mix(in srgb, var(--mnx-accent-soft) 60%, var(--mnx-surface-soft)));
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, white 90%, transparent), transparent 16%),
+    radial-gradient(circle at 84% 18%, color-mix(in srgb, white 72%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, white 72%, var(--mnx-surface)) 0%, color-mix(in srgb, var(--mnx-accent-soft) 20%, var(--mnx-surface-soft)) 100%);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 42%, transparent),
-    0 18px 32px color-mix(in srgb, var(--mnx-accent) 18%, transparent);
-  transform: perspective(420px) rotateX(14deg);
+    inset 0 1px 0 color-mix(in srgb, white 58%, transparent),
+    inset 0 -10px 24px color-mix(in srgb, var(--mnx-accent-soft) 10%, transparent),
+    0 18px 36px color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+  transform: perspective(420px) rotateX(10deg);
   overflow: hidden;
 }
 
@@ -1299,101 +1303,148 @@ html[data-dashboard-shell="true"] body {
     0 18px 32px color-mix(in srgb, var(--mnx-danger) 16%, transparent);
 }
 
-.mnx-mona-pet-face {
+.mnx-mona-pet-glass {
   position: relative;
-  z-index: 2;
-  width: 2.5rem;
-  height: 2rem;
-  display: grid;
-  grid-template-columns: repeat(2, 0.5rem);
-  justify-content: center;
-  gap: 0.7rem;
-  transform: translateY(0.2rem);
+  z-index: 1;
+  width: 100%;
+  height: 100%;
 }
 
-.mnx-mona-pet-eye {
-  width: 0.5rem;
-  height: 0.7rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mnx-text-strong) 80%, white);
-  box-shadow: 0 0 0 0.14rem color-mix(in srgb, white 20%, transparent);
-}
-
-.mnx-mona-pet-smile {
+.mnx-mona-pet-glass::before {
   position: absolute;
-  left: 50%;
-  bottom: 0.02rem;
-  width: 1rem;
-  height: 0.5rem;
-  border-bottom: 0.16rem solid color-mix(in srgb, var(--mnx-text-strong) 70%, white);
-  border-radius: 0 0 999px 999px;
-  transform: translateX(-50%);
-}
-
-.mnx-mona-pet-paw {
-  position: absolute;
-  bottom: 0.34rem;
-  width: 0.72rem;
-  height: 0.54rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, white 58%, var(--mnx-accent-soft));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 45%, transparent);
-}
-
-.mnx-mona-pet-paw-a {
-  left: 1.28rem;
-}
-
-.mnx-mona-pet-paw-b {
-  right: 1.28rem;
-}
-
-.mnx-mona-pet-orbit {
-  position: absolute;
-  inset: 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 22%, transparent);
-  border-radius: 999px;
-  opacity: 0.7;
-}
-
-.mnx-mona-pet-orbit::after {
-  position: absolute;
-  top: -0.14rem;
-  left: 50%;
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, white 72%, var(--mnx-accent));
-  box-shadow: 0 0 0.55rem color-mix(in srgb, var(--mnx-accent) 28%, transparent);
+  inset: 0.18rem;
+  border-radius: 1.18rem;
+  border: 1px solid color-mix(in srgb, color-mix(in srgb, white 58%, var(--mnx-accent-soft)) 72%, transparent);
   content: "";
 }
 
-.mnx-mona-pet-orbit-a {
-  transform: rotate(12deg);
+.mnx-mona-pet-glass::after {
+  position: absolute;
+  left: 0.35rem;
+  top: 0.28rem;
+  width: 0.9rem;
+  height: 1.85rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, white 78%, transparent), transparent 78%);
+  opacity: 0.75;
+  transform: rotate(40deg);
+  content: "";
 }
 
-.mnx-mona-pet-orbit-b {
-  inset: 0.82rem;
-  transform: rotateX(70deg);
+.mnx-mona-pet-chat {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 44%, transparent);
 }
 
-.mnx-mona-pet-orbit-c {
-  inset: 0.76rem;
-  transform: rotateY(74deg);
+.mnx-mona-pet-chat::after {
+  position: absolute;
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 0 0 0.65rem 0;
+  border-right: 1px solid color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border));
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border));
+  background: inherit;
+  content: "";
+}
+
+.mnx-mona-pet-chat-back {
+  z-index: 2;
+  width: 1.88rem;
+  height: 2.12rem;
+  left: 1rem;
+  top: 0.86rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, white 54%, var(--mnx-surface)) 0%, color-mix(in srgb, var(--mnx-accent-soft) 22%, var(--mnx-surface-soft)) 100%);
+  opacity: 0.72;
+}
+
+.mnx-mona-pet-chat-back::after {
+  left: 0.34rem;
+  bottom: -0.12rem;
+  transform: skewX(18deg) rotate(18deg);
+}
+
+.mnx-mona-pet-orbit-ring {
+  position: absolute;
+  z-index: 3;
+  left: 0.52rem;
+  top: 1.62rem;
+  width: 2.96rem;
+  height: 1.08rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 44%, transparent);
+  transform: rotate(-17deg);
+  pointer-events: none;
+}
+
+.mnx-mona-pet-orbit-node {
+  position: absolute;
+  left: -0.06rem;
+  bottom: -0.1rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 35%, color-mix(in srgb, white 88%, transparent), color-mix(in srgb, var(--mnx-accent) 78%, transparent) 55%, var(--mnx-accent) 100%);
+  box-shadow: 0 0 0.85rem color-mix(in srgb, var(--mnx-accent) 28%, transparent);
+}
+
+.mnx-mona-pet-chat-front {
+  z-index: 4;
+  width: 1.96rem;
+  height: 2.08rem;
+  left: 1.46rem;
+  top: 1.1rem;
+  border-radius: 1.04rem;
+  background:
+    radial-gradient(circle at 34% 18%, color-mix(in srgb, white 74%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, color-mix(in srgb, var(--mnx-success) 30%, var(--mnx-accent-soft)) 92%, white) 0%, color-mix(in srgb, color-mix(in srgb, var(--mnx-success) 62%, var(--mnx-accent)) 92%, transparent) 44%, color-mix(in srgb, var(--mnx-success-text, var(--mnx-accent-text)) 82%, transparent) 100%);
+  overflow: hidden;
+}
+
+.mnx-mona-pet-chat-front::after {
+  right: 0.28rem;
+  bottom: -0.14rem;
+  transform: skewX(-12deg) rotate(18deg);
+}
+
+.mnx-mona-pet-chat-gloss {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, color-mix(in srgb, white 26%, transparent) 0%, transparent 58%);
+}
+
+.mnx-mona-pet-chat-dots {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 1rem;
+  display: flex;
+  gap: 0.26rem;
+  transform: translateX(-50%);
+}
+
+.mnx-mona-pet-chat-dots > span {
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 92%, var(--mnx-surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, white 22%, transparent);
 }
 
 .mnx-mona-pet-badge {
   position: absolute;
-  right: 0.1rem;
-  bottom: 0.25rem;
-  width: 1.7rem;
-  height: 1.7rem;
+  right: 0;
+  bottom: 0.1rem;
+  width: 1.2rem;
+  height: 1.2rem;
   display: grid;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 20%, var(--mnx-border));
   border-radius: 999px;
   color: var(--mnx-accent-text);
-  background: color-mix(in srgb, var(--mnx-surface) 84%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, white 84%, var(--mnx-surface)) 0%, color-mix(in srgb, var(--mnx-surface) 96%, var(--mnx-surface-soft)) 100%);
   box-shadow: var(--mnx-shadow);
   backdrop-filter: blur(12px);
 }
@@ -5915,6 +5966,32 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   gap: var(--mn-space-2);
 }
 
+/* Card-level section headings inside the CHA job workspace sit in narrow
+   two-column panels, so the page-level heading scale/two-column layout
+   causes the title and description to collide. Use a compact, stacked
+   variant scoped to that workspace instead of changing the global default. */
+.mnx-cha-workspace .mnx-section-heading {
+  display: block;
+  padding: 0 0 var(--mn-space-2);
+}
+
+.mnx-cha-workspace .mnx-section-heading h2 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.mnx-cha-workspace .mnx-section-heading-aside {
+  justify-items: start;
+  margin-top: var(--mn-space-1);
+}
+
+.mnx-cha-workspace .mnx-section-heading-aside p {
+  max-width: none;
+  font-size: 12px;
+}
+
 .mnx-button-compact {
   min-width: auto;
   min-height: 39px;
@@ -6238,6 +6315,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-field-control:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   border-color: var(--mnx-accent);
   box-shadow: var(--mnx-focus-ring);
 }
@@ -6270,6 +6349,46 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     5px 5px,
     5px 5px,
     100% 100%;
+}
+
+/*
+ * Leading-icon field. Two supported shapes:
+ *   1. Explicit: wrap an icon (svg / .mnx-field-icon) + .mnx-field-control in
+ *      .mnx-search-field.
+ *   2. Implicit: any icon <svg> placed as the immediate previous sibling of a
+ *      .mnx-field-control inside a positioned wrapper (the pattern used across
+ *      the app: <div className="relative"><Search /><Input /></div>).
+ * Custom monolith CSS is unlayered, so a bare `.mnx-field-control { padding }`
+ * rule outranks Tailwind's `pl-*` utilities and clips the text under the icon.
+ * These sibling/descendant selectors carry enough specificity to win back the
+ * left padding without touching every call site.
+ */
+.mnx-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.mnx-search-field > svg,
+.mnx-search-field > .mnx-field-icon {
+  position: absolute;
+  left: 0.75rem;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--mnx-muted);
+  pointer-events: none;
+}
+
+.mnx-search-field > .mnx-field-control,
+svg + .mnx-field-control {
+  padding-left: 2.375rem;
+}
+
+.mnx-field-control::-webkit-search-cancel-button {
+  appearance: none;
 }
 
 .mnx-select-shell .mnx-field-select,
@@ -14980,6 +15099,7 @@ button.mnx-accounting-record-card {
   --mnx-info: var(--mn-color-info);
   --mnx-overlay: var(--mn-color-overlay);
   --mnx-shadow: var(--mn-shadow-panel);
+  --mnx-shadow-soft: var(--frappe-shadow-sm, var(--mn-shadow-panel));
   color: var(--mnx-text);
   background: var(--mnx-page);
 }
@@ -16041,7 +16161,6 @@ button.mnx-accounting-record-card {
   padding-block: 1rem;
 }
 
-.mnx-button,
 .mnx-select-shell .mnx-field-select,
 .mnx-select-trigger,
 .mnx-field-control,
@@ -16054,8 +16173,12 @@ button.mnx-accounting-record-card {
 
 .mnx-button {
   min-width: 0;
+  min-height: 2rem;
+  height: auto;
   width: fit-content;
   max-width: 100%;
+  border-radius: var(--mnx-radius-sm);
+  box-shadow: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;

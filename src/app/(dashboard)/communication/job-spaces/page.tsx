@@ -17,7 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { CommunicationBadge, CommunicationButton, CommunicationEmptyTableRow, CommunicationInput, CommunicationPanel, CommunicationPanelHeader, CommunicationTable } from "@/modules/communication/components/workspace/communication-workspace";
-import { WorkspaceMetric, WorkspaceSectionHeading } from "@/components/layout/workspace";
+import { WorkspaceMetric } from "@/components/layout/workspace";
 
 function statusVariant(status?: string | null) {
   if (status === "success") return "success" as const;
@@ -96,17 +96,11 @@ export default async function JobSpacesDashboard() {
         />
       </section>
 
-      <WorkspaceSectionHeading
-        index="01"
-        title="Active job workspaces"
-        description="Monitor Google Chat and Drive provisioning for each active shipping job."
-      />
-
       <CommunicationPanel>
         <CommunicationPanelHeader
           eyebrow="Provisioning register"
-          title="Active jobs"
-          description="Retry incomplete workspaces without changing the underlying CHA job."
+          title="Active job workspaces"
+          description="Monitor Google Chat and Drive provisioning for each active shipping job. Retry incomplete workspaces without changing the underlying CHA job."
         />
         <CommunicationTable>
           <thead>
@@ -225,17 +219,11 @@ export default async function JobSpacesDashboard() {
         </CommunicationTable>
       </CommunicationPanel>
 
-      <WorkspaceSectionHeading
-        index="02"
-        title="Deleted-job cleanup"
-        description="Only deleted jobs with lingering external Chat or Drive resources remain in this review queue."
-      />
-
       <CommunicationPanel>
         <CommunicationPanelHeader
           eyebrow="External cleanup"
-          title="Deleted jobs"
-          description="Retry permission-gated Chat cleanup while retaining the deleted job audit trail."
+          title="Deleted-job cleanup"
+          description="Deleted jobs with lingering external Chat or Drive resources. Retry permission-gated Chat cleanup while retaining the deleted job audit trail."
         />
         <CommunicationTable>
           <thead>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, FlaskConical } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { toggleGoogleChatLiveView } from "@/modules/communication/actions/google-chat-live-view";
 import { CommunicationBadge, CommunicationButton, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
 import { WorkspaceAlert } from "@/components/layout/workspace";
@@ -46,7 +46,6 @@ export function GoogleChatLiveViewSettings({ enabled }: { enabled: boolean }) {
         eyebrow="Experimental"
         title="Google Chat live view"
         description="Attempt to embed the Google Chat web interface with a controlled fallback when Google blocks framing."
-        actions={<FlaskConical aria-hidden="true" />}
       />
       <div className="mnx-communication-panel-body">
         <WorkspaceAlert variant="warning">

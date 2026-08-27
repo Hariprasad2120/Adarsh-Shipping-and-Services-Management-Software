@@ -121,8 +121,6 @@ type WorkspaceHealth = {
 };
 
 export type CommunicationOverviewDashboardProps = {
-  connectionLabel: string;
-  connectionState: "connected" | "attention";
   metrics: OverviewMetric[];
   workspaceHealth: WorkspaceHealth;
   emails: EmailActivity[];
@@ -152,35 +150,6 @@ const alertIconMap = {
   info: RefreshCw,
   success: CheckCircle2,
 } as const;
-
-function Sparkline({
-  points,
-  tone = "accent",
-}: {
-  points: number[];
-  tone?: TrendTone;
-}) {
-  const normalized = points.length > 1 ? points : [0, ...(points.length ? points : [0])];
-  const max = Math.max(1, ...normalized);
-  const path = normalized
-    .map((point, index) => {
-      const x = (index / Math.max(1, normalized.length - 1)) * 100;
-      const y = 100 - (point / max) * 100;
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg
-      className={`mnx-communication-overview-sparkline mnx-dashboard-tone-${tone}`}
-      viewBox="0 0 100 100"
-      aria-hidden="true"
-      preserveAspectRatio="none"
-    >
-      <path d={path} vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
 
 function HealthRing({ score }: { score: number }) {
   const radius = 34;
@@ -231,27 +200,22 @@ function DashboardMetricTile({
         <strong>{metric.value}</strong>
         <span>{metric.detail}</span>
       </div>
-      <footer className="mnx-communication-overview-kpi-footer">
-        {metric.href && metric.actionLabel ? (
+      {metric.href && metric.actionLabel ? (
+        <footer className="mnx-communication-overview-kpi-footer">
           <span className="mnx-communication-overview-kpi-link">
             {metric.actionLabel}
             <ArrowRight aria-hidden="true" />
           </span>
-        ) : (
-          <span className="mnx-communication-overview-kpi-link is-muted">
-            Live workspace signal
-          </span>
-        )}
-        {metric.points?.length ? <Sparkline points={metric.points} tone={metric.tone} /> : null}
-      </footer>
+        </footer>
+      ) : null}
     </>
   );
 
   if (!metric.href) {
     return (
-      <article className="mnx-communication-overview-kpi-card">
+      <div className="mnx-communication-overview-kpi-card">
         {content}
-      </article>
+      </div>
     );
   }
 
@@ -269,8 +233,6 @@ export function CommunicationOverviewDashboard({
   activityRangeLabel,
   alerts,
   chats,
-  connectionLabel,
-  connectionState,
   driveOverview,
   emails,
   meetings,
@@ -290,23 +252,6 @@ export function CommunicationOverviewDashboard({
 
   return (
     <div className="mnx-communication-overview">
-      <section className="mnx-communication-overview-connection">
-        <div>
-          <p className="mnx-communication-label">Workspace status</p>
-          <strong>{connectionLabel}</strong>
-        </div>
-        <CommunicationBadge
-          variant={connectionState === "connected" ? "success" : "warning"}
-        >
-          {connectionState === "connected" ? (
-            <CheckCircle2 aria-hidden="true" />
-          ) : (
-            <AlertTriangle aria-hidden="true" />
-          )}
-          {connectionState === "connected" ? "Connected" : "Needs review"}
-        </CommunicationBadge>
-      </section>
-
       <section
         className="mnx-communication-overview-kpi-grid"
         aria-label="Communication overview metrics"
@@ -314,7 +259,7 @@ export function CommunicationOverviewDashboard({
         {metrics.map((metric) => (
           <DashboardMetricTile key={metric.label} metric={metric} />
         ))}
-        <article className="mnx-communication-overview-kpi-card mnx-communication-overview-kpi-card-health">
+        <div className="mnx-communication-overview-kpi-card mnx-communication-overview-kpi-card-health">
           <header className="mnx-communication-overview-kpi-header">
             <span className="mnx-communication-overview-kpi-icon">
               <CheckCircle2 aria-hidden="true" />
@@ -339,16 +284,15 @@ export function CommunicationOverviewDashboard({
               </div>
             </div>
           </div>
-        </article>
+        </div>
       </section>
 
       <div className="mnx-communication-overview-main-grid">
         <div className="mnx-communication-overview-main-column">
           <CommunicationPanel>
             <CommunicationPanelHeader
-              eyebrow="Latest workspace activity"
-              title="Latest workspace activity"
-              description="Review recent email, chat movement, and direct mentions across the connected workspace."
+              title="Latest activity"
+              description="Recent email, chat movement, and direct mentions across the connected workspace."
               actions={
                 <div className="mnx-communication-overview-header-actions">
                   <ButtonLink href="/communication/mail" variant="inverse">
@@ -382,30 +326,28 @@ export function CommunicationOverviewDashboard({
 
             {activeTab === "email" ? (
               emails.length ? (
-                <div className="mnx-communication-overview-activity-table" role="table" aria-label="Recent email">
-                  <div className="mnx-communication-overview-activity-table-head" role="rowgroup">
-                    <div role="row">
-                      <span role="columnheader">Sender</span>
-                      <span role="columnheader">Subject</span>
-                      <span role="columnheader">Snippet</span>
-                      <span role="columnheader">Time</span>
-                    </div>
-                  </div>
-                  <div role="rowgroup">
-                    {emails.map((email) => (
-                      <Link key={email.id} href={email.href} className="mnx-communication-overview-activity-row" role="row">
-                        <span role="cell" className="mnx-communication-overview-activity-primary">
-                          <strong>{email.sender}</strong>
-                          {email.unread ? (
-                            <CommunicationBadge variant="accent">Unread</CommunicationBadge>
-                          ) : null}
+                <div className="mnx-communication-record-list">
+                  {emails.map((email) => (
+                    <Link
+                      key={email.id}
+                      href={email.href}
+                      className="mnx-communication-record mnx-communication-overview-email-row"
+                    >
+                      <div className="mnx-communication-overview-email-top">
+                        <strong>{email.sender}</strong>
+                        {email.unread ? (
+                          <CommunicationBadge variant="accent">Unread</CommunicationBadge>
+                        ) : null}
+                        <span className="mnx-communication-overview-email-time">
+                          {email.timestamp}
                         </span>
-                        <span role="cell">{email.subject}</span>
-                        <span role="cell">{email.snippet}</span>
-                        <span role="cell">{email.timestamp}</span>
-                      </Link>
-                    ))}
-                  </div>
+                      </div>
+                      <span className="mnx-communication-overview-email-subject">
+                        {email.subject}
+                      </span>
+                      <p>{email.snippet}</p>
+                    </Link>
+                  ))}
                 </div>
               ) : (
                 <div className="mnx-empty-state">No recent email activity is available yet.</div>
@@ -441,14 +383,13 @@ export function CommunicationOverviewDashboard({
 
           <CommunicationPanel>
             <CommunicationPanelHeader
-              eyebrow="Workspace activity overview"
-              title="Workspace activity overview"
-              description="Current operational volume from the live workspace plus the recorded communication audit stream."
+              title="Activity overview"
+              description="Operational volume from the live workspace plus the recorded communication audit stream."
               actions={<span className="mnx-communication-overview-range">{activityRangeLabel}</span>}
             />
             <div className="mnx-communication-overview-analytics-grid">
               {activityMetrics.map((metric) => (
-                <article key={metric.label} className="mnx-communication-overview-analytics-card">
+                <div key={metric.label} className="mnx-communication-overview-analytics-card">
                   <p>{metric.label}</p>
                   <strong>{metric.value}</strong>
                   <span>{metric.helper}</span>
@@ -464,21 +405,7 @@ export function CommunicationOverviewDashboard({
                       {metric.trendLabel}
                     </span>
                   ) : null}
-                  {metric.points?.length ? (
-                    <div className="mnx-communication-overview-analytics-chart">
-                      <Sparkline
-                        points={metric.points}
-                        tone={
-                          metric.tone === "positive"
-                            ? "success"
-                            : metric.tone === "negative"
-                              ? "danger"
-                              : "accent"
-                        }
-                      />
-                    </div>
-                  ) : null}
-                </article>
+                </div>
               ))}
             </div>
           </CommunicationPanel>
@@ -487,7 +414,6 @@ export function CommunicationOverviewDashboard({
         <div className="mnx-communication-overview-side-column">
           <CommunicationPanel>
             <CommunicationPanelHeader
-              eyebrow="Calendar"
               title="Upcoming meetings"
               actions={
                 <ButtonLink href="/communication/calendar" variant="outline">
@@ -522,7 +448,7 @@ export function CommunicationOverviewDashboard({
           </CommunicationPanel>
 
           <CommunicationPanel>
-            <CommunicationPanelHeader eyebrow="Quick actions" title="Quick actions" />
+            <CommunicationPanelHeader title="Quick actions" />
             <div className="mnx-communication-action-grid">
               {quickActions.map((action) => {
                 const Icon = iconMap[action.icon];
@@ -542,8 +468,7 @@ export function CommunicationOverviewDashboard({
           {driveOverview ? (
             <CommunicationPanel>
               <CommunicationPanelHeader
-                eyebrow="Drive coverage"
-                title="Drive workspace coverage"
+                title="Drive coverage"
                 description={driveOverview.helper}
               />
               <div className="mnx-communication-overview-drive-summary">
@@ -553,7 +478,9 @@ export function CommunicationOverviewDashboard({
                 </div>
                 <HardDrive aria-hidden="true" />
               </div>
-              <DashboardSegmentList items={driveOverview.breakdown} />
+              <div className="mnx-communication-overview-drive-segments">
+                <DashboardSegmentList items={driveOverview.breakdown} />
+              </div>
               <div className="mnx-communication-overview-drive-action">
                 <ButtonLink href={driveOverview.href} variant="inverse">
                   Browse drive
@@ -564,7 +491,6 @@ export function CommunicationOverviewDashboard({
 
           <CommunicationPanel>
             <CommunicationPanelHeader
-              eyebrow="Alerts & notifications"
               title="Alerts & notifications"
               actions={
                 <ButtonLink href="/communication/settings" variant="outline">

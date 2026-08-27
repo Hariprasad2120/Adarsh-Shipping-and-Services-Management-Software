@@ -419,6 +419,7 @@ export function CommunicationMailWorkspace({
   const [showCreateLabel, setShowCreateLabel] = useState(false);
   const [showManageLabels, setShowManageLabels] = useState(false);
   const [newLabelName, setNewLabelName] = useState("");
+  const [showAllSidebarLabels, setShowAllSidebarLabels] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const [pageHistory, setPageHistory] = useState<(string | undefined)[]>([undefined]);
@@ -427,6 +428,10 @@ export function CommunicationMailWorkspace({
 
   const currentPageToken = pageHistory[pageIndex];
   const visibleUserLabels = labels.filter((label) => label.type === "user");
+  const SIDEBAR_LABEL_PREVIEW = 6;
+  const sidebarLabels = showAllSidebarLabels
+    ? visibleUserLabels
+    : visibleUserLabels.slice(0, SIDEBAR_LABEL_PREVIEW);
   const selectedCount = selectedThreadIds.length;
   const showConversationView = Boolean(selectedThread) || loadingThread;
   const apiEnableUrl = parseMailboxError(error);
@@ -1342,16 +1347,6 @@ ${message.bodyText || message.snippet}
       <section className="mnx-gmail-workspace" data-communication-mail="true">
         <div className="mnx-gmail-topbar">
           <div className="mnx-gmail-topbar-primary">
-            <div className="mnx-gmail-topbar-copy">
-              <span className="mnx-gmail-topbar-eyebrow">Workspace mail</span>
-              <div>
-                <strong>Search, filter, and process conversation threads</strong>
-                <p>
-                  Keep Gmail operations, labels, and job-linking actions in one focused
-                  workspace.
-                </p>
-              </div>
-            </div>
             <div className="mnx-gmail-topbar-search">
               <label htmlFor={searchInputId} className="mnx-gmail-sr-only">
                 Search mail
@@ -1610,7 +1605,7 @@ ${message.bodyText || message.snippet}
                 <p className="mnx-gmail-sidebar-muted">No custom labels yet.</p>
               ) : (
                 <div className="mnx-gmail-custom-labels">
-                  {visibleUserLabels.map((label) => (
+                  {sidebarLabels.map((label) => (
                     <FolderButton
                       key={label.id}
                       active={folder === "CUSTOM" && customLabelId === label.id}
@@ -1624,6 +1619,19 @@ ${message.bodyText || message.snippet}
                       }}
                     />
                   ))}
+                  {visibleUserLabels.length > SIDEBAR_LABEL_PREVIEW ? (
+                    <CommunicationButton
+                      type="button"
+                      variant="secondary"
+                      size="compact"
+                      className="mnx-gmail-sidebar-more"
+                      onClick={() => setShowAllSidebarLabels((current) => !current)}
+                    >
+                      {showAllSidebarLabels
+                        ? "Show fewer labels"
+                        : `Show all ${visibleUserLabels.length} labels`}
+                    </CommunicationButton>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -1643,9 +1651,8 @@ ${message.bodyText || message.snippet}
                 <div className="mnx-gmail-list-title">
                   <div>
                     <strong>Workspace inbox</strong>
-                    <p>Read, organize, and act on conversations from your workspace.</p>
+                    <p>Read, organize, and act on connected conversations.</p>
                   </div>
-                  <span className="mnx-gmail-list-badge">Workspace mail</span>
                 </div>
                 <CommunicationButton
                   type="button"
@@ -1893,7 +1900,7 @@ ${message.bodyText || message.snippet}
                     const selected = selectedThread?.id === thread.id;
                     const checked = selectedThreadIds.includes(thread.id);
                     return (
-                      <article
+                      <div
                         key={thread.id}
                         className={[
                           "mnx-gmail-thread-row",
@@ -1944,7 +1951,7 @@ ${message.bodyText || message.snippet}
                         <time className="mnx-gmail-thread-row-date">
                           {formatDateLabel(thread.date)}
                         </time>
-                      </article>
+                      </div>
                     );
                   })
                 )}
@@ -1955,33 +1962,16 @@ ${message.bodyText || message.snippet}
               <section className="mnx-gmail-insight-card">
                 <div className="mnx-gmail-insight-card-header">
                   <strong>Inbox overview</strong>
-                  <CommunicationButton type="button" variant="secondary" size="compact">
-                    View insights
-                  </CommunicationButton>
                 </div>
                 <div className="mnx-gmail-insight-grid">
-                  <div className="mnx-gmail-insight-stat">
-                    <strong>{totalInboxThreads}</strong>
-                    <span>Total conversations</span>
-                  </div>
                   <div className="mnx-gmail-insight-stat">
                     <strong>{unreadInboxThreads}</strong>
                     <span>Unread</span>
                   </div>
                   <div className="mnx-gmail-insight-stat">
-                    <strong>{threads.length}</strong>
-                    <span>Loaded now</span>
+                    <strong>{totalInboxThreads}</strong>
+                    <span>Total conversations</span>
                   </div>
-                  <div className="mnx-gmail-insight-stat">
-                    <strong>{visibleUserLabels.length}</strong>
-                    <span>Custom labels</span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="mnx-gmail-insight-card">
-                <div className="mnx-gmail-insight-card-header">
-                  <strong>Quick actions</strong>
                 </div>
                 <div className="mnx-gmail-action-list">
                   <CommunicationButton
@@ -1994,18 +1984,6 @@ ${message.bodyText || message.snippet}
                     <span>
                       <strong>Compose mail</strong>
                       <small>Start a new message</small>
-                    </span>
-                  </CommunicationButton>
-                  <CommunicationButton
-                    type="button"
-                    variant="secondary"
-                    className="mnx-gmail-action-item"
-                    onClick={() => setShowCreateLabel(true)}
-                  >
-                    <Tag aria-hidden="true" />
-                    <span>
-                      <strong>Create label</strong>
-                      <small>Organize your emails</small>
                     </span>
                   </CommunicationButton>
                   <CommunicationButton
@@ -2036,30 +2014,6 @@ ${message.bodyText || message.snippet}
                       <small>Pull the latest Gmail changes</small>
                     </span>
                   </CommunicationButton>
-                </div>
-              </section>
-
-              <section className="mnx-gmail-insight-card">
-                <div className="mnx-gmail-insight-card-header">
-                  <strong>Tips & shortcuts</strong>
-                </div>
-                <div className="mnx-gmail-shortcut-list">
-                  <div>
-                    <span>Search mail</span>
-                    <kbd>/</kbd>
-                  </div>
-                  <div>
-                    <span>Compose message</span>
-                    <kbd>C</kbd>
-                  </div>
-                  <div>
-                    <span>Archive selected</span>
-                    <kbd>E</kbd>
-                  </div>
-                  <div>
-                    <span>Delete conversation</span>
-                    <kbd>#</kbd>
-                  </div>
                 </div>
               </section>
             </aside>
@@ -2332,7 +2286,7 @@ ${message.bodyText || message.snippet}
                           </div>
                         ) : null}
                         {selectedThreadVisibleMessages.map((message) => (
-                      <article key={message.id} className="mnx-gmail-message-card">
+                      <div key={message.id} className="mnx-gmail-message-card">
                         <header className="mnx-gmail-message-header">
                           <div>
                             <strong>{getAddressName(message.from)}</strong>
@@ -2454,7 +2408,7 @@ ${message.bodyText || message.snippet}
                               ))}
                           </div>
                         ) : null}
-                      </article>
+                      </div>
                         ))}
                       </div>
 

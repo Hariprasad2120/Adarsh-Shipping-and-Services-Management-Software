@@ -5,6 +5,7 @@ import * as React from "react";
 import {
   CheckCircle2,
   Ban,
+  ChevronDown,
   Circle,
   Download,
   Eye,
@@ -20,6 +21,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+
+import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1049,6 +1052,7 @@ export function DocumentDropzone({
               onValueChange={(value) => onRequirementIdChange?.(value)}
               options={requirementOptions}
               placeholder="Select document slot to upload..."
+              searchable={false}
               triggerClassName="rounded-xl mnx-border-accent text-sm"
               value={requirement?.id || ""}
             />
@@ -1111,6 +1115,667 @@ export function DocumentDropzone({
           onInputChange(requirement.id, event);
         }}
       />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Single-column accordion (compact rework of the document flow)     *
+ * ------------------------------------------------------------------ */
+
+type DocumentPreviewFrameProps = {
+  version: WorkflowDocumentVersion | null;
+  previewUrl: string | null;
+  downloadUrl: string | null;
+  loadingPreview: boolean;
+  onPreviewLoad: () => void;
+  onPreviewError: () => void;
+};
+
+export function DocumentPreviewFrame({
+  version,
+  previewUrl,
+  downloadUrl,
+  loadingPreview,
+  onPreviewLoad,
+  onPreviewError,
+}: DocumentPreviewFrameProps) {
+  const [imageScale, setImageScale] = React.useState(1);
+  const [pdfPreviewState, setPdfPreviewState] = React.useState<{ key: string; url: string } | null>(null);
+  const onPreviewErrorRef = React.useRef(onPreviewError);
+  const pdfPreviewKey = `${version?.id || "none"}:${previewUrl || ""}`;
+  const effectivePdfPreviewUrl = previewUrl?.startsWith("blob:")
+    ? previewUrl
+    : pdfPreviewState?.key === pdfPreviewKey
+      ? pdfPreviewState.url
+      : null;
+
+  React.useEffect(() => {
+    onPreviewErrorRef.current = onPreviewError;
+  }, [onPreviewError]);
+
+  const lastVersionIdRef = React.useRef(version?.id ?? null);
+  if (lastVersionIdRef.current !== (version?.id ?? null)) {
+    lastVersionIdRef.current = version?.id ?? null;
+    if (imageScale !== 1) setImageScale(1);
+  }
+
+  React.useEffect(() => {
+    if (!version || version.mimeType !== "application/pdf" || !previewUrl || previewUrl.startsWith("blob:")) {
+      return;
+    }
+
+    let isCancelled = false;
+    let objectUrl: string | null = null;
+
+    fetch(previewUrl, { credentials: "include" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load PDF preview.");
+        return response.blob();
+      })
+      .then((blob) => {
+        if (isCancelled) return;
+        objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+        setPdfPreviewState({ key: pdfPreviewKey, url: objectUrl });
+      })
+      .catch(() => {
+        if (!isCancelled) onPreviewErrorRef.current();
+      });
+
+    return () => {
+      isCancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [pdfPreviewKey, previewUrl, version]);
+
+  const mimeType = version?.mimeType || "application/octet-stream";
+  const isImage = version ? mimeType.startsWith("image/") : false;
+  const isPdf = version ? mimeType === "application/pdf" : false;
+  const canPreview = version ? Boolean(previewUrl) && (isImage || isPdf) : false;
+  const fileSize = version ? formatFileSize(version.sizeBytes) : "";
+  const iconButtonClass = "!h-9 !w-9 !min-w-9 !rounded-lg !p-0";
+
+  return (
+    <div className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface">
+      <div className="relative flex min-h-[260px] items-center justify-center overflow-hidden border-b mnx-border mnx-bg-soft">
+        {!version ? (
+          <div className="space-y-2 p-6 text-center">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border mnx-border-warning mnx-bg-warning mnx-text-warning">
+              <FileText size={26} />
+            </span>
+            <p className="text-sm font-medium mnx-text-primary">No document uploaded</p>
+            <p className="mx-auto max-w-[220px] text-xs mnx-text-muted">
+              Drop a file below or declare an exemption for this requirement.
+            </p>
+          </div>
+        ) : canPreview ? (
+          <>
+            {loadingPreview ? (
+              <div className="absolute inset-0 z-10 flex items-center justify-center mnx-bg-surface">
+                <span className="text-sm mnx-text-muted">Loading preview...</span>
+              </div>
+            ) : null}
+            {isImage ? (
+              <img
+                key={pdfPreviewKey}
+                src={previewUrl!}
+                alt={version.fileName}
+                className="h-full max-h-[260px] w-full object-contain transition-transform"
+                style={{ transform: `scale(${imageScale})` }}
+                onLoad={onPreviewLoad}
+                onError={onPreviewError}
+              />
+            ) : effectivePdfPreviewUrl ? (
+              <iframe
+                src={effectivePdfPreviewUrl}
+                className="h-[260px] w-full border-0"
+                title={version.fileName}
+                onLoad={onPreviewLoad}
+              />
+            ) : (
+              <div className="flex h-[260px] w-full items-center justify-center p-6 text-sm mnx-text-muted">
+                Loading PDF preview...
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="space-y-2 p-6 text-center">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
+              <FileText size={26} />
+            </span>
+            <p className="mnx-label mnx-text-primary">{version.fileName}</p>
+            <p className="text-xs mnx-text-muted">{fileSize}</p>
+            <p className="mx-auto max-w-[220px] text-xs mnx-text-muted">
+              Inline preview is unavailable for this file type. Download it to review locally.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {version ? (
+        <div className="flex items-center justify-between gap-3 px-3 py-2">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium mnx-text-primary">{version.fileName}</p>
+            <p className="text-xs mnx-text-muted">{fileSize}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button type="button" variant="outline" mode="icon" className={iconButtonClass} onClick={() => setImageScale((c) => Math.max(0.75, c - 0.1))} disabled={!isImage} aria-label="Zoom out">
+              <ZoomOut size={15} />
+            </Button>
+            <Button type="button" variant="outline" mode="icon" className={iconButtonClass} onClick={() => setImageScale((c) => Math.min(2.5, c + 0.1))} disabled={!isImage} aria-label="Zoom in">
+              <ZoomIn size={15} />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              mode="icon"
+              className={iconButtonClass}
+              onClick={() => previewUrl && window.open(previewUrl, "_blank", "noopener,noreferrer")}
+              disabled={!previewUrl}
+              aria-label="Open in new tab"
+            >
+              <Maximize2 size={15} />
+            </Button>
+            <a href={downloadUrl || undefined} download={version.fileName} aria-label={`Download ${version.fileName}`}>
+              <Button type="button" variant="outline" mode="icon" className={iconButtonClass} disabled={!downloadUrl}>
+                <Download size={15} />
+              </Button>
+            </a>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export type WorkflowDocumentCategoryGroup = {
+  categoryName: string;
+  requirements: WorkflowDocumentRequirement[];
+};
+
+type WorkflowDocumentAccordionProps = {
+  categoryGroups: WorkflowDocumentCategoryGroup[];
+  allRequirements: WorkflowDocumentRequirement[];
+  activeCategoryName: string | null;
+  onRequirementOpen: (requirementId: string) => void;
+  segment: "preview" | "details";
+  onSegmentChange: (segment: "preview" | "details") => void;
+  search: string;
+  onSearchChange: (value: string) => void;
+  filterMode: FilterMode;
+  onFilterChange: (value: FilterMode) => void;
+  previewUrl: string | null;
+  downloadUrl: string | null;
+  loadingPreview: boolean;
+  onPreviewLoad: () => void;
+  onPreviewError: () => void;
+  currentStageLabel: string;
+  currentStepLabel: string;
+  dueDate?: string | null;
+  currentUserId: string;
+  canDelete: boolean;
+  loadingKey: string | null;
+  uploadDisabled?: boolean;
+  maxFileSizeLabel?: string;
+  onUpload: (requirementId: string) => void;
+  onDeclareExemption: (requirementId: string) => void;
+  onMarkNa: (requirementId: string) => void;
+  onUndo: (requirementId: string) => void;
+  onDelete: (requirementId: string, versionId: string, fileName: string) => void;
+  onInputChange: (requirementId: string, event: React.ChangeEvent<HTMLInputElement>) => void;
+  onAcceptCustomerDocument?: (requirementId: string) => void;
+  registerRowRef?: (requirementId: string, element: HTMLDivElement | null) => void;
+  highlightedRequirementId?: string | null;
+};
+
+function getCurrentVersion(requirement: WorkflowDocumentRequirement) {
+  return requirement.versions.find((version) => version.isCurrent) || requirement.versions[0] || null;
+}
+
+function isRequirementUploaded(requirement: WorkflowDocumentRequirement) {
+  const currentVersion = getCurrentVersion(requirement);
+  return Boolean(currentVersion) && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(requirement.status);
+}
+
+export function WorkflowDocumentAccordion({
+  categoryGroups,
+  allRequirements,
+  activeCategoryName,
+  onRequirementOpen,
+  segment,
+  onSegmentChange,
+  search,
+  onSearchChange,
+  filterMode,
+  onFilterChange,
+  previewUrl,
+  downloadUrl,
+  loadingPreview,
+  onPreviewLoad,
+  onPreviewError,
+  currentStageLabel,
+  currentStepLabel,
+  dueDate,
+  currentUserId,
+  canDelete,
+  loadingKey,
+  uploadDisabled = false,
+  maxFileSizeLabel = "15MB",
+  onUpload,
+  onDeclareExemption,
+  onMarkNa,
+  onUndo,
+  onDelete,
+  onInputChange,
+  onAcceptCustomerDocument,
+  registerRowRef,
+  highlightedRequirementId,
+}: WorkflowDocumentAccordionProps) {
+  const filterOptions: Array<{ value: FilterMode; label: string }> = [
+    { value: "ALL", label: "All Documents" },
+    { value: "UPLOADED", label: "Uploaded" },
+    { value: "PENDING", label: "Pending" },
+    { value: "DECLARED_EXEMPTION", label: "Declared Exemption" },
+    { value: "MARKED_NA", label: "Marked as N/A" },
+  ];
+  const selectedFilterLabel = filterOptions.find((option) => option.value === filterMode)?.label ?? "All Documents";
+
+  const [openCategory, setOpenCategory] = React.useState<string | null>(
+    activeCategoryName ?? categoryGroups[0]?.categoryName ?? null,
+  );
+  const [openRequirementId, setOpenRequirementId] = React.useState<string | null>(null);
+  const [quickUploadOpen, setQuickUploadOpen] = React.useState(false);
+  const [quickUploadTargetId, setQuickUploadTargetId] = React.useState<string | null>(null);
+  const [lastHighlight, setLastHighlight] = React.useState<string | null>(null);
+
+  // Adjust open state when a requirement is highlighted from elsewhere (blocked "proceed").
+  if (highlightedRequirementId && highlightedRequirementId !== lastHighlight) {
+    setLastHighlight(highlightedRequirementId);
+    const owningGroup = categoryGroups.find((group) =>
+      group.requirements.some((requirement) => requirement.id === highlightedRequirementId),
+    );
+    if (owningGroup) setOpenCategory(owningGroup.categoryName);
+    setOpenRequirementId(highlightedRequirementId);
+  }
+
+  const toggleCategory = (name: string) => {
+    setOpenCategory((current) => (current === name ? null : name));
+    setOpenRequirementId(null);
+  };
+  const toggleRequirement = (requirementId: string) => {
+    const next = openRequirementId === requirementId ? null : requirementId;
+    setOpenRequirementId(next);
+    if (next) onRequirementOpen(next);
+  };
+
+  const quickUploadTarget = quickUploadTargetId
+    ? allRequirements.find((requirement) => requirement.id === quickUploadTargetId) ?? null
+    : null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 rounded-xl border mnx-border mnx-bg-surface p-3 sm:flex-row sm:items-center">
+        <div className="mnx-search-field flex-1">
+          <Search aria-hidden="true" />
+          <Input
+            type="search"
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search documents..."
+            className="h-10"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 shrink-0 gap-2 px-3 text-sm"
+              aria-label={`Filter documents. Current filter ${selectedFilterLabel}`}
+            >
+              <Filter size={15} />
+              <span className="hidden sm:inline">{selectedFilterLabel}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="mnx-cha-menu w-56">
+            <DropdownMenuLabel className="mnx-label">Document Status</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={filterMode} onValueChange={(value) => onFilterChange(value as FilterMode)}>
+              {filterOptions.map((option, index) => (
+                <React.Fragment key={option.value}>
+                  {index === 1 ? <DropdownMenuSeparator /> : null}
+                  <DropdownMenuRadioItem value={option.value}>{option.label}</DropdownMenuRadioItem>
+                </React.Fragment>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="space-y-2">
+        {categoryGroups.map((group) => {
+          const uploadedInGroup = group.requirements.filter(isRequirementUploaded).length;
+          const isCategoryOpen = openCategory === group.categoryName;
+
+          return (
+            <div key={group.categoryName} className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface">
+              {/* eslint-disable-next-line no-restricted-syntax -- disclosure header, not a UI button */}
+              <button
+                type="button"
+                aria-expanded={isCategoryOpen}
+                onClick={() => toggleCategory(group.categoryName)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left mnx-hover-accent"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold mnx-text-primary">{group.categoryName}</span>
+                  <span className="mt-0.5 block text-xs mnx-text-muted">
+                    {group.requirements.length} document{group.requirements.length === 1 ? "" : "s"} ·{" "}
+                    {group.requirements.length - uploadedInGroup} pending
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full mnx-bg-soft px-2.5 py-1 text-xs font-medium mnx-text-muted">
+                  {uploadedInGroup}/{group.requirements.length}
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={cn("shrink-0 mnx-text-muted transition-transform", isCategoryOpen && "rotate-180")}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {isCategoryOpen ? (
+                <div className="space-y-2 border-t mnx-border p-2">
+                  {group.requirements.map((requirement) => {
+          const currentVersion = getCurrentVersion(requirement);
+          const uploaded = isRequirementUploaded(requirement);
+          const isException = requirement.status === "NOT_AVAILABLE" || Boolean(requirement.exception);
+          const isNa = requirement.exception?.reason === "N/A";
+          const isExpanded = openRequirementId === requirement.id;
+          const dotClass = uploaded
+            ? "mnx-bg-success"
+            : isException
+              ? "mnx-bg-warning"
+              : "mnx-bg-muted";
+          const statusText = uploaded ? "Uploaded" : isNa ? "Marked N/A" : isException ? "Exemption" : "Pending";
+          const withCustomer = requirement as WorkflowDocumentRequirement & {
+            customerSubmission?: { status?: string; portalUser?: { name?: string | null } | null; reviewerComment?: string | null } | null;
+            usesCustomerSubmission?: boolean;
+          };
+          const customerSubmission = withCustomer.customerSubmission ?? null;
+          const usesCustomerSubmission = Boolean(withCustomer.usesCustomerSubmission && customerSubmission);
+          const canAcceptCustomerSubmission =
+            usesCustomerSubmission &&
+            Boolean(onAcceptCustomerDocument) &&
+            ["UPLOADED", "UNDER_REVIEW", "CLARIFICATION_REQUIRED", "REUPLOAD_REQUIRED"].includes(customerSubmission?.status || "");
+          const canDeleteVersion = currentVersion
+            ? canDelete || currentUserId === currentVersion.uploadedById
+            : false;
+
+          return (
+            <div
+              key={requirement.id}
+              ref={(element) => registerRowRef?.(requirement.id, element)}
+              className={cn(
+                "overflow-hidden rounded-xl border mnx-bg-surface transition-colors",
+                isExpanded ? "mnx-border-accent mnx-shadow-panel" : "mnx-border",
+                highlightedRequirementId === requirement.id && "animate-doc-missing-blink",
+              )}
+            >
+              {/* eslint-disable-next-line no-restricted-syntax -- accordion disclosure header, not a UI button */}
+              <button
+                type="button"
+                aria-expanded={isExpanded}
+                onClick={() => toggleRequirement(requirement.id)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left mnx-hover-accent"
+              >
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", dotClass)} aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium mnx-text-primary">{requirement.name}</span>
+                  <span className="mt-0.5 block truncate text-xs mnx-text-muted">
+                    {requirement.isMandatory ? "Mandatory" : "Optional"} · {statusText}
+                    {currentVersion ? ` · ${currentVersion.fileName}` : ""}
+                  </span>
+                </span>
+                {requirement.isMandatory ? (
+                  <OrangeDocumentBadge>MANDATORY</OrangeDocumentBadge>
+                ) : (
+                  <Badge variant="secondary">OPTIONAL</Badge>
+                )}
+                <ChevronDown
+                  size={16}
+                  className={cn("shrink-0 mnx-text-muted transition-transform", isExpanded && "rotate-180")}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {isExpanded ? (
+                <div className="space-y-3 border-t mnx-border px-4 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <DocumentStatusBadge status={requirement.status} />
+                    {isException ? (
+                      <span className="text-xs mnx-text-muted">
+                        {isNa ? "Marked by " : "Declared by "}
+                        {requirement.exception?.user?.name || "Unknown"} · {formatDateTime(requirement.exception?.createdAt)}
+                      </span>
+                    ) : requirement.requirementItem?.description ? (
+                      <span className="max-w-full text-xs mnx-text-muted">{requirement.requirementItem.description}</span>
+                    ) : null}
+                  </div>
+
+                  <div className="inline-flex rounded-lg mnx-bg-soft p-0.5" role="tablist" aria-label="Document view">
+                    {(["preview", "details"] as const).map((value) => (
+                      // eslint-disable-next-line no-restricted-syntax -- segmented control tab, not a UI button
+                      <button
+                        key={value}
+                        type="button"
+                        role="tab"
+                        aria-selected={segment === value}
+                        onClick={() => onSegmentChange(value)}
+                        className={cn(
+                          "rounded-md px-3 py-1 text-xs font-medium capitalize transition-colors",
+                          segment === value ? "mnx-bg-surface mnx-text-primary mnx-shadow-panel" : "mnx-text-muted",
+                        )}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+
+                  {segment === "preview" ? (
+                    <DocumentPreviewFrame
+                      version={currentVersion}
+                      previewUrl={previewUrl}
+                      downloadUrl={downloadUrl}
+                      loadingPreview={loadingPreview}
+                      onPreviewLoad={onPreviewLoad}
+                      onPreviewError={onPreviewError}
+                    />
+                  ) : (
+                    <div className="rounded-xl border mnx-border mnx-bg-soft px-4 py-1">
+                      <DocumentDetailRow label="Requirement" value={requirement.name} />
+                      <DocumentDetailRow label="Mandatory" value={requirement.isMandatory ? "Yes" : "No"} />
+                      <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
+                      <DocumentDetailRow label="Linked Job Stage" value={currentStageLabel} />
+                      <DocumentDetailRow label="Due Date" value={dueDate ? formatDateOnly(dueDate) : "Not scheduled"} />
+                      {currentVersion ? (
+                        <>
+                          <DocumentDetailRow label="File Name" value={currentVersion.fileName} />
+                          <DocumentDetailRow label="File Size" value={<span className="mnx-numeric">{formatFileSize(currentVersion.sizeBytes)}</span>} />
+                          <DocumentDetailRow
+                            label="Source"
+                            value={
+                              currentVersion.source === "FILING_WORKFLOW"
+                                ? "Filing Workflow"
+                                : currentVersion.source === "CUSTOMER_PORTAL"
+                                  ? "Customer Portal"
+                                  : "Documents Page"
+                            }
+                          />
+                          <DocumentDetailRow label="Uploaded By" value={currentVersion.uploadedBy?.name || "Unknown"} />
+                          <DocumentDetailRow label="Uploaded On" value={<span className="mnx-numeric">{formatDateTime(currentVersion.uploadedAt)}</span>} />
+                          <DocumentDetailRow
+                            label="Validity"
+                            value={currentVersion.validityDate ? formatDateOnly(currentVersion.validityDate) : "Not required"}
+                          />
+                        </>
+                      ) : null}
+                      <DocumentDetailRow label="Current Status" value={currentStepLabel} />
+                    </div>
+                  )}
+
+                  {usesCustomerSubmission ? (
+                    <div className="space-y-1 rounded-xl border mnx-border mnx-bg-soft p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary">CUSTOMER PORTAL</Badge>
+                        {customerSubmission?.portalUser?.name ? (
+                          <span className="text-xs mnx-text-muted">Uploaded by {customerSubmission.portalUser.name}</span>
+                        ) : null}
+                      </div>
+                      <p className="text-xs mnx-text-muted">
+                        Accept this file to save it as the CHA document, or upload the CHA copy to replace it.
+                      </p>
+                      {customerSubmission?.reviewerComment ? (
+                        <p className="text-xs mnx-text-warning">{customerSubmission.reviewerComment}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {currentVersion ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
+                      <div className="flex min-w-0 items-center gap-2 text-sm mnx-text-primary">
+                        <FileText size={15} className="shrink-0 mnx-text-accent" />
+                        <span className="truncate">{currentVersion.fileName}</span>
+                        <span className="mnx-numeric shrink-0 text-xs mnx-text-muted">{formatFileSize(currentVersion.sizeBytes)}</span>
+                      </div>
+                      {canDeleteVersion ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          mode="icon"
+                          size="sm"
+                          className="!h-8 !w-8 !min-w-8 !rounded-lg mnx-border-danger !p-0 mnx-text-danger mnx-hover-danger"
+                          onClick={() => onDelete(requirement.id, currentVersion.id, currentVersion.fileName)}
+                          disabled={loadingKey !== null}
+                          aria-label={`Delete ${currentVersion.fileName}`}
+                        >
+                          <Trash size={14} />
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <FileUploadField
+                      id={`workflow-doc-accordion-${requirement.id}`}
+                      compact
+                      accept="image/png,image/jpeg,application/pdf,image/jpg"
+                      disabled={loadingKey !== null || uploadDisabled}
+                      triggerText="Drag and drop a file, or browse"
+                      helperText={`Supports PNG, JPG, PDF up to ${maxFileSizeLabel}`}
+                      showSelectedPreview={false}
+                      onInputChange={(event) => onInputChange(requirement.id, event)}
+                    />
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-end gap-2 border-t mnx-border pt-3">
+                    {isException ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 mnx-border-warning mnx-text-warning mnx-hover-accent"
+                        disabled={loadingKey !== null}
+                        onClick={() => onUndo(requirement.id)}
+                      >
+                        <Undo2 size={14} />
+                        {isNa ? "Undo N/A" : "Undo Exemption"}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          disabled={loadingKey !== null}
+                          onClick={() => onDeclareExemption(requirement.id)}
+                        >
+                          <ShieldCheck size={14} />
+                          Declare Exemption
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 mnx-border-warning mnx-text-warning mnx-hover-accent"
+                          disabled={loadingKey !== null}
+                          onClick={() => onMarkNa(requirement.id)}
+                        >
+                          Mark as N/A
+                        </Button>
+                      </>
+                    )}
+                    {canAcceptCustomerSubmission ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="gap-2"
+                        disabled={loadingKey !== null}
+                        onClick={() => onAcceptCustomerDocument?.(requirement.id)}
+                      >
+                        <CheckCircle2 size={14} />
+                        Accept Customer Upload
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="gap-2"
+                      disabled={loadingKey !== null || uploadDisabled}
+                      onClick={() => onUpload(requirement.id)}
+                    >
+                      <Upload size={14} />
+                      {currentVersion ? (usesCustomerSubmission ? "Upload CHA Copy" : "Re-upload") : "Upload File"}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface">
+        {/* eslint-disable-next-line no-restricted-syntax -- disclosure header, not a UI button */}
+        <button
+          type="button"
+          aria-expanded={quickUploadOpen}
+          onClick={() => setQuickUploadOpen((open) => !open)}
+          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium mnx-text-primary mnx-hover-accent"
+        >
+          <Upload size={15} className="shrink-0 mnx-text-accent" />
+          <span className="flex-1">Quick upload — send any document</span>
+          <ChevronDown
+            size={16}
+            className={cn("shrink-0 mnx-text-muted transition-transform", quickUploadOpen && "rotate-180")}
+            aria-hidden="true"
+          />
+        </button>
+        {quickUploadOpen ? (
+          <div className="border-t mnx-border p-3">
+            <DocumentDropzone
+              requirement={quickUploadTarget}
+              requirementsList={allRequirements}
+              onRequirementIdChange={setQuickUploadTargetId}
+              disabled={loadingKey !== null || uploadDisabled}
+              maxFileSizeLabel={maxFileSizeLabel}
+              onInputChange={onInputChange}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

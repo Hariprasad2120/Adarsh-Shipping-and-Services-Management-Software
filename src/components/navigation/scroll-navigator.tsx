@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 type ScrollState = "top" | "middle" | "bottom";
 
-const SCROLLABLE_RATIO_THRESHOLD = 1.25;
+const SCROLLABLE_RATIO_THRESHOLD = 1.08;
 const TOP_THRESHOLD_RATIO = 0.15;
 const BOTTOM_THRESHOLD_PX = 96;
 

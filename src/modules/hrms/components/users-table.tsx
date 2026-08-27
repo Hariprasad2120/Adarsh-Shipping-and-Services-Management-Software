@@ -654,8 +654,7 @@ export function UsersTable({
 
         <OperationalDataTable>
           <OperationalDataTableHeader
-            eyebrow="Access directory"
-            title="Credential directory"
+            hideIdentity
             actions={
               selectedIds.length > 0 ? (
                 <div className="flex flex-wrap items-center justify-end gap-2">

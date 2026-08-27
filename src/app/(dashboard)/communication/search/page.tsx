@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ArrowRight,
-  Briefcase,
-  ExternalLink,
-  Folder,
-  Mail,
-  RefreshCw,
-  Search,
-} from "lucide-react";
+import { ArrowRight, ExternalLink, RefreshCw, Search } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { CommunicationButton, CommunicationInput, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
 import { WorkspaceState } from "@/components/layout/workspace";
@@ -120,7 +112,6 @@ export default function UnifiedSearchPortal() {
           <ResultPanel
             title="Jobs and shipments"
             count={results.jobs.length}
-            icon={<Briefcase aria-hidden="true" />}
             empty="No matching jobs."
           >
             {results.jobs.map((job) => (
@@ -143,7 +134,6 @@ export default function UnifiedSearchPortal() {
           <ResultPanel
             title="Email"
             count={results.emails.length}
-            icon={<Mail aria-hidden="true" />}
             empty="No matching email."
           >
             {results.emails.map((email) => (
@@ -169,7 +159,6 @@ export default function UnifiedSearchPortal() {
           <ResultPanel
             title="Drive files"
             count={results.files.length}
-            icon={<Folder aria-hidden="true" />}
             empty="No matching files."
           >
             {results.files.map((file) => (
@@ -209,13 +198,11 @@ function ResultPanel({
   children,
   count,
   empty,
-  icon,
   title,
 }: {
   children: React.ReactNode;
   count: number;
   empty: string;
-  icon: React.ReactNode;
   title: string;
 }) {
   return (
@@ -223,7 +210,6 @@ function ResultPanel({
       <CommunicationPanelHeader
         eyebrow={`${count} result${count === 1 ? "" : "s"}`}
         title={title}
-        actions={icon}
       />
       {count === 0 ? (
         <div className="mnx-empty-state">{empty}</div>

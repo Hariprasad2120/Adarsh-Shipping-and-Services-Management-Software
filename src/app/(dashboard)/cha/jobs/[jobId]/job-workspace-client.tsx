@@ -20,11 +20,7 @@ import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import {
-  FilingDocumentPreviewDrawer,
-  DocumentDropzone,
-  RequirementDocumentCard,
-  UploadedWorkflowDocumentCard,
-  WorkflowDocumentsSectionHeader,
+  WorkflowDocumentAccordion,
   type WorkflowDocumentRequirement,
   type WorkflowDocumentVersion,
 } from "@/modules/cha/components/jobs/workflow-documents-section";
@@ -643,11 +639,10 @@ function MilestoneCard({
     <div
       id={`workflow-stage-${stageKey.toLowerCase()}`}
       data-stage-key={stageKey}
-      className={`scroll-mt-32 overflow-hidden rounded-xl border mnx-bg-surface transition-all duration-500 ${cardBorderClass} ${isSpotlit
+      className={`scroll-mt-32 overflow-hidden rounded-xl border mnx-bg-surface ${cardBorderClass} ${isSpotlit
           ? "ring-2 mnx-border-accent mnx-shadow-panel"
           : ""
         }`}
-      style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
     >
       <div
         onClick={() => {
@@ -1407,40 +1402,6 @@ export function JobWorkspaceClient({
   const [isDocumentDrawerOpen, setIsDocumentDrawerOpen] = useState(true);
   const [documentDrawerTab, setDocumentDrawerTab] = useState<"preview" | "details">("preview");
 
-  const previewDrawerRef = useRef<HTMLDivElement>(null);
-  const dropzoneRef = useRef<HTMLDivElement>(null);
-  const [previewOffset, setPreviewOffset] = useState(0);
-
-  const updatePreviewOffset = useCallback(() => {
-    if (!selectedDocumentRequirementId || !isDocumentDrawerOpen) {
-      setPreviewOffset(0);
-      return;
-    }
-    // Small delay to ensure DOM is updated and height has settled
-    setTimeout(() => {
-      const cardElement = documentRequirementCardRefs.current[selectedDocumentRequirementId];
-      const dropzoneElement = dropzoneRef.current;
-      if (cardElement && dropzoneElement) {
-        const cardRect = cardElement.getBoundingClientRect();
-        const dropzoneRect = dropzoneElement.getBoundingClientRect();
-        const gap = 20; // space-y-5 is 20px gap
-        const naturalDrawerTop = dropzoneRect.bottom + gap;
-        const offset = Math.max(0, cardRect.top - naturalDrawerTop);
-        setPreviewOffset(offset);
-      }
-    }, 50);
-  }, [selectedDocumentRequirementId, isDocumentDrawerOpen]);
-
-  useEffect(() => {
-    updatePreviewOffset();
-    window.addEventListener("scroll", updatePreviewOffset, { passive: true });
-    window.addEventListener("resize", updatePreviewOffset);
-    return () => {
-      window.removeEventListener("scroll", updatePreviewOffset);
-      window.removeEventListener("resize", updatePreviewOffset);
-    };
-  }, [updatePreviewOffset]);
-
   const filteredWorkflowDocuments = useMemo(() => {
     const normalizedQuery = documentSearchQuery.trim().toLowerCase();
     return visibleDocumentRequirements
@@ -1642,17 +1603,14 @@ export function JobWorkspaceClient({
       const clickedInsideDocumentCard = Object.values(documentRequirementCardRefs.current).some((cardElement) =>
         cardElement?.contains(target),
       );
-      const clickedInsidePreviewDrawer = previewDrawerRef.current?.contains(target);
-      const clickedInsideDropzone = dropzoneRef.current?.contains(target);
       const clickedInsideOverlay = target instanceof Element && Boolean(target.closest('[role="dialog"], [data-radix-popper-content-wrapper]'));
 
-      if (clickedInsideDocumentCard || clickedInsidePreviewDrawer || clickedInsideDropzone || clickedInsideOverlay) {
+      if (clickedInsideDocumentCard || clickedInsideOverlay) {
         return;
       }
 
       setSelectedDocumentRequirementId(null);
       setIsDocumentDrawerOpen(false);
-      setPreviewOffset(0);
     };
 
     document.addEventListener("pointerdown", handleDocumentPointerDown);
@@ -6027,7 +5985,10 @@ export function JobWorkspaceClient({
                         <Button
                           type="button"
                           onClick={stage.onClick}
-                          className="mnx-plain mnx-workflow-link flex items-center gap-3 px-3 py-2 text-left"
+                          className={cn(
+                            "mnx-plain mnx-workflow-link flex items-center gap-3 rounded-full px-3 py-2 text-left",
+                            (stage.isCompleted || stage.isCurrent) && "mnx-bg-accent-soft",
+                          )}
                         >
                           <span
                             className={cn(
@@ -6043,7 +6004,7 @@ export function JobWorkspaceClient({
                           <span className="flex items-center gap-1.5">
                             <span className={cn(
                               "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em]",
-                              stage.isCurrent
+                              stage.isCompleted || stage.isCurrent
                                 ? "mnx-text-accent"
                                 : "mnx-text-primary",
                             )}>
@@ -6524,16 +6485,7 @@ export function JobWorkspaceClient({
                   }
                 >
                   <div className="space-y-6">
-                    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-                      <div className="space-y-5">
-                        <WorkflowDocumentsSectionHeader
-                          uploadedCount={uploadedWorkflowDocuments.length}
-                          searchValue={documentSearchQuery}
-                          onSearchChange={setDocumentSearchQuery}
-                          filterMode={documentsFilterMode}
-                          onFilterChange={setDocumentsFilterMode}
-                        />
-
+                    <div className="space-y-5">
                         <div className="flex flex-wrap items-center justify-end gap-3">
                           <Button
                             type="button"
@@ -6564,236 +6516,54 @@ export function JobWorkspaceClient({
                         </div>
 
                         {filteredWorkflowDocuments.length > 0 ? (
-                          <div className="mnx-cha-document-flow space-y-4">
-                            <div className="mnx-cha-document-category-tabs" role="tablist" aria-label="Document categories">
-                              {documentCategoryGroups.map((group) => {
-                                const uploadedCount = group.requirements.filter((requirement) => {
-                                  const currentVersion = requirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || requirement.versions[0];
-                                  return !!currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(requirement.status);
-                                }).length;
-                                const pendingCount = group.requirements.length - uploadedCount;
-                                const isActive = group.categoryName === activeDocumentCategoryName;
-
-                                return (
-                                  <Button
-                                    key={group.categoryName}
-                                    type="button"
-                                    variant="outline"
-                                    role="tab"
-                                    aria-selected={isActive}
-                                    className={cn(
-                                      "mnx-cha-document-category-tab",
-                                      isActive && "mnx-cha-document-category-tab-active",
-                                    )}
-                                    onClick={() => {
-                                      setActiveDocumentCategory(group.categoryName);
-                                      setSelectedDocumentRequirementId(group.requirements[0]?.id ?? null);
-                                      setDocumentDrawerTab("preview");
-                                      setIsDocumentDrawerOpen(true);
-                                    }}
-                                  >
-                                    <span className="mnx-cha-document-category-tab-copy">
-                                      <span className="mnx-cha-document-category-tab-title">{group.categoryName}</span>
-                                      <span className="mnx-cha-document-category-tab-meta">
-                                        {group.requirements.length} item{group.requirements.length === 1 ? "" : "s"} • {pendingCount} pending
-                                      </span>
-                                    </span>
-                                    <span className="mnx-cha-document-category-tab-badges">
-                                      <span className="mnx-cha-document-category-count">{uploadedCount} up</span>
-                                      <span className="mnx-cha-document-category-count mnx-cha-document-category-count-pending">{pendingCount} due</span>
-                                    </span>
-                                  </Button>
-                                );
-                              })}
-                            </div>
-
-                            {activeDocumentCategoryGroup && selectedWorkflowDocumentRequirement ? (
-                              <div className="mnx-cha-document-workspace">
-                                <section className="mnx-cha-document-stage-panel mnx-bg-surface mnx-border p-5">
-                                  <div className="mnx-cha-document-stage-panel-header">
-                                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-start gap-3">
-                                      <span className="mt-0.5 h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
-                                      <div className="min-w-0 space-y-1">
-                                        <p className="mnx-heading-3 mnx-text-primary">{activeDocumentCategoryGroup.categoryName}</p>
-                                        <p className="text-sm mnx-text-muted">
-                                          Move through each requirement in this category one by one. The selected document stays in focus while upload and preview remain on the right.
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="mnx-cha-document-stage-summary">
-                                      <span className="mnx-cha-document-stage-summary-chip">
-                                        {activeDocumentCategoryRequirements.length} requirement{activeDocumentCategoryRequirements.length === 1 ? "" : "s"}
-                                      </span>
-                                      <span className="mnx-cha-document-stage-summary-chip">
-                                        {activeDocumentCategoryRequirements.filter((requirement) => requirement.status === "UPLOADED" || requirement.status === "ACCEPTED").length} uploaded
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="mnx-cha-document-requirement-tabs" role="tablist" aria-label={`${activeDocumentCategoryGroup.categoryName} requirements`}>
-                                    {activeDocumentCategoryRequirements.map((requirement) => {
-                                      const isSelected = selectedWorkflowDocumentRequirement.id === requirement.id;
-                                      const isUploaded = requirement.status === "UPLOADED" || requirement.status === "ACCEPTED";
-                                      const isException = requirement.status === "NOT_AVAILABLE" || Boolean(requirement.exception);
-
-                                      return (
-                                        <Button
-                                          key={requirement.id}
-                                          type="button"
-                                          variant="outline"
-                                          role="tab"
-                                          aria-selected={isSelected}
-                                          className={cn(
-                                            "mnx-cha-document-requirement-tab",
-                                            isSelected && "mnx-cha-document-requirement-tab-active",
-                                          )}
-                                          onClick={() => selectWorkflowDocumentRequirement(requirement.id, { openDrawer: true, tab: "preview" })}
-                                        >
-                                          <span className="mnx-cha-document-requirement-tab-copy">
-                                            <span className="mnx-cha-document-requirement-tab-title">{requirement.name}</span>
-                                            <span className="mnx-cha-document-requirement-tab-meta">
-                                              {requirement.isMandatory ? "Mandatory" : "Optional"} • {isUploaded ? "Uploaded" : isException ? "Exception" : "Pending"}
-                                            </span>
-                                          </span>
-                                          <span
-                                            className={cn(
-                                              "mnx-cha-document-requirement-dot",
-                                              isUploaded
-                                                ? "mnx-cha-document-requirement-dot-success"
-                                                : isException
-                                                  ? "mnx-cha-document-requirement-dot-warning"
-                                                  : "mnx-cha-document-requirement-dot-muted",
-                                            )}
-                                            aria-hidden="true"
-                                          />
-                                        </Button>
-                                      );
-                                    })}
-                                  </div>
-
-                                  <div
-                                    ref={(element) => {
-                                      documentRequirementCardRefs.current[selectedWorkflowDocumentRequirement.id] = element;
-                                    }}
-                                    className={cn(
-                                      "mt-4",
-                                      highlightedDocumentReqId === selectedWorkflowDocumentRequirement.id && "animate-doc-missing-blink",
-                                    )}
-                                  >
-                                    {(() => {
-                                      const selectedRequirement = selectedWorkflowDocumentRequirement as WorkflowDocumentRequirement & {
-                                        customerSubmission?: any;
-                                        usesCustomerSubmission?: boolean;
-                                      };
-                                      const currentVersion = selectedRequirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedRequirement.versions[0];
-
-                                      if (currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(selectedRequirement.status)) {
-                                        const customerSubmission = selectedRequirement.customerSubmission ?? null;
-                                        const usesCustomerSubmission = Boolean(selectedRequirement.usesCustomerSubmission && customerSubmission);
-                                        const canAcceptCustomerSubmission =
-                                          usesCustomerSubmission &&
-                                          ["UPLOADED", "UNDER_REVIEW", "CLARIFICATION_REQUIRED", "REUPLOAD_REQUIRED"].includes(customerSubmission.status);
-
-                                        return (
-                                          <UploadedWorkflowDocumentCard
-                                            requirement={selectedRequirement}
-                                            version={currentVersion}
-                                            loadingKey={loading}
-                                            currentUserId={currentUserId}
-                                            canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
-                                            selected
-                                            onSelect={(requirementId) => selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" })}
-                                            onPreview={(requirementId) => selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" })}
-                                            onDelete={(requirementId, versionId, fileName) =>
-                                              setDeleteDocModal({
-                                                reqId: requirementId,
-                                                versionId,
-                                                fileName,
-                                              })
-                                            }
-                                            onDeclareExemption={(requirementId) => {
-                                              setSelectedDocumentRequirementId(requirementId);
-                                              setIsDocumentDrawerOpen(false);
-                                              setActiveDocReqId(requirementId);
-                                              const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
-                                              setExceptionReason(
-                                                currentRequirement?.exception?.reason === "N/A"
-                                                  ? ""
-                                                  : currentRequirement?.exception?.reason || "",
-                                              );
-                                            }}
-                                            onMarkNa={handleMarkNotAvailable}
-                                            onUpload={setUploadDocumentModalReqId}
-                                            uploadButtonLabel={usesCustomerSubmission ? "Upload CHA Copy" : undefined}
-                                            helperContent={
-                                              usesCustomerSubmission ? (
-                                                <div className="space-y-2">
-                                                  <div className="flex flex-wrap items-center gap-2">
-                                                    <Badge variant="secondary">CUSTOMER PORTAL</Badge>
-                                                    {customerSubmission.portalUser?.name ? (
-                                                      <span className="text-xs mnx-text-muted">
-                                                        Uploaded by {customerSubmission.portalUser.name}
-                                                      </span>
-                                                    ) : null}
-                                                  </div>
-                                                  <p className="text-sm font-semibold mnx-text-primary">
-                                                    Customer-uploaded file awaiting CHA decision
-                                                  </p>
-                                                  <p className="text-xs mnx-text-muted">
-                                                    Accept this file to save it as the submitted CHA document, or upload the CHA copy yourself if you need to replace it.
-                                                  </p>
-                                                  {customerSubmission.reviewerComment ? (
-                                                    <p className="text-xs mnx-text-warning">{customerSubmission.reviewerComment}</p>
-                                                  ) : null}
-                                                </div>
-                                              ) : null
-                                            }
-                                            footerActions={
-                                              canAcceptCustomerSubmission ? (
-                                                <Button
-                                                  type="button"
-                                                  size="sm"
-                                                  className="gap-2"
-                                                  disabled={loading !== null}
-                                                  onClick={() => handleAcceptCustomerDocument(selectedRequirement.id)}
-                                                >
-                                                  <CheckCircle2 size={14} />
-                                                  {loading === `customer-accept-${selectedRequirement.id}` ? "Accepting..." : "Accept Customer Upload"}
-                                                </Button>
-                                              ) : null
-                                            }
-                                          />
-                                        );
-                                      }
-
-                                      return (
-                                        <RequirementDocumentCard
-                                          requirement={selectedRequirement}
-                                          loadingKey={loading}
-                                          selected
-                                          onSelect={(requirementId) => selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" })}
-                                          onUndo={handleRemoveException}
-                                          onUpload={setUploadDocumentModalReqId}
-                                          onDeclareExemption={(requirementId) => {
-                                            setSelectedDocumentRequirementId(requirementId);
-                                            setIsDocumentDrawerOpen(false);
-                                            setActiveDocReqId(requirementId);
-                                            const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
-                                            setExceptionReason(
-                                              currentRequirement?.exception?.reason === "N/A"
-                                                ? ""
-                                                : currentRequirement?.exception?.reason || "",
-                                            );
-                                          }}
-                                          onMarkNa={handleMarkNotAvailable}
-                                        />
-                                      );
-                                    })()}
-                                  </div>
-                                </section>
-                              </div>
-                            ) : null}
-                          </div>
+                          <WorkflowDocumentAccordion
+                            categoryGroups={documentCategoryGroups}
+                            allRequirements={filteredWorkflowDocuments}
+                            activeCategoryName={activeDocumentCategoryName}
+                            onRequirementOpen={(requirementId) => {
+                              selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" });
+                            }}
+                            segment={documentDrawerTab}
+                            onSegmentChange={setDocumentDrawerTab}
+                            search={documentSearchQuery}
+                            onSearchChange={setDocumentSearchQuery}
+                            filterMode={documentsFilterMode}
+                            onFilterChange={setDocumentsFilterMode}
+                            previewUrl={selectedDocumentPreviewUrl}
+                            downloadUrl={selectedDocumentDownloadUrl}
+                            loadingPreview={loadingPreview}
+                            onPreviewLoad={() => setLoadingPreview(false)}
+                            onPreviewError={() => setLoadingPreview(false)}
+                            currentStageLabel={currentStageLabel}
+                            currentStepLabel={`${workflowProgressPercent}% Uploaded • ${workflowCurrentStepLabel}`}
+                            dueDate={job.estimatedClosureDate || null}
+                            currentUserId={currentUserId}
+                            canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
+                            loadingKey={loading}
+                            highlightedRequirementId={highlightedDocumentReqId}
+                            registerRowRef={(requirementId, element) => {
+                              documentRequirementCardRefs.current[requirementId] = element;
+                            }}
+                            onUpload={setUploadDocumentModalReqId}
+                            onMarkNa={handleMarkNotAvailable}
+                            onUndo={handleRemoveException}
+                            onAcceptCustomerDocument={handleAcceptCustomerDocument}
+                            onInputChange={handleUploadDoc}
+                            onDelete={(requirementId, versionId, fileName) =>
+                              setDeleteDocModal({ reqId: requirementId, versionId, fileName })
+                            }
+                            onDeclareExemption={(requirementId) => {
+                              setSelectedDocumentRequirementId(requirementId);
+                              setIsDocumentDrawerOpen(false);
+                              setActiveDocReqId(requirementId);
+                              const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
+                              setExceptionReason(
+                                currentRequirement?.exception?.reason === "N/A"
+                                  ? ""
+                                  : currentRequirement?.exception?.reason || "",
+                              );
+                            }}
+                          />
                         ) : (
                           <div className="flex items-center justify-center gap-3 rounded-xl border border-dashed mnx-border mnx-bg-surface p-8 text-center text-sm mnx-text-muted mnx-shadow-panel">
                             <Search size={18} className="shrink-0 mnx-text-accent" />
@@ -7012,49 +6782,6 @@ export function JobWorkspaceClient({
                           </div>
                         )}
                       </div>
-
-                      <div className="space-y-5 xl:sticky xl:top-24 w-full xl:w-[360px] flex-shrink-0">
-                        <div ref={dropzoneRef}>
-                          <DocumentDropzone
-                            requirement={selectedWorkflowDocumentRequirement}
-                            requirementsList={filteredWorkflowDocuments}
-                            onRequirementIdChange={(id) => {
-                              setSelectedDocumentRequirementId(id);
-                              setIsDocumentDrawerOpen(true);
-                              setDocumentDrawerTab("preview");
-                            }}
-                            disabled={loading !== null}
-                            onInputChange={handleUploadDoc}
-                          />
-                        </div>
-
-                        <div 
-                          ref={previewDrawerRef}
-                          style={{
-                            transform: `translateY(${previewOffset}px)`,
-                            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                          }}
-                        >
-                          <FilingDocumentPreviewDrawer
-                            open={isDocumentDrawerOpen}
-                            requirement={selectedWorkflowDocumentRequirement}
-                            version={selectedWorkflowDocumentVersion}
-                            previewUrl={selectedDocumentPreviewUrl}
-                            downloadUrl={selectedDocumentDownloadUrl}
-                            loadingPreview={loadingPreview}
-                            activeTab={documentDrawerTab}
-                            currentStepLabel={`${workflowProgressPercent}% Uploaded • ${workflowCurrentStepLabel}`}
-                            currentStageLabel={currentStageLabel}
-                            dueDate={job.estimatedClosureDate || null}
-                            onClose={() => setIsDocumentDrawerOpen(false)}
-                            onTabChange={setDocumentDrawerTab}
-                            onPreviewLoad={() => setLoadingPreview(false)}
-                            onPreviewError={() => setLoadingPreview(false)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
                   </div>
                 </MilestoneCard>
               ) : null}
@@ -7144,7 +6871,7 @@ export function JobWorkspaceClient({
 
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)]">
                       <div className="space-y-4">
-                        <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
+                        <div className="mnx-bg-surface mnx-border-accent rounded-xl border p-4 shadow-sm">
                           <SectionHeading
                             index="01"
                             title="Core Filing Data"
@@ -7220,7 +6947,7 @@ export function JobWorkspaceClient({
                             ) : null}
                           </div>
                           {job.additionalData ? (
-                            <div className="mt-4 pt-4">
+                            <div className="mt-4 border-t mnx-border pt-4">
                               <DoValidityPanel
                                 key={job.additionalData.deliveryOrderExtensionDate ?? "no-do-extension-date"}
                                 jobId={job.id}
@@ -7240,7 +6967,7 @@ export function JobWorkspaceClient({
                       </div>
 
                       <div className="space-y-4">
-                        <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
+                        <div className="mnx-bg-surface mnx-border-accent rounded-xl border p-4 shadow-sm">
                           <SectionHeading
                             index="02"
                             title="BL References"
@@ -7272,7 +6999,7 @@ export function JobWorkspaceClient({
                           </div>
                         </div>
 
-                        <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
+                        <div className="mnx-bg-surface mnx-border-accent rounded-xl border p-4 shadow-sm">
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <SectionHeading
                               index="03"

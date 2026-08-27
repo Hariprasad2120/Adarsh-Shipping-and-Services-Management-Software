@@ -30,11 +30,7 @@ export default async function ChaProcessPage() {
         description="Approved quotations land here first for customs processing. Open a quotation to create the real CHA job and complete the remaining operational details."
       />
 
-      <ChaSection
-        index="01"
-        title="CHA process queue"
-        description="Only quotation details are shown here until a job is created from the process page."
-      >
+      <ChaSection>
         {items.length === 0 ? (
           <div className="mnx-panel-state">
             <WorkspaceEmptyState

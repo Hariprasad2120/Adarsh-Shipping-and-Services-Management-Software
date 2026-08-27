@@ -492,8 +492,7 @@ export function JobsClient({
         />
         <OperationalDataTable>
           <OperationalDataTableHeader
-            eyebrow="Shipment register"
-            title={title}
+            hideIdentity
             actions={
               <ChaVisibleRecords
                 visible={data.items.length}

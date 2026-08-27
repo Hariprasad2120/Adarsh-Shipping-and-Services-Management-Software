@@ -577,7 +577,7 @@ export function AccountingSection({
   className?: string;
   description?: ReactNode;
   eyebrow?: string;
-  title: ReactNode;
+  title?: ReactNode;
 }) {
   const tableLabel =
     typeof title === "string" ? `${title} table` : "Accounting records";

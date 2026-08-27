@@ -10,6 +10,13 @@
   gap: var(--mn-layout-workspace-stack-gap);
 }
 
+/* WorkspacePage forces `gap: 0` via [data-workspace-surface="single"];
+   the communication frame needs breathing room between header, nav and body. */
+.mnx-communication-page.mnx-workspace-page[data-workspace-surface="single"],
+.mnx-admin-page.mnx-workspace-page[data-workspace-surface="single"] {
+  gap: var(--mn-layout-workspace-stack-gap);
+}
+
 .mnx-communication-page-header,
 .mnx-admin-page-header {
   overflow: hidden;
@@ -558,8 +565,8 @@
 
 .mnx-communication-panel-body {
   display: grid;
-  gap: var(--mn-space-4);
-  padding: var(--mn-space-5);
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
 }
 
 .mnx-communication-panel-body > p {
@@ -622,10 +629,38 @@
   font-size: var(--mn-font-size-xs);
 }
 
+/* Collapse the inflated metric cards inside communication module pages
+   (the global `article { ... !important }` layer forces tall flex cards). */
+.mnx-communication-page .mnx-workspace-metric {
+  min-height: 0 !important;
+  padding: var(--mn-space-4) !important;
+  justify-content: flex-start !important;
+  gap: var(--mn-space-2) !important;
+}
+
+.mnx-communication-page .mnx-workspace-metric-header {
+  min-height: 0 !important;
+  padding-bottom: var(--mn-space-2) !important;
+}
+
+.mnx-communication-page .mnx-workspace-metric-body {
+  min-height: 0 !important;
+}
+
 .mnx-communication-record-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   color: var(--mnx-text-strong);
   font-weight: 650;
+  white-space: nowrap;
   transition: color var(--mn-motion-fast);
+}
+
+.mnx-communication-record-link svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
 }
 
 .mnx-communication-record-link:hover {
@@ -635,13 +670,13 @@
 .mnx-communication-form,
 .mnx-communication-settings-form {
   display: grid;
-  gap: var(--mn-space-5);
+  gap: var(--mn-space-3);
 }
 
 .mnx-communication-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mn-space-4);
+  gap: var(--mn-space-3);
 }
 
 .mnx-communication-form-actions,
@@ -674,54 +709,304 @@
 .mnx-communication-search-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--mn-space-3);
-  padding: var(--mn-space-5);
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-4);
 }
 
 .mnx-communication-result-count {
-  padding: 0 var(--mn-space-5) var(--mn-space-5);
+  padding: 0 var(--mn-space-1) var(--mn-space-1);
   color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-sm);
 }
 
 .mnx-communication-result-grid,
-.mnx-communication-folder-grid,
+.mnx-communication-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--mn-space-3);
+}
+
 .mnx-communication-action-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mn-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--mn-space-2);
 }
 
-.mnx-communication-overview {
+/* Month calendar view */
+
+.mnx-communication-calendar {
   display: grid;
-  gap: var(--mn-space-6);
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem);
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4) var(--mn-space-5) var(--mn-space-5);
 }
 
-.mnx-communication-overview-connection {
+.mnx-communication-calendar-main {
+  display: grid;
+  gap: var(--mn-space-2);
+  min-width: 0;
+}
+
+.mnx-communication-calendar-head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mn-space-4);
-  padding: 0 var(--mn-space-1);
+  gap: var(--mn-space-3);
 }
 
-.mnx-communication-overview-connection strong {
-  display: block;
+.mnx-communication-calendar-head strong {
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-type-title-size);
+}
+
+.mnx-communication-calendar-nav {
+  display: flex;
+  gap: var(--mn-space-1);
+}
+
+.mnx-communication-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.mnx-communication-calendar-weekdays span {
+  padding: var(--mn-space-1) var(--mn-space-2);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.mnx-communication-calendar-grid {
+  display: grid;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  overflow: hidden;
+}
+
+.mnx-communication-calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.mnx-communication-calendar-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 5.5rem;
+  padding: var(--mn-space-1) var(--mn-space-2) var(--mn-space-2);
+  border-top: 1px solid var(--mnx-border);
+  border-left: 1px solid var(--mnx-border);
+  background: var(--mnx-surface);
+  color: var(--mnx-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--mn-motion-fast);
+}
+
+.mnx-communication-calendar-week:first-child .mnx-communication-calendar-cell {
+  border-top: 0;
+}
+
+.mnx-communication-calendar-cell:nth-child(7n + 1) {
+  border-left: 0;
+}
+
+.mnx-communication-calendar-cell:hover {
+  background: color-mix(in srgb, var(--mnx-accent-soft) 35%, var(--mnx-surface));
+}
+
+.mnx-communication-calendar-cell.is-outside {
+  background: color-mix(in srgb, var(--mnx-surface-soft) 55%, var(--mnx-surface));
+  color: var(--mnx-text-muted);
+}
+
+.mnx-communication-calendar-cell.is-selected {
+  background: color-mix(in srgb, var(--mnx-accent-soft) 45%, var(--mnx-surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mnx-accent) 45%, var(--mnx-border));
+}
+
+.mnx-communication-calendar-daynum {
+  align-self: flex-end;
+  min-width: 1.5rem;
+  font-size: var(--mn-font-size-xs);
+  font-weight: 650;
+  text-align: center;
+}
+
+.mnx-communication-calendar-cell.is-today .mnx-communication-calendar-daynum {
+  border-radius: 999px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-accent-text);
+}
+
+.mnx-communication-calendar-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mnx-communication-calendar-chip {
+  overflow: hidden;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.35rem;
+  color: var(--mnx-accent-text);
+  background: color-mix(in srgb, var(--mnx-accent) 14%, var(--mnx-surface));
+  font-size: var(--mn-font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-communication-calendar-more {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 600;
+}
+
+.mnx-communication-calendar-agenda {
+  display: grid;
+  align-content: start;
+  gap: var(--mn-space-3);
+  min-width: 0;
+  padding: var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-communication-calendar-agenda > header {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.mnx-communication-calendar-agenda > header strong {
   color: var(--mnx-text-strong);
   font-size: var(--mn-font-size-lg);
 }
 
+.mnx-communication-calendar-agenda-list {
+  display: grid;
+  gap: var(--mn-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mnx-communication-calendar-agenda-item {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface);
+}
+
+.mnx-communication-calendar-agenda-item strong {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-communication-calendar-agenda-time {
+  color: var(--mnx-accent-text);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+}
+
+.mnx-communication-calendar-agenda-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-3);
+  margin-top: 0.15rem;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+}
+
+.mnx-communication-calendar-agenda-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.mnx-communication-calendar-agenda-meta svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.mnx-communication-calendar-agenda-empty {
+  display: grid;
+  place-items: center;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-6) var(--mn-space-3);
+  color: var(--mnx-text-muted);
+  text-align: center;
+}
+
+.mnx-communication-calendar-agenda-empty svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+@media (max-width: 70rem) {
+  .mnx-communication-calendar {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-communication-calendar-cell {
+    min-height: 4.25rem;
+  }
+}
+
+.mnx-communication-overview {
+  display: grid;
+  gap: var(--mn-layout-workspace-stack-gap);
+}
+
+/* Give every overview panel a clearly readable card boundary. */
+.mnx-communication-overview .mnx-communication-panel {
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow-soft);
+}
+
+.mnx-communication-overview .mnx-communication-panel > .mnx-table-toolbar {
+  padding: var(--mn-space-4) var(--mn-space-5) var(--mn-space-3);
+}
+
+/* Quick-actions grid sits flush against the panel edge otherwise. */
+.mnx-communication-overview .mnx-communication-panel > .mnx-communication-action-grid {
+  padding: 0 var(--mn-space-5) var(--mn-space-5);
+}
+
+.mnx-communication-overview-drive-segments {
+  padding: 0 var(--mn-space-5) var(--mn-space-3);
+}
+
+.mnx-communication-overview .mnx-empty-state {
+  margin: var(--mn-space-2) var(--mn-space-5) var(--mn-space-5);
+  padding: var(--mn-space-6) var(--mn-space-4);
+  border: 1px dashed var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+  color: var(--mnx-text-muted);
+  text-align: center;
+}
+
 .mnx-communication-overview-kpi-grid {
   display: grid;
-  gap: var(--mn-space-4);
+  gap: var(--mn-space-3);
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .mnx-communication-overview-kpi-card {
   display: grid;
-  gap: var(--mn-space-5);
+  gap: var(--mn-space-3);
   min-width: 0;
-  padding: var(--mn-space-5);
+  padding: var(--mn-space-4);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mn-radius-panel);
   color: inherit;
@@ -811,9 +1096,15 @@
 .mnx-communication-overview-analytics-card strong,
 .mnx-communication-overview-drive-summary strong {
   color: var(--mnx-text-strong);
-  font-size: clamp(1.6rem, 2vw, 2.2rem);
-  line-height: 1.05;
-  letter-spacing: -0.05em;
+  font-size: var(--mn-type-title-size);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.mnx-communication-overview-kpi-copy strong {
+  font-size: var(--mn-type-numeric-size);
+  line-height: var(--mn-type-numeric-line);
+  letter-spacing: var(--mn-type-numeric-tracking);
 }
 
 .mnx-communication-overview-kpi-copy span,
@@ -838,8 +1129,9 @@
 }
 
 .mnx-communication-overview-sparkline {
-  width: 8rem;
-  height: 2.25rem;
+  width: 6rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
   color: var(--mnx-accent);
 }
 
@@ -871,12 +1163,27 @@
   color: var(--mnx-text-muted);
 }
 
+.mnx-communication-overview-kpi-card-health {
+  grid-column: 1 / -1;
+}
+
 .mnx-communication-overview-health-copy {
   display: flex;
+  flex-wrap: wrap;
   min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: var(--mn-space-4);
+}
+
+.mnx-communication-overview-health-copy > div:first-child {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.mnx-communication-overview-health-score {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .mnx-communication-overview-health-score {
@@ -972,58 +1279,60 @@
   background: var(--mnx-accent-soft);
 }
 
-.mnx-communication-overview-activity-table {
+.mnx-communication-overview-email-row {
   display: grid;
-}
-
-.mnx-communication-overview-activity-table-head,
-.mnx-communication-overview-activity-row {
-  display: grid;
-  grid-template-columns: minmax(12rem, 1.1fr) minmax(12rem, 1.35fr) minmax(12rem, 1.45fr) auto;
-  gap: var(--mn-space-4);
-  align-items: center;
-}
-
-.mnx-communication-overview-activity-table-head {
-  padding: 0 var(--mn-space-5) var(--mn-space-3);
-}
-
-.mnx-communication-overview-activity-table-head span {
-  color: var(--mnx-text-muted);
-  font-size: var(--mn-font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.mnx-communication-overview-activity-row {
-  padding: var(--mn-space-4) var(--mn-space-5);
-  border-top: 1px solid var(--mnx-border);
+  gap: 0.2rem;
+  align-items: start;
   color: inherit;
   transition: background-color var(--mn-motion-fast);
 }
 
-.mnx-communication-overview-activity-row:hover {
+.mnx-communication-overview-email-row:hover {
   background: color-mix(in srgb, var(--mnx-accent-soft) 30%, var(--mnx-surface));
 }
 
-.mnx-communication-overview-activity-row span {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--mnx-text-muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mnx-communication-overview-activity-primary {
+.mnx-communication-overview-email-top {
   display: flex;
   min-width: 0;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--mn-space-2);
 }
 
-.mnx-communication-overview-activity-primary strong,
+.mnx-communication-overview-email-top strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mnx-text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-communication-overview-email-time {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  white-space: nowrap;
+}
+
+.mnx-communication-overview-email-subject {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mnx-text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-communication-overview-email-row p {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mnx-communication-overview-chat-row strong,
 .mnx-communication-overview-alert-row strong,
 .mnx-communication-overview-meeting-row strong {
@@ -1062,9 +1371,9 @@
 
 .mnx-communication-overview-analytics-grid {
   display: grid;
-  gap: var(--mn-space-4);
+  gap: var(--mn-space-3);
   padding: 0 var(--mn-space-5) var(--mn-space-5);
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
 }
 
 .mnx-communication-overview-analytics-card {
@@ -1076,7 +1385,9 @@
 }
 
 .mnx-communication-overview-analytics-card strong {
-  font-size: 1.75rem;
+  font-size: var(--mn-type-numeric-size);
+  line-height: var(--mn-type-numeric-line);
+  letter-spacing: var(--mn-type-numeric-tracking);
 }
 
 .mnx-communication-overview-analytics-card span {
@@ -1227,11 +1538,58 @@
 
 .mnx-communication-folder {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
   gap: var(--mn-space-3);
-  padding: var(--mn-space-4);
+  padding: var(--mn-space-3);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mn-radius-control);
   background: var(--mnx-surface-soft);
+  color: inherit;
+  transition:
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast);
+}
+
+.mnx-communication-folder:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent-soft) 30%, var(--mnx-surface));
+}
+
+.mnx-communication-folder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-communication-folder-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.mnx-communication-folder-copy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.mnx-communication-folder-copy strong {
+  overflow: hidden;
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-communication-folder-copy small {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
 }
 
 .mnx-communication-folder > header {
@@ -1243,9 +1601,9 @@
 
 .mnx-communication-settings-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.34fr);
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.36fr);
   align-items: start;
-  gap: var(--mn-space-6);
+  gap: var(--mn-space-4);
 }
 
 .mnx-communication-settings-aside,
@@ -1275,6 +1633,50 @@
 .mnx-communication-detail-list > div:first-child,
 .mnx-communication-diagnostics > div:first-child {
   border-top: 0;
+}
+
+/* Setting rows: label stack grows, control never wraps char-by-char. */
+.mnx-communication-setting-row > span,
+.mnx-communication-health > div > span {
+  display: grid;
+  gap: 0.1rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mnx-communication-setting-row > span > strong,
+.mnx-communication-health > div > span > strong {
+  display: block;
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+}
+
+.mnx-communication-setting-row > span > small,
+.mnx-communication-health > div > span > small {
+  display: block;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  line-height: 1.45;
+}
+
+.mnx-communication-setting-row > svg,
+.mnx-communication-health > div > svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-communication-setting-row > .mnx-badge,
+.mnx-communication-setting-row > .mnx-button,
+.mnx-communication-health > div > .mnx-badge {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-align: center;
 }
 
 .mnx-communication-detail-list dt,
@@ -1367,17 +1769,12 @@
 .mnx-gmail-topbar {
   align-items: stretch;
   justify-content: space-between;
-  gap: var(--mn-space-5);
-  padding: var(--mn-space-4) var(--mn-space-5);
-  border: 1px solid color-mix(in srgb, var(--mnx-border) 82%, transparent);
-  border-radius: calc(var(--mn-radius-panel) - 0.15rem);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--mnx-surface) 92%, var(--mnx-canvas)) 0%,
-      color-mix(in srgb, var(--mnx-surface-soft) 88%, var(--mnx-surface)) 100%
-    );
-  box-shadow: 0 1rem 2.4rem rgb(15 23 42 / 0.06);
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-3) var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow-soft);
 }
 
 .mnx-gmail-topbar-primary {
@@ -1428,12 +1825,11 @@
 
 .mnx-gmail-topbar-search {
   flex: 1 1 auto;
-  min-height: 3.85rem;
-  padding: 0 var(--mn-space-4) 0 var(--mn-space-4);
+  min-height: 2.75rem;
+  padding: 0 var(--mn-space-3);
   border: 1px solid var(--mnx-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mnx-surface) 96%, var(--mnx-canvas));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
 }
 
 .mnx-gmail-topbar-search > svg,
@@ -1479,22 +1875,21 @@
 }
 
 .mnx-gmail-topbar-action-group {
-  padding: 0.3rem;
-  border: 1px solid color-mix(in srgb, var(--mnx-border) 80%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mnx-surface) 94%, var(--mnx-canvas));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
+  padding: 0.25rem;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
 }
 
 .mnx-gmail-topbar-action {
-  min-height: 2.75rem;
-  padding-inline: 1rem;
-  border-radius: 999px;
+  min-height: 2.25rem;
+  padding-inline: var(--mn-space-3);
+  border-radius: calc(var(--mn-radius-control) - 0.15rem);
 }
 
 .mnx-gmail-shell {
   display: grid;
-  grid-template-columns: minmax(15rem, 17.5rem) minmax(0, 1fr);
+  grid-template-columns: minmax(11rem, 12.5rem) minmax(0, 1fr);
   min-height: calc(100dvh - 15rem);
   overflow: hidden;
   border: 1px solid var(--mnx-border);
@@ -1504,19 +1899,19 @@
 
 .mnx-gmail-sidebar {
   display: grid;
-  gap: var(--mn-space-5);
+  gap: var(--mn-space-3);
   align-content: start;
   min-width: 0;
-  padding: var(--mn-space-5) var(--mn-space-4) var(--mn-space-6);
+  padding: var(--mn-space-3) var(--mn-space-2) var(--mn-space-4);
   border-right: 1px solid var(--mnx-border);
   background: color-mix(in srgb, var(--mnx-surface-soft) 72%, var(--mnx-canvas));
 }
 
 .mnx-gmail-compose-button {
   justify-content: flex-start;
-  min-height: 3.5rem;
-  padding-inline: var(--mn-space-5);
-  border-radius: 1.2rem;
+  min-height: 2.4rem !important;
+  padding-inline: var(--mn-space-3);
+  border-radius: var(--mn-radius-control);
   background: color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-surface));
   color: var(--mnx-text-strong);
 }
@@ -1529,25 +1924,40 @@
 .mnx-gmail-compose-attachments,
 .mnx-gmail-modal-card-body {
   display: grid;
-  gap: var(--mn-space-2);
+  gap: 0.125rem;
+}
+
+.mnx-gmail-sidebar-more {
+  justify-content: flex-start;
+  width: 100%;
+  margin-top: var(--mn-space-1);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
 }
 
 .mnx-gmail-folder-button {
   display: flex;
+  width: 100%;
   min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mn-space-3);
-  min-height: 2.75rem;
-  padding: 0 var(--mn-space-4);
+  gap: var(--mn-space-2);
+  min-height: 1.9rem !important;
+  padding: 0 var(--mn-space-2) !important;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--mn-radius-control);
   color: var(--mnx-text);
   background: transparent;
+  font-size: var(--mn-font-size-sm);
   text-align: left;
   transition:
     background var(--mn-motion-fast),
     color var(--mn-motion-fast);
+}
+
+.mnx-gmail-folder-button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .mnx-gmail-folder-button:hover,
@@ -1611,7 +2021,7 @@
 
 .mnx-gmail-list-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 19rem);
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 15rem);
   min-width: 0;
   min-height: 0;
 }
@@ -1652,8 +2062,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mn-space-4);
-  padding: var(--mn-space-5) var(--mn-space-5) var(--mn-space-4);
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-3) var(--mn-space-4);
   border-bottom: 1px solid var(--mnx-border);
 }
 
@@ -1665,12 +2075,16 @@
 
 .mnx-gmail-list-title > div {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.1rem;
 }
 
 .mnx-gmail-list-title strong {
-  font-size: var(--mn-type-heading-size);
+  font-size: var(--mn-type-title-size);
   color: var(--mnx-text-strong);
+}
+
+.mnx-gmail-list-title p {
+  font-size: var(--mn-font-size-xs);
 }
 
 .mnx-gmail-list-title p {
@@ -1695,8 +2109,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mn-space-3);
-  padding: var(--mn-space-4) var(--mn-space-5);
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-2) var(--mn-space-4);
   border-bottom: 1px solid var(--mnx-border);
 }
 
@@ -1704,8 +2118,8 @@
   display: flex;
   align-items: center;
   gap: var(--mn-space-2);
-  min-height: 2.75rem;
-  min-width: min(100%, 15.5rem);
+  min-height: 2.25rem;
+  min-width: min(100%, 14rem);
   padding: 0 var(--mn-space-3);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mn-radius-control);
@@ -1721,15 +2135,15 @@
 }
 
 .mnx-gmail-filter-chip {
-  min-height: 2.5rem;
+  min-height: 2rem;
 }
 
 .mnx-gmail-toolbar {
   justify-content: space-between;
-  min-height: 3.75rem;
-  padding: var(--mn-space-3);
+  min-height: auto;
+  padding: var(--mn-space-2) var(--mn-space-3);
   border-bottom: 1px solid var(--mnx-border);
-  align-items: flex-start;
+  align-items: center;
 }
 
 .mnx-gmail-toolbar-left,
@@ -1752,11 +2166,11 @@
 
 .mnx-gmail-tab {
   display: grid;
-  gap: var(--mn-space-1);
-  min-height: 4.5rem;
-  padding: var(--mn-space-4);
+  gap: 0.1rem;
+  min-height: 3.25rem;
+  padding: var(--mn-space-2) var(--mn-space-4);
   border: 0;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--mnx-text);
   text-align: left;
@@ -1791,13 +2205,14 @@
 
 .mnx-gmail-thread-row {
   display: grid;
-  grid-template-columns: auto minmax(10rem, 12.5rem) minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(9rem, 11rem) minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--mn-space-3);
-  min-height: 3.75rem;
-  padding: 0 var(--mn-space-3);
+  min-height: 3rem;
+  padding: 0 var(--mn-space-4);
   border-bottom: 1px solid var(--mnx-border);
   background: var(--mnx-surface);
+  font-size: var(--mn-font-size-sm);
   cursor: pointer;
 }
 
@@ -2172,20 +2587,20 @@
 .mnx-gmail-insights {
   display: grid;
   align-content: start;
-  gap: var(--mn-space-4);
+  gap: var(--mn-space-3);
   min-width: 0;
-  padding: var(--mn-space-5);
+  padding: var(--mn-space-3);
   background: color-mix(in srgb, var(--mnx-surface-soft) 35%, var(--mnx-canvas));
 }
 
 .mnx-gmail-insight-card {
   display: grid;
-  gap: var(--mn-space-4);
-  padding: var(--mn-space-4);
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-3);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mn-radius-panel);
   background: var(--mnx-surface);
-  box-shadow: var(--mnx-shadow);
+  box-shadow: var(--mnx-shadow-soft);
 }
 
 .mnx-gmail-insight-card-header {
@@ -2216,6 +2631,7 @@
 
 .mnx-gmail-insight-stat span {
   color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
 }
 
 .mnx-gmail-action-list,
@@ -2482,7 +2898,7 @@
 
 [data-communication-chat="true"] {
   display: grid;
-  grid-template-columns: minmax(20rem, 20rem) minmax(0, 1fr) minmax(18rem, 20rem);
+  grid-template-columns: minmax(14rem, 15rem) minmax(0, 1fr) minmax(14rem, 15.5rem);
   height: auto;
   min-height: calc(100dvh - 11rem);
   min-width: 0;
@@ -2503,33 +2919,33 @@
 
 [data-communication-chat-sidebar-header="true"] {
   min-height: auto;
-  padding: var(--mn-space-5);
+  padding: var(--mn-space-3);
   background: var(--mnx-surface);
 }
 
 [data-communication-chat-sidebar-search="true"] {
-  padding: var(--mn-space-3);
+  padding: var(--mn-space-2);
   background: transparent;
 }
 
 [data-communication-chat-sidebar-search="true"] .mnx-field-control {
-  min-height: 3rem;
-  border-radius: 1rem;
+  min-height: 2.25rem;
+  border-radius: var(--mn-radius-control);
   background: var(--mnx-surface);
   box-shadow: none;
 }
 
 [data-communication-chat-sidebar-tabs="true"] {
   display: grid;
-  gap: var(--mn-space-1);
-  padding: 0 var(--mn-space-3) var(--mn-space-3);
+  gap: 0.125rem;
+  padding: 0 var(--mn-space-2) var(--mn-space-2);
   background: transparent;
 }
 
 [data-communication-chat-sidebar-tabs="true"] .mnx-button {
-  min-height: 2.8rem;
+  min-height: 2rem;
   justify-content: flex-start;
-  border-radius: 1rem;
+  border-radius: var(--mn-radius-control);
   box-shadow: none;
   border-color: transparent;
   background: transparent;
@@ -2537,13 +2953,13 @@
 
 [data-communication-chat-rail="true"] {
   min-height: 0;
-  padding: var(--mn-space-4) var(--mn-space-3);
-  gap: var(--mn-space-5);
+  padding: var(--mn-space-3) var(--mn-space-2);
+  gap: var(--mn-space-3);
 }
 
 [data-communication-chat-header="true"] {
-  min-height: 6rem;
-  padding: var(--mn-space-4) var(--mn-space-6);
+  min-height: 0;
+  padding: var(--mn-space-2) var(--mn-space-4);
   background: var(--mnx-surface);
 }
 
@@ -2602,13 +3018,13 @@
 }
 
 [data-communication-chat-composer="true"] {
-  padding: var(--mn-space-5);
+  padding: var(--mn-space-3);
   background: var(--mnx-surface);
 }
 
 [data-communication-chat-composer="true"] .mnx-field-textarea {
-  min-height: 7rem;
-  padding: var(--mn-space-5);
+  min-height: 3.25rem;
+  padding: var(--mn-space-3);
 }
 
 [data-communication-chat-context="true"] {
@@ -2617,7 +3033,7 @@
 }
 
 [data-communication-chat-context-body="true"] {
-  padding: var(--mn-space-4);
+  padding: var(--mn-space-3);
 }
 
 [data-communication-chat-context-body="true"] .mnx-button {
@@ -2774,7 +3190,6 @@
 }
 
 @media (max-width: 42rem) {
-  .mnx-communication-overview-connection,
   .mnx-communication-overview-health-copy,
   .mnx-communication-overview-alert-row,
   .mnx-communication-overview-meeting-row {
@@ -2784,18 +3199,6 @@
   .mnx-communication-overview-kpi-grid,
   .mnx-communication-overview-analytics-grid {
     grid-template-columns: 1fr;
-  }
-
-  .mnx-communication-overview-activity-table-head {
-    display: none;
-  }
-
-  .mnx-communication-overview-activity-row {
-    grid-template-columns: 1fr;
-  }
-
-  .mnx-communication-overview-activity-row span {
-    white-space: normal;
   }
 
   .mnx-communication-overview-alert-row,

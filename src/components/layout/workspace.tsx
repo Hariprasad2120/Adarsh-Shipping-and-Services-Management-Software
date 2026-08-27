@@ -110,10 +110,15 @@ export function WorkspaceSectionHeading({
 }: WorkspaceSectionHeadingProps) {
   const Heading: React.ElementType = `h${level}`;
 
+  // When a section has no title it carries no heading weight — skip it entirely
+  // so pages don't render an empty duplicate of the header sitting above it.
+  if (title === undefined || title === null || title === false || title === "") {
+    return null;
+  }
+
   return (
     <header className={cn("mnx-section-heading", className)} {...props}>
       <div className="mnx-section-heading-title">
-        <span className="mnx-section-heading-index">{index}</span>
         <Heading>
           <span className="mnx-section-heading-text">{title}</span>
           {badge ? <span className="mnx-section-heading-badge">{badge}</span> : null}
@@ -364,14 +369,20 @@ export function WorkspacePanelHeader({
     </WorkspaceCardInfo>
   ) : null;
 
+  const hasIdentity =
+    Boolean(eyebrow) ||
+    !(title === undefined || title === null || title === false || title === "");
+
   return (
     <header className={cn("mnx-table-toolbar", className)} {...props}>
-      <div className="mnx-panel-header-copy">
-        {eyebrow ? (
-          <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel>
-        ) : null}
-        <h2>{title}</h2>
-      </div>
+      {hasIdentity ? (
+        <div className="mnx-panel-header-copy">
+          {eyebrow ? <MonolithSpecLabel>{eyebrow}</MonolithSpecLabel> : null}
+          {title ? <h2>{title}</h2> : null}
+        </div>
+      ) : (
+        <div aria-hidden="true" />
+      )}
       {panelInfo || actions ? (
         <div className="mnx-panel-actions">
           {panelInfo}

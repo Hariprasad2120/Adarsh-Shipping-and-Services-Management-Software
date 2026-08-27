@@ -6,7 +6,6 @@ import {
   ExternalLink,
   File,
   Folder,
-  HardDrive,
 } from "lucide-react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
@@ -72,7 +71,6 @@ export default async function JobDrivePortal({
           eyebrow="Document context"
           title="Select a job workspace"
           description="Browse the controlled Google Drive hierarchy provisioned for a CHA job."
-          actions={<HardDrive aria-hidden="true" />}
         />
         <div className="mnx-communication-panel-body">
           <CommunicationField label="Job workspace">
@@ -120,10 +118,12 @@ export default async function JobDrivePortal({
                   href={`/communication/drive?jobId=${selectedJobId}&folderId=${folderId}`}
                   className="mnx-communication-folder"
                 >
-                  <Folder aria-hidden="true" />
-                  <span>
+                  <span className="mnx-communication-folder-icon">
+                    <Folder aria-hidden="true" />
+                  </span>
+                  <span className="mnx-communication-folder-copy">
                     <strong>{categoryName.substring(3)}</strong>
-                    <small>Code: {categoryName.substring(0, 2)}</small>
+                    <small>Code {categoryName.substring(0, 2)}</small>
                   </span>
                 </Link>
               ))}
@@ -186,7 +186,6 @@ export default async function JobDrivePortal({
             eyebrow="Drive synchronisation"
             title="Drive folder not synchronised"
             description={`The real Google Drive hierarchy for ${currentJob.jobNumber} is missing, pending, failed, or still using a mock profile.`}
-            actions={<HardDrive aria-hidden="true" />}
           />
           <div className="mnx-communication-panel-body">
             <p>

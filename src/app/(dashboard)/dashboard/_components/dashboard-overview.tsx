@@ -154,21 +154,23 @@ export function DashboardOverview({
                   )}
                   title="Priority focus"
                 />
-                {nextTask ? (
-                  <>
-                    <h3>{nextTask.title}</h3>
-                    <p>Due {formatDate(nextTask.dueDate)}</p>
-                    <Badge className={`mnx-priority-${nextTask.priority.toLowerCase()}`}>
-                      <i />
-                      {nextTask.priority} priority
-                    </Badge>
-                  </>
-                ) : (
-                  <div className="mnx-empty-compact">
-                    <CheckCircle2 size={20} />
-                    <p>You are fully caught up for now.</p>
-                  </div>
-                )}
+                <div className="mnx-dashboard-announcement-shadow">
+                  {nextTask ? (
+                    <>
+                      <h3>{nextTask.title}</h3>
+                      <p>Due {formatDate(nextTask.dueDate)}</p>
+                      <Badge className={`mnx-priority-${nextTask.priority.toLowerCase()}`}>
+                        <i />
+                        {nextTask.priority} priority
+                      </Badge>
+                    </>
+                  ) : (
+                    <div className="mnx-empty-compact">
+                      <CheckCircle2 size={20} />
+                      <p>You are fully caught up for now.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </section>
@@ -186,26 +188,30 @@ export function DashboardOverview({
             />
 
             <section>
-              <div className="mnx-task-list">
-                {data.recentTasks.length > 0 ? data.recentTasks.slice(0, 5).map((task) => (
-                  <article key={task.id}>
-                    <span className="mnx-task-check" aria-hidden="true" />
-                    <div>
-                      <h3>{task.title}</h3>
-                      <p>Due {formatDate(task.dueDate)}</p>
-                    </div>
-                    <Badge className={`mnx-priority-${task.priority.toLowerCase()}`}>
-                      {task.priority}
-                    </Badge>
-                  </article>
-                )) : (
+              {data.recentTasks.length > 0 ? (
+                <div className="mnx-task-list">
+                  {data.recentTasks.slice(0, 5).map((task) => (
+                    <article key={task.id}>
+                      <span className="mnx-task-check" aria-hidden="true" />
+                      <div>
+                        <h3>{task.title}</h3>
+                        <p>Due {formatDate(task.dueDate)}</p>
+                      </div>
+                      <Badge className={`mnx-priority-${task.priority.toLowerCase()}`}>
+                        {task.priority}
+                      </Badge>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mnx-dashboard-announcement-shadow">
                   <MonolithEmptyState>
                     <CheckCircle2 size={24} />
                     <h3>The board is clear</h3>
                     <p>No pending tasks require your attention.</p>
                   </MonolithEmptyState>
-                )}
-              </div>
+                </div>
+              )}
 
               <Link className="mnx-text-link" href="/todo">
                 Open task workspace <ArrowUpRight size={14} />

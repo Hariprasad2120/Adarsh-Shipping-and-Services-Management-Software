@@ -92,22 +92,22 @@ export function FileUploadField({
   }
 
   return (
-    <div className={cn(compact ? "grid gap-2" : "grid gap-3", className)}>
+    <div className={cn("mnx-document-dropzone-field", className)}>
       {label ? <Label>{label}</Label> : null}
       <label
         htmlFor={id}
         className={cn(
-          "dropzone",
-          compact && "!p-4",
-          disabled && "pointer-events-none opacity-50",
+          "mnx-document-dropzone",
+          compact && "!min-h-0 !p-4",
+          disabled && "is-disabled",
         )}
         onDragOver={(event) => event.preventDefault()}
         onDrop={handleDrop}
       >
-        <div className="upload-icon">
+        <div className="mnx-document-dropzone-icon">
           {uploading ? "..." : <Upload className="h-5 w-5" />}
         </div>
-        <b>{uploading ? uploadingLabel : triggerText}</b>
+        <strong>{uploading ? uploadingLabel : triggerText}</strong>
         {helperText ? <p>{helperText}</p> : null}
         <input
           ref={inputRef}
@@ -122,7 +122,7 @@ export function FileUploadField({
         />
       </label>
       {showSelectedPreview && previewFiles.length > 0 ? (
-        <div className="grid gap-2">
+        <div className="mnx-document-dropzone-preview">
           {previewFiles.map((file, index) => (
             <div key={`${file.name}-${index}`} className="mnx-file-row">
               <FileText className="h-4 w-4" />
