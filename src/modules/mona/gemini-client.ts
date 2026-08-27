@@ -4,7 +4,6 @@ import type {
   GeminiResponse,
   GeminiContent,
   GeminiFunctionDeclaration,
-  GeminiPart,
 } from "./types";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -16,25 +15,19 @@ export const AVAILABLE_MODELS = [
   { id: "models/gemini-1.5-flash", name: "Gemini 1.5 Flash", description: "Previous gen, separate quota" },
 ] as const;
 
-/** Currently preferred model — set by the user via settings */
-let preferredModelId: string = AVAILABLE_MODELS[0].id;
+export const DEFAULT_MODEL_ID = AVAILABLE_MODELS[0].id;
 
-export function setPreferredModel(modelId: string) {
-  const valid = AVAILABLE_MODELS.find((m) => m.id === modelId);
-  if (valid) preferredModelId = modelId;
-}
-
-export function getPreferredModel(): string {
-  return preferredModelId;
-}
-
-// Cooldown: once quota is exhausted, stop making API calls for 60s
-let quotaCooldownUntil = 0;
+// Cooldown: once quota is exhausted for a specific model, stop making API calls for 60s
+const quotaCooldownUntilByModel = new Map<string, number>();
 const QUOTA_COOLDOWN_MS = 60_000;
 
 /** Reset cooldown — called when user switches models */
-export function resetQuotaCooldown() {
-  quotaCooldownUntil = 0;
+export function resetQuotaCooldown(modelId?: string) {
+  if (modelId) {
+    quotaCooldownUntilByModel.delete(modelId);
+    return;
+  }
+  quotaCooldownUntilByModel.clear();
 }
 
 function getApiKey(): string {
@@ -53,6 +46,7 @@ function getApiKey(): string {
  */
 export async function callGemini(opts: {
   contents: GeminiContent[];
+  modelId?: string;
   systemInstruction?: string;
   tools?: GeminiFunctionDeclaration[];
   temperature?: number;
@@ -81,13 +75,14 @@ export async function callGemini(opts: {
 
   let lastError: Error | null = null;
 
-  // If we recently hit quota exhaustion, fail fast — don't burn more requests
-  if (quotaCooldownUntil > Date.now()) {
+  const modelId = opts.modelId ?? DEFAULT_MODEL_ID;
+  const cooldownUntil = quotaCooldownUntilByModel.get(modelId) ?? 0;
+
+  // If we recently hit quota exhaustion for this model, fail fast
+  if (cooldownUntil > Date.now()) {
     throw new Error("[Mona] 429 quota exhausted — cooling down");
   }
 
-  // Use only the user's preferred model (no auto-fallback to avoid burning quota)
-  const modelId = preferredModelId;
   const url = `${GEMINI_API_BASE}/${modelId}:generateContent?key=${apiKey}`;
   const MAX_RETRIES = 1; // Single attempt — don't retry on quota errors
 
@@ -105,7 +100,7 @@ export async function callGemini(opts: {
           // Quota exhausted — activate cooldown, fail immediately
           if (res.status === 429 && errorText.includes("RESOURCE_EXHAUSTED")) {
             console.warn(`[Mona] ${modelId} quota exhausted, cooldown activated`);
-            quotaCooldownUntil = Date.now() + QUOTA_COOLDOWN_MS;
+            quotaCooldownUntilByModel.set(modelId, Date.now() + QUOTA_COOLDOWN_MS);
             throw new Error(`[Mona] 429 quota exhausted: ${errorText.slice(0, 300)}`);
           }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- existing offline matcher consumes heterogeneous tool payloads and this Phase 4 pass only adds citation metadata around that flow */
 // ─── Mona Local Request Engine ───────────────────────────────────────────────
 //
 // Local fallback engine to parse and reply to user queries when Gemini API
@@ -6,8 +7,16 @@
 //
 
 import type { MonaContext, MonaChatResponse } from "./types";
+import {
+  createFaqCitation,
+  createToolCitations,
+} from "./citations";
+import { HOW_TO_GUIDES, MONOLITH_MODULES, STATIC_FAQS } from "./knowledge-base";
+import {
+  searchMonaKnowledge,
+  searchMonaKnowledgeForContext,
+} from "./knowledge";
 import { executeTool } from "./tools";
-import { MONOLITH_MODULES, HOW_TO_GUIDES, STATIC_FAQS } from "./knowledge-base";
 
 /**
  * Handles incoming chat messages locally.
@@ -25,6 +34,14 @@ export async function handleOfflineQuery(
     const isWelcome = 
       query.includes("greet me") || 
       query.includes("proactive insights") || 
+      query.includes("my work today") ||
+      query.includes("morning brief") ||
+      query.includes("overdue blockers") ||
+      query.includes("pending approvals") ||
+      query.includes("waiting-for") ||
+      query.includes("waiting for") ||
+      query.includes("follow-up reminders") ||
+      query.includes("follow ups") ||
       query.includes("needs my attention") || 
       query === "hi" || 
       query === "hello" || 
@@ -33,23 +50,13 @@ export async function handleOfflineQuery(
     if (isWelcome) {
       toolsUsed.push("getProactiveInsights");
       const res = (await executeTool("getProactiveInsights", {}, ctx)) as any;
-      
-      let insightBlock = "";
-      if (res && res.insights && res.insights.length > 0) {
-        res.insights.forEach((ins: string) => {
-          insightBlock += `- ${ins}\n`;
-        });
-      } else {
-        insightBlock += `- ✅ You are completely caught up! No urgent alerts.\n`;
-      }
 
       const firstName = ctx.userName.split(" ")[0];
-      const content = `Hello, **${firstName}**! 👋 Welcome back to Monolith Engine.\n\n` +
-        `I am operating in **Offline Support Mode** since the primary Gemini AI service is currently unavailable. However, I can still query your database locally!\n\n` +
-        `**Here is what needs your attention today:**\n${insightBlock}\n` +
-        `Ask me about your **tasks**, **attendance**, **leaves**, or search the platform **features** and **how-to guides**!`;
+      const intro = `Hello, **${firstName}**! 👋 Welcome back to Monolith Engine.\n\n` +
+        `I am operating in **Offline Support Mode** since the primary Gemini AI service is currently unavailable. However, I can still query your database locally!\n\n`;
+      const content = intro + buildOfflineProactiveBrief(res);
 
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // 2. Identify query category
@@ -79,7 +86,7 @@ export async function handleOfflineQuery(
         `- **Department**: ${res.department}\n` +
         `- **Branch**: ${res.branch}\n` +
         `- **Reporting Manager**: ${res.manager}`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Attendance
@@ -103,7 +110,7 @@ export async function handleOfflineQuery(
         content += `- No punches recorded in the last 7 days.\n`;
       }
       content += `\nYou can punch in/out or view complete logs at **/attendance/punch**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Leaves
@@ -131,7 +138,7 @@ export async function handleOfflineQuery(
         content += `- No pending leave applications.\n`;
       }
       content += `\nYou can request new leaves or verify balances at **/attendance/leaves**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Tasks
@@ -160,7 +167,7 @@ export async function handleOfflineQuery(
         content += `- No pending HRMS checklists.\n`;
       }
       content += `\nManage personal items at **/todo** or view team tasks at **/hrms/tasks**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Notifications
@@ -179,7 +186,7 @@ export async function handleOfflineQuery(
         content += `- No recent notifications.\n`;
       }
       content += `\nView full notifications center at **/notifications**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Help Desk / Support Cases
@@ -198,10 +205,129 @@ export async function handleOfflineQuery(
         content += `- No open help desk support cases.\n`;
       }
       content += `\nFile a ticket or check update progress at **/hrms/helpdesk**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // CRM Leads Summary (requires crm.lead.read)
+    if (matchKeywords(query, ["worth pursuing", "customer worth pursuing", "best customer to pursue", "pursue first"])) {
+      if (!ctx.permissions.includes("crm.lead.read") || !ctx.permissions.includes("crm.deal.manage")) {
+        return { content: "You do not have the CRM permissions required to review cross-module customer pursuit priorities.", toolsUsed };
+      }
+      toolsUsed.push("getCustomerWorthPursuing");
+      const res = (await executeTool("getCustomerWorthPursuing", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't generate pursuit priorities: ${res.error}`, toolsUsed };
+      }
+      let content = `Customer Worth Pursuing\n`;
+      if (res.headline) {
+        content += `- **Headline**: ${res.headline}\n`;
+      }
+      content += `\n**Top Accounts**\n`;
+      if (res.topAccounts?.length > 0) {
+        res.topAccounts.forEach((account: any) => {
+          content += `- **${account.accountName}**: ₹${Number(account.weightedPipelineValue).toLocaleString("en-IN")} weighted pipeline, ${account.openDeals} open deals, ${account.pendingQuotes} live quotes, ${account.overdueFollowUps} overdue follow-ups\n`;
+          if (account.reasons?.length) {
+            content += `  Reasons: ${account.reasons.join(" · ")}\n`;
+          }
+        });
+      } else {
+        content += `- No strong account pursuit signals found.\n`;
+      }
+      if (res.topProspects?.length > 0) {
+        content += `\n**Prospects To Keep Warm**\n`;
+        res.topProspects.forEach((lead: any) => {
+          content += `- **${lead.company}** (${lead.status}, ${lead.rating})${lead.contactName ? ` · ${lead.contactName}` : ""}\n`;
+        });
+      }
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    if (matchKeywords(query, ["quote follow up priority", "quotation follow up priority", "quotes need follow up", "quote sla"])) {
+      if (!ctx.permissions.includes("crm.invoice.manage")) {
+        return { content: "You do not have the quotation permissions required to review follow-up priorities.", toolsUsed };
+      }
+      toolsUsed.push("getQuoteFollowUpPriorities");
+      const res = (await executeTool("getQuoteFollowUpPriorities", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't rank quote follow-up priorities: ${res.error}`, toolsUsed };
+      }
+      let content = `Quote Follow-up Priorities\n`;
+      if (res.headline) {
+        content += `- **Headline**: ${res.headline}\n`;
+      }
+      content += `\n**Priority Queue**\n`;
+      if (res.prioritizedQuotes?.length > 0) {
+        res.prioritizedQuotes.forEach((quote: any) => {
+          content += `- **${quote.quoteNumber}** for ${quote.customerName}: ${quote.approvalStatus} · ₹${Number(quote.total).toLocaleString("en-IN")}\n`;
+          if (quote.reasons?.length) {
+            content += `  Reasons: ${quote.reasons.join(" · ")}\n`;
+          }
+        });
+      } else {
+        content += `- No quote follow-up priorities are active.\n`;
+      }
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    if (matchKeywords(query, ["job risk", "jobs at risk", "risk overview", "cha risk"])) {
+      if (!ctx.permissions.includes("cha.job.read")) {
+        return { content: "You do not have the CHA job permissions required to inspect job risk.", toolsUsed };
+      }
+      toolsUsed.push("getJobRiskOverview");
+      const res = (await executeTool("getJobRiskOverview", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't generate the job risk overview: ${res.error}`, toolsUsed };
+      }
+      let content = `Job Risk Overview\n`;
+      if (res.headline) {
+        content += `- **Headline**: ${res.headline}\n`;
+      }
+      if (res.summary) {
+        content += `- **High risk**: ${res.summary.highRisk}\n`;
+        content += `- **Medium risk**: ${res.summary.mediumRisk}\n`;
+        content += `- **Watch list**: ${res.summary.watchList}\n`;
+      }
+      content += `\n**At-Risk Jobs**\n`;
+      if (res.atRiskJobs?.length > 0) {
+        res.atRiskJobs.forEach((job: any) => {
+          content += `- **${job.jobNumber}** · ${job.customerName} (${job.priority}/${job.stage})\n`;
+          if (job.reasons?.length) {
+            content += `  Reasons: ${job.reasons.join(" · ")}\n`;
+          }
+        });
+      } else {
+        content += `- No elevated job risks found.\n`;
+      }
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    if (matchKeywords(query, ["outstanding payment", "outstanding receivable", "receivables", "collections summary", "payment relationship"])) {
+      if (!ctx.permissions.includes("accounting.journal.read") || !ctx.permissions.includes("crm.deal.manage")) {
+        return { content: "You do not have the accounting and CRM permissions required to inspect outstanding-payment relationship summaries.", toolsUsed };
+      }
+      toolsUsed.push("getOutstandingPaymentRelationshipSummary");
+      const res = (await executeTool("getOutstandingPaymentRelationshipSummary", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't generate the receivables relationship summary: ${res.error}`, toolsUsed };
+      }
+      let content = `Outstanding Payment + Relationship Summary\n`;
+      if (res.headline) {
+        content += `- **Headline**: ${res.headline}\n`;
+      }
+      content += `\n**Priority Accounts**\n`;
+      if (res.prioritizedAccounts?.length > 0) {
+        res.prioritizedAccounts.forEach((account: any) => {
+          content += `- **${account.customerName}**: ₹${Number(account.totalOutstanding).toLocaleString("en-IN")} outstanding, ${account.overdueInvoices} overdue invoices, ${account.openDeals} open deals\n`;
+          if (account.reasons?.length) {
+            content += `  Reasons: ${account.reasons.join(" · ")}\n`;
+          }
+        });
+      } else {
+        content += `- No receivables pressure signals found.\n`;
+      }
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
     if (matchKeywords(query, ["lead", "leads"])) {
       if (!ctx.permissions.includes("crm.lead.read")) {
         return { content: "You do not have permission key `crm.lead.read` required to access CRM lead summaries.", toolsUsed };
@@ -224,7 +350,7 @@ export async function handleOfflineQuery(
         content += `- No lead records found.\n`;
       }
       content += `\nManage lead pipelines at **/crm/leads**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // CRM Deals Summary (requires crm.deal.manage)
@@ -250,7 +376,63 @@ export async function handleOfflineQuery(
         content += `- No deals found in CRM.\n`;
       }
       content += `\nInspect pipeline kanban cards at **/crm/deals**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    // CRM Enquiries Summary
+    if (matchKeywords(query, ["enquiry", "enquiries", "inquiry", "pricing", "rate request"])) {
+      if (!ctx.permissions.includes("crm.lead.read")) {
+        return { content: "You do not have permission key `crm.lead.read` required to access CRM enquiry summaries.", toolsUsed };
+      }
+      toolsUsed.push("getCrmEnquiriesSummary");
+      const res = (await executeTool("getCrmEnquiriesSummary", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't retrieve enquiry summaries: ${res.error}`, toolsUsed };
+      }
+      let content = `CRM Enquiries Summary (Total Enquiries: **${res.totalEnquiries}**)\n\n**By Status:**\n`;
+      res.byStatus.forEach((entry: any) => {
+        content += `- **${entry.status}**: ${entry.count}\n`;
+      });
+      content += `\n**By Service Type:**\n`;
+      res.byServiceType.forEach((entry: any) => {
+        content += `- **${entry.serviceType}**: ${entry.count}\n`;
+      });
+      content += `\n**Recent Enquiries:**\n`;
+      if (res.recentEnquiries.length > 0) {
+        res.recentEnquiries.forEach((entry: any) => {
+          content += `- **${entry.enquiryRef}** · ${entry.company} (${entry.serviceType} | ${entry.status})\n`;
+        });
+      } else {
+        content += `- No recent enquiries found.\n`;
+      }
+      content += `\nReview the live workflow at **/crm/enquiries**`;
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    // CRM Quotes Summary
+    if (matchKeywords(query, ["quote", "quotes", "quotation", "quotations"])) {
+      if (!ctx.permissions.includes("crm.invoice.manage")) {
+        return { content: "You do not have permission key `crm.invoice.manage` required to access CRM quotation summaries.", toolsUsed };
+      }
+      toolsUsed.push("getCrmQuotesSummary");
+      const res = (await executeTool("getCrmQuotesSummary", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't retrieve quotation summaries: ${res.error}`, toolsUsed };
+      }
+      let content = `CRM Quotes Summary (Total Quotes: **${res.totalQuotes}** | Total Value: **₹${Number(res.totalQuotedValue).toLocaleString("en-IN")}**)\n\n**By Approval Status:**\n`;
+      res.byApprovalStatus.forEach((entry: any) => {
+        content += `- **${entry.status}**: ${entry.count} (₹${Number(entry.totalValue).toLocaleString("en-IN")})\n`;
+      });
+      content += `\n**Recent Quotes:**\n`;
+      if (res.recentQuotes.length > 0) {
+        res.recentQuotes.forEach((entry: any) => {
+          content += `- **${entry.quoteNumber}** for ${entry.customerName} (${entry.approvalStatus} | ₹${Number(entry.total).toLocaleString("en-IN")})\n`;
+        });
+      } else {
+        content += `- No recent quotes found.\n`;
+      }
+      content += `\nReview the quotation workspace at **/crm/quotes**`;
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Team Attendance Summary (requires attendance.punch.manage)
@@ -270,7 +452,7 @@ export async function handleOfflineQuery(
         `- **Absent**: ${res.absent}\n` +
         `- **Daily Attendance Rate**: ${res.attendanceRate}%\n\n` +
         `Analyze attendance reports at **/attendance/reports**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // Letter Templates (requires hrms.letters.manage)
@@ -288,7 +470,92 @@ export async function handleOfflineQuery(
         content += `- **${t.name}** (Type: *${t.type}* | Status: ${t.isActive ? "Active" : "Inactive"})\n`;
       });
       content += `\nManage templates and issue new letters at **/hrms/letters**`;
-      return { content, toolsUsed };
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    // Communication Workspace
+    if (matchKeywords(query, ["mail", "email", "communication", "chat", "inbox", "thread"])) {
+      if (!ctx.permissions.includes("communication.mail.access")) {
+        return { content: "You do not have the communication mail access required to inspect communication workspace summaries.", toolsUsed };
+      }
+      toolsUsed.push("getCommunicationSummary");
+      const res = (await executeTool("getCommunicationSummary", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't retrieve communication activity: ${res.error}`, toolsUsed };
+      }
+      let content = `Communication Workspace Summary\n` +
+        `- **Org events in last 14 days**: ${res.totalEventsLast14Days}\n` +
+        `- **Your events in last 14 days**: ${res.myEventsLast14Days}\n\n` +
+        `**Recent Activity:**\n`;
+      if (res.recentActions.length > 0) {
+        res.recentActions.forEach((entry: any) => {
+          content += `- **${entry.action}** on ${entry.createdAt}: ${entry.details}\n`;
+        });
+      } else {
+        content += `- No recent communication activity recorded.\n`;
+      }
+      content += `\nOpen the workspace at **/communication**`;
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    // Accounting Workspace
+    if (matchKeywords(query, ["accounting", "finance", "journal", "payment entry", "payments"])) {
+      if (!ctx.permissions.includes("accounting.journal.read")) {
+        return { content: "You do not have the accounting read access required to inspect finance summaries.", toolsUsed };
+      }
+      toolsUsed.push("getAccountingSummary");
+      const res = (await executeTool("getAccountingSummary", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't retrieve accounting summaries: ${res.error}`, toolsUsed };
+      }
+      let content = `Accounting Summary\n\n**Document Statuses:**\n`;
+      res.documentStatuses.forEach((entry: any) => {
+        content += `- **${entry.status}**: ${entry.count} (₹${Number(entry.totalAmount).toLocaleString("en-IN")})\n`;
+      });
+      content += `\n**Payment Statuses:**\n`;
+      res.paymentStatuses.forEach((entry: any) => {
+        content += `- **${entry.status}**: ${entry.count}\n`;
+      });
+      content += `\n**Recent Documents:**\n`;
+      if (res.recentDocuments.length > 0) {
+        res.recentDocuments.forEach((entry: any) => {
+          content += `- **${entry.documentType}** (${entry.status}) on ${entry.postingDate} · ₹${Number(entry.totalAmount).toLocaleString("en-IN")}\n`;
+        });
+      } else {
+        content += `- No recent accounting documents found.\n`;
+      }
+      content += `\nOpen finance workspaces at **/accounting**`;
+      return withToolCitations(ctx, content, toolsUsed);
+    }
+
+    // CHA Jobs / Operations
+    if (matchKeywords(query, ["cha", "job", "jobs", "filing", "checklist", "clearance"])) {
+      if (!ctx.permissions.includes("cha.job.read")) {
+        return { content: "You do not have the CHA job access required to inspect operations summaries.", toolsUsed };
+      }
+      toolsUsed.push("getChaJobsSummary");
+      const res = (await executeTool("getChaJobsSummary", {}, ctx)) as any;
+      if (res.error) {
+        return { content: `I couldn't retrieve CHA job summaries: ${res.error}`, toolsUsed };
+      }
+      let content = `CHA Jobs Summary (Total Jobs: **${res.totalJobs}**)\n\n**By Stage:**\n`;
+      res.byStage.forEach((entry: any) => {
+        content += `- **${entry.stage}**: ${entry.count}\n`;
+      });
+      content += `\n**By Priority:**\n`;
+      res.byPriority.forEach((entry: any) => {
+        content += `- **${entry.priority}**: ${entry.count}\n`;
+      });
+      content += `\n**Recent Jobs:**\n`;
+      if (res.recentJobs.length > 0) {
+        res.recentJobs.forEach((entry: any) => {
+          content += `- **${entry.jobNumber}** · ${entry.title} (${entry.stage} | ${entry.priority})\n`;
+        });
+      } else {
+        content += `- No recent CHA jobs found.\n`;
+      }
+      content += `\nOpen the operations workspace at **/cha/jobs**`;
+      return withToolCitations(ctx, content, toolsUsed);
     }
 
     // If it's NOT a how-to query, but we didn't match a DB trigger, try How-To Guides now
@@ -297,34 +564,48 @@ export async function handleOfflineQuery(
       if (guideRes) return guideRes;
     }
 
-    // 4. Static FAQ Matching
-    for (const faq of STATIC_FAQS) {
-      if (matchKeywords(query, faq.keywords)) {
-        return { content: faq.answer, toolsUsed };
+    // 4. Static FAQ and module knowledge retrieval
+    const knowledgeHit = searchMonaKnowledge(query, 1)[0];
+    if (knowledgeHit?.kind === "faq") {
+      const faq = STATIC_FAQS.find(
+        (item) => knowledgeHit.id === `faq:${item.question.toLowerCase().replace(/\s+/g, "-")}`,
+      );
+      if (faq) {
+        return {
+          content: faq.answer,
+          toolsUsed,
+          citations: [knowledgeHit.citation],
+        };
       }
     }
 
-    // 5. Monolith Module Info Matching
-    let bestModule = null;
-    for (const mod of MONOLITH_MODULES) {
-      if (query.includes(mod.name.toLowerCase().split(" ")[0]) || query.includes(mod.name.toLowerCase())) {
-        bestModule = mod;
-        break;
+    if (knowledgeHit?.kind === "module") {
+      const moduleRes = buildModuleResponse(knowledgeHit.title, toolsUsed);
+      if (moduleRes) {
+        return moduleRes;
       }
     }
 
-    if (bestModule) {
-      let content = `### Module: ${bestModule.name}\n` +
-        `**Overview**: ${bestModule.description}\n\n` +
-        `**Features Available:**\n`;
-      bestModule.features.forEach((feat) => {
-        content += `- ${feat}\n`;
-      });
-      content += `\nLink to module: ${bestModule.path}`;
-      return { content, toolsUsed };
+    const contextualKnowledgeHit = await searchMonaKnowledgeForContext({
+      query: userMessage,
+      limit: 1,
+      orgId: ctx.orgId,
+      permissions: ctx.permissions,
+      userId: ctx.userId,
+    });
+    if (contextualKnowledgeHit[0]?.kind === "document") {
+      return {
+        content:
+          `I found an approved internal template that looks relevant:\n` +
+          `- **${contextualKnowledgeHit[0].title}**\n` +
+          `- ${contextualKnowledgeHit[0].summary}\n\n` +
+          `Open **/hrms/letters** to review or use this template.`,
+        toolsUsed,
+        citations: [contextualKnowledgeHit[0].citation],
+      };
     }
 
-    // 6. Generic Offline Help / Capability Request
+    // 5. Generic Offline Help / Capability Request
     if (query.includes("help") || query.includes("can you do") || query.includes("capabilities") || query.includes("what can you")) {
       const content = `### Mona's Offline Capabilities\n` +
         `I am running in **Offline Support Mode**. The primary Gemini AI is currently unavailable, but I can assist you with:\n\n` +
@@ -342,10 +623,18 @@ export async function handleOfflineQuery(
         `- What is the CRM module?\n` +
         `- What are the keyboard shortcuts?\n\n` +
         `Type any of these commands to get started!`;
-      return { content, toolsUsed };
+      return {
+        content,
+        toolsUsed,
+        citations: [createFaqCitation({
+          question: "Mona's offline capabilities",
+          answer: content,
+          keywords: ["offline", "capabilities", "help"],
+        })],
+      };
     }
 
-    // 7. Default Friendly Offline Fallback
+    // 6. Default Friendly Offline Fallback
     const content = `I am currently operating in **Offline Support Mode** because the primary Gemini AI service is rate-limited or offline.\n\n` +
       `I couldn't quite resolve your request: *"${userMessage}"* with my local rule-engine. However, I can still help you retrieve live database items and navigate Monolith modules!\n\n` +
       `**Try asking me one of the following:**\n` +
@@ -384,38 +673,123 @@ function matchKeywords(query: string, keywords: string[]): boolean {
  * Helper to match a how-to guide based on keyword phrase overlap scoring.
  */
 function matchGuide(query: string): MonaChatResponse | null {
-  let bestGuide = null;
-  let bestGuideScore = 0;
-
-  for (const guide of HOW_TO_GUIDES) {
-    let score = 0;
-    for (const kw of guide.keywords) {
-      if (kw.includes(" ")) {
-        const words = kw.toLowerCase().split(" ");
-        if (words.every((w) => query.includes(w))) {
-          score += 1.5; // High weight for phrase alignment
-        }
-      } else if (query.includes(kw.toLowerCase())) {
-        score += 1.0;
-      }
-    }
-    if (score > bestGuideScore) {
-      bestGuideScore = score;
-      bestGuide = guide;
-    }
+  const bestHit = searchMonaKnowledge(query, 1)[0];
+  if (bestHit?.kind !== "guide") {
+    return null;
   }
 
-  // Minimum threshold score to resolve guide
-  if (bestGuide && bestGuideScore >= 1.5) {
-    let content = `### ${bestGuide.title}\n\n`;
-    bestGuide.steps.forEach((step, idx) => {
-      content += `${idx + 1}. ${step}\n`;
+  const guide = HOW_TO_GUIDES.find(
+    (item) => bestHit.id === `guide:${item.title.toLowerCase().replace(/\s+/g, "-")}`,
+  );
+  if (!guide) {
+    return null;
+  }
+
+  let content = `### ${guide.title}\n\n`;
+  guide.steps.forEach((step, idx) => {
+    content += `${idx + 1}. ${step}\n`;
+  });
+  if (guide.path) {
+    content += `\nDirect page link: ${guide.path}`;
+  }
+
+  return {
+    content,
+    toolsUsed: [],
+    citations: [bestHit.citation],
+  };
+}
+
+function buildModuleResponse(
+  moduleTitle: string,
+  toolsUsed: string[],
+): MonaChatResponse | null {
+  const moduleInfo = MONOLITH_MODULES.find((item) => item.name === moduleTitle);
+  if (!moduleInfo) {
+    return null;
+  }
+
+  let content = `### Module: ${moduleInfo.name}\n` +
+    `**Overview**: ${moduleInfo.description}\n\n` +
+    `**Features Available:**\n`;
+  moduleInfo.features.forEach((feature) => {
+    content += `- ${feature}\n`;
+  });
+  content += `\nLink to module: ${moduleInfo.path}`;
+
+  const knowledgeHit = searchMonaKnowledge(moduleInfo.name, 1)[0];
+  return {
+    content,
+    toolsUsed,
+    citations: knowledgeHit ? [knowledgeHit.citation] : undefined,
+  };
+}
+
+function withToolCitations(
+  ctx: MonaContext,
+  content: string,
+  toolsUsed: string[],
+): MonaChatResponse {
+  return {
+    content,
+    toolsUsed,
+    citations: createToolCitations(toolsUsed, ctx),
+  };
+}
+
+function buildOfflineProactiveBrief(res: any): string {
+  const brief = res?.brief;
+  const sections = brief?.sections;
+  let content = "";
+
+  if (brief?.headline) {
+    content += `**Morning brief:** ${brief.headline}\n\n`;
+  } else {
+    content += `**Here is what needs your attention today:**\n`;
+  }
+
+  if (brief?.myWorkToday) {
+    content += `**My Work Today**\n`;
+    content += `- **Overdue blockers**: ${brief.myWorkToday.overdueBlockers}\n`;
+    content += `- **Approvals waiting**: ${brief.myWorkToday.approvalsWaiting}\n`;
+    content += `- **Follow-ups due**: ${brief.myWorkToday.followUpsDue}\n`;
+    content += `- **Waiting-for items**: ${brief.myWorkToday.waitingFor}\n`;
+      content += `- **Unread notifications**: ${brief.myWorkToday.unreadNotifications}\n\n`;
+    }
+
+  content += renderOfflineSection("Overdue blockers", sections?.overdueBlockers);
+  content += renderOfflineSection("Pending approvals", sections?.pendingApprovals);
+  content += renderOfflineSection("Follow-up reminders", sections?.followUps);
+  content += renderOfflineSection("Waiting-for items", sections?.waitingFor);
+
+  if (res?.insights?.length > 0) {
+    content += `**Quick signals**\n`;
+    res.insights.forEach((insight: string) => {
+      content += `- ${insight}\n`;
     });
-    if (bestGuide.path) {
-      content += `\nDirect page link: ${bestGuide.path}`;
-    }
-    return { content, toolsUsed: [] };
+    content += `\n`;
   }
 
-  return null;
+  if (!brief?.headline && (!res?.insights || res.insights.length === 0)) {
+    content += `- ✅ You are completely caught up! No urgent alerts.\n\n`;
+  }
+
+  content += `Ask me about your **tasks**, **attendance**, **leaves**, **approvals**, or Monolith **how-to guides**.`;
+  return content;
+}
+
+function renderOfflineSection(
+  title: string,
+  items: Array<{ title: string; detail: string; href?: string }> | undefined,
+) {
+  if (!items || items.length === 0) {
+    return "";
+  }
+
+  let content = `**${title}**\n`;
+  items.forEach((item) => {
+    content += `- **${item.title}**: ${item.detail}${item.href ? ` (${item.href})` : ""}\n`;
+  });
+  content += `\n`;
+  return content;
 }

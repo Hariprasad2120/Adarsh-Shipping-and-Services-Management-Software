@@ -2,8 +2,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { loadUserPermissions } from "@/lib/rbac";
+import { buildMonaContext } from "@/modules/mona/context";
 import { chatWithMona, clearConversation } from "@/modules/mona/service";
-import type { MonaContext } from "@/modules/mona/types";
+import { resolveMonaAvailability } from "@/modules/mona/governance";
 import { getClientIp, rateLimit, sanitizeText } from "@/lib/security";
 
 export async function POST(request: Request) {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
     // Handle clear action
     if (action === "clear") {
-      clearConversation(userId, chatSessionId);
+      await clearConversation(userId, chatSessionId, "web");
       return NextResponse.json({ ok: true });
     }
 
@@ -48,16 +49,32 @@ export async function POST(request: Request) {
     // Load user permissions
     const permissionsSet = await loadUserPermissions(userId);
     const permissions = Array.from(permissionsSet);
+    const availability = await resolveMonaAvailability({
+      isAdmin: permissionsSet.has("admin.org.manage"),
+      orgId: session.user.orgId,
+      userId,
+    });
+
+    if (!availability.allowed) {
+      return NextResponse.json(
+        {
+          error: availability.reason ?? "Mona is not available.",
+          content: availability.reason ?? "Mona is not available.",
+        },
+        { status: 403 },
+      );
+    }
 
     // Build context
-    const context: MonaContext = {
+    const context = await buildMonaContext({
       userId,
       userName: session.user.name || "User",
       orgId: session.user.orgId,
       currentPath: currentPath || "/dashboard",
       permissions,
       isAdmin: permissions.includes("admin.org.manage"),
-    };
+      channel: "web",
+    });
 
     // Call Mona
     const response = await chatWithMona(
@@ -69,6 +86,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       content: response.content,
       toolsUsed: response.toolsUsed,
+      citations: response.citations,
+      actions: response.actions,
     });
   } catch (err) {
     console.error("[Mona API] Error:", err);

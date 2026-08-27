@@ -98,8 +98,8 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
   },
   "/hrms/incentives": {
     eyebrow: "Compensation operations",
-    title: "Incentive working",
-    description: "Review incentive entries and payouts.",
+    title: "Incentive approvals",
+    description: "Review incentive claims and payout status.",
     icon: BadgeCheck,
   },
   "/hrms/letters": {
@@ -116,8 +116,8 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
   },
   "/hrms/on-duty-admin": {
     eyebrow: "Attendance workflow",
-    title: "On-duty administration",
-    description: "Review field-duty requests.",
+    title: "On-duty control room",
+    description: "Manage field-duty requests, live trips, and claims.",
     icon: MapPinned,
   },
   "/hrms/org-structure": {

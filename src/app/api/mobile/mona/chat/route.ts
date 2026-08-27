@@ -1,8 +1,8 @@
 // ─── Mona Chat Mobile API Route ───────────────────────────────────────────────
 import { getMobileUser } from "@/lib/mobile-auth";
 import { loadUserPermissions } from "@/lib/rbac";
+import { buildMonaContext } from "@/modules/mona/context";
 import { chatWithMona, clearConversation } from "@/modules/mona/service";
-import type { MonaContext } from "@/modules/mona/types";
 import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
 import { getClientIp, rateLimit, sanitizeText } from "@/lib/security";
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     // Handle clear action
     if (action === "clear") {
-      clearConversation(userId, chatSessionId);
+      await clearConversation(userId, chatSessionId, "mobile");
       return mobileJson({ ok: true });
     }
 
@@ -54,14 +54,15 @@ export async function POST(request: Request) {
     const permissions = Array.from(permissionsSet);
 
     // Build context
-    const context: MonaContext = {
+    const context = await buildMonaContext({
       userId,
       userName: user.name || "User",
       orgId: user.orgId ?? undefined,
       currentPath: currentPath || "/dashboard",
       permissions,
       isAdmin: permissions.includes("admin.org.manage"),
-    };
+      channel: "mobile",
+    });
 
     // Call Mona
     const response = await chatWithMona(
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
     return mobileJson({
       content: response.content,
       toolsUsed: response.toolsUsed,
+      citations: response.citations,
     });
   } catch (err) {
     console.error("[Mona Mobile API] Error:", err);

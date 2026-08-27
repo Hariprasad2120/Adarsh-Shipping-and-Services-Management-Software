@@ -13,6 +13,7 @@ import {
   MessageSquareText,
   Minus,
   Search,
+  Settings2,
   Sparkles,
   Volume2,
   VolumeOff,
@@ -29,6 +30,12 @@ import {
   type MonaPetRouteDetail,
 } from "@/modules/mona/pet-events";
 import { useMonaChat } from "@/modules/mona/components/mona-provider";
+import type {
+  MonaPetBehaviorIntensity,
+  MonaContextSnapshot,
+  MonaPetDockPosition,
+  MonaPetPersonality,
+} from "@/modules/mona/components/mona-provider";
 
 type PetMood = "idle" | "assist" | "alert" | "celebrate";
 
@@ -139,8 +146,102 @@ function getRouteProfile(pathname: string) {
   return ROUTE_PROFILES.find((entry) => entry.match.test(pathname))?.profile ?? DEFAULT_PROFILE;
 }
 
+function buildContextPrompt(snapshot: MonaContextSnapshot | null, fallbackPrompt: string) {
+  if (!snapshot) return fallbackPrompt;
+  if (snapshot.entity) {
+    return `I am on ${snapshot.route.pageLabel}. Use this page context and focused record ${snapshot.entity.label} to summarize what matters, any risk, and the next best step.`;
+  }
+  return `I am on ${snapshot.route.pageLabel} in ${snapshot.route.moduleLabel}. Use this page context to explain what matters here and what I should do next.`;
+}
+
+function buildContextBubble(snapshot: MonaContextSnapshot | null, fallbackText: string) {
+  if (!snapshot) return fallbackText;
+  if (snapshot.entity) {
+    return `${snapshot.route.pageLabel} is focused on ${snapshot.entity.label}. I can brief you on the record, current context, and next move.`;
+  }
+  return `${snapshot.route.pageLabel} is ready. ${snapshot.route.pageSummary}`;
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getDockOffset(position: MonaPetDockPosition, viewportWidth: number) {
+  if (position === "auto") {
+    return { x: 0, y: 0 };
+  }
+
+  const compact = viewportWidth < 640;
+  if (position === "bottom-left") {
+    return { x: compact ? -152 : -284, y: 0 };
+  }
+  if (position === "bottom-center") {
+    return { x: compact ? -76 : -142, y: 0 };
+  }
+  return { x: 0, y: 0 };
+}
+
+function describeCompanionLine(
+  personality: MonaPetPersonality,
+  petName: string,
+) {
+  switch (personality) {
+    case "professional":
+      return `${petName} stays concise, calm, and focused on the page in front of you.`;
+    case "playful":
+      return `${petName} keeps the workspace lively while staying grounded in real Monolith context.`;
+    case "silent":
+      return `${petName} stays out of the way until you open the panel or ask for help.`;
+    default:
+      return `${petName} stays low, follows your workspace, and opens the right Monolith help when you need it.`;
+  }
+}
+
+function getBehaviorAmplitude(intensity: MonaPetBehaviorIntensity) {
+  if (intensity === "quiet") {
+    return { lift: 2, sway: 6 };
+  }
+  if (intensity === "expressive") {
+    return { lift: 10, sway: 20 };
+  }
+  return { lift: 7, sway: 14 };
+}
+
+function ChoiceButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    // eslint-disable-next-line no-restricted-syntax -- pet setting chips are compact custom choice controls
+    <button
+      type="button"
+      className={cn("mnx-mona-pet-choice", active ? "is-active" : "")}
+      aria-pressed={active}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SettingsSection({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="mnx-mona-pet-setting-group">
+      <strong>{label}</strong>
+      <div className="mnx-mona-pet-choice-row">{children}</div>
+    </div>
+  );
 }
 
 export function MonaDesktopPet() {
@@ -148,21 +249,76 @@ export function MonaDesktopPet() {
   const routeProfile = useMemo(() => getRouteProfile(pathname), [pathname]);
   const label = getPathLabel(pathname) ?? routeProfile.headline;
   const reduceMotion = useReducedMotion();
-  const { isLoading, isOpen, openChat, sendMessage, toggleChat } = useMonaChat();
+  const {
+    contextSnapshot,
+    isLoading,
+    isContextLoading,
+    isOpen,
+    openChat,
+    preferences,
+    sendMessage,
+    suggestedPrompts,
+    guidanceTargets,
+    startGuidance,
+    toggleChat,
+    updatePreferences,
+  } = useMonaChat();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const dismissTimerRef = useRef<number | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [mood, setMood] = useState<PetMood>("idle");
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window === "undefined" ? 1280 : window.innerWidth,
+  );
   const [message, setMessage] = useState<PetMessage>({
     actionLabel: "Assist here",
     prompt: routeProfile.prompt,
     text: routeProfile.text,
   });
-  const showBubble = isExpanded || isOpen || mood === "alert" || mood === "celebrate";
-  const shouldWander = !isExpanded && !isOpen;
+  const primaryPrompt = suggestedPrompts[0]?.prompt ?? buildContextPrompt(contextSnapshot, routeProfile.prompt);
+  const primaryLabel = suggestedPrompts[0]?.label ?? "Assist here";
+  const effectiveAnimationMode =
+    reduceMotion && preferences.animationMode === "full"
+      ? "reduced"
+      : preferences.animationMode;
+  const motionDisabled = effectiveAnimationMode === "disabled";
+  const motionReduced = effectiveAnimationMode === "reduced";
+  const proactiveAssistVisible =
+    preferences.personality !== "silent" &&
+    preferences.proactiveLevel === "proactive" &&
+    mood === "assist";
+  const showBubble =
+    isExpanded ||
+    isOpen ||
+    mood === "alert" ||
+    mood === "celebrate" ||
+    proactiveAssistVisible;
+  const shouldWander =
+    !isExpanded &&
+    !isOpen &&
+    !motionDisabled &&
+    preferences.behaviorIntensity !== "quiet";
+  const dragEnabled = preferences.dockPosition === "auto" && viewportWidth >= 768;
+  const dragBounds = useMemo(() => {
+    if (viewportWidth < 640) {
+      return { left: -156, right: 24, top: -240, bottom: 18 };
+    }
+    if (viewportWidth < 1024) {
+      return { left: -260, right: 52, top: -360, bottom: 56 };
+    }
+    return { left: -380, right: 120, top: -480, bottom: 100 };
+  }, [viewportWidth]);
+  const behaviorAmplitude = useMemo(
+    () => getBehaviorAmplitude(preferences.behaviorIntensity),
+    [preferences.behaviorIntensity],
+  );
+  const personalityLine = useMemo(
+    () => describeCompanionLine(preferences.personality, preferences.petName),
+    [preferences.personality, preferences.petName],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -180,14 +336,39 @@ export function MonaDesktopPet() {
   }, [x, y]);
 
   useEffect(() => {
-    if (isMuted) return;
+    if (typeof window === "undefined") return;
+
+    function handleResize() {
+      setViewportWidth(window.innerWidth);
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (preferences.dockPosition !== "auto") {
+      const offset = getDockOffset(preferences.dockPosition, viewportWidth);
+      x.set(offset.x);
+      y.set(offset.y);
+      return;
+    }
+
+    x.set(clamp(x.get(), dragBounds.left, dragBounds.right));
+    y.set(clamp(y.get(), dragBounds.top, dragBounds.bottom));
+  }, [dragBounds, preferences.dockPosition, viewportWidth, x, y]);
+
+  useEffect(() => {
+    if (preferences.personality === "silent" || preferences.proactiveLevel === "silent") {
+      return;
+    }
 
     const frameId = window.requestAnimationFrame(() => {
       setMood("assist");
       setMessage({
-        actionLabel: "Assist here",
-        prompt: routeProfile.prompt,
-        text: routeProfile.text,
+        actionLabel: primaryLabel,
+        prompt: primaryPrompt,
+        text: buildContextBubble(contextSnapshot, routeProfile.text),
       });
     });
 
@@ -206,24 +387,34 @@ export function MonaDesktopPet() {
         dismissTimerRef.current = null;
       }
     };
-  }, [isMuted, routeProfile]);
+  }, [
+    contextSnapshot,
+    preferences.personality,
+    preferences.proactiveLevel,
+    primaryLabel,
+    primaryPrompt,
+    routeProfile.text,
+  ]);
 
   useEffect(() => {
     function handleRouteEvent(event: Event) {
-      if (isMuted) return;
+      if (preferences.personality === "silent") return;
+      if (preferences.proactiveLevel === "silent") return;
 
       const detail = (event as CustomEvent<MonaPetRouteDetail>).detail;
       const profile = getRouteProfile(detail.pathname);
       setMood("assist");
       setMessage({
-        actionLabel: "Assist here",
-        prompt: profile.prompt,
-        text: `${detail.contextLabel} is ready. ${profile.text}`,
+        actionLabel: primaryLabel,
+        prompt: primaryPrompt || profile.prompt,
+        text: contextSnapshot
+          ? buildContextBubble(contextSnapshot, `${detail.contextLabel} is ready. ${profile.text}`)
+          : `${detail.contextLabel} is ready. ${profile.text}`,
       });
     }
 
     function handleNotificationEvent(event: Event) {
-      if (isMuted) return;
+      if (preferences.proactiveLevel === "silent") return;
 
       const detail = (event as CustomEvent<MonaPetNotificationDetail>).detail;
       setMood(detail.count > 1 ? "alert" : "celebrate");
@@ -248,26 +439,28 @@ export function MonaDesktopPet() {
         handleNotificationEvent as EventListener,
       );
     };
-  }, [isMuted]);
+  }, [contextSnapshot, preferences.personality, preferences.proactiveLevel, primaryLabel, primaryPrompt]);
 
   useEffect(() => {
-    if (!isOpen || isMuted) return;
+    if (!isOpen || preferences.personality === "silent") return;
 
     const frameId = window.requestAnimationFrame(() => {
       setMood("assist");
       setMessage({
         text: isLoading
-          ? "I’m thinking through your workspace context now."
-          : "Chat is open. Ask for a summary, navigation help, or action plan.",
+          ? `${preferences.petName} is thinking through your workspace context now.`
+          : isContextLoading
+            ? `${preferences.petName} is reading the current workspace so the next answer lands in the right context.`
+            : "Chat is open. Ask for a summary, navigation help, or action plan.",
       });
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [isLoading, isMuted, isOpen]);
+  }, [isContextLoading, isLoading, isOpen, preferences.personality, preferences.petName]);
 
   async function handleAssistHere() {
     openChat();
-    await sendMessage(routeProfile.prompt);
+    await sendMessage(primaryPrompt);
   }
 
   function persistCurrentPosition() {
@@ -275,8 +468,8 @@ export function MonaDesktopPet() {
     window.localStorage.setItem(
       "mona-pet-position",
       JSON.stringify({
-        x: clamp(x.get(), -320, 120),
-        y: clamp(y.get(), -420, 80),
+        x: clamp(x.get(), dragBounds.left, dragBounds.right),
+        y: clamp(y.get(), dragBounds.top, dragBounds.bottom),
       }),
     );
   }
@@ -284,15 +477,18 @@ export function MonaDesktopPet() {
   return (
     <motion.aside
       className={cn("mnx-mona-pet", isExpanded ? "is-expanded" : "", isOpen ? "is-chat-open" : "")}
+      data-mona-appearance={preferences.appearance}
+      data-mona-type={preferences.petType}
       style={{ x, y }}
-      drag
+      drag={dragEnabled}
       dragMomentum={false}
       dragElastic={0.08}
-      dragConstraints={{ top: -480, left: -380, right: 120, bottom: 100 }}
+      dragConstraints={dragBounds}
       onDragStart={() => {
         dragStartRef.current = { x: x.get(), y: y.get() };
       }}
       onDragEnd={() => {
+        if (!dragEnabled) return;
         const moved =
           Math.abs(dragStartRef.current.x - x.get()) > 6 ||
           Math.abs(dragStartRef.current.y - y.get()) > 6;
@@ -301,18 +497,18 @@ export function MonaDesktopPet() {
           setIsExpanded((current) => !current);
         }
       }}
-      initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.96 }}
-      animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+      initial={motionDisabled ? false : { opacity: 0, y: 18, scale: 0.96 }}
+      animate={motionDisabled ? undefined : { opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.28, ease: "easeOut" }}
     >
       <AnimatePresence initial={false}>
-        {!isMuted && showBubble ? (
+        {showBubble ? (
           <motion.div
             key={message.text}
             className="mnx-mona-pet-bubble"
-            initial={reduceMotion ? false : { opacity: 0, y: 6, scale: 0.96 }}
-            animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 6, scale: 0.96 }}
+            initial={motionDisabled ? false : { opacity: 0, y: 6, scale: 0.96 }}
+            animate={motionDisabled ? undefined : { opacity: 1, y: 0, scale: 1 }}
+            exit={motionDisabled ? undefined : { opacity: 0, y: 6, scale: 0.96 }}
             transition={{ duration: 0.2 }}
           >
             <small>{label}</small>
@@ -326,7 +522,7 @@ export function MonaDesktopPet() {
         <motion.div
           className={cn("mnx-mona-pet-shadow", `is-${mood}`)}
           animate={
-            reduceMotion
+            motionDisabled || motionReduced
               ? undefined
               : {
                   scaleX: [1, 1.12, 1],
@@ -341,28 +537,30 @@ export function MonaDesktopPet() {
           className={cn("mnx-mona-pet-core", `is-${mood}`)}
           onClick={() => setIsExpanded((current) => !current)}
           animate={
-            reduceMotion
+            motionDisabled
               ? undefined
               : {
-                  x: shouldWander ? [-14, 16, -14] : 0,
-                  y: [0, -7, 0],
-                  rotateZ: [0, -1.4, 1.4, 0],
+                  x: shouldWander
+                    ? [-behaviorAmplitude.sway, behaviorAmplitude.sway, -behaviorAmplitude.sway]
+                    : 0,
+                  y: [0, -behaviorAmplitude.lift, 0],
+                  rotateZ: motionReduced ? [0, -0.6, 0.6, 0] : [0, -1.4, 1.4, 0],
                 }
           }
           transition={{
             x: {
-              duration: mood === "alert" ? 1.8 : 6,
+              duration: mood === "alert" ? 1.8 : motionReduced ? 7.5 : 6,
               repeat: Infinity,
               ease: "easeInOut",
             },
-            duration: mood === "alert" ? 1.6 : 3.2,
+            duration: mood === "alert" ? 1.6 : motionReduced ? 4.8 : 3.2,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          whileHover={reduceMotion ? undefined : { scale: 1.04 }}
-          whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+          whileHover={motionDisabled ? undefined : { scale: 1.04 }}
+          whileTap={motionDisabled ? undefined : { scale: 0.98 }}
           aria-expanded={isExpanded}
-          aria-label="Open Mona desktop pet controls"
+          aria-label={`Open ${preferences.petName} desktop pet controls`}
         >
           <span className="mnx-mona-pet-halo" aria-hidden="true" />
           <span className="mnx-mona-pet-shell" aria-hidden="true">
@@ -387,20 +585,24 @@ export function MonaDesktopPet() {
         {isExpanded ? (
           <motion.div
             className="mnx-mona-pet-controls"
-            initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.96 }}
-            animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.96 }}
+            initial={motionDisabled ? false : { opacity: 0, y: 8, scale: 0.96 }}
+            animate={motionDisabled ? undefined : { opacity: 1, y: 0, scale: 1 }}
+            exit={motionDisabled ? undefined : { opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.2 }}
           >
             <div className="mnx-mona-pet-controls-copy">
-              <strong>{routeProfile.headline}</strong>
-              <span>I stay low, follow your workspace, and open the right Monolith help when you need me.</span>
+              <strong>
+                {preferences.petName} · {contextSnapshot?.route.pageLabel ?? routeProfile.headline}
+              </strong>
+              <span>
+                {contextSnapshot?.entity?.summary ?? personalityLine}
+              </span>
             </div>
 
             <div className="mnx-mona-pet-actions">
               <Button size="sm" variant="accent" onClick={() => void handleAssistHere()}>
                 <MessageSquareText size={14} />
-                <span>{message.actionLabel ?? "Assist here"}</span>
+                <span>{message.actionLabel ?? primaryLabel}</span>
               </Button>
               <Button size="sm" variant="outline" onClick={dispatchMonaPetOpenSearch}>
                 <Search size={14} />
@@ -410,6 +612,16 @@ export function MonaDesktopPet() {
                 <Sparkles size={14} />
                 <span>{isOpen ? "Hide chat" : "Open chat"}</span>
               </Button>
+              {guidanceTargets.length > 0 ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startGuidance()}
+                >
+                  <Sparkles size={14} />
+                  <span>Guide page</span>
+                </Button>
+              ) : null}
               <Link className="mnx-mona-pet-link" href="/notifications">
                 <Bell size={14} />
                 <span>Notifications</span>
@@ -421,10 +633,21 @@ export function MonaDesktopPet() {
                 size="sm"
                 variant="outline"
                 className="mnx-mona-pet-utility"
-                onClick={() => setIsMuted((current) => !current)}
+                onClick={() =>
+                  updatePreferences({ voiceEnabled: !preferences.voiceEnabled })
+                }
               >
-                {isMuted ? <VolumeOff size={13} /> : <Volume2 size={13} />}
-                <span>{isMuted ? "Muted" : "Voice on"}</span>
+                {preferences.voiceEnabled ? <Volume2 size={13} /> : <VolumeOff size={13} />}
+                <span>{preferences.voiceEnabled ? "Voice on" : "Voice off"}</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mnx-mona-pet-utility"
+                onClick={() => setSettingsOpen((current) => !current)}
+              >
+                <Settings2 size={13} />
+                <span>{settingsOpen ? "Hide settings" : "Settings"}</span>
               </Button>
               <Button
                 size="sm"
@@ -436,6 +659,140 @@ export function MonaDesktopPet() {
                 <span>Minimize</span>
               </Button>
             </div>
+
+            <AnimatePresence initial={false}>
+              {settingsOpen ? (
+                <motion.div
+                  className="mnx-mona-pet-settings"
+                  initial={motionDisabled ? false : { opacity: 0, y: 6 }}
+                  animate={motionDisabled ? undefined : { opacity: 1, y: 0 }}
+                  exit={motionDisabled ? undefined : { opacity: 0, y: 6 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <SettingsSection label="Name">
+                    {(["Mona", "Moni", "Orbit", "Pixel"] as const).map((name) => (
+                      <ChoiceButton
+                        key={name}
+                        active={preferences.petName === name}
+                        onClick={() => updatePreferences({ petName: name })}
+                      >
+                        {name}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Type">
+                    {(["orb", "scout"] as const).map((petType) => (
+                      <ChoiceButton
+                        key={petType}
+                        active={preferences.petType === petType}
+                        onClick={() => updatePreferences({ petType })}
+                      >
+                        {petType === "orb" ? "Orb" : "Scout"}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Appearance">
+                    {(["classic", "aurora"] as const).map((appearance) => (
+                      <ChoiceButton
+                        key={appearance}
+                        active={preferences.appearance === appearance}
+                        onClick={() => updatePreferences({ appearance })}
+                      >
+                        {appearance === "classic" ? "Classic" : "Aurora"}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Personality">
+                    {(
+                      ["professional", "friendly", "playful", "silent"] as const
+                    ).map((personality) => (
+                      <ChoiceButton
+                        key={personality}
+                        active={preferences.personality === personality}
+                        onClick={() => updatePreferences({ personality })}
+                      >
+                        {personality[0].toUpperCase() + personality.slice(1)}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Animation">
+                    {(["full", "reduced", "disabled"] as const).map((animationMode) => (
+                      <ChoiceButton
+                        key={animationMode}
+                        active={preferences.animationMode === animationMode}
+                        onClick={() => updatePreferences({ animationMode })}
+                      >
+                        {animationMode[0].toUpperCase() + animationMode.slice(1)}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Behavior">
+                    {(
+                      ["quiet", "balanced", "expressive"] as const
+                    ).map((behaviorIntensity) => (
+                      <ChoiceButton
+                        key={behaviorIntensity}
+                        active={preferences.behaviorIntensity === behaviorIntensity}
+                        onClick={() => updatePreferences({ behaviorIntensity })}
+                      >
+                        {behaviorIntensity[0].toUpperCase() + behaviorIntensity.slice(1)}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Proactive">
+                    {(
+                      [
+                        "silent",
+                        "important-only",
+                        "balanced",
+                        "proactive",
+                      ] as const
+                    ).map((proactiveLevel) => (
+                      <ChoiceButton
+                        key={proactiveLevel}
+                        active={preferences.proactiveLevel === proactiveLevel}
+                        onClick={() => updatePreferences({ proactiveLevel })}
+                      >
+                        {proactiveLevel === "important-only"
+                          ? "Important"
+                          : proactiveLevel[0].toUpperCase() + proactiveLevel.slice(1)}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+
+                  <SettingsSection label="Dock">
+                    {(
+                      [
+                        "auto",
+                        "bottom-left",
+                        "bottom-center",
+                        "bottom-right",
+                      ] as const
+                    ).map((dockPosition) => (
+                      <ChoiceButton
+                        key={dockPosition}
+                        active={preferences.dockPosition === dockPosition}
+                        onClick={() => updatePreferences({ dockPosition })}
+                      >
+                        {dockPosition === "auto"
+                          ? "Auto"
+                          : dockPosition === "bottom-left"
+                            ? "Left"
+                            : dockPosition === "bottom-center"
+                              ? "Center"
+                              : "Right"}
+                      </ChoiceButton>
+                    ))}
+                  </SettingsSection>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </motion.div>
         ) : null}
       </AnimatePresence>

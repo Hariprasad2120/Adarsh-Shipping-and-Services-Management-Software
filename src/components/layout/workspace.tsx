@@ -17,14 +17,14 @@ function WorkspaceCardInfo({
   className?: string;
 }) {
   return (
-    <details className={cn("mnx-card-info", className)}>
-      <summary aria-label={ariaLabel} className="mnx-card-info-trigger">
+    <div className={cn("mnx-card-info", className)}>
+      <button type="button" aria-label={ariaLabel} className="mnx-card-info-trigger">
         <span aria-hidden="true">!</span>
-      </summary>
+      </button>
       <div className="mnx-card-info-popover">
         <div className="mnx-card-info-content">{children}</div>
       </div>
-    </details>
+    </div>
   );
 }
 
@@ -183,14 +183,14 @@ export function WorkspaceMetric({
           <MonolithSpecLabel>{label}</MonolithSpecLabel>
         </span>
         {actionIcon || metricInfo ? (
-          <span className="mnx-workspace-metric-controls">
+          <div className="mnx-workspace-metric-controls">
             {metricInfo}
             {actionIcon ? (
               <span className="mnx-workspace-metric-action" aria-hidden="true">
                 {actionIcon}
               </span>
             ) : null}
-          </span>
+          </div>
         ) : null}
       </div>
       <div className="mnx-workspace-metric-body">

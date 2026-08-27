@@ -102,7 +102,11 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
       </div>
 
       <WorkspaceSectionHeading
-        index="05"
+        index={(
+          <span className="mnx-section-heading-marker" aria-hidden="true">
+            &rsaquo;
+          </span>
+        )}
         title="Reportee directory"
         description="Live attendance context for the people who report to you."
       />

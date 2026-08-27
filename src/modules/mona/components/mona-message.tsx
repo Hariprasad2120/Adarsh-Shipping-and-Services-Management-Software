@@ -3,7 +3,7 @@
 import { MonaAvatarSmall } from "@/modules/mona/components/mona-avatar";
 import type { MonaChatMessage } from "@/modules/mona/components/mona-provider";
 import { motion } from "framer-motion";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ThumbsDown, ThumbsUp } from "lucide-react";
 import DOMPurify from "isomorphic-dompurify";
 import { useState, useCallback } from "react";
 
@@ -12,15 +12,69 @@ import { useState, useCallback } from "react";
  * Uses design-system tokens: bg-mono-card, bg-mono-soft,
  * text-mono-text, border-mono-border, and the semantic accent token.
  */
-export function MonaMessage({ message }: { message: MonaChatMessage }) {
+export function MonaMessage({
+  message,
+  onExecuteAction,
+  onSubmitFeedback,
+}: {
+  message: MonaChatMessage;
+  onExecuteAction?: (
+    messageId: string,
+    action: NonNullable<MonaChatMessage["actions"]>[number],
+  ) => Promise<void>;
+  onSubmitFeedback?: (params: {
+    feedback: "helpful" | "unhelpful";
+    reason?: string;
+    responseExcerpt: string;
+  }) => Promise<void>;
+}) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+  const [executingActionId, setExecutingActionId] = useState<string | null>(null);
+  const [feedbackState, setFeedbackState] = useState<"helpful" | "unhelpful" | null>(null);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [message.content]);
+
+  const handleExecuteAction = useCallback(
+    async (action: NonNullable<MonaChatMessage["actions"]>[number]) => {
+      if (!onExecuteAction || executingActionId) {
+        return;
+      }
+
+      setExecutingActionId(action.id);
+      try {
+        await onExecuteAction(message.id, action);
+      } finally {
+        setExecutingActionId(null);
+      }
+    },
+    [executingActionId, message.id, onExecuteAction],
+  );
+
+  const handleFeedback = useCallback(
+    async (feedback: "helpful" | "unhelpful") => {
+      if (!onSubmitFeedback || feedbackState) {
+        return;
+      }
+
+      const reason =
+        feedback === "unhelpful"
+          ? window.prompt("What was missing or incorrect? Optional.", "")?.trim() || undefined
+          : undefined;
+
+      await onSubmitFeedback({
+        feedback,
+        reason,
+        responseExcerpt: message.content.slice(0, 500),
+      });
+      setFeedbackState(feedback);
+    },
+    [feedbackState, message.content, onSubmitFeedback],
+  );
 
   // Typing indicator
   if (message.isTyping) {
@@ -99,6 +153,7 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
 
           {/* Copy button (Mona messages only) */}
           {!isUser && message.content && (
+            // eslint-disable-next-line no-restricted-syntax -- compact copy control is an intentional message-bubble utility affordance
             <button
               type="button"
               onClick={handleCopy}
@@ -115,9 +170,116 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
         </div>
 
         {/* Timestamp */}
-        <span className="px-1 text-[9px] text-mono-muted opacity-60">
-          {formatTime(message.timestamp)}
-        </span>
+        <div className="flex flex-col gap-1 px-1">
+          {message.actions && message.actions.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {message.actions.map((action) => {
+                const isExecuting = executingActionId === action.id;
+
+                return (
+                  <div
+                    key={action.id}
+                    className="rounded-2xl border border-mono-border bg-mono-card px-3 py-3"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="text-[12px] font-semibold text-mono-text">
+                        {action.title}
+                      </div>
+                      <p className="text-[11px] leading-5 text-mono-muted">
+                        {action.description}
+                      </p>
+                    </div>
+
+                    {action.fields.length > 0 ? (
+                      <div className="mt-2 grid gap-1">
+                        {action.fields.map((field) => (
+                          <div
+                            key={`${action.id}-${field.label}`}
+                            className="flex items-start justify-between gap-3 rounded-xl bg-mono-page px-2.5 py-2"
+                          >
+                            <span className="text-[10px] uppercase tracking-[0.12em] text-mono-muted">
+                              {field.label}
+                            </span>
+                            <span className="text-right text-[11px] text-mono-text">
+                              {field.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {onExecuteAction ? (
+                      // eslint-disable-next-line no-restricted-syntax -- action confirmation is a compact inline control embedded inside a chat message card
+                      <button
+                        type="button"
+                        onClick={() => void handleExecuteAction(action)}
+                        disabled={isExecuting}
+                        className="mt-3 inline-flex items-center justify-center rounded-full px-3 py-1.5 text-[11px] font-semibold text-[var(--mn-color-on-accent)] transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                        style={{ background: "var(--mn-gradient-accent)" }}
+                      >
+                        {isExecuting ? "Working..." : action.confirmationLabel}
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {message.citations && message.citations.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {message.citations.map((citation) =>
+                citation.href ? (
+                  <a
+                    key={citation.id}
+                    href={citation.href}
+                    className="rounded-full border border-mono-border bg-mono-page px-2 py-0.5 text-[9px] font-medium text-mono-muted transition-colors hover:bg-mono-soft hover:text-mono-text"
+                    title={citation.detail ?? citation.label}
+                  >
+                    Source: {citation.label}
+                  </a>
+                ) : (
+                  <span
+                    key={citation.id}
+                    className="rounded-full border border-mono-border bg-mono-page px-2 py-0.5 text-[9px] font-medium text-mono-muted"
+                    title={citation.detail ?? citation.label}
+                  >
+                    Source: {citation.label}
+                  </span>
+                ),
+              )}
+            </div>
+          ) : null}
+
+          {!isUser && message.content && !message.actions?.length ? (
+            <div className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line no-restricted-syntax -- compact message feedback controls are intentional inline utilities in the chat transcript */}
+              <button
+                type="button"
+                onClick={() => void handleFeedback("helpful")}
+                disabled={feedbackState !== null}
+                className="inline-flex items-center gap-1 rounded-full border border-mono-border bg-mono-page px-2 py-0.5 text-[9px] font-medium text-mono-muted transition-colors hover:bg-mono-soft disabled:cursor-default disabled:opacity-70"
+              >
+                <ThumbsUp size={10} />
+                <span>{feedbackState === "helpful" ? "Marked helpful" : "Helpful"}</span>
+              </button>
+              {/* eslint-disable-next-line no-restricted-syntax -- compact message feedback controls are intentional inline utilities in the chat transcript */}
+              <button
+                type="button"
+                onClick={() => void handleFeedback("unhelpful")}
+                disabled={feedbackState !== null}
+                className="inline-flex items-center gap-1 rounded-full border border-mono-border bg-mono-page px-2 py-0.5 text-[9px] font-medium text-mono-muted transition-colors hover:bg-mono-soft disabled:cursor-default disabled:opacity-70"
+              >
+                <ThumbsDown size={10} />
+                <span>{feedbackState === "unhelpful" ? "Marked unhelpful" : "Needs work"}</span>
+              </button>
+            </div>
+          ) : null}
+
+          <span className="text-[9px] text-mono-muted opacity-60">
+            {formatTime(message.timestamp)}
+          </span>
+        </div>
       </div>
     </motion.div>
   );

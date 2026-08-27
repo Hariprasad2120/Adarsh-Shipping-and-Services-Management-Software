@@ -10,7 +10,7 @@ import {
   buildSpaceLinkedCard,
   buildErrorCard,
 } from "./cards";
-import { generateLinkToken, revokeLink } from "./identity";
+import { generateLinkToken } from "./identity";
 import { linkSpaceToRecord, unlinkSpace, upsertSubscription, getSpaceByResource } from "./space";
 import { processMessage, resetSession } from "./gateway";
 import { db } from "@/lib/db";
@@ -354,7 +354,7 @@ async function handleSummary(params: CommandParams): Promise<CommandResult> {
 
 async function handleReset(params: CommandParams): Promise<CommandResult> {
   if (params.identity.linked) {
-    resetSession({
+    await resetSession({
       userId: params.identity.userId,
       channel: "google_chat",
       spaceResourceName: params.spaceResourceName,

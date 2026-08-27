@@ -10,6 +10,7 @@ import {
   Coins,
   FileSearch,
   MapPinned,
+  Plus,
   RefreshCw,
   Route,
   ShieldAlert,
@@ -18,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ButtonLink } from "@/components/ui/button";
 import {
   PeopleErrorState,
   PeopleField,
@@ -130,6 +132,7 @@ type OnDutyDashboardData = {
     completedThisMonth: number;
     averageDistanceKm: number;
   };
+  requestUsers: PersonSummary[];
   pendingApprovals: OnDutyRequestRow[];
   activeTrips: OnDutyRequestRow[];
   recentRequests: OnDutyRequestRow[];
@@ -158,11 +161,29 @@ type HistoryStatusFilter =
   | "REJECTED"
   | "CANCELLED";
 
+type CreateRequestForm = {
+  userId: string;
+  fromDate: string;
+  toDate: string;
+  startTime: string;
+  endTime: string;
+  purpose: string;
+  reason: string;
+  clientReference: string;
+  visitLocation: string;
+  visitAddress: string;
+  remarks: string;
+};
+
 const HIGH_RISK_ALERTS = new Set([
   "MOCK_DETECTED",
   "APP_KILLED",
   "PERMISSION_DENIED",
 ]);
+
+function getTodayInputValue() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -286,6 +307,21 @@ export function OnDutyAdminView() {
   const [routeRequestId, setRouteRequestId] = useState<string | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeReview, setRouteReview] = useState<RouteReviewData | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [creatingRequest, setCreatingRequest] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateRequestForm>({
+    userId: "",
+    fromDate: getTodayInputValue(),
+    toDate: getTodayInputValue(),
+    startTime: "",
+    endTime: "",
+    purpose: "",
+    reason: "",
+    clientReference: "",
+    visitLocation: "",
+    visitAddress: "",
+    remarks: "",
+  });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -369,6 +405,70 @@ export function OnDutyAdminView() {
     }
   };
 
+  const openCreateRequest = () => {
+    setCreateForm((current) => ({
+      ...current,
+      userId: data?.requestUsers[0]?.id ?? "",
+    }));
+    setCreateModalOpen(true);
+  };
+
+  const updateCreateForm = (field: keyof CreateRequestForm, value: string) => {
+    setCreateForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const submitCreateRequest = async () => {
+    if (!createForm.fromDate || !createForm.toDate || !createForm.reason.trim()) {
+      toast.error("From date, to date, and reason are required.");
+      return;
+    }
+
+    setCreatingRequest(true);
+    try {
+      const response = await fetch("/api/hrms/on-duty", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          ...createForm,
+          purpose: createForm.purpose.trim() || undefined,
+          reason: createForm.reason.trim(),
+          clientReference: createForm.clientReference.trim() || undefined,
+          visitLocation: createForm.visitLocation.trim() || undefined,
+          visitAddress: createForm.visitAddress.trim() || undefined,
+          remarks: createForm.remarks.trim() || undefined,
+        }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.ok) {
+        throw new Error(json.error || "Failed to create on-duty request");
+      }
+
+      toast.success("On-duty request submitted.");
+      setCreateModalOpen(false);
+      setCreateForm({
+        userId: data?.requestUsers[0]?.id ?? "",
+        fromDate: getTodayInputValue(),
+        toDate: getTodayInputValue(),
+        startTime: "",
+        endTime: "",
+        purpose: "",
+        reason: "",
+        clientReference: "",
+        visitLocation: "",
+        visitAddress: "",
+        remarks: "",
+      });
+      await fetchData();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create on-duty request",
+      );
+    } finally {
+      setCreatingRequest(false);
+    }
+  };
+
   if (loading && !data) {
     return (
       <PeopleLoadingState description="Loading approvals, field trips, reimbursement exposure, and route evidence." />
@@ -410,6 +510,44 @@ export function OnDutyAdminView() {
     };
   });
 
+  const controlFrames = [
+    {
+      icon: <CheckCircle2 aria-hidden="true" />,
+      title: "Request intake",
+      detail: "Employee raises on-duty with purpose, visit window, and destination.",
+      badge: `${data.summary.pendingApprovals} pending`,
+      variant: "warning" as const,
+    },
+    {
+      icon: <MapPinned aria-hidden="true" />,
+      title: "Field visit link",
+      detail: "Attach the attendance request to client-site or field-work context.",
+      badge: `${data.summary.approvedAwaitingStart} ready`,
+      variant: data.summary.approvedAwaitingStart > 0 ? "accent" as const : "neutral" as const,
+    },
+    {
+      icon: <Route aria-hidden="true" />,
+      title: "Live route control",
+      detail: "Monitor active trips through heartbeat, waypoint, and route review.",
+      badge: `${data.summary.activeTrips} live`,
+      variant: data.summary.activeTrips > 0 ? "success" as const : "neutral" as const,
+    },
+    {
+      icon: <ShieldAlert aria-hidden="true" />,
+      title: "Policy exceptions",
+      detail: "Flag missing GPS, stale movement, and permission breaks before closure.",
+      badge: `${data.summary.openAlerts} alerts`,
+      variant: data.summary.openAlerts > 0 ? "danger" as const : "success" as const,
+    },
+    {
+      icon: <Wallet aria-hidden="true" />,
+      title: "Claim closure",
+      detail: "Keep distance-backed reimbursement attached to completed field work.",
+      badge: `${data.summary.claimsInFlight} claims`,
+      variant: data.summary.claimsInFlight > 0 ? "warning" as const : "success" as const,
+    },
+  ];
+
   return (
     <div className="mnx-on-duty-workspace">
       <PeopleSummaryGrid>
@@ -417,54 +555,55 @@ export function OnDutyAdminView() {
           icon={<CheckCircle2 aria-hidden="true" />}
           label="Pending approvals"
           value={data.summary.pendingApprovals}
-          detail={`${data.summary.approvedAwaitingStart} already approved and waiting to start`}
         />
         <PeopleSummary
           icon={<Route aria-hidden="true" />}
           label="Live field trips"
           value={data.summary.activeTrips}
-          detail={`${data.summary.openAlerts} GPS or policy exceptions need review`}
         />
         <PeopleSummary
           icon={<Wallet aria-hidden="true" />}
           label="Claims in flight"
           value={data.summary.claimsInFlight}
-          detail={`${formatCurrency(data.summary.settlementExposure)} reimbursement exposure`}
         />
         <PeopleSummary
           icon={<Waypoints aria-hidden="true" />}
           label="Completed this month"
           value={data.summary.completedThisMonth}
-          detail={`${data.summary.averageDistanceKm} km average completed route`}
         />
       </PeopleSummaryGrid>
 
-      <WorkspaceAlert
-        variant={
-          data.summary.pendingApprovals > 0 || data.summary.openAlerts > 0
-            ? "warning"
-            : "success"
-        }
-      >
-        {data.summary.pendingApprovals > 0 || data.summary.openAlerts > 0
-          ? `The on-duty desk needs action. ${data.summary.pendingApprovals} request${data.summary.pendingApprovals === 1 ? "" : "s"} are pending approval and ${data.summary.openAlerts} field exception${data.summary.openAlerts === 1 ? "" : "s"} remain unresolved.`
-          : "The on-duty desk is stable right now. No pending approvals or unresolved trip exceptions are open in your reporting scope."}
-      </WorkspaceAlert>
+      {data.summary.pendingApprovals > 0 || data.summary.openAlerts > 0 ? (
+        <WorkspaceAlert variant="warning">
+          {`${data.summary.pendingApprovals} approval${data.summary.pendingApprovals === 1 ? "" : "s"} and ${data.summary.openAlerts} exception${data.summary.openAlerts === 1 ? "" : "s"} need review.`}
+        </WorkspaceAlert>
+      ) : null}
 
       <WorkspaceSectionHeading
         index="01"
-        title="On-duty command center"
-        description="Reframed as an advanced attendance-operations workspace: approve requests, supervise live travel, preserve route evidence, and keep settlement exposure visible from one connected ERP-style surface."
+        title="On-duty control room"
         actions={
-          <WorkspaceAction
-            variant="outline"
-            size="compact"
-            onClick={fetchData}
-            disabled={loading}
-          >
-            <RefreshCw className="size-4" aria-hidden="true" />
-            Refresh desk
-          </WorkspaceAction>
+          <div className="mnx-on-duty-heading-actions">
+            <WorkspaceAction onClick={openCreateRequest} size="compact">
+              <Plus className="size-4" aria-hidden="true" />
+              Create request
+            </WorkspaceAction>
+            <ButtonLink href="/hrms/tracking" variant="outline" size="sm">
+              Field tracking
+            </ButtonLink>
+            <ButtonLink href="/hrms/reimbursement" variant="outline" size="sm">
+              Review claims
+            </ButtonLink>
+            <WorkspaceAction
+              variant="outline"
+              size="compact"
+              onClick={fetchData}
+              disabled={loading}
+            >
+              <RefreshCw className="size-4" aria-hidden="true" />
+              Refresh
+            </WorkspaceAction>
+          </div>
         }
       />
 
@@ -472,79 +611,20 @@ export function OnDutyAdminView() {
         <div className="mnx-on-duty-primary">
           <PeopleSection>
             <PeopleSectionHeader
-              eyebrow="Control lanes"
-              title="Operational framing"
-              description="These are the core lanes mature attendance and field-workforce systems keep connected: approval velocity, live mission control, audit fidelity, and reimbursement closure."
+              eyebrow="Control frame"
+              title="Field-duty operating model"
             />
             <div className="mnx-on-duty-lane-grid">
-              <article className="mnx-on-duty-lane-card">
-                <span className="mnx-on-duty-lane-icon">
-                  <CheckCircle2 aria-hidden="true" />
-                </span>
-                <div>
-                  <strong>Approval desk</strong>
-                  <p>
-                    Validate purpose, dates, locations, and employee intent before
-                    a field trip touches attendance.
-                  </p>
-                </div>
-                <WorkspaceBadge variant="warning">
-                  {data.summary.pendingApprovals} pending
-                </WorkspaceBadge>
-              </article>
-              <article className="mnx-on-duty-lane-card">
-                <span className="mnx-on-duty-lane-icon">
-                  <Route aria-hidden="true" />
-                </span>
-                <div>
-                  <strong>Live mission control</strong>
-                  <p>
-                    Keep current trips, latest heartbeat posture, and destination
-                    context visible while employees are in the field.
-                  </p>
-                </div>
-                <WorkspaceBadge
-                  variant={data.summary.activeTrips > 0 ? "accent" : "neutral"}
-                >
-                  {data.summary.activeTrips} active
-                </WorkspaceBadge>
-              </article>
-              <article className="mnx-on-duty-lane-card">
-                <span className="mnx-on-duty-lane-icon">
-                  <ShieldAlert aria-hidden="true" />
-                </span>
-                <div>
-                  <strong>Audit and exceptions</strong>
-                  <p>
-                    Catch offline, permission, or route-integrity exceptions before
-                    they compromise payroll evidence.
-                  </p>
-                </div>
-                <WorkspaceBadge
-                  variant={data.summary.openAlerts > 0 ? "danger" : "success"}
-                >
-                  {data.summary.openAlerts} open alerts
-                </WorkspaceBadge>
-              </article>
-              <article className="mnx-on-duty-lane-card">
-                <span className="mnx-on-duty-lane-icon">
-                  <Coins aria-hidden="true" />
-                </span>
-                <div>
-                  <strong>Settlement desk</strong>
-                  <p>
-                    Carry approved distance into reimbursement visibility so finance
-                    follow-through stays attached to the trip trail.
-                  </p>
-                </div>
-                <WorkspaceBadge
-                  variant={
-                    data.summary.claimsInFlight > 0 ? "warning" : "success"
-                  }
-                >
-                  {data.summary.claimsInFlight} claims in flight
-                </WorkspaceBadge>
-              </article>
+              {controlFrames.map((frame) => (
+                <article className="mnx-on-duty-lane-card" key={frame.title}>
+                  <span className="mnx-on-duty-lane-icon">{frame.icon}</span>
+                  <div>
+                    <strong>{frame.title}</strong>
+                    <p>{frame.detail}</p>
+                  </div>
+                  <WorkspaceBadge variant={frame.variant}>{frame.badge}</WorkspaceBadge>
+                </article>
+              ))}
             </div>
           </PeopleSection>
 
@@ -552,20 +632,15 @@ export function OnDutyAdminView() {
             <PeopleSection>
               <PeopleSectionHeader
                 eyebrow="Approval queue"
-                title="Requests awaiting manager action"
-                description="Review each request with enough operational context to approve confidently, not just mark attendance blindly."
+                title="Manager approvals"
               />
               <div className="mnx-on-duty-approval-stack">
                 {data.pendingApprovals.length === 0 ? (
                   <div className="mnx-on-duty-empty">
-                    <CheckCircle2 aria-hidden="true" />
-                    <div>
-                      <strong>No requests are waiting for approval</strong>
-                      <p>
-                        The approval desk is clear. New on-duty requests will appear
-                        here with visit context and trip window details.
-                      </p>
-                    </div>
+                    <span className="mnx-on-duty-card-icon">
+                      <CheckCircle2 aria-hidden="true" />
+                    </span>
+                    <strong>No requests waiting</strong>
                   </div>
                 ) : (
                   data.pendingApprovals.map((request) => (
@@ -619,20 +694,15 @@ export function OnDutyAdminView() {
             <PeopleSection>
               <PeopleSectionHeader
                 eyebrow="Live trip board"
-                title="Field movement in progress"
-                description="Surface trip purpose, last heartbeat, route freshness, and audit posture while active work is underway."
+                title="Active field visits"
               />
               <div className="mnx-on-duty-trip-stack">
                 {activeTripsWithFreshness.length === 0 ? (
                   <div className="mnx-on-duty-empty">
-                    <MapPinned aria-hidden="true" />
-                    <div>
-                      <strong>No active field trips</strong>
-                      <p>
-                        Once an approved request is started, it will move here with
-                        live route and GPS heartbeat context.
-                      </p>
-                    </div>
+                    <span className="mnx-on-duty-card-icon">
+                      <MapPinned aria-hidden="true" />
+                    </span>
+                    <strong>No active field trips</strong>
                   </div>
                 ) : (
                   activeTripsWithFreshness.map((trip) => (
@@ -689,20 +759,15 @@ export function OnDutyAdminView() {
             <PeopleSection>
               <PeopleSectionHeader
                 eyebrow="Exception desk"
-                title="On-duty tracking exceptions"
-                description="Separate policy and telemetry issues from healthy trips so managers can intervene before attendance evidence degrades."
+                title="GPS and policy exceptions"
               />
               <div className="mnx-on-duty-alert-stack">
                 {data.trackingAlerts.length === 0 ? (
                   <div className="mnx-on-duty-empty">
-                    <ShieldAlert aria-hidden="true" />
-                    <div>
-                      <strong>No open field exceptions</strong>
-                      <p>
-                        GPS-linked on-duty work is currently stable for the people
-                        in your reporting scope.
-                      </p>
-                    </div>
+                    <span className="mnx-on-duty-card-icon">
+                      <ShieldAlert aria-hidden="true" />
+                    </span>
+                    <strong>No open exceptions</strong>
                   </div>
                 ) : (
                   data.trackingAlerts.map((alert) => (
@@ -753,20 +818,15 @@ export function OnDutyAdminView() {
             <PeopleSection>
               <PeopleSectionHeader
                 eyebrow="Settlement visibility"
-                title="Reimbursement and closure"
-                description="Keep fuel and trip-closure follow-through attached to the same operational desk instead of losing it after travel completes."
+                title="Distance-backed claims"
               />
               <div className="mnx-on-duty-claim-stack">
                 {data.reimbursementClaims.length === 0 ? (
                   <div className="mnx-on-duty-empty">
-                    <Wallet aria-hidden="true" />
-                    <div>
-                      <strong>No reimbursement claims yet</strong>
-                      <p>
-                        Completed and claimable trips will appear here once fuel
-                        reimbursement is raised from the field workflow.
-                      </p>
-                    </div>
+                    <span className="mnx-on-duty-card-icon">
+                      <Wallet aria-hidden="true" />
+                    </span>
+                    <strong>No reimbursement claims</strong>
                   </div>
                 ) : (
                   data.reimbursementClaims.map((claim) => (
@@ -811,28 +871,24 @@ export function OnDutyAdminView() {
             <PeopleSectionHeader
               eyebrow="Manager scope"
               title="Desk posture"
-              description="A compact watchlist for the reporting span you currently supervise."
             />
             <div className="mnx-on-duty-watch-list">
               <div className="mnx-on-duty-watch-item">
                 <span>01</span>
                 <div>
                   <strong>{data.summary.directReports} direct reports</strong>
-                  <p>Employees currently inside your on-duty approval scope.</p>
                 </div>
               </div>
               <div className="mnx-on-duty-watch-item">
                 <span>02</span>
                 <div>
                   <strong>{data.summary.totalRequests} tracked requests</strong>
-                  <p>Recent attendance-linked on-duty trail visible on this desk.</p>
                 </div>
               </div>
               <div className="mnx-on-duty-watch-item">
                 <span>03</span>
                 <div>
                   <strong>{formatCurrency(data.summary.settlementExposure)}</strong>
-                  <p>Current reimbursement exposure waiting for settlement flow.</p>
                 </div>
               </div>
             </div>
@@ -840,39 +896,32 @@ export function OnDutyAdminView() {
 
           <PeopleSection>
             <PeopleSectionHeader
-              eyebrow="Governance"
-              title="Advanced control model"
-              description="Borrowed from current ERP attendance and workforce patterns without changing your existing backend contracts."
+              eyebrow="Setup options"
+              title="Field visit controls"
             />
             <div className="mnx-on-duty-governance-list">
               <article className="mnx-on-duty-governance-card">
-                <Clock3 aria-hidden="true" />
+                <span className="mnx-on-duty-card-icon">
+                  <Clock3 aria-hidden="true" />
+                </span>
                 <div>
-                  <strong>Approval before attendance effect</strong>
-                  <p>
-                    Requests, approvals, and start events remain distinct so the
-                    attendance trail stays auditable.
-                  </p>
+                  <strong>Request policy</strong>
                 </div>
               </article>
               <article className="mnx-on-duty-governance-card">
-                <Route aria-hidden="true" />
+                <span className="mnx-on-duty-card-icon">
+                  <Route aria-hidden="true" />
+                </span>
                 <div>
-                  <strong>Route evidence during travel</strong>
-                  <p>
-                    Active trips are monitored with location heartbeat freshness,
-                    latest waypoint posture, and route review on demand.
-                  </p>
+                  <strong>Tracking rule</strong>
                 </div>
               </article>
               <article className="mnx-on-duty-governance-card">
-                <Coins aria-hidden="true" />
+                <span className="mnx-on-duty-card-icon">
+                  <Coins aria-hidden="true" />
+                </span>
                 <div>
-                  <strong>Trip-to-claim continuity</strong>
-                  <p>
-                    Completed distance flows into reimbursement visibility so HRMS
-                    and finance do not break the trip chain.
-                  </p>
+                  <strong>Claim rule</strong>
                 </div>
               </article>
             </div>
@@ -884,7 +933,6 @@ export function OnDutyAdminView() {
         <PeopleSectionHeader
           eyebrow="Audit history"
           title="Recent on-duty trail"
-          description="Search and filter the recent attendance-linked history, then open route evidence when a trip needs deeper review."
         />
 
         <div className="mnx-on-duty-history-toolbar">
@@ -975,6 +1023,150 @@ export function OnDutyAdminView() {
           </PeopleTableBody>
         </PeopleTable>
       </PeopleSection>
+
+      <Modal
+        open={createModalOpen}
+        eyebrow="On-duty request"
+        title="Create on-duty request"
+        description="Submit field-duty for yourself or an eligible direct report. Approval and tracking continue from this desk."
+        onClose={() => setCreateModalOpen(false)}
+        size="workspace"
+      >
+        <div className="mnx-on-duty-modal-stack">
+          <div className="mnx-on-duty-request-form">
+            <PeopleField label="Employee" htmlFor="on-duty-create-user" required>
+              <WorkspaceSelect
+                id="on-duty-create-user"
+                value={createForm.userId}
+                onChange={(event) => updateCreateForm("userId", event.target.value)}
+                disabled={creatingRequest}
+              >
+                {data.requestUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}{user.designation ? ` - ${user.designation}` : ""}
+                  </option>
+                ))}
+              </WorkspaceSelect>
+            </PeopleField>
+
+            <PeopleField label="From date" htmlFor="on-duty-create-from" required>
+              <PeopleInput
+                id="on-duty-create-from"
+                type="date"
+                value={createForm.fromDate}
+                onChange={(event) => updateCreateForm("fromDate", event.target.value)}
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="To date" htmlFor="on-duty-create-to" required>
+              <PeopleInput
+                id="on-duty-create-to"
+                type="date"
+                value={createForm.toDate}
+                onChange={(event) => updateCreateForm("toDate", event.target.value)}
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Start time" htmlFor="on-duty-create-start">
+              <PeopleInput
+                id="on-duty-create-start"
+                type="time"
+                value={createForm.startTime}
+                onChange={(event) => updateCreateForm("startTime", event.target.value)}
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="End time" htmlFor="on-duty-create-end">
+              <PeopleInput
+                id="on-duty-create-end"
+                type="time"
+                value={createForm.endTime}
+                onChange={(event) => updateCreateForm("endTime", event.target.value)}
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Purpose" htmlFor="on-duty-create-purpose">
+              <PeopleInput
+                id="on-duty-create-purpose"
+                value={createForm.purpose}
+                onChange={(event) => updateCreateForm("purpose", event.target.value)}
+                placeholder="Client visit, site inspection, collection, delivery"
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Reason" htmlFor="on-duty-create-reason" required>
+              <PeopleTextarea
+                id="on-duty-create-reason"
+                rows={3}
+                value={createForm.reason}
+                onChange={(event) => updateCreateForm("reason", event.target.value)}
+                placeholder="Why is on-duty attendance required?"
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Field visit location" htmlFor="on-duty-create-location">
+              <PeopleInput
+                id="on-duty-create-location"
+                value={createForm.visitLocation}
+                onChange={(event) => updateCreateForm("visitLocation", event.target.value)}
+                placeholder="Customer site, port, warehouse, branch, field area"
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Client / job reference" htmlFor="on-duty-create-reference">
+              <PeopleInput
+                id="on-duty-create-reference"
+                value={createForm.clientReference}
+                onChange={(event) => updateCreateForm("clientReference", event.target.value)}
+                placeholder="Optional CRM, job, shipment, or customer reference"
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Visit address" htmlFor="on-duty-create-address">
+              <PeopleTextarea
+                id="on-duty-create-address"
+                rows={3}
+                value={createForm.visitAddress}
+                onChange={(event) => updateCreateForm("visitAddress", event.target.value)}
+                placeholder="Full address or route notes"
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+
+            <PeopleField label="Remarks" htmlFor="on-duty-create-remarks">
+              <PeopleTextarea
+                id="on-duty-create-remarks"
+                rows={3}
+                value={createForm.remarks}
+                onChange={(event) => updateCreateForm("remarks", event.target.value)}
+                placeholder="Additional manager or employee context"
+                disabled={creatingRequest}
+              />
+            </PeopleField>
+          </div>
+
+          <div className="mnx-on-duty-modal-actions">
+            <WorkspaceAction
+              variant="outline"
+              onClick={() => setCreateModalOpen(false)}
+              disabled={creatingRequest}
+            >
+              Cancel
+            </WorkspaceAction>
+            <WorkspaceAction onClick={() => void submitCreateRequest()} disabled={creatingRequest}>
+              {creatingRequest ? "Submitting..." : "Submit on-duty"}
+            </WorkspaceAction>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={rejectModalRequest != null}

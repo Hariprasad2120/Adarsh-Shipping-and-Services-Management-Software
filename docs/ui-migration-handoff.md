@@ -1,6 +1,69 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-25
+Last updated: 2026-08-27
+
+## 2026-08-27 Mona Work Pet Phase 9-11 closeout handoff
+
+Closed the current Mona / Work Pet implementation track by documenting the
+completed guidance, governance, and hardening phases and refreshing the route
+and ownership audits after adding the new `/admin/work-pet` surface.
+
+Delivered:
+
+- completed Phase 9 UI guidance in the live Mona stack with:
+  - explicit `data-workpet-target` anchors on dashboard and topbar surfaces;
+  - route-scoped guidance registry entries in `src/modules/mona/guidance.ts`;
+  - `src/modules/mona/components/mona-guidance-overlay.tsx` for controlled
+    highlight/help flows instead of arbitrary selector access;
+- completed Phase 10 admin/governance with:
+  - `src/app/(dashboard)/admin/work-pet/page.tsx` and
+    `work-pet-admin-client.tsx`;
+  - org-scoped Mona rollout/model controls in
+    `src/modules/mona/governance.ts`;
+  - analytics and feedback-review wiring backed by persisted
+    `MonaConversation` and `MonaAuditEvent` data;
+- completed Phase 11 hardening with:
+  - safer Mona action-token validation and explicit client-safe failure
+    statuses;
+  - untrusted document-preview suppression for instruction-like retrieved
+    content;
+  - stronger system-prompt rules for email/document retrieval boundaries;
+  - focused Mona unit/security tests under `src/modules/mona/__tests__/`.
+
+Documentation and verification updates:
+
+- regenerated `docs/ui-route-audit.md` and
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`; the fresh audit now reports 352
+  pages, 17 layouts, 405 route-state rows, and includes `/admin/work-pet` as a
+  `COMPLIANT` admin route;
+- regenerated `docs/ui-component-and-style-ownership-audit.md`, which now
+  includes the new admin Work Pet route files and Mona guidance overlay
+  ownership evidence;
+- added `vitest.mona.config.ts` plus `npm run test:mona` so Mona security/unit
+  coverage can run without the guarded `.env.staging.local` staging test gate;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed `docs/ui-component-and-style-ownership-audit.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run test:mona`:
+  passed with 4 files and 10 tests;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed for the Mona Phase 11 hardening batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint --quiet ...`:
+  passed for the Mona Phase 9-11 touched files and the new Mona Vitest config.
+
+Known limits:
+
+- runtime browser verification across Light, Night, and Violet themes for the
+  floating Mona shell, dashboard guidance overlays, and `/admin/work-pet`
+  remains pending in this Codex session;
+- the repository-wide guarded Vitest flow still requires `.env.staging.local`
+  for database-backed suites, so `npm run test` remains intentionally stricter
+  than the new `npm run test:mona` unit path;
+- this closeout documents the current Mona / Work Pet completion state but does
+  not rename the `mona` code namespace or add a second planning/status tracker
+  outside the existing Work Pet plan.
 
 ## 2026-08-25 Shared disclosure auto-close and compact card rhythm handoff
 

@@ -723,7 +723,7 @@ export function HelpDeskView() {
             description="Model this page like an internal service desk: route work by category, deflect common questions with guidance, and keep a clean employee conversation trail."
           />
           <div className="mnx-helpdesk-stack">
-            <div className="mnx-helpdesk-toggle-row" role="tablist" aria-label="Choose service desk">
+            <div className="mnx-helpdesk-toggle-row mnx-helpdesk-desk-toggle-row" role="tablist" aria-label="Choose service desk">
               <PeopleToggleButton
                 active={selectedDesk === "HR"}
                 onClick={() => switchDesk("HR")}
@@ -1038,7 +1038,7 @@ export function HelpDeskView() {
             </div>
 
             <div className="mnx-helpdesk-filter-cluster">
-              <div className="mnx-helpdesk-toggle-row" role="tablist" aria-label="Queue filters">
+              <div className="mnx-helpdesk-toggle-row mnx-helpdesk-filter-toggle-row" role="tablist" aria-label="Queue filters">
                 {QUEUE_FILTERS.map((filter) => (
                   <PeopleToggleButton
                     key={filter.value}

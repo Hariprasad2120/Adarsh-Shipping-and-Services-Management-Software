@@ -129,10 +129,18 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
   const availableCount = snapshot.modules.filter((module) => module.available).length;
 
   return (
-    <section className="mnx-module-command-section" aria-label="Module command center">
+    <section
+      className="mnx-module-command-section"
+      aria-label="Module command center"
+      data-workpet-target="dashboard-module-command-center"
+    >
       <header className="mnx-module-command-header">
         <WorkspaceSectionHeading
-          index="05"
+          index={(
+            <span className="mnx-section-heading-marker" aria-hidden="true">
+              &rsaquo;
+            </span>
+          )}
           title="Module command center"
           description="Live pulse from enabled workspaces available to your role."
         />

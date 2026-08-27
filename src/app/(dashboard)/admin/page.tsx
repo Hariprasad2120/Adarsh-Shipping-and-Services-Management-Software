@@ -148,6 +148,8 @@ export default async function AdminPage() {
                     ? "Manage roles and explicit permissions."
                     : item.href === "/admin/settings"
                       ? "Control appraisal configuration."
+                      : item.href === "/admin/work-pet"
+                        ? "Govern Mona rollout, model policy, analytics, and feedback."
                       : item.href === "/admin/notifications"
                         ? "Inspect notification delivery and retries."
                         : "Open this controlled administration tool."}

@@ -263,7 +263,11 @@ export function DashboardOrganization({
   return (
     <section className="mnx-organization-section">
       <WorkspaceSectionHeading
-        index="06"
+        index={(
+          <span className="mnx-section-heading-marker" aria-hidden="true">
+            &rsaquo;
+          </span>
+        )}
         title="Company services & people"
         description="Company signals, policy references, structures, and colleague records."
       />

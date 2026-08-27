@@ -9,14 +9,14 @@ function OperationalTableInfoDisclosure({
   children: React.ReactNode;
 }) {
   return (
-    <details className="mnx-card-info">
-      <summary aria-label={ariaLabel} className="mnx-card-info-trigger">
+    <div className="mnx-card-info">
+      <button type="button" aria-label={ariaLabel} className="mnx-card-info-trigger">
         <span aria-hidden="true">!</span>
-      </summary>
+      </button>
       <div className="mnx-card-info-popover">
         <div className="mnx-card-info-content">{children}</div>
       </div>
-    </details>
+    </div>
   );
 }
 

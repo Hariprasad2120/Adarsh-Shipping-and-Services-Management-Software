@@ -186,6 +186,8 @@ model Organisation {
   googleWorkspaceSettings    GoogleWorkspaceSetting[]
   jobWorkspaceProfiles       JobWorkspaceProfile[]
   communicationAuditEvents   CommunicationAuditEvent[]
+  monaConversations          MonaConversation[]
+  monaAuditEvents            MonaAuditEvent[]
 
   // Recruit Module
   recruitJobOpenings    RecruitJobOpening[]
@@ -533,6 +535,8 @@ model User {
   // Google Workspace Relations
   workspaceConnection      GoogleWorkspaceConnection?
   communicationAuditEvents CommunicationAuditEvent[]
+  monaConversations        MonaConversation[]
+  monaAuditEvents          MonaAuditEvent[]
 
   // Google Chat Integration
   googleChatLink GoogleChatUserLink?
@@ -3008,22 +3012,22 @@ model SalaryRevisionLetter {
 // with admin-configurable rows. See
 // docs/payroll/MONOLITH_PAYROLL_INTEGRATION_MAP.md, section 4.
 model SalaryComponent {
-  id               String   @id @default(cuid())
-  orgId            String
-  category         String // EARNING | DEDUCTION | BENEFIT | REIMBURSEMENT
-  name             String
-  componentType    String // Zoho "earning type" label, e.g. Basic, House Rent Allowance, Custom Allowance
-  calculationType  String // FIXED_FLAT | FIXED_PERCENT | VARIABLE_FLAT | VARIABLE_PERCENT
-  percentOfBasic   Float? // used when calculationType is *_PERCENT
-  considerForEpf   Boolean  @default(false)
-  considerForEsi   Boolean  @default(false)
-  includeInCtc     Boolean  @default(true)
-  taxable          Boolean  @default(true)
-  fbpEligible      Boolean  @default(false) // Phase 12: Flexible Benefit Plan eligibility (Reimbursement components only)
-  active           Boolean  @default(true)
-  sortOrder        Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(cuid())
+  orgId           String
+  category        String // EARNING | DEDUCTION | BENEFIT | REIMBURSEMENT
+  name            String
+  componentType   String // Zoho "earning type" label, e.g. Basic, House Rent Allowance, Custom Allowance
+  calculationType String // FIXED_FLAT | FIXED_PERCENT | VARIABLE_FLAT | VARIABLE_PERCENT
+  percentOfBasic  Float? // used when calculationType is *_PERCENT
+  considerForEpf  Boolean  @default(false)
+  considerForEsi  Boolean  @default(false)
+  includeInCtc    Boolean  @default(true)
+  taxable         Boolean  @default(true)
+  fbpEligible     Boolean  @default(false) // Phase 12: Flexible Benefit Plan eligibility (Reimbursement components only)
+  active          Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   templateComponents SalaryTemplateComponent[]
 
@@ -3070,11 +3074,11 @@ model PayrollTaxChallan {
 }
 
 model PayrollTaxChallanAssociation {
-  id            String   @id @default(cuid())
-  challanId     String
+  id             String   @id @default(cuid())
+  challanId      String
   liabilityMonth DateTime @db.Date
-  amount        Float
-  createdAt     DateTime @default(now())
+  amount         Float
+  createdAt      DateTime @default(now())
 
   challan PayrollTaxChallan @relation(fields: [challanId], references: [id], onDelete: Cascade)
 
@@ -3123,14 +3127,14 @@ model PayrollStatutoryLwfConfig {
 // default unlike PT/LWF). Paid as an annual off-cycle batch, not a monthly
 // payroll line.
 model PayrollStatutoryBonusConfig {
-  id                    String   @id @default(cuid())
-  orgId                 String   @unique
-  enabled               Boolean  @default(false)
-  percent               Float    @default(8.33)
-  eligibilityWageCeiling Float   @default(21000)
-  calculationWageCeiling Float   @default(7000)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  orgId                  String   @unique
+  enabled                Boolean  @default(false)
+  percent                Float    @default(8.33)
+  eligibilityWageCeiling Float    @default(21000)
+  calculationWageCeiling Float    @default(7000)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
 // Annual income-tax slabs (old/new regime), keyed by fiscal year so a new
@@ -3169,18 +3173,18 @@ model PayrollStatutoryTaxRegimeConfig {
 // infrastructure this repo/org doesn't have). Org files externally and
 // records the outcome here.
 model PayrollForm16Filing {
-  id             String    @id @default(cuid())
-  orgId          String
-  employeeId     String
-  fiscalYear     String
-  status         String    @default("NOT_FILED") // NOT_FILED | GENERATED | FILED
-  generatedAt    DateTime?
-  filedAt        DateTime?
+  id                    String    @id @default(cuid())
+  orgId                 String
+  employeeId            String
+  fiscalYear            String
+  status                String    @default("NOT_FILED") // NOT_FILED | GENERATED | FILED
+  generatedAt           DateTime?
+  filedAt               DateTime?
   acknowledgementNumber String?
-  filedById      String?
-  notes          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  filedById             String?
+  notes                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@unique([orgId, employeeId, fiscalYear])
   @@index([orgId, fiscalYear])
@@ -3190,15 +3194,15 @@ model PayrollForm16Filing {
 // wired to real existing actions (notification, to-do task) — not a
 // generic workflow engine. See PayrollAutomationLog for execution history.
 model PayrollAutomationRule {
-  id          String   @id @default(cuid())
-  orgId       String
-  trigger     String // LOAN_FULLY_REPAID | SALARY_REVISION_APPROVED | NEW_PAYROLL_EMPLOYEE | PAYROLL_RUN_OVERDUE
-  enabled     Boolean  @default(true)
-  actionType  String // NOTIFY_MANAGER | NOTIFY_HR | CREATE_TODO
+  id           String   @id @default(cuid())
+  orgId        String
+  trigger      String // LOAN_FULLY_REPAID | SALARY_REVISION_APPROVED | NEW_PAYROLL_EMPLOYEE | PAYROLL_RUN_OVERDUE
+  enabled      Boolean  @default(true)
+  actionType   String // NOTIFY_MANAGER | NOTIFY_HR | CREATE_TODO
   actionConfig Json? // action-specific extras, e.g. { "dueInDays": 3 }
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   logs PayrollAutomationLog[]
 
@@ -3206,14 +3210,14 @@ model PayrollAutomationRule {
 }
 
 model PayrollAutomationLog {
-  id           String   @id @default(cuid())
-  ruleId       String
-  orgId        String
-  triggeredAt  DateTime @default(now())
-  subjectType  String // EMPLOYEE | LOAN | SALARY_REVISION | PAYROLL_BATCH
-  subjectId    String
-  outcome      String // EXECUTED | SKIPPED | FAILED
-  detail       String?
+  id          String   @id @default(cuid())
+  ruleId      String
+  orgId       String
+  triggeredAt DateTime @default(now())
+  subjectType String // EMPLOYEE | LOAN | SALARY_REVISION | PAYROLL_BATCH
+  subjectId   String
+  outcome     String // EXECUTED | SKIPPED | FAILED
+  detail      String?
 
   rule PayrollAutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
@@ -7224,6 +7228,71 @@ model CommunicationAuditEvent {
 
   @@index([orgId])
   @@index([userId])
+}
+
+model MonaConversation {
+  id            String                    @id @default(cuid())
+  orgId         String?
+  userId        String
+  channel       String
+  sessionKey    String
+  title         String?
+  lastPath      String?
+  lastPageLabel String?
+  lastMessageAt DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  org           Organisation?             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      MonaConversationMessage[]
+  auditEvents   MonaAuditEvent[]
+
+  @@unique([userId, channel, sessionKey])
+  @@index([orgId, updatedAt])
+  @@index([userId, updatedAt])
+  @@index([channel, updatedAt])
+}
+
+model MonaConversationMessage {
+  id              String           @id @default(cuid())
+  conversationId  String
+  ordinal         Int
+  role            String
+  content         String           @db.Text
+  toolNames       Json?
+  contextSnapshot Json?
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  conversation    MonaConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, ordinal])
+  @@index([conversationId, createdAt])
+}
+
+model MonaAuditEvent {
+  id              String            @id @default(cuid())
+  orgId           String?
+  userId          String
+  conversationId  String?
+  channel         String
+  sessionKey      String?
+  eventType       String
+  status          String
+  requestMessage  String?           @db.Text
+  responseMessage String?           @db.Text
+  toolNames       Json?
+  routePath       String?
+  details         Json?
+  latencyMs       Int?
+  createdAt       DateTime          @default(now())
+  org             Organisation?     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation    MonaConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, createdAt])
+  @@index([userId, createdAt])
+  @@index([conversationId, createdAt])
+  @@index([channel, createdAt])
 }
 
 // ─── CHA Module Models ────────────────────────────────────────────────────────

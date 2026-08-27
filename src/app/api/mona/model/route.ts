@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { loadUserPermissions } from "@/lib/rbac";
 import {
   AVAILABLE_MODELS,
-  getPreferredModel,
-  setPreferredModel,
   resetQuotaCooldown,
 } from "@/modules/mona/gemini-client";
+import {
+  getEffectiveMonaModelForUser,
+  setPreferredMonaModelForUser,
+} from "@/modules/mona/settings";
+import {
+  getMonaGovernanceForOrg,
+  resolveMonaAvailability,
+} from "@/modules/mona/governance";
 
 /** GET — returns available models and current selection */
 export async function GET() {
@@ -14,9 +21,29 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const permissions = await loadUserPermissions(session.user.id);
+  const isAdmin = permissions.has("admin.org.manage");
+  const availability = await resolveMonaAvailability({
+    isAdmin,
+    orgId: session.user.orgId,
+    userId: session.user.id,
+  });
+  const governance = await getMonaGovernanceForOrg(session.user.orgId);
+  const currentModel = await getEffectiveMonaModelForUser({
+    orgId: session.user.orgId,
+    userId: session.user.id,
+  });
+  const visibleModels = AVAILABLE_MODELS.filter((model) =>
+    governance.allowedModelIds.includes(model.id),
+  );
+
   const response = NextResponse.json({
-    models: AVAILABLE_MODELS,
-    current: getPreferredModel(),
+    models: visibleModels,
+    current: currentModel,
+    canSwitchModel: governance.allowUserModelSwitching,
+    rolloutMode: governance.rolloutMode,
+    available: availability.allowed,
+    disabledReason: availability.reason,
   });
   response.headers.set("Cache-Control", "private, max-age=300, stale-while-revalidate=600");
   return response;
@@ -29,6 +56,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const permissions = await loadUserPermissions(session.user.id);
+  const isAdmin = permissions.has("admin.org.manage");
+  const availability = await resolveMonaAvailability({
+    isAdmin,
+    orgId: session.user.orgId,
+    userId: session.user.id,
+  });
+  if (!availability.allowed) {
+    return NextResponse.json(
+      { error: availability.reason ?? "Mona is not available." },
+      { status: 403 },
+    );
+  }
+
   const body = await req.json();
   const { modelId } = body;
 
@@ -36,12 +77,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid model ID" }, { status: 400 });
   }
 
-  setPreferredModel(modelId);
-  resetQuotaCooldown(); // Reset cooldown when switching models
+  const savedModelId = await setPreferredMonaModelForUser({
+    userId: session.user.id,
+    orgId: session.user.orgId,
+    modelId,
+  });
+  resetQuotaCooldown(savedModelId);
   console.log(`[Mona] Model switched to: ${modelId} by user ${session.user.id}`);
 
   return NextResponse.json({
     success: true,
-    current: getPreferredModel(),
+    current: savedModelId,
   });
 }

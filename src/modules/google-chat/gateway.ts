@@ -2,8 +2,8 @@
 // Routes chat requests through the existing chatWithMona() orchestrator.
 // Adds Google Chat channel context without touching the core AI logic.
 
+import { buildMonaContext } from "@/modules/mona/context";
 import { chatWithMona, clearConversation } from "@/modules/mona/service";
-import type { MonaContext } from "@/modules/mona/types";
 
 export type GatewayRequest = {
   userId: string;
@@ -25,7 +25,7 @@ export type GatewayResponse = {
 };
 
 export async function processMessage(req: GatewayRequest): Promise<GatewayResponse> {
-  const ctx: MonaContext = {
+  const ctx = await buildMonaContext({
     userId: req.userId,
     userName: req.userName,
     orgId: req.orgId,
@@ -34,7 +34,8 @@ export async function processMessage(req: GatewayRequest): Promise<GatewayRespon
       : "/google-chat",
     permissions: req.permissions,
     isAdmin: req.isAdmin,
-  };
+    channel: "google_chat",
+  });
 
   const sessionKey = req.channel === "google_chat"
     ? `gchat:${req.spaceResourceName ?? "dm"}:${req.userId}`
@@ -43,13 +44,13 @@ export async function processMessage(req: GatewayRequest): Promise<GatewayRespon
   return chatWithMona(ctx, req.message, sessionKey);
 }
 
-export function resetSession(params: {
+export async function resetSession(params: {
   userId: string;
   channel: "web" | "google_chat";
   spaceResourceName?: string;
-}): void {
+}): Promise<void> {
   const sessionKey = params.channel === "google_chat"
     ? `gchat:${params.spaceResourceName ?? "dm"}:${params.userId}`
     : `${params.userId}:reset`;
-  clearConversation(params.userId, sessionKey);
+  await clearConversation(params.userId, sessionKey, params.channel);
 }

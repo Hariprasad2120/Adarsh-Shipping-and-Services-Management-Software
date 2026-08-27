@@ -3,7 +3,6 @@ import {
   BellRing,
   CalendarDays,
   CheckCircle2,
-  ClipboardCheck,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -43,8 +42,6 @@ function formatDate(value: Date | string, options?: Intl.DateTimeFormatOptions) 
 }
 
 export function DashboardOverview({
-  profile,
-  sessionUser,
   data,
   moduleSnapshot,
   commandCenterSnapshot,
@@ -84,7 +81,11 @@ export function DashboardOverview({
 
   return (
     <div className="mnx-dashboard-overview">
-      <section className="mnx-dashboard-metrics mnx-dashboard-metrics-inline" aria-label="Workspace summary metrics">
+      <section
+        className="mnx-dashboard-metrics mnx-dashboard-metrics-inline"
+        aria-label="Workspace summary metrics"
+        data-workpet-target="dashboard-summary-metrics"
+      >
         {metrics.map((metric) => (
           <article className="mnx-metric-card" key={metric.label}>
             <header>
@@ -97,12 +98,16 @@ export function DashboardOverview({
       </section>
 
       <WorkspaceSectionHeading
-        index="03"
+        index={(
+          <span className="mnx-section-heading-marker" aria-hidden="true">
+            &rsaquo;
+          </span>
+        )}
         title="Operations hub"
         description="Company signals, assigned work, weekly rhythm, and your quick launcher into active modules."
       />
 
-      <div className="mnx-dashboard-main-hub">
+      <div className="mnx-dashboard-main-hub" data-workpet-target="dashboard-operations-hub">
         <div className="mnx-hub-primary">
           <section className="mnx-feed-panel">
             <header className="mnx-panel-heading">
@@ -110,33 +115,45 @@ export function DashboardOverview({
                 <MonolithSpecLabel>MY COMMAND FEED</MonolithSpecLabel>
                 <h2>A clear start to the day</h2>
               </div>
-              <span className="mnx-user-email">{sessionUser.email}</span>
             </header>
 
-            <p className="mnx-feed-intro">
-              Welcome back, {profile.name || sessionUser.name}. Your workspace is prioritized around
-              current attendance, the next task in motion, and the latest company signal.
-            </p>
-
             <div className="mnx-feed-cards">
-              <article className="mnx-inset-card">
-                <header><BellRing size={16} /><span>Latest announcement</span></header>
-                {nextAnnouncement ? (
-                  <>
-                    <h3>{nextAnnouncement.title}</h3>
-                    <p>{nextAnnouncement.body}</p>
-                    <small>Published {formatDate(nextAnnouncement.createdAt)}</small>
-                  </>
-                ) : (
-                  <div className="mnx-empty-compact">
-                    <CheckCircle2 size={20} />
-                    <p>No new company announcements are waiting.</p>
-                  </div>
-                )}
-              </article>
+              <div className="mnx-dashboard-card-section">
+                <WorkspaceSectionHeading
+                  className="mnx-dashboard-card-heading"
+                  index={(
+                    <span className="mnx-section-heading-marker" aria-hidden="true">
+                      &rsaquo;
+                    </span>
+                  )}
+                  title="Latest announcement"
+                />
+                <div className="mnx-dashboard-announcement-shadow">
+                  {nextAnnouncement ? (
+                    <>
+                      <h3>{nextAnnouncement.title}</h3>
+                      <p>{nextAnnouncement.body}</p>
+                      <small>Published {formatDate(nextAnnouncement.createdAt)}</small>
+                    </>
+                  ) : (
+                    <div className="mnx-empty-compact">
+                      <CheckCircle2 size={20} />
+                      <p>No new company announcements are waiting.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-              <article className="mnx-inset-card">
-                <header><ClipboardCheck size={16} /><span>Priority focus</span></header>
+              <div className="mnx-dashboard-card-section">
+                <WorkspaceSectionHeading
+                  className="mnx-dashboard-card-heading"
+                  index={(
+                    <span className="mnx-section-heading-marker" aria-hidden="true">
+                      &rsaquo;
+                    </span>
+                  )}
+                  title="Priority focus"
+                />
                 {nextTask ? (
                   <>
                     <h3>{nextTask.title}</h3>
@@ -152,44 +169,49 @@ export function DashboardOverview({
                     <p>You are fully caught up for now.</p>
                   </div>
                 )}
-              </article>
-            </div>
-          </section>
-
-          <section className="mnx-task-panel">
-            <header className="mnx-panel-heading">
-              <div>
-                <MonolithSpecLabel>OPEN WORK</MonolithSpecLabel>
-                <h2>Task pipeline</h2>
               </div>
-              <span className="mnx-count-pill">{data.recentTasks.length} active</span>
-            </header>
-
-            <div className="mnx-task-list">
-              {data.recentTasks.length > 0 ? data.recentTasks.slice(0, 5).map((task) => (
-                <article key={task.id}>
-                  <span className="mnx-task-check" aria-hidden="true" />
-                  <div>
-                    <h3>{task.title}</h3>
-                    <p>Due {formatDate(task.dueDate)}</p>
-                  </div>
-                  <Badge className={`mnx-priority-${task.priority.toLowerCase()}`}>
-                    {task.priority}
-                  </Badge>
-                </article>
-              )) : (
-                <MonolithEmptyState>
-                  <CheckCircle2 size={24} />
-                  <h3>The board is clear</h3>
-                  <p>No pending tasks require your attention.</p>
-                </MonolithEmptyState>
-              )}
             </div>
-
-            <Link className="mnx-text-link" href="/todo">
-              Open task workspace <ArrowUpRight size={14} />
-            </Link>
           </section>
+
+          <div className="mnx-dashboard-card-section">
+            <WorkspaceSectionHeading
+              className="mnx-dashboard-card-heading"
+              index={(
+                <span className="mnx-section-heading-marker" aria-hidden="true">
+                  &rsaquo;
+                </span>
+              )}
+              title="Task pipeline"
+              actions={<span className="mnx-count-pill">{data.recentTasks.length} active</span>}
+            />
+
+            <section>
+              <div className="mnx-task-list">
+                {data.recentTasks.length > 0 ? data.recentTasks.slice(0, 5).map((task) => (
+                  <article key={task.id}>
+                    <span className="mnx-task-check" aria-hidden="true" />
+                    <div>
+                      <h3>{task.title}</h3>
+                      <p>Due {formatDate(task.dueDate)}</p>
+                    </div>
+                    <Badge className={`mnx-priority-${task.priority.toLowerCase()}`}>
+                      {task.priority}
+                    </Badge>
+                  </article>
+                )) : (
+                  <MonolithEmptyState>
+                    <CheckCircle2 size={24} />
+                    <h3>The board is clear</h3>
+                    <p>No pending tasks require your attention.</p>
+                  </MonolithEmptyState>
+                )}
+              </div>
+
+              <Link className="mnx-text-link" href="/todo">
+                Open task workspace <ArrowUpRight size={14} />
+              </Link>
+            </section>
+          </div>
 
           <section className="mnx-table-card">
             <header className="mnx-panel-heading">
@@ -236,7 +258,7 @@ export function DashboardOverview({
         </div>
 
         <aside className="mnx-hub-secondary">
-          <section className="mnx-dashboard-brief-panel">
+          <section className="mnx-dashboard-brief-panel" data-workpet-target="dashboard-exceptions">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>EXCEPTIONS</MonolithSpecLabel>
@@ -276,7 +298,7 @@ export function DashboardOverview({
             )}
           </section>
 
-          <section className="mnx-dashboard-brief-panel">
+          <section className="mnx-dashboard-brief-panel" data-workpet-target="dashboard-quick-launch">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>QUICK LAUNCH</MonolithSpecLabel>
@@ -328,11 +350,16 @@ export function DashboardOverview({
       </div>
 
       <WorkspaceSectionHeading
-        index="05"
+        index={(
+          <span className="mnx-section-heading-marker" aria-hidden="true">
+            &rsaquo;
+          </span>
+        )}
         title="Analytics & Workflows"
         description="Live module metrics, AMS appraisal pipeline distribution, and attendance signal analysis."
       />
 
+      <div data-workpet-target="dashboard-analytics-workflows">
       <DashboardInsightGrid>
         <DashboardInsightCard
           eyebrow="Organization pulse"
@@ -397,6 +424,7 @@ export function DashboardOverview({
           )}
         />
       </DashboardInsightGrid>
+      </div>
 
       <ModuleCommandCenter snapshot={moduleSnapshot} />
     </div>

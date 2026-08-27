@@ -68,6 +68,7 @@
     "catalogue:update": "npx tsx scripts/update-product-catalogue.ts",
     "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
     "test": "tsx scripts/run-with-staging-env.ts vitest run",
+    "test:mona": "vitest run --config vitest.mona.config.ts",
     "test:ui": "vitest run --config vitest.ui.config.ts",
     "smoke:test": "node scripts/vercel-smoke-test.mjs",
     "test:playwright:performance": "node scripts/playwright-performance-security.mjs",

@@ -1,7 +1,37 @@
 # Work Pet Implementation Plan
 
-Last updated: 2026-08-25
+Last updated: 2026-08-27
 Scope: plan derived from current repository state
+
+## Implementation status as of 2026-08-27
+
+Completed:
+
+- Phase 1 shell hardening through Phase 11 security and quality hardening are
+  now implemented in the existing `src/modules/mona/**` stack rather than a
+  second assistant namespace.
+- Phase 9 UI guidance shipped with explicit `data-workpet-target` anchors,
+  route-scoped guidance registries, guided overlays, and chat-linked help
+  prompts.
+- Phase 10 admin and analytics shipped with `/admin/work-pet`, org-level
+  rollout controls, pilot-user scoping, model governance, token-aware usage
+  metrics, failure/fallback analytics, and Mona feedback review.
+- Phase 11 hardening shipped with safer action-token verification, untrusted
+  document-preview handling, stronger prompt boundaries for retrieved content,
+  and focused Mona security/unit coverage.
+
+Validation now available:
+
+- `npm run test:mona` runs the dedicated Mona unit/security suite without
+  requiring the guarded staging `.env.staging.local` database test setup.
+- targeted `npx tsc --noEmit --pretty false` and focused `npx eslint --quiet`
+  passed for the Phase 9-11 Mona batches in this Codex session.
+
+Still manual:
+
+- runtime browser verification across Light, Night, and Violet themes for the
+  floating Mona shell, dashboard guidance overlays, and `/admin/work-pet`
+  remains pending in this Codex session.
 
 ## 1. Delivery strategy
 

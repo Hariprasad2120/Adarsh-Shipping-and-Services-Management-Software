@@ -198,17 +198,17 @@ export function HrmsIncentivesClient({
       <PeopleSummaryGrid>
         <PeopleSummary
           icon={<ClipboardCheck aria-hidden="true" />}
-          label="Submitted for HRMS"
+          label="Awaiting review"
           value={submittedCount}
         />
         <PeopleSummary
           icon={<ShieldCheck aria-hidden="true" />}
-          label="Approved entries"
+          label="Ready for payroll"
           value={approvedCount}
         />
         <PeopleSummary
           icon={<BadgeIndianRupee aria-hidden="true" />}
-          label="Paid value"
+          label="Paid this cycle"
           value={formatMoney(paidValue, "INR")}
         />
       </PeopleSummaryGrid>
@@ -216,9 +216,9 @@ export function HrmsIncentivesClient({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <PeopleSection>
           <PeopleSectionHeader
-            eyebrow="Incentive queue"
-            title="HRMS incentive working"
-            description="CRM submits the input here. HRMS reviews, approves, rejects, or marks the payout complete from this workspace."
+            eyebrow="Review queue"
+            title="Incentive approvals"
+            description="Review CRM-submitted incentive claims, confirm the payout decision, and keep payroll status current."
             actions={
               <MnxAction variant="secondary" onClick={() => void refresh()} disabled={loading}>
                 <RefreshCcw aria-hidden="true" />
@@ -245,7 +245,7 @@ export function HrmsIncentivesClient({
                 </datalist>
               </div>
               <WorkspaceAlert variant="info">
-                Use `ALL`, `SUBMITTED`, `REVIEWED`, `APPROVED`, `REJECTED`, or `PAID` to narrow the queue.
+                Filter the queue by all entries, new submissions, reviewed items, approved payouts, rejected claims, or paid records.
               </WorkspaceAlert>
             </div>
 
@@ -316,12 +316,12 @@ export function HrmsIncentivesClient({
 
         <PeopleSection>
           <PeopleSectionHeader
-            eyebrow="Processing desk"
-            title={selected ? selected.employee.name : "Select an incentive"}
+            eyebrow="Review details"
+            title={selected ? selected.employee.name : "Select a claim"}
             description={
               selected
                 ? `${selected.referenceLabel} · submitted by ${selected.createdBy.name}`
-                : "Choose an incentive entry from the queue to review and update it."
+                : "Choose a claim from the queue to review the context, record notes, and update the status."
             }
           />
           <div className="grid gap-4 p-5 sm:p-6">
@@ -368,13 +368,13 @@ export function HrmsIncentivesClient({
                     </PeopleSelect>
                   </PeopleField>
 
-                  <PeopleField label="HRMS notes" htmlFor="hrms-incentive-notes">
+                  <PeopleField label="Review notes" htmlFor="hrms-incentive-notes">
                     <PeopleTextarea
                       id="hrms-incentive-notes"
                       rows={6}
                       value={hrNotes}
                       onChange={(event) => setHrNotes(event.target.value)}
-                      placeholder="Record review notes, payroll remarks, approval context, or rejection reasons."
+                      placeholder="Add approval context, payroll remarks, or rejection reasons."
                       disabled={saving}
                     />
                   </PeopleField>
@@ -382,14 +382,14 @@ export function HrmsIncentivesClient({
                   <div className="flex justify-end">
                     <MnxAction onClick={() => void save()} disabled={saving}>
                       <ShieldCheck aria-hidden="true" />
-                      {saving ? "Saving..." : "Update incentive"}
+                      {saving ? "Saving..." : "Save decision"}
                     </MnxAction>
                   </div>
                 </div>
               </>
             ) : (
               <WorkspaceAlert variant="info">
-                No incentive record is selected yet.
+                Select a claim from the queue to begin review.
               </WorkspaceAlert>
             )}
           </div>

@@ -1182,6 +1182,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/admin/settings"],
       },
       {
+        href: "/admin/work-pet",
+        label: "Work Pet Governance",
+        icon: View,
+        permission: "admin.org.manage",
+        matchPaths: ["/admin/work-pet"],
+      },
+      {
         href: "/admin/passkeys",
         label: "Passkey Resets",
         icon: Security,

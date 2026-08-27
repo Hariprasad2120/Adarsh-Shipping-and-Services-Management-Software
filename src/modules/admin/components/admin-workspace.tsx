@@ -97,6 +97,12 @@ const exactRouteMeta: Record<string, AdminRouteMeta> = {
     description: "Manage organisation-wide settings.",
     icon: Settings2,
   },
+  "/admin/work-pet": {
+    eyebrow: "Assistant governance",
+    title: "Work Pet governance",
+    description: "Control Mona rollout, model policy, analytics, and feedback review.",
+    icon: MessageSquareText,
+  },
   "/admin/simulation": {
     eyebrow: "Controlled diagnostics",
     title: "Time simulation",
@@ -109,6 +115,7 @@ const navigationItems = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/roles", label: "Roles" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/work-pet", label: "Work Pet" },
   { href: "/admin/passkeys", label: "Passkeys" },
   { href: "/admin/sessions", label: "Sessions" },
   { href: "/admin/data-tools", label: "Data tools" },

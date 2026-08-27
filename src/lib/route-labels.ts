@@ -89,6 +89,7 @@ const PATH_LABELS: Record<string, string> = {
   "/admin": "Admin",
   "/admin/roles": "Roles & Permissions",
   "/admin/settings": "Appraisal Settings",
+  "/admin/work-pet": "Work Pet Governance",
   "/admin/passkeys": "Passkey Resets",
   "/admin/sessions": "Session Monitor",
   "/admin/data-tools": "Data Tools",
