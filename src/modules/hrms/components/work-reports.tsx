@@ -281,7 +281,7 @@ export function WorkReportsView({
         if (current && nextReports.some((report) => report.id === current)) {
           return current;
         }
-        return nextReports[0]?.id ?? null;
+        return null;
       });
     } catch (error) {
       toast.error(

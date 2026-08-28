@@ -6,11 +6,11 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
   Menu,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
   ShieldCheck,
   Sun,
@@ -422,13 +422,14 @@ function MonolithAppShellBody({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarCollapsedLoaded, setSidebarCollapsedLoaded] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [sidebarPinned, setSidebarPinned] = useState(false);
   const [query, setQuery] = useState("");
-  const [expandedSections, setExpandedSections] = useState<
-    Record<string, boolean>
-  >({});
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(
+    null,
+  );
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const sidebarIsExpanded = sidebarPinned || sidebarExpanded || profileOpen;
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds, enabledFeatureIds),
     [caps, enabledFeatureIds, enabledModuleIds],
@@ -475,16 +476,14 @@ function MonolithAppShellBody({
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
-      setSidebarCollapsed(window.localStorage.getItem("sidebarCollapsed") === "true");
-      setSidebarCollapsedLoaded(true);
+      setSidebarPinned(window.localStorage.getItem("sidebarPinned") === "true");
     });
     return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   useEffect(() => {
-    if (!sidebarCollapsedLoaded) return;
-    window.localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
-  }, [sidebarCollapsed, sidebarCollapsedLoaded]);
+    window.localStorage.setItem("sidebarPinned", String(sidebarPinned));
+  }, [sidebarPinned]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -516,10 +515,8 @@ function MonolithAppShellBody({
     if (!activeSection) return;
 
     const frameId = window.requestAnimationFrame(() => {
-      setExpandedSections((current) =>
-        current[activeSection.id]
-          ? current
-          : { ...current, [activeSection.id]: true },
+      setExpandedSectionId((current) =>
+        current === activeSection.id ? current : activeSection.id,
       );
     });
 
@@ -530,11 +527,31 @@ function MonolithAppShellBody({
     <div
       className="mnx-dashboard-shell"
       data-theme={theme}
-      data-sidebar-collapsed={sidebarCollapsed}
+      data-sidebar-expanded={sidebarIsExpanded}
+      data-sidebar-pinned={sidebarPinned}
     >
       <aside
         className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`}
         aria-label="Primary navigation"
+        onMouseEnter={() => {
+          if (!sidebarPinned) setSidebarExpanded(true);
+        }}
+        onMouseLeave={() => {
+          setProfileOpen(false);
+          if (!sidebarPinned) setSidebarExpanded(false);
+        }}
+        onFocusCapture={() => {
+          if (!sidebarPinned) setSidebarExpanded(true);
+        }}
+        onBlurCapture={(event) => {
+          if (
+            !sidebarPinned &&
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          ) {
+            setProfileOpen(false);
+            setSidebarExpanded(false);
+          }
+        }}
       >
         <div className="mnx-sidebar-brand">
           <Link href="/dashboard" aria-label="Monolith dashboard">
@@ -549,12 +566,22 @@ function MonolithAppShellBody({
           </Link>
           <button
             type="button"
-            className="mnx-sidebar-collapse-toggle"
-            onClick={() => setSidebarCollapsed((current) => !current)}
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="mnx-sidebar-pin-toggle"
+            onClick={() => {
+              setSidebarPinned((current) => {
+                const next = !current;
+                setSidebarExpanded(next);
+                if (!next && !profileOpen) {
+                  setSidebarExpanded(false);
+                }
+                return next;
+              });
+            }}
+            aria-label={sidebarPinned ? "Unpin sidebar" : "Pin sidebar open"}
+            title={sidebarPinned ? "Unpin sidebar" : "Pin sidebar open"}
+            aria-pressed={sidebarPinned}
           >
-            {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {sidebarPinned ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
           </button>
           <button
             type="button"
@@ -576,7 +603,8 @@ function MonolithAppShellBody({
               section.matchPaths,
             );
             const hasItems = section.items.length > 0;
-            const isExpanded = hasItems && !!expandedSections[section.id];
+            const isExpanded = hasItems && expandedSectionId === section.id;
+            const isSubnavVisible = isExpanded && sidebarIsExpanded;
             const activeItemHref = getActiveItemHref(pathname, section.items);
 
             if (!hasItems) {
@@ -606,12 +634,12 @@ function MonolithAppShellBody({
                   className={`mnx-sidebar-entry ${isActive ? "is-active" : ""}`}
                   aria-expanded={isExpanded}
                   aria-controls={`mnx-sidebar-items-${section.id}`}
-                  onClick={() =>
-                    setExpandedSections((current) => ({
-                      ...current,
-                      [section.id]: !current[section.id],
-                    }))
-                  }
+                  onClick={() => {
+                    if (!sidebarPinned) setSidebarExpanded(true);
+                    setExpandedSectionId((current) =>
+                      current === section.id ? null : section.id,
+                    );
+                  }}
                 >
                   <span>
                     <Icon size={15} strokeWidth={1.9} />
@@ -624,45 +652,46 @@ function MonolithAppShellBody({
                   />
                 </button>
 
-                <div
-                  id={`mnx-sidebar-items-${section.id}`}
-                  className="mnx-sidebar-subnav"
-                  role="group"
-                  aria-label={`${section.label} navigation`}
-                  hidden={!isExpanded}
-                >
-                  {section.items.map((item, index) => {
-                    const ItemIcon = item.icon;
-                    const isItemActive = activeItemHref === item.href;
-                    const previousSectionLabel =
-                      index > 0 ? section.items[index - 1]?.sectionLabel : undefined;
-                    const showSectionLabel =
-                      !!item.sectionLabel &&
-                      item.sectionLabel !== previousSectionLabel;
+                {isSubnavVisible ? (
+                  <div
+                    id={`mnx-sidebar-items-${section.id}`}
+                    className="mnx-sidebar-subnav"
+                    role="group"
+                    aria-label={`${section.label} navigation`}
+                  >
+                    {section.items.map((item, index) => {
+                      const ItemIcon = item.icon;
+                      const isItemActive = activeItemHref === item.href;
+                      const previousSectionLabel =
+                        index > 0 ? section.items[index - 1]?.sectionLabel : undefined;
+                      const showSectionLabel =
+                        !!item.sectionLabel &&
+                        item.sectionLabel !== previousSectionLabel;
 
-                    return (
-                      <div className="mnx-sidebar-subnav-item" key={item.href}>
-                        {showSectionLabel ? (
-                          <p className="mnx-sidebar-subnav-heading">
-                            {item.sectionLabel}
-                          </p>
-                        ) : null}
-                        <Link
-                          href={item.href}
-                          className={isItemActive ? "is-active" : ""}
-                          aria-current={isItemActive ? "page" : undefined}
-                          title={item.label}
-                          onClick={() => setMobileOpen(false)}
-                        >
-                          <span>
-                            <ItemIcon size={13} strokeWidth={1.9} />
-                          </span>
-                          <b>{item.label}</b>
-                        </Link>
-                      </div>
-                    );
-                  })}
-                </div>
+                      return (
+                        <div className="mnx-sidebar-subnav-item" key={item.href}>
+                          {showSectionLabel ? (
+                            <p className="mnx-sidebar-subnav-heading">
+                              {item.sectionLabel}
+                            </p>
+                          ) : null}
+                          <Link
+                            href={item.href}
+                            className={isItemActive ? "is-active" : ""}
+                            aria-current={isItemActive ? "page" : undefined}
+                            title={item.label}
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            <span>
+                              <ItemIcon size={13} strokeWidth={1.9} />
+                            </span>
+                            <b>{item.label}</b>
+                          </Link>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             );
           })}
@@ -676,7 +705,17 @@ function MonolithAppShellBody({
             aria-label="Open profile menu"
             aria-expanded={profileOpen}
             aria-haspopup="menu"
-            onClick={() => setProfileOpen((current) => !current)}
+            onClick={() =>
+              setProfileOpen((current) => {
+                const next = !current;
+                if (next) {
+                  setSidebarExpanded(true);
+                } else if (!sidebarPinned) {
+                  setSidebarExpanded(false);
+                }
+                return next;
+              })
+            }
           >
             <span>{initials(userName)}</span>
             <div>

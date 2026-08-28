@@ -415,9 +415,9 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
               <CheckCircle2 className="size-5" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-[var(--mnx-text)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-accent)]">
                 Action queue
-              </h1>
+              </p>
               <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
                 {isAdmin
                   ? "Review live approval queues, record decisions, and refresh organisation-wide requests."

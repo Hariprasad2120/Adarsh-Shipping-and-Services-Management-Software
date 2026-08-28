@@ -6,6 +6,7 @@ import {
   PeopleControlTextarea as MnxTextarea,
 } from "@/modules/people/components";
 
+import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
@@ -143,9 +144,9 @@ export function TasksView() {
               <CheckSquare className="size-5" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-[var(--mnx-text)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-accent)]">
                 Assignment board
-              </h1>
+              </p>
               <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
                 Create tasks, assign owners, and monitor pending versus completed checklist work.
               </p>
@@ -154,8 +155,8 @@ export function TasksView() {
 
           <MnxAction
             type="button"
-            onClick={() => setShowForm(!showForm)}
-            variant={showForm ? "secondary" : "primary"}
+            onClick={() => setShowForm(true)}
+            variant="primary"
           >
             <Plus className="size-4" />
             <span>Create Task</span>
@@ -163,15 +164,18 @@ export function TasksView() {
         </div>
       </div>
 
-      {/* Task Creation Form */}
-      {showForm && (
+      <WorkspaceDialog
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        eyebrow="Checklist task"
+        title="Create Checklist Task"
+        description="Add a new checklist item, assign the owner, and set the delivery expectation."
+        size="wide"
+      >
         <form
           onSubmit={handleCreateTask}
-          className="max-w-3xl space-y-4 border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5"
+          className="space-y-5"
         >
-          <h3 className="text-sm font-semibold text-[var(--mnx-text)]">
-            Create Checklist Task
-          </h3>
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
               Task Title
@@ -196,7 +200,7 @@ export function TasksView() {
               className="resize-none"
             />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
                 Assignee
@@ -239,7 +243,7 @@ export function TasksView() {
               </NativeSelect>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--mnx-border)] pt-4">
             <MnxAction
               type="button"
               onClick={() => setShowForm(false)}
@@ -256,7 +260,7 @@ export function TasksView() {
             </MnxAction>
           </div>
         </form>
-      )}
+      </WorkspaceDialog>
 
       {/* Task Checklist grids */}
       <div className="grid gap-6 md:grid-cols-2">
