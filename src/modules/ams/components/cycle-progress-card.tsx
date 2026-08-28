@@ -54,14 +54,14 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const ACTIVE_BADGE_CLASS =
-  "border-mono-border bg-mono-accent/10 text-mono-accent";
+  "border-[var(--mnx-border)] bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]";
 const PENDING_BADGE_CLASS =
-  "border-mono-border bg-mono-accent/10 text-mono-muted";
+  "border-[var(--mnx-border)] bg-[var(--mnx-soft)] text-[var(--mnx-text-muted)]";
 const CURRENT_STEP_GLOW_CLASS = "shadow-[var(--mn-shadow-panel)]";
 
 function cardClassName(className?: string) {
   return [
-    "mnx-performance-surface mnx-accent-edge rounded-[var(--mn-radius-panel)] border border-mono-border/35 bg-mono-card p-5",
+    "mnx-performance-surface mnx-accent-edge rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5",
     className,
   ]
     .filter(Boolean)
@@ -184,9 +184,11 @@ export function CycleProgressCard({
     <section className={cardClassName(className)}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="mnx-title-2 text-mono-text">Cycle Progress</h2>
+          <h2 className="mnx-title-3 text-[var(--mnx-text-strong)]">
+            Cycle Progress
+          </h2>
           {cycleLabel && (
-            <p className="text-xs text-mono-muted">{cycleLabel}</p>
+            <p className="text-xs text-[var(--mnx-text-muted)]">{cycleLabel}</p>
           )}
         </div>
         <span
@@ -213,8 +215,8 @@ export function CycleProgressCard({
                   <span
                     className={`absolute left-1/2 top-8 bottom-[-20px] w-px -translate-x-1/2 ${
                       isDone || isCurrent
-                        ? "bg-mono-accent/10"
-                        : "bg-outline-variant/80"
+                        ? "bg-[var(--mnx-accent-text)]"
+                        : "bg-[var(--mnx-border)]"
                     }`}
                   />
                 ) : null}
@@ -223,29 +225,22 @@ export function CycleProgressCard({
                     isDone || isCurrent
                       ? ACTIVE_BADGE_CLASS
                       : PENDING_BADGE_CLASS
-                  } ${isCurrent ? `animate-pulse ${CURRENT_STEP_GLOW_CLASS}` : ""}`}
+                  } ${isCurrent ? CURRENT_STEP_GLOW_CLASS : ""}`}
                 >
-                  {isCurrent ? (
-                    <span className="absolute inset-[-6px] rounded-full border border-mono-border animate-ping" />
-                  ) : null}
                   <Icon className="relative z-10 size-4" />
                 </span>
               </div>
               <div className="min-w-0 pt-1">
                 <p
                   className={`text-sm font-semibold ${
-                    isDone || isCurrent ? "text-mono-text" : "text-mono-muted"
+                    isDone || isCurrent
+                      ? "text-[var(--mnx-text-strong)]"
+                      : "text-[var(--mnx-text-muted)]"
                   }`}
                 >
                   {item.title}
                 </p>
-                <p
-                  className={`mt-1 text-sm ${
-                    isDone || isCurrent
-                      ? "text-mono-muted"
-                      : "text-mono-muted/70"
-                  }`}
-                >
+                <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
                   {item.description}
                 </p>
               </div>

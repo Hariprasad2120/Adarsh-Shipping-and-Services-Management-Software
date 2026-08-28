@@ -1,6 +1,5 @@
 "use client";
 
-import { PerformanceControlButton } from "@/modules/performance/components/performance-workspace";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -49,29 +48,34 @@ type MyReviewDetail = {
   }[];
 };
 
+const ACCENT_CHIP =
+  "border-[var(--mnx-border)] bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]";
+const NEUTRAL_CHIP =
+  "border-[var(--mnx-border)] bg-[var(--mnx-soft)] text-[var(--mnx-text-muted)]";
+const SUCCESS_CHIP =
+  "border-[var(--mnx-border)] bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]";
+const WARNING_CHIP =
+  "border-[var(--mnx-border)] bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]";
+const DANGER_CHIP =
+  "border-[var(--mnx-border)] bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]";
+
 const STAGE_COLOR: Record<string, string> = {
-  DUE_NOTIFIED:
-    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
-  REVIEWERS_ASSIGNED: "bg-mono-accent/10 text-mono-accent border-mono-border",
-  SELF_ASSESSMENT_OPEN: "bg-mono-accent/10 text-mono-accent border-mono-border",
-  REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent border-mono-border",
-  MANAGEMENT_REVIEW:
-    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
-  MEETING_PENDING: "bg-mono-accent/10 text-mono-accent border-mono-border",
-  MEETING_LIVE:
-    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",
-  HIKE_FINALISATION: "bg-mono-accent/10 text-mono-accent border-mono-border",
-  CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
+  DUE_NOTIFIED: WARNING_CHIP,
+  REVIEWERS_ASSIGNED: ACCENT_CHIP,
+  SELF_ASSESSMENT_OPEN: ACCENT_CHIP,
+  REVIEWER_RATING: ACCENT_CHIP,
+  MANAGEMENT_REVIEW: WARNING_CHIP,
+  MEETING_PENDING: ACCENT_CHIP,
+  MEETING_LIVE: SUCCESS_CHIP,
+  HIKE_FINALISATION: ACCENT_CHIP,
+  CLOSED: NEUTRAL_CHIP,
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: "bg-mono-soft text-mono-muted border-mono-border/40",
-  AVAILABLE:
-    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",
-  UNAVAILABLE:
-    "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border-mono-border",
-  FORCED:
-    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  PENDING: NEUTRAL_CHIP,
+  AVAILABLE: SUCCESS_CHIP,
+  UNAVAILABLE: DANGER_CHIP,
+  FORCED: WARNING_CHIP,
 };
 
 const KIND_LABEL: Record<string, string> = {
@@ -81,9 +85,25 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const REVIEW_SUBMISSION_COLOR: Record<string, string> = {
-  SUBMITTED: "bg-mono-accent/10 text-mono-accent border-mono-border",
-  DRAFT: "bg-mono-soft text-mono-muted border-mono-border/40",
+  SUBMITTED: ACCENT_CHIP,
+  DRAFT: NEUTRAL_CHIP,
 };
+
+function Chip({
+  className = NEUTRAL_CHIP,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
 
 function DeadlineBanner({
   deadline,
@@ -98,9 +118,7 @@ function DeadlineBanner({
   return (
     <div
       className={`rounded-xl border px-4 py-3 text-sm ${
-        passed
-          ? "border-mono-border bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
-          : "border-mono-border bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+        passed ? DANGER_CHIP : WARNING_CHIP
       }`}
     >
       {label}: <strong>{new Date(deadline).toLocaleDateString("en-IN")}</strong>
@@ -273,279 +291,264 @@ export function MyReviewDetailClient({
     input?.focus({ preventScroll: true });
   }
 
+  const roleLabel = KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind;
+
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <p className="text-sm text-mono-muted">
-          Reviewer workspace for this appraisal assignment.
-        </p>
-      </div>
+      <p className="text-sm text-[var(--mnx-text-muted)]">
+        Reviewer workspace for this appraisal assignment.
+      </p>
 
-      <div className="grid gap-6 xl:grid-cols-3 xl:items-start">
-        <CycleProgressCard
-          stage={appraisal.stage}
-          cycleName={appraisal.cycle.name}
-          cycleYear={appraisal.cycle.year}
-          reviewers={appraisal.assignedReviewers.map((reviewer) => ({
-            kind: reviewer.kind,
-            name: reviewer.name,
-            availabilityStatus: reviewer.availabilityStatus,
-            submissionStatus: reviewer.submissionStatus,
-          }))}
-          selfAssessment={
-            appraisal.selfAssessmentAnswers
-              ? { editCount: appraisal.selfAssessmentEditCount }
-              : null
-          }
-          management={{
-            submitted:
-              appraisal.stage !== "REVIEWER_RATING" &&
-              appraisal.stage !== "SELF_ASSESSMENT_OPEN" &&
-              appraisal.stage !== "REVIEWERS_ASSIGNED",
-          }}
-          meeting={{
-            scheduledAt: null,
-            hasMinutes:
-              appraisal.stage === "HIKE_FINALISATION" ||
-              appraisal.stage === "CLOSED",
-          }}
-          className="h-full"
-        />
-
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Review Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-[15px] font-semibold text-mono-text">
-                  {appraisal.employee.name}
-                </p>
-                <p className="text-sm text-mono-muted">
-                  {appraisal.employee.designation ?? "No designation"} —{" "}
-                  {appraisal.cycle.name} {appraisal.cycle.year}
-                </p>
-                <p className="text-xs uppercase tracking-[0.14em] text-mono-muted/70">
-                  Your role:{" "}
-                  {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
-                </p>
-                <p className="text-xs text-mono-muted/60">
-                  Self-assessment edited {appraisal.selfAssessmentEditCount}{" "}
-                  time
-                  {appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
-                </p>
-              </div>
-              <div className="flex flex-col items-start gap-2 sm:items-end">
-                <span
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    STAGE_COLOR[appraisal.stage] ??
-                    "border-mono-border/40 bg-mono-soft text-mono-muted"
-                  }`}
-                >
-                  {appraisal.stage.replace(/_/g, " ")}
-                </span>
-                <span
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    STATUS_COLOR[appraisal.reviewerStatus] ??
-                    "bg-mono-soft text-mono-muted border-mono-border/40"
-                  }`}
-                >
-                  {appraisal.reviewerStatus}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Assigned Reviewers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {appraisal.assignedReviewers.map((reviewer) => (
-                <div
-                  key={reviewer.id}
-                  className="rounded-2xl border border-mono-border/40 bg-mono-soft px-4 py-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-mono-text">
-                        {reviewer.name ??
-                          KIND_LABEL[reviewer.kind] ??
-                          reviewer.kind}
-                      </p>
-                      <p className="text-xs text-mono-muted">
-                        {reviewer.designation ??
-                          KIND_LABEL[reviewer.kind] ??
-                          reviewer.kind}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
-                        STATUS_COLOR[reviewer.availabilityStatus] ??
-                        "bg-mono-soft text-mono-muted border-mono-border/40"
-                      }`}
-                    >
-                      {reviewer.availabilityStatus}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-mono-border/40 bg-mono-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-mono-muted">
-                      {KIND_LABEL[reviewer.kind] ?? reviewer.kind}
-                    </span>
-                    {reviewer.submissionStatus ? (
-                      <span
-                        className={`rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${
-                          REVIEW_SUBMISSION_COLOR[reviewer.submissionStatus] ??
-                          "bg-mono-soft text-mono-muted border-mono-border/40"
-                        }`}
-                      >
-                        {reviewer.submissionStatus}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {reviewer.submittedAt ? (
-                    <p className="mt-3 text-xs text-mono-muted">
-                      Submitted on{" "}
-                      {new Date(reviewer.submittedAt).toLocaleString("en-IN")}
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-xs text-mono-muted/60">
-                      No rating submitted yet.
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-3">
-        {appraisal.stage === "REVIEWERS_ASSIGNED" &&
-        appraisal.availabilityDeadline ? (
-          <DeadlineBanner
-            deadline={appraisal.availabilityDeadline}
-            serverNow={serverNow}
-            label="Availability deadline"
+      <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
+        {/* Left rail — progress */}
+        <div className="xl:sticky xl:top-4">
+          <CycleProgressCard
+            stage={appraisal.stage}
+            cycleName={appraisal.cycle.name}
+            cycleYear={appraisal.cycle.year}
+            reviewers={appraisal.assignedReviewers.map((reviewer) => ({
+              kind: reviewer.kind,
+              name: reviewer.name,
+              availabilityStatus: reviewer.availabilityStatus,
+              submissionStatus: reviewer.submissionStatus,
+            }))}
+            selfAssessment={
+              appraisal.selfAssessmentAnswers
+                ? { editCount: appraisal.selfAssessmentEditCount }
+                : null
+            }
+            management={{
+              submitted:
+                appraisal.stage !== "REVIEWER_RATING" &&
+                appraisal.stage !== "SELF_ASSESSMENT_OPEN" &&
+                appraisal.stage !== "REVIEWERS_ASSIGNED",
+            }}
+            meeting={{
+              scheduledAt: null,
+              hasMinutes:
+                appraisal.stage === "HIKE_FINALISATION" ||
+                appraisal.stage === "CLOSED",
+            }}
           />
-        ) : null}
-        {appraisal.stage === "REVIEWER_RATING" &&
-        appraisal.reviewerRatingDeadline ? (
-          <DeadlineBanner
-            deadline={appraisal.reviewerRatingDeadline}
-            serverNow={serverNow}
-            label="Rating deadline"
-          />
-        ) : null}
+        </div>
 
-        {savedAt ? (
-          <div className="rounded-xl border border-mono-border bg-[var(--mnx-success-bg)] px-4 py-3 text-sm text-[var(--mnx-success)]">
-            Reviewer rating saved at {savedAt}.
-          </div>
-        ) : null}
-
-        {currentSubmissionStatus === "SUBMITTED" && canRate ? (
-          <div className="rounded-xl border border-mono-border bg-mono-accent/10 px-4 py-3 text-sm text-mono-accent">
-            This review is marked as submitted, but you can still edit and
-            resubmit it until the deadline.
-          </div>
-        ) : null}
-
-        {appraisal.stage === "REVIEWER_RATING" && ratingDeadlinePassed ? (
-          <div className="rounded-xl border border-mono-border/40 bg-mono-soft px-4 py-3 text-sm text-mono-muted">
-            Reviewer rating is now view-only because the deadline has passed.
-          </div>
-        ) : null}
-
-        {currentSubmittedAt &&
-        currentRating &&
-        appraisal.stage !== "REVIEWERS_ASSIGNED" ? (
-          <div className="rounded-xl border border-mono-border bg-[var(--mnx-success-bg)] px-4 py-3 text-sm text-[var(--mnx-success)]">
-            Last submitted on{" "}
-            <strong>
-              {new Date(currentSubmittedAt).toLocaleString("en-IN")}
-            </strong>
-            .
-          </div>
-        ) : null}
-
-        {showSubmittedPreview ? (
+        {/* Main column */}
+        <div className="space-y-6">
+          {/* Review summary */}
           <Card>
-            <div ref={latestSubmissionRef}>
-              <PerformanceControlButton
-                type="button"
-                onClick={() => setLatestSubmissionOpen((current) => !current)}
-                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-mono-text">
-                    Latest Submitted Rating
+            <CardHeader>
+              <CardTitle>Review summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[15px] font-semibold text-[var(--mnx-text-strong)]">
+                    {appraisal.employee.name}
                   </p>
-                  <p className="text-xs text-mono-muted">
-                    Expand to review the last submitted answers and jump back to
-                    any criterion.
+                  <p className="text-sm text-[var(--mnx-text-muted)]">
+                    {appraisal.employee.designation ?? "No designation"} ·{" "}
+                    {appraisal.cycle.name} {appraisal.cycle.year}
+                  </p>
+                  <p className="text-xs text-[var(--mnx-text-muted)]">
+                    Self-assessment edited {appraisal.selfAssessmentEditCount}{" "}
+                    time
+                    {appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
                   </p>
                 </div>
-                <ChevronDown
-                  className={`h-4 w-4 text-mono-accent transition-transform duration-200 ${
-                    latestSubmissionOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                />
-              </PerformanceControlButton>
-
-              {latestSubmissionOpen ? (
-                <div className="px-5 pb-4">
-                  <CriteriaPointsView
-                    criteria={criteria}
-                    supplementary={[]}
-                    answers={currentRating}
-                    onReviewerFieldNavigate={handleReviewerFieldNavigate}
-                  />
+                <div className="flex flex-col items-start gap-2 sm:items-end">
+                  <Chip
+                    className={
+                      STAGE_COLOR[appraisal.stage] ?? NEUTRAL_CHIP
+                    }
+                  >
+                    {appraisal.stage.replace(/_/g, " ")}
+                  </Chip>
+                  <Chip
+                    className={
+                      STATUS_COLOR[appraisal.reviewerStatus] ?? NEUTRAL_CHIP
+                    }
+                  >
+                    {appraisal.reviewerStatus}
+                  </Chip>
                 </div>
-              ) : null}
-            </div>
+              </div>
+              <div className="mt-4 border-t border-[var(--mnx-border)] pt-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--mnx-text-muted)]">
+                  Your role
+                </p>
+                <p className="mt-0.5 text-sm font-medium text-[var(--mnx-text-strong)]">
+                  {roleLabel}
+                </p>
+              </div>
+            </CardContent>
           </Card>
-        ) : null}
+
+          {/* Banners */}
+          {appraisal.stage === "REVIEWERS_ASSIGNED" &&
+          appraisal.availabilityDeadline ? (
+            <DeadlineBanner
+              deadline={appraisal.availabilityDeadline}
+              serverNow={serverNow}
+              label="Availability deadline"
+            />
+          ) : null}
+          {appraisal.stage === "REVIEWER_RATING" &&
+          appraisal.reviewerRatingDeadline ? (
+            <DeadlineBanner
+              deadline={appraisal.reviewerRatingDeadline}
+              serverNow={serverNow}
+              label="Rating deadline"
+            />
+          ) : null}
+          {savedAt ? (
+            <div className={`rounded-xl border px-4 py-3 text-sm ${SUCCESS_CHIP}`}>
+              Reviewer rating saved at {savedAt}.
+            </div>
+          ) : null}
+          {currentSubmissionStatus === "SUBMITTED" && canRate ? (
+            <div className={`rounded-xl border px-4 py-3 text-sm ${ACCENT_CHIP}`}>
+              This review is marked as submitted, but you can still edit and
+              resubmit it until the deadline.
+            </div>
+          ) : null}
+          {appraisal.stage === "REVIEWER_RATING" && ratingDeadlinePassed ? (
+            <div className={`rounded-xl border px-4 py-3 text-sm ${NEUTRAL_CHIP}`}>
+              Reviewer rating is now view-only because the deadline has passed.
+            </div>
+          ) : null}
+          {currentSubmittedAt &&
+          currentRating &&
+          appraisal.stage !== "REVIEWERS_ASSIGNED" ? (
+            <div className={`rounded-xl border px-4 py-3 text-sm ${SUCCESS_CHIP}`}>
+              Last submitted on{" "}
+              <strong>
+                {new Date(currentSubmittedAt).toLocaleString("en-IN")}
+              </strong>
+              .
+            </div>
+          ) : null}
+
+          {/* Assigned reviewers */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Assigned reviewers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {appraisal.assignedReviewers.map((reviewer) => (
+                  <div
+                    key={reviewer.id}
+                    className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-soft)] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--mnx-text-strong)]">
+                          {reviewer.name ??
+                            KIND_LABEL[reviewer.kind] ??
+                            reviewer.kind}
+                        </p>
+                        <p className="truncate text-xs text-[var(--mnx-text-muted)]">
+                          {reviewer.designation ??
+                            KIND_LABEL[reviewer.kind] ??
+                            reviewer.kind}
+                        </p>
+                      </div>
+                      <Chip
+                        className={
+                          STATUS_COLOR[reviewer.availabilityStatus] ??
+                          NEUTRAL_CHIP
+                        }
+                      >
+                        {reviewer.availabilityStatus}
+                      </Chip>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <Chip className={NEUTRAL_CHIP}>
+                        {KIND_LABEL[reviewer.kind] ?? reviewer.kind}
+                      </Chip>
+                      {reviewer.submissionStatus ? (
+                        <Chip
+                          className={
+                            REVIEW_SUBMISSION_COLOR[reviewer.submissionStatus] ??
+                            NEUTRAL_CHIP
+                          }
+                        >
+                          {reviewer.submissionStatus}
+                        </Chip>
+                      ) : null}
+                    </div>
+
+                    <p className="mt-3 text-xs text-[var(--mnx-text-muted)]">
+                      {reviewer.submittedAt
+                        ? `Submitted ${new Date(reviewer.submittedAt).toLocaleString("en-IN")}`
+                        : "No rating submitted yet."}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] xl:items-start">
+      {/* Latest submitted rating (collapsible) */}
+      {showSubmittedPreview ? (
+        <Card>
+          <div ref={latestSubmissionRef}>
+            {/* eslint-disable-next-line no-restricted-syntax -- disclosure header, not a standard Button */}
+            <button
+              type="button"
+              onClick={() => setLatestSubmissionOpen((current) => !current)}
+              className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+            >
+              <div>
+                <p className="text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  Latest submitted rating
+                </p>
+                <p className="text-xs text-[var(--mnx-text-muted)]">
+                  Expand to review the last submitted answers and jump back to
+                  any criterion.
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-4 w-4 text-[var(--mnx-accent-text)] transition-transform duration-200 ${
+                  latestSubmissionOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
+            {latestSubmissionOpen ? (
+              <div className="border-t border-[var(--mnx-border)] px-5 py-4">
+                <CriteriaPointsView
+                  criteria={criteria}
+                  supplementary={[]}
+                  answers={currentRating}
+                  onReviewerFieldNavigate={handleReviewerFieldNavigate}
+                />
+              </div>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Self-assessment + reviewer action */}
+      <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
         <Card>
           <CardHeader>
-            <CardTitle>Appraisee Self-Assessment</CardTitle>
+            <CardTitle>Appraisee self-assessment</CardTitle>
           </CardHeader>
           <CardContent>
             {appraisal.stage === "SELF_ASSESSMENT_OPEN" ? (
               appraisal.selfAssessmentAnswers ? (
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-mono-accent/10 px-3 py-1.5 text-xs font-medium text-mono-accent ring-1 ring-primary/20">
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Self-assessment submitted
-                    </span>
-                  </div>
-                  <p className="text-xs text-mono-muted/70">
+                <div className="space-y-2">
+                  <Chip className={ACCENT_CHIP}>Self-assessment submitted</Chip>
+                  <p className="text-xs text-[var(--mnx-text-muted)]">
                     The self-assessment content is available after the
                     self-assessment deadline.
                   </p>
                 </div>
               ) : (
-                <p className="text-sm italic text-mono-muted/70">
+                <p className="text-sm italic text-[var(--mnx-text-muted)]">
                   The appraisee has not submitted a self-assessment yet.
                 </p>
               )
@@ -558,7 +561,7 @@ export function MyReviewDetailClient({
                 selfTemplate={selfTemplate}
               />
             ) : (
-              <p className="text-sm italic text-mono-muted/70">
+              <p className="text-sm italic text-[var(--mnx-text-muted)]">
                 The appraisee has not submitted a self-assessment yet.
               </p>
             )}
@@ -569,18 +572,16 @@ export function MyReviewDetailClient({
           {canSetAvailability ? (
             <Card>
               <CardHeader>
-                <CardTitle>Confirm Availability</CardTitle>
+                <CardTitle>Confirm availability</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-mono-muted">
+              <CardContent className="space-y-3">
+                <p className="text-sm text-[var(--mnx-text-muted)]">
                   Confirm whether you can take this review assignment.
                 </p>
-                <div className="flex flex-wrap gap-3 pt-1">
+                <div className="flex flex-wrap gap-3">
                   <Button
-                    variant="default"
                     onClick={() => setAvailability(true)}
                     disabled={statusLoading !== null}
-                    className="bg-mono-accent/10 hover:bg-mono-accent/10 border-0"
                   >
                     {statusLoading === "available" ? "Saving…" : "Available"}
                   </Button>
@@ -588,7 +589,6 @@ export function MyReviewDetailClient({
                     variant="outline"
                     onClick={() => setAvailability(false)}
                     disabled={statusLoading !== null}
-                    className="border-mono-border text-mono-accent hover:bg-mono-accent/5"
                   >
                     {statusLoading === "unavailable"
                       ? "Saving…"
@@ -600,9 +600,9 @@ export function MyReviewDetailClient({
           ) : null}
 
           {showRatingEditor ? (
-            <Card className="mnx-performance-surface mnx-accent-edge-violet">
+            <Card>
               <CardHeader>
-                <CardTitle>Reviewer Rating</CardTitle>
+                <CardTitle>Reviewer rating</CardTitle>
               </CardHeader>
               <CardContent>
                 <CriteriaPointsForm
@@ -626,7 +626,7 @@ export function MyReviewDetailClient({
           {showEditableSubmitted ? (
             <Card>
               <CardHeader>
-                <CardTitle>Your Submitted Rating</CardTitle>
+                <CardTitle>Your submitted rating</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <CriteriaPointsView
@@ -634,14 +634,10 @@ export function MyReviewDetailClient({
                   supplementary={[]}
                   answers={currentRating}
                 />
-                <div className="border-t border-mono-border/40 pt-4">
-                  <PerformanceControlButton
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-mono-border px-4 py-2 text-sm font-medium text-mono-accent transition hover:bg-mono-accent/8"
-                  >
-                    Edit Rating
-                  </PerformanceControlButton>
+                <div className="border-t border-[var(--mnx-border)] pt-4">
+                  <Button variant="outline" onClick={() => setIsEditing(true)}>
+                    Edit rating
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -650,7 +646,7 @@ export function MyReviewDetailClient({
           {showReadOnlyRating ? (
             <Card>
               <CardHeader>
-                <CardTitle>Your Submitted Rating</CardTitle>
+                <CardTitle>Your submitted rating</CardTitle>
               </CardHeader>
               <CardContent>
                 <CriteriaPointsView
@@ -665,10 +661,10 @@ export function MyReviewDetailClient({
           {showStatusCard ? (
             <Card>
               <CardHeader>
-                <CardTitle>Review Status</CardTitle>
+                <CardTitle>Review status</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-mono-muted">
+                <p className="text-sm text-[var(--mnx-text-muted)]">
                   {getWaitingMessage(appraisal.stage)}
                 </p>
               </CardContent>
