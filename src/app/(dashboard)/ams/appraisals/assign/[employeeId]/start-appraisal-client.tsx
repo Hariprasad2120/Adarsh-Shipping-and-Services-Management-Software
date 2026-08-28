@@ -127,11 +127,11 @@ function ToggleRow({
       role="switch"
       aria-checked={active}
       onClick={onToggle}
-      className={`flex w-full items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left transition ${
-        active
-          ? "border-[var(--frappe-primary)] bg-[color-mix(in_srgb,var(--frappe-primary)_8%,var(--mnx-surface))]"
-          : "border-[var(--mnx-border)] bg-[var(--mnx-surface)] hover:border-[var(--mnx-border-strong)]"
-      }`}
+      style={{
+        borderColor: active ? "var(--frappe-primary)" : "var(--mnx-border)",
+        background: "var(--mnx-surface)",
+      }}
+      className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left transition hover:border-[var(--mnx-border-strong)]"
     >
       <span className="min-w-0">
         <span className="block text-sm font-medium text-[var(--mnx-text-strong)]">
@@ -142,16 +142,19 @@ function ToggleRow({
         </span>
       </span>
       <span
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition ${
-          active
-            ? "border-[var(--frappe-primary)] bg-[var(--frappe-primary)]"
-            : "border-[var(--mnx-border-strong)] bg-[var(--mnx-soft)]"
-        }`}
+        aria-hidden="true"
+        style={{
+          background: active
+            ? "var(--frappe-primary)"
+            : "var(--mnx-border-strong)",
+          justifyContent: active ? "flex-end" : "flex-start",
+        }}
+        className="flex h-6 w-11 shrink-0 items-center rounded-full p-[3px] transition-colors"
       >
         <span
-          className={`inline-block h-[1.15rem] w-[1.15rem] transform rounded-full bg-white shadow-md ring-1 ring-black/10 transition ${
-            active ? "translate-x-[1.35rem]" : "translate-x-[0.15rem]"
-          }`}
+          // eslint-disable-next-line no-restricted-syntax -- knob must stay white on both the grey and primary track
+          style={{ background: "#ffffff" }}
+          className="block h-[18px] w-[18px] rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
         />
       </span>
     </button>
