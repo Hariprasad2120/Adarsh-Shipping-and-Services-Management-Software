@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { ScrollNavigator } from "@/components/navigation/scroll-navigator";
+import { NavigationProgress } from "@/components/navigation/navigation-progress";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -67,6 +69,9 @@ export default function RootLayout({
         />
       </head>
       <body className="frappe-ui mnx-root min-h-full flex flex-col">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         {children}
         <ScrollNavigator />
         <Toaster

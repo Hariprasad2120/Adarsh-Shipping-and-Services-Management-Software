@@ -101,5 +101,7 @@ export function AppRouteLoading({
 }) {
   const copy = LOADING_COPY[scope];
 
-  return <LoadingScreen message={copy.message} subtitle={copy.subtitle} />;
+  // Hold briefly so quick client navigations (which the top progress bar
+  // already signals) don't flash the full-screen loader.
+  return <LoadingScreen message={copy.message} subtitle={copy.subtitle} delayMs={240} />;
 }

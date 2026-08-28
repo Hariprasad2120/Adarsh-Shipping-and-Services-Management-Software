@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 export interface LoadingScreenProps {
@@ -9,15 +10,37 @@ export interface LoadingScreenProps {
   fullScreen?: boolean;
   bgOpacity?: number;
   accentColor?: string;
+  /**
+   * Hold the overlay hidden for this many ms before showing it. Lets fast
+   * route transitions resolve without flashing a full-screen loader. Default 0
+   * keeps the instant behaviour for every existing caller.
+   */
+  delayMs?: number;
 }
 
 export function LoadingScreen({
   message = "Preparing your workspace",
   subtitle = "Loading the latest records, controls, and route context.",
   fullScreen = true,
+  delayMs = 0,
 }: LoadingScreenProps) {
+  const [visible, setVisible] = useState(delayMs <= 0);
+
+  useEffect(() => {
+    if (delayMs <= 0) return;
+    const timer = window.setTimeout(() => setVisible(true), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [delayMs]);
+
+  if (!visible) return null;
+
   const content = (
-    <div style={containerStyle(fullScreen)}>
+    <div
+      style={{
+        ...containerStyle(fullScreen),
+        animation: "mnxLoadingFade 0.18s ease-out both",
+      }}
+    >
       <div style={backdropPatternStyle} />
       <div style={panelStyle}>
         <div style={badgeStyle}>MONOLITH</div>
@@ -41,6 +64,11 @@ export function LoadingScreen({
         @keyframes mnxLoadingProgress {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(260%); }
+        }
+
+        @keyframes mnxLoadingFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>
