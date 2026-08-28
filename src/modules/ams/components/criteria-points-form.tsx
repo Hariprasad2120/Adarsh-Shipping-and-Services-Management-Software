@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  PerformanceControlButton,
   PerformanceControlInput,
   PerformanceControlTextarea,
   PerformanceTable,
@@ -737,7 +736,8 @@ export function ReviewerCriteriaSection({
     <Card id={`reviewer-criterion-${criterion.id}`}>
       <CardContent className="space-y-4">
         {/* Collapsible header */}
-        <PerformanceControlButton
+        {/* eslint-disable-next-line no-restricted-syntax -- disclosure header, not a standard Button */}
+        <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
@@ -789,7 +789,7 @@ export function ReviewerCriteriaSection({
               )}
             />
           </div>
-        </PerformanceControlButton>
+        </button>
 
         {!collapsed && (
           <>
@@ -1680,7 +1680,8 @@ export function CriteriaPointsView({
             <div className="mb-2 flex flex-wrap items-start justify-between gap-3 border-l-4 border-mono-border pl-3">
               <div>
                 {onReviewerFieldNavigate ? (
-                  <PerformanceControlButton
+                  // eslint-disable-next-line no-restricted-syntax -- inline jump-to-field link, not a standard Button
+                  <button
                     type="button"
                     onClick={() =>
                       onReviewerFieldNavigate(
@@ -1692,7 +1693,7 @@ export function CriteriaPointsView({
                     <h3 className="mnx-title-3 text-current">
                       {criterion.label}
                     </h3>
-                  </PerformanceControlButton>
+                  </button>
                 ) : (
                   <h3 className="mnx-title-3 text-mono-text">
                     {criterion.label}
@@ -1739,7 +1740,8 @@ export function CriteriaPointsView({
                   className="border-b border-mono-border/20 py-3 last:border-b-0"
                 >
                   {onReviewerFieldNavigate ? (
-                    <PerformanceControlButton
+                    // eslint-disable-next-line no-restricted-syntax -- inline jump-to-field link, not a standard Button
+                    <button
                       type="button"
                       onClick={() =>
                         onReviewerFieldNavigate(
@@ -1749,7 +1751,7 @@ export function CriteriaPointsView({
                       className="mb-1 block text-left text-xs text-mono-muted/50 transition hover:text-mono-accent hover:underline"
                     >
                       {question.prompt}
-                    </PerformanceControlButton>
+                    </button>
                   ) : (
                     <p className="mb-1 text-xs text-mono-muted/50">
                       {question.prompt}

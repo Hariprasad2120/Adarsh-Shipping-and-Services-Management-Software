@@ -337,6 +337,23 @@ body::-webkit-scrollbar-corner {
   --color-outline: var(--color-outline);
   --color-outline-variant: var(--color-outline-variant);
 
+  /*
+   * Legacy `mono-*` palette shim.
+   *
+   * A large number of modules (AMS/LMS especially) were authored against
+   * Tailwind colours named `mono-*` that were never registered, so utilities
+   * like `bg-mono-card` / `text-mono-muted` silently produced nothing. Map
+   * them onto the live `--mnx-*` design tokens so those screens render with
+   * correct, theme-aware colour until each is migrated to `--mnx-*` directly.
+   */
+  --color-mono-page: var(--mnx-bg-subtle, var(--mnx-surface-soft));
+  --color-mono-card: var(--mnx-surface);
+  --color-mono-soft: var(--mnx-surface-soft);
+  --color-mono-muted: var(--mnx-text-muted);
+  --color-mono-text: var(--mnx-text-strong);
+  --color-mono-border: var(--mnx-border);
+  --color-mono-accent: var(--mnx-accent-text);
+
   --shadow-ambient: var(--shadow-ambient);
   --shadow-ambient-hover: var(--shadow-ambient-hover);
 }

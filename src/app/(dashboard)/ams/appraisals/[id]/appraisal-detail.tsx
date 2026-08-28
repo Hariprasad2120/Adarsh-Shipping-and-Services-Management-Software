@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  PerformanceControlButton,
-  PerformanceControlTextarea,
-} from "@/modules/performance/components/performance-workspace";
+import { PerformanceControlTextarea } from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -866,21 +863,20 @@ function StageActions({
                 Can you attend the appraisal review for{" "}
                 <strong>{appraisal.employee.name}</strong>?
               </p>
-              <div className="flex gap-3">
-                <PerformanceControlButton
+              <div className="flex flex-wrap gap-3">
+                <Button
                   onClick={() => onAction("availability", { available: true })}
                   disabled={saving}
-                  className="px-4 py-2 bg-[var(--mnx-success-bg)] text-mono-text text-sm font-medium rounded-lg hover:bg-[var(--mnx-success-bg)] disabled:opacity-50"
                 >
                   Yes, I&apos;m available
-                </PerformanceControlButton>
-                <PerformanceControlButton
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => onAction("availability", { available: false })}
                   disabled={saving}
-                  className="px-4 py-2 bg-[var(--mnx-danger-bg)] text-mono-text text-sm font-medium rounded-lg hover:bg-[var(--mnx-danger-bg)] disabled:opacity-50"
                 >
                   No, unavailable
-                </PerformanceControlButton>
+                </Button>
               </div>
             </div>
           ) : (
@@ -917,7 +913,9 @@ function StageActions({
                       {r.user.name}{" "}
                       <span className="text-mono-muted/60">({r.kind})</span>
                     </span>
-                    <PerformanceControlButton
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() =>
                         onAction("availability", {
                           available: true,
@@ -925,10 +923,9 @@ function StageActions({
                           userId: r.userId,
                         })
                       }
-                      className="text-xs px-2 py-1 bg-[var(--mnx-warning-bg)] text-mono-text rounded hover:bg-[var(--mnx-warning-bg)]"
                     >
                       Force available
-                    </PerformanceControlButton>
+                    </Button>
                   </div>
                 ))}
             </div>
@@ -1035,13 +1032,12 @@ function StageActions({
               <p className="text-sm text-mono-muted mb-3">
                 No management reviewer has claimed this appraisal yet.
               </p>
-              <PerformanceControlButton
+              <Button
                 onClick={() => onAction("claim-management", {})}
                 disabled={saving}
-                className="px-4 py-2 bg-[var(--mnx-warning-bg)] text-mono-text text-sm font-medium rounded-lg hover:bg-[var(--mnx-warning-bg)] disabled:opacity-50"
               >
                 Claim this appraisal
-              </PerformanceControlButton>
+              </Button>
             </Card>
           )}
 
@@ -1089,18 +1085,28 @@ function StageActions({
                         .slice(0, 16);
                       const active = meetingDate === isoValue;
                       return (
-                        <PerformanceControlButton
+                        // eslint-disable-next-line no-restricted-syntax -- selectable option chip, not a standard Button
+                        <button
                           key={`${value}:${index}`}
                           type="button"
+                          aria-pressed={active}
                           onClick={() => setMeetingDate(isoValue)}
-                          className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
+                          style={{
+                            borderColor: active
+                              ? "var(--frappe-primary)"
+                              : "var(--mnx-border)",
+                            background: active
+                              ? "var(--mnx-accent-soft)"
+                              : "var(--mnx-surface)",
+                          }}
+                          className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
                             active
-                              ? "border-mono-border bg-mono-accent/8 text-mono-text"
-                              : "border-mono-border/35 bg-mono-card text-mono-muted hover:border-mono-border"
+                              ? "text-[var(--mnx-accent-text)]"
+                              : "text-[var(--mnx-text)] hover:border-[var(--mnx-border-strong)]"
                           }`}
                         >
                           {new Date(value).toLocaleString("en-IN")}
-                        </PerformanceControlButton>
+                        </button>
                       );
                     })}
                   </div>
@@ -1121,7 +1127,7 @@ function StageActions({
                   })
                 }
                 disabled={saving || !meetingDate}
-                className="bg-mono-accent/10 text-mono-text hover:bg-mono-accent/10"
+               
               >
                 Finalize Meeting Date
               </Button>
@@ -1151,7 +1157,7 @@ function StageActions({
             <Button
               onClick={() => onAction("meeting", { action: "start" })}
               disabled={saving}
-              className="mt-3 bg-mono-accent/10 text-mono-text hover:bg-mono-accent/10"
+              className="mt-3"
             >
               Open MOM Window
             </Button>
@@ -1159,13 +1165,13 @@ function StageActions({
         )}
 
       {stage === "MEETING_LIVE" && caps["ams.meeting.confirm"] && (
-        <PerformanceControlButton
+        <Button
+          variant="destructive"
           onClick={() => onAction("meeting", { action: "close" })}
           disabled={saving}
-          className="px-4 py-2 bg-[var(--mnx-danger-bg)] text-mono-text text-sm rounded-lg hover:bg-[var(--mnx-danger-bg)]"
         >
           Close Meeting
-        </PerformanceControlButton>
+        </Button>
       )}
 
       {/* Finalise hike */}
@@ -1291,7 +1297,7 @@ function StageActions({
                 !hikeEffective ||
                 scoreData?.hikePercent === null
               }
-              className="mt-3 bg-mono-accent/10 text-mono-text hover:bg-mono-accent/10"
+              className="mt-3"
             >
               Finalize Salary
             </Button>
@@ -1461,17 +1467,30 @@ function MeetingSection({
       </div>
       {caps["ams.meeting.minutes"] && meeting.status !== "DONE" && (
         <div className="space-y-2 pt-3 border-t border-mono-border/40">
-          <div className="flex gap-2">
-            {availableRoles.map((r) => (
-              <PerformanceControlButton
-                key={r}
-                type="button"
-                onClick={() => setMinuteRole(r)}
-                className={`text-xs px-2 py-1 rounded ${minuteRole === r ? "bg-mono-accent/10 text-mono-text" : "bg-mono-soft text-mono-text"}`}
-              >
-                {r}
-              </PerformanceControlButton>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {availableRoles.map((r) => {
+              const active = minuteRole === r;
+              return (
+                // eslint-disable-next-line no-restricted-syntax -- role filter chip, not a standard Button
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setMinuteRole(r)}
+                  style={{
+                    background: active
+                      ? "var(--mnx-accent-soft)"
+                      : "var(--mnx-soft)",
+                    color: active
+                      ? "var(--mnx-accent-text)"
+                      : "var(--mnx-text-muted)",
+                  }}
+                  className="rounded-full border border-[var(--mnx-border)] px-3 py-1 text-xs font-medium"
+                >
+                  {r}
+                </button>
+              );
+            })}
           </div>
           <PerformanceControlTextarea
             value={minuteContent}
@@ -1480,16 +1499,16 @@ function MeetingSection({
             rows={2}
             className="w-full border border-mono-border rounded-lg px-3 py-2 text-sm resize-none"
           />
-          <PerformanceControlButton
+          <Button
+            size="sm"
             onClick={() => {
               onAddMinute(minuteRole, minuteContent);
               setMinuteContent("");
             }}
             disabled={saving || !minuteContent}
-            className="px-3 py-1.5 bg-mono-accent/10 text-mono-text text-sm rounded-lg disabled:opacity-50"
           >
             Add
-          </PerformanceControlButton>
+          </Button>
         </div>
       )}
     </Card>
@@ -1510,23 +1529,43 @@ function ToggleCard({
   onToggle: () => void;
 }) {
   return (
-    <PerformanceControlButton
+    // eslint-disable-next-line no-restricted-syntax -- switch widget (card + track), not a standard Button
+    <button
       type="button"
+      role="switch"
+      aria-checked={active}
       onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-2xl border border-mono-border/35 bg-mono-card px-4 py-3 text-left transition hover:border-mono-border"
+      style={{
+        borderColor: active ? "var(--frappe-primary)" : "var(--mnx-border)",
+        background: "var(--mnx-surface)",
+      }}
+      className="flex w-full items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left transition hover:border-[var(--mnx-border-strong)]"
     >
-      <div>
-        <p className="font-medium text-mono-text">{label}</p>
-        <p className="mt-1 text-xs text-mono-muted">{description}</p>
-      </div>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-[var(--mnx-text-strong)]">
+          {label}
+        </span>
+        <span className="mt-0.5 block text-xs text-[var(--mnx-text-muted)]">
+          {description}
+        </span>
+      </span>
       <span
-        className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-mono-soft" : "bg-outline-variant dark:bg-mono-soft"}`}
+        aria-hidden="true"
+        style={{
+          background: active
+            ? "var(--frappe-primary)"
+            : "var(--mnx-border-strong)",
+          justifyContent: active ? "flex-end" : "flex-start",
+        }}
+        className="flex h-6 w-11 shrink-0 items-center rounded-full p-[3px] transition-colors"
       >
         <span
-          className={`absolute top-1 h-5 w-5 rounded-full bg-mono-card transition ${active ? "left-6" : "left-1"}`}
+          // eslint-disable-next-line no-restricted-syntax -- knob stays white on both track colours
+          style={{ background: "#ffffff" }}
+          className="block h-[18px] w-[18px] rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
         />
       </span>
-    </PerformanceControlButton>
+    </button>
   );
 }
 
@@ -1538,8 +1577,8 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mnx-performance-surface mnx-accent-edge bg-mono-card rounded-xl border border-mono-border p-5 space-y-3">
-      {title && <h2 className="mnx-title-2 text-mono-text">{title}</h2>}
+    <div className="mnx-performance-surface mnx-accent-edge bg-mono-card rounded-xl border border-mono-border p-5 shadow-sm space-y-3 sm:p-6">
+      {title && <h2 className="mnx-title-3 text-mono-text">{title}</h2>}
       {children}
     </div>
   );
@@ -1557,33 +1596,40 @@ function ReviewerToggleRow({
   onToggle: () => void;
 }) {
   return (
-    <PerformanceControlButton
+    // eslint-disable-next-line no-restricted-syntax -- switch widget, not a standard Button
+    <button
       type="button"
-      aria-pressed={active}
+      role="switch"
+      aria-checked={active}
       onClick={onToggle}
-      className={`flex ${compact ? "w-auto min-w-[190px]" : "w-full"} items-center justify-between rounded-2xl ${compact ? "px-3 py-2.5" : "px-4 py-4"} text-left transition ${
-        active
-          ? "bg-mono-card text-mono-text"
-          : "bg-mono-card text-mono-muted hover:border-mono-border"
-      } ${compact ? "border border-mono-border/35" : "border border-mono-border/35"}`}
+      style={{
+        borderColor: active ? "var(--frappe-primary)" : "var(--mnx-border)",
+        background: "var(--mnx-surface)",
+      }}
+      className={`flex ${compact ? "w-auto min-w-[190px]" : "w-full"} items-center justify-between gap-3 rounded-xl border ${compact ? "px-3 py-2.5" : "px-4 py-3.5"} text-left transition hover:border-[var(--mnx-border-strong)]`}
     >
       <span
-        className={`${compact ? "text-xs uppercase tracking-[0.14em]" : "text-sm"} font-medium`}
+        className={`${compact ? "text-xs uppercase tracking-[0.14em]" : "text-sm"} font-medium text-[var(--mnx-text-strong)]`}
       >
         {label}
       </span>
       <span
-        className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-          active ? "bg-mono-soft" : "bg-outline-variant dark:bg-mono-soft"
-        }`}
+        aria-hidden="true"
+        style={{
+          background: active
+            ? "var(--frappe-primary)"
+            : "var(--mnx-border-strong)",
+          justifyContent: active ? "flex-end" : "flex-start",
+        }}
+        className="flex h-6 w-11 shrink-0 items-center rounded-full p-[3px] transition-colors"
       >
         <span
-          className={`inline-block h-6 w-6 rounded-full bg-mono-card shadow-sm transition ${
-            active ? "translate-x-5" : "translate-x-1"
-          }`}
+          // eslint-disable-next-line no-restricted-syntax -- knob stays white on both track colours
+          style={{ background: "#ffffff" }}
+          className="block h-[18px] w-[18px] rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
         />
       </span>
-    </PerformanceControlButton>
+    </button>
   );
 }
 

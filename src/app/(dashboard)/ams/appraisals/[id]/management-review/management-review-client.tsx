@@ -1,6 +1,5 @@
 "use client";
 
-import { PerformanceControlButton } from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -69,8 +68,8 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-3 rounded-xl border border-mono-border bg-mono-card p-5">
-      <h2 className="mnx-title-2 text-mono-text">{title}</h2>
+    <div className="space-y-3 rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm sm:p-6">
+      <h2 className="mnx-title-3 text-mono-text">{title}</h2>
       {children}
     </div>
   );
@@ -376,13 +375,9 @@ export function ManagementReviewClient({
           <p className="text-sm text-mono-muted">
             Claim this appraisal to open your separate management rating form.
           </p>
-          <PerformanceControlButton
-            onClick={() => void claimReview()}
-            disabled={claiming}
-            className="rounded-lg bg-mono-accent/10 px-4 py-2 text-sm font-medium text-mono-text hover:bg-mono-accent/10 disabled:opacity-50"
-          >
-            {claiming ? "Claiming..." : "Claim this appraisal"}
-          </PerformanceControlButton>
+          <Button onClick={() => void claimReview()} disabled={claiming}>
+            {claiming ? "Claiming…" : "Claim this appraisal"}
+          </Button>
         </Card>
       ) : canSubmit && isEditing ? (
         <Card title="Your Management Rating">
@@ -518,13 +513,9 @@ export function ManagementReviewClient({
               answers={currentRating}
             />
             <div className="border-t border-mono-border/40 pt-4">
-              <PerformanceControlButton
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="rounded-lg border border-mono-border px-4 py-2 text-sm font-medium text-mono-accent transition hover:bg-mono-accent/8"
-              >
-                Edit Form
-              </PerformanceControlButton>
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                Edit form
+              </Button>
             </div>
           </>
         </Card>
