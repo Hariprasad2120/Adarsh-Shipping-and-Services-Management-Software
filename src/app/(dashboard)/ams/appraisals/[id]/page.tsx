@@ -27,10 +27,11 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
       stage: true,
       employee: { select: { id: true } },
       cycle: { select: { orgId: true } },
+      reviewers: { select: { userId: true } },
     },
   });
 
-  if (!redirectContext || redirectContext.cycle.orgId !== orgId) notFound();
+  if (!redirectContext || redirectContext.cycle?.orgId !== orgId) notFound();
   if (redirectContext.stage === "DUE_NOTIFIED") {
     redirect(`/ams/appraisals/assign/${redirectContext.employee.id}`);
   }
@@ -40,7 +41,19 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
     can(session.user.id, "ams.appraisal.view_all"),
     can(session.user.id, "ams.appraisal.management_review"),
   ]);
-  if (!canAssign && !canViewAll && !canManageReview) {
+  // Assigned reviewers (HR / TL / Manager / Management) and the employee under
+  // review may open this page even without an org-wide AMS permission.
+  const isAssignedReviewer = redirectContext.reviewers.some(
+    (reviewer) => reviewer.userId === session.user.id,
+  );
+  const isSubjectEmployee = redirectContext.employee.id === session.user.id;
+  if (
+    !canAssign &&
+    !canViewAll &&
+    !canManageReview &&
+    !isAssignedReviewer &&
+    !isSubjectEmployee
+  ) {
     await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
   }
 

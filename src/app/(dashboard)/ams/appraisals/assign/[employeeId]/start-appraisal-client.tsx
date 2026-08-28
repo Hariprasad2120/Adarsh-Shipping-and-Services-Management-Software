@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  PerformanceControlButton,
   PerformanceTable,
   PerformanceTableBody,
   PerformanceTableCell,
@@ -9,7 +8,6 @@ import {
   PerformanceTableHeader,
   PerformanceTableRow,
 } from "@/modules/performance/components/performance-workspace";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -22,6 +20,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import type { SalaryRevisionSummary } from "@/modules/hrms/salary-revisions-shared";
@@ -39,25 +38,78 @@ type ScheduledAppraisal = {
   descriptor: string;
 };
 
+/* ------------------------------------------------------------------ */
+/* shared style tokens                                                  */
+/* ------------------------------------------------------------------ */
+
+const CARD =
+  "mnx-performance-surface mnx-accent-edge rounded-2xl border border-[var(--mnx-border)] p-5 shadow-sm sm:p-6";
+
 function statusBadgeClass(status: string) {
   if (status === "APPROVED")
-    return "border-mono-border bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]";
+    return "border-[var(--mnx-border)] bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]";
   if (status === "PENDING")
-    return "border-mono-border bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]";
+    return "border-[var(--mnx-border)] bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]";
   if (status === "REJECTED")
-    return "border-mono-border bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]";
-  return "border-mono-border bg-mono-soft text-mono-muted";
+    return "border-[var(--mnx-border)] bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]";
+  return "border-[var(--mnx-border)] bg-[var(--mnx-soft)] text-[var(--mnx-text-muted)]";
 }
 
 function kindLabel(kind: "ANNUAL" | "INTERMEDIATE") {
   return kind === "ANNUAL" ? "ANNUAL Appraisal" : "INTERMEDIATE Appraisal";
 }
 
-function sectionCardClass(extra = "") {
-  return `mnx-performance-surface mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:p-6 ${extra}`.trim();
+/* ------------------------------------------------------------------ */
+/* small primitives                                                     */
+/* ------------------------------------------------------------------ */
+
+function IconBadge({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "accent";
+}) {
+  return (
+    <span
+      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+        tone === "accent"
+          ? "border-[color-mix(in_srgb,var(--mnx-accent)_35%,var(--mnx-border))] bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]"
+          : "border-[var(--mnx-border)] bg-[var(--mnx-soft)] text-[var(--mnx-text)]"
+      }`}
+    >
+      {children}
+    </span>
+  );
 }
 
-function ToggleCard({
+function SectionHeader({
+  description,
+  icon,
+  title,
+  titleClassName = "text-[var(--mnx-text-strong)]",
+}: {
+  description?: string;
+  icon: React.ReactNode;
+  title: string;
+  titleClassName?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      {icon}
+      <div className="min-w-0">
+        <h2 className={`mnx-title-3 ${titleClassName}`}>{title}</h2>
+        {description ? (
+          <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
+            {description}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ToggleRow({
   active,
   label,
   description,
@@ -69,36 +121,170 @@ function ToggleCard({
   onToggle: () => void;
 }) {
   return (
-    <PerformanceControlButton
+    // eslint-disable-next-line no-restricted-syntax -- intentional switch widget (card + track), not a standard Button
+    <button
       type="button"
+      role="switch"
+      aria-checked={active}
       onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-2xl border border-mono-border/35 bg-mono-card px-4 py-3 text-left transition hover:border-mono-border"
+      className={`flex w-full items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left transition ${
+        active
+          ? "border-[var(--frappe-primary)] bg-[color-mix(in_srgb,var(--frappe-primary)_8%,var(--mnx-surface))]"
+          : "border-[var(--mnx-border)] bg-[var(--mnx-surface)] hover:border-[var(--mnx-border-strong)]"
+      }`}
     >
-      <div>
-        <p className="font-medium text-mono-text">{label}</p>
-        <p className="mt-1 text-xs text-mono-muted">{description}</p>
-      </div>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-[var(--mnx-text-strong)]">
+          {label}
+        </span>
+        <span className="mt-0.5 block text-xs text-[var(--mnx-text-muted)]">
+          {description}
+        </span>
+      </span>
       <span
-        className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-mono-accent/10" : "bg-outline-variant dark:bg-mono-soft"}`}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition ${
+          active
+            ? "border-[var(--frappe-primary)] bg-[var(--frappe-primary)]"
+            : "border-[var(--mnx-border-strong)] bg-[var(--mnx-soft)]"
+        }`}
       >
         <span
-          className={`absolute top-1 h-5 w-5 rounded-full bg-mono-card transition ${active ? "left-6" : "left-1"}`}
+          className={`inline-block h-[1.15rem] w-[1.15rem] transform rounded-full bg-white shadow-md ring-1 ring-black/10 transition ${
+            active ? "translate-x-[1.35rem]" : "translate-x-[0.15rem]"
+          }`}
         />
       </span>
-    </PerformanceControlButton>
+    </button>
   );
 }
 
-function CurrentStepIcon({ children }: { children: React.ReactNode }) {
+function InlineMetric({ label, value }: { label: string; value: string }) {
   return (
-    <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-mono-border bg-mono-accent/10 text-mono-accent shadow-[var(--mn-shadow-panel)] animate-pulse">
-      <span className="absolute inset-[-6px] rounded-full border border-mono-border animate-ping" />
-      <span className="relative z-10 inline-flex items-center justify-center">
-        {children}
-      </span>
+    <div className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-[var(--mnx-text-muted)]">
+        {label}
+      </p>
+      <p className="mnx-numeric mt-1 text-[1.05rem] text-[var(--mnx-text-strong)]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function RupeeBadge() {
+  return (
+    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-soft)] text-lg font-semibold text-[var(--mnx-text-strong)]">
+      ₹
     </span>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* employee context                                                     */
+/* ------------------------------------------------------------------ */
+
+function EmployeeStat({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-[var(--mnx-text-muted)]">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1.5">
+        {accent ? (
+          <span className="inline-flex rounded-full bg-[var(--mnx-accent-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--mnx-accent-text)]">
+            {value}
+          </span>
+        ) : (
+          <p className="truncate text-[0.95rem] text-[var(--mnx-text-strong)]">
+            {value}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EmployeeCard({
+  employee,
+  employeeDetailsHref,
+}: {
+  employee: {
+    name: string;
+    designation: string | null;
+    employeeNumber: string;
+    joinDateLabel: string;
+    tenureLabel: string;
+    employeeTypeLabel: string;
+  };
+  employeeDetailsHref: string;
+}) {
+  return (
+    <div className={CARD}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <IconBadge tone="accent">
+            <CircleUserRound className="size-5" />
+          </IconBadge>
+          <div className="min-w-0">
+            <h2 className="mnx-title-3 truncate text-[var(--mnx-text-strong)]">
+              {employee.name}
+            </h2>
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              {employee.designation ?? "Designation not set"}
+            </p>
+          </div>
+        </div>
+        <ButtonLink
+          href={employeeDetailsHref}
+          variant="outline"
+          className="shrink-0"
+        >
+          <CircleUserRound className="size-4" />
+          Employee Details
+        </ButtonLink>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-4 border-t border-[var(--mnx-border)] pt-5 sm:grid-cols-4">
+        <EmployeeStat
+          icon={<Users className="size-3.5" />}
+          label="Emp #"
+          value={employee.employeeNumber}
+        />
+        <EmployeeStat
+          icon={<CalendarDays className="size-3.5" />}
+          label="Joining Date"
+          value={employee.joinDateLabel}
+        />
+        <EmployeeStat
+          icon={<BriefcaseBusiness className="size-3.5" />}
+          label="Tenure"
+          value={employee.tenureLabel}
+        />
+        <EmployeeStat
+          icon={<Sparkles className="size-3.5" />}
+          label="Type"
+          value={employee.employeeTypeLabel}
+          accent
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* salary history                                                       */
+/* ------------------------------------------------------------------ */
 
 function SalaryHistoryCard({
   employeeId,
@@ -139,41 +325,39 @@ function SalaryHistoryCard({
 
   if (!summary || !summary.latestRevision) {
     return (
-      <div className={sectionCardClass()}>
-        <div className="flex items-center gap-3">
-          <IndianRupeeIcon />
-          <div>
-            <h2 className="mnx-title-2 text-mono-text">
-              Salary & Revision History
-            </h2>
-            <p className="mt-1 text-sm text-mono-muted">
-              No salary revision records are available for this employee yet.
-            </p>
-          </div>
+      <div className={`${CARD} flex items-center gap-3`}>
+        <RupeeBadge />
+        <div>
+          <h2 className="mnx-title-3 text-[var(--mnx-text-strong)]">
+            Salary &amp; Revision History
+          </h2>
+          <p className="mt-0.5 text-sm text-[var(--mnx-text-muted)]">
+            No salary revision records are available for this employee yet.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={sectionCardClass()}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className={CARD}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <IndianRupeeIcon />
-          <h2 className="mnx-title-2 text-mono-text">
-            Salary & Revision History
+          <RupeeBadge />
+          <h2 className="mnx-title-3 text-[var(--mnx-text-strong)]">
+            Salary &amp; Revision History
           </h2>
         </div>
         <a
           href={`/hrms/salary-revisions?employeeId=${employeeId}`}
-          className="inline-flex items-center gap-1 text-sm font-medium text-mono-accent transition hover:text-mono-muted"
+          className="inline-flex items-center gap-1 text-sm font-medium text-[var(--mnx-accent-text)] transition hover:opacity-80"
         >
           View all
           <ExternalLink className="size-4" />
         </a>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
         <InlineMetric
           label="Current Gross (Annual)"
           value={formatINR(summary.currentGrossAnnual)}
@@ -190,11 +374,11 @@ function SalaryHistoryCard({
 
       <div className="mt-6">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium text-mono-muted">
+          <p className="text-sm font-medium text-[var(--mnx-text-muted)]">
             Revision History
           </p>
           {monthOptions.length > 0 ? (
-            <div className="w-full max-w-sm">
+            <div className="w-full sm:max-w-xs">
               <DropdownSelect
                 ariaLabel="Filter revision history by month"
                 onValueChange={setSelectedMonth}
@@ -213,7 +397,7 @@ function SalaryHistoryCard({
         <div className="overflow-x-auto">
           <PerformanceTable className="min-w-full text-sm">
             <PerformanceTableHeader>
-              <PerformanceTableRow className="border-b border-mono-border/30">
+              <PerformanceTableRow className="border-b border-[var(--mnx-border)]">
                 {[
                   "Effective",
                   "Gross",
@@ -224,7 +408,7 @@ function SalaryHistoryCard({
                 ].map((label) => (
                   <PerformanceTableHead
                     key={label}
-                    className="px-0 py-2 text-left text-xs font-medium text-mono-muted"
+                    className="px-0 py-2 text-left text-xs font-medium text-[var(--mnx-text-muted)]"
                   >
                     {label}
                   </PerformanceTableHead>
@@ -235,20 +419,20 @@ function SalaryHistoryCard({
               {rows.map((revision) => (
                 <PerformanceTableRow
                   key={revision.id}
-                  className="border-b border-mono-border/20 last:border-b-0"
+                  className="border-b border-[var(--mnx-border)] last:border-b-0"
                 >
-                  <PerformanceTableCell className="py-3 text-mono-text">
+                  <PerformanceTableCell className="py-3 text-[var(--mnx-text)]">
                     {revision.effectiveLabel}
                   </PerformanceTableCell>
-                  <PerformanceTableCell className="mnx-numeric py-3 text-mono-text">
+                  <PerformanceTableCell className="mnx-numeric py-3 text-[var(--mnx-text)]">
                     {formatINR(
                       revision.revisedGrossAnnual ?? revision.grossAnnual,
                     )}
                   </PerformanceTableCell>
-                  <PerformanceTableCell className="mnx-numeric py-3 text-mono-text">
+                  <PerformanceTableCell className="mnx-numeric py-3 text-[var(--mnx-text)]">
                     {formatINR(revision.ctcAnnual)}
                   </PerformanceTableCell>
-                  <PerformanceTableCell className="mnx-numeric py-3 font-semibold text-mono-text">
+                  <PerformanceTableCell className="mnx-numeric py-3 font-semibold text-[var(--mnx-text-strong)]">
                     {formatINR(revision.revisedCtcAnnual)}
                   </PerformanceTableCell>
                   <PerformanceTableCell className="mnx-numeric py-3 text-[var(--mnx-success)]">
@@ -271,24 +455,129 @@ function SalaryHistoryCard({
   );
 }
 
-function InlineMetric({ label, value }: { label: string; value: string }) {
+/* ------------------------------------------------------------------ */
+/* reviewer selectors                                                   */
+/* ------------------------------------------------------------------ */
+
+function ReviewerField({
+  accent,
+  ariaLabel,
+  label,
+  onValueChange,
+  options,
+  value,
+}: {
+  accent: string;
+  ariaLabel: string;
+  label: string;
+  onValueChange: (value: string) => void;
+  options: ReviewerOption[];
+  value: string;
+}) {
   return (
-    <div>
-      <p className="text-sm text-mono-muted">{label}</p>
-      <p className="mt-1 text-[1rem] font-normal text-mono-text sm:text-[1.05rem]">
-        {value}
-      </p>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-[var(--mnx-text-strong)]">
+        <span className={`h-2.5 w-2.5 rounded-full ${accent}`} />
+        {label}
+      </div>
+      <DropdownSelect
+        ariaLabel={ariaLabel}
+        onValueChange={onValueChange}
+        options={[
+          { value: "", label: `Select ${label}` },
+          ...options.map((option) => ({
+            value: option.id,
+            label: option.name,
+          })),
+        ]}
+        triggerClassName="py-2.5"
+        value={value}
+      />
     </div>
   );
 }
 
-function IndianRupeeIcon() {
+function ReviewerSelectors({
+  hrLabel,
+  hrUsers,
+  includeManager,
+  includeTL,
+  managerUsers,
+  selectedHR,
+  selectedManager,
+  selectedTL,
+  setSelectedHR,
+  setSelectedManager,
+  setSelectedTL,
+  tlUsers,
+}: {
+  hrLabel: string;
+  hrUsers: ReviewerOption[];
+  includeManager: boolean;
+  includeTL: boolean;
+  managerUsers: ReviewerOption[];
+  selectedHR: string;
+  selectedManager: string;
+  selectedTL: string;
+  setSelectedHR: (value: string) => void;
+  setSelectedManager: (value: string) => void;
+  setSelectedTL: (value: string) => void;
+  tlUsers: ReviewerOption[];
+}) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-mono-soft text-lg font-semibold text-mono-text">
-      ₹
-    </span>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <ReviewerField
+        accent="bg-[var(--mnx-success)]"
+        ariaLabel={hrLabel}
+        label={hrLabel}
+        onValueChange={setSelectedHR}
+        options={hrUsers}
+        value={selectedHR}
+      />
+      {includeTL ? (
+        <ReviewerField
+          accent="bg-[var(--mnx-warning)]"
+          ariaLabel="TL Reviewer"
+          label="TL Reviewer"
+          onValueChange={setSelectedTL}
+          options={tlUsers}
+          value={selectedTL}
+        />
+      ) : null}
+      {includeManager ? (
+        <ReviewerField
+          accent="bg-[var(--frappe-primary)]"
+          ariaLabel="Manager Reviewer"
+          label="Manager Reviewer"
+          onValueChange={setSelectedManager}
+          options={managerUsers}
+          value={selectedManager}
+        />
+      ) : null}
+    </div>
   );
 }
+
+function LabeledField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-[var(--mnx-text-strong)]">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* main                                                                 */
+/* ------------------------------------------------------------------ */
 
 export function StartAppraisalClient({
   canStartSpecial,
@@ -441,79 +730,48 @@ export function StartAppraisalClient({
   }
 
   return (
-    <div className="space-y-5">
-      <div className={sectionCardClass()}>
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1fr)_auto] xl:items-start">
-          <EmployeeInfo
-            icon={<Users className="size-4" />}
-            label="Emp #"
-            value={employee.employeeNumber}
-          />
-          <EmployeeInfo
-            icon={<CalendarDays className="size-4" />}
-            label="Joining Date"
-            value={employee.joinDateLabel}
-          />
-          <EmployeeInfo
-            icon={<BriefcaseBusiness className="size-4" />}
-            label="Tenure"
-            value={employee.tenureLabel}
-          />
-          <EmployeeInfo
-            icon={<Sparkles className="size-4" />}
-            label="Type"
-            value={employee.employeeTypeLabel}
-            accent
-          />
-          <div className="xl:justify-self-end">
-            <Link
-              href={employeeDetailsHref}
-              className="inline-flex items-center gap-2 self-start rounded-2xl border border-mono-border/40 bg-mono-card px-4 py-2.5 text-sm font-medium text-mono-text shadow-sm transition hover:border-mono-border hover:text-mono-accent"
-            >
-              <CircleUserRound className="size-4" />
-              Employee Details
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-5xl space-y-6">
+      <EmployeeCard
+        employee={employee}
+        employeeDetailsHref={employeeDetailsHref}
+      />
 
       <SalaryHistoryCard employeeId={employee.id} summary={salarySummary} />
 
       {errorMessage ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-mono-border bg-[var(--mnx-danger-bg)] px-4 py-3 text-sm text-[var(--mnx-danger)]">
+        <div className="flex items-center gap-3 rounded-xl border border-[color-mix(in_srgb,var(--mnx-danger)_35%,var(--mnx-border))] bg-[var(--mnx-danger-bg)] px-4 py-3 text-sm text-[var(--mnx-danger)]">
           <AlertCircle className="size-4 shrink-0" />
           {errorMessage}
         </div>
       ) : null}
 
-      <div className={sectionCardClass()}>
+      <div className={CARD}>
         <SectionHeader
           icon={
-            <CurrentStepIcon>
+            <IconBadge tone="accent">
               <Users className="size-5" />
-            </CurrentStepIcon>
+            </IconBadge>
           }
           title="Assign Reviewers"
+          description="System-scheduled appraisal for this employee."
         />
 
         {scheduledAppraisal ? (
-          <div className="mt-6 space-y-5">
-            <div className="rounded-2xl border border-mono-border bg-[var(--mnx-success-bg)] px-4 py-3 text-sm text-[var(--mnx-success)]">
-              <span className="inline-flex items-center gap-2">
-                <Info className="size-4 shrink-0" />
-                <span>
-                  System determined:{" "}
-                  <strong>{kindLabel(scheduledAppraisal.kind)}</strong> -{" "}
-                  {scheduledAppraisal.descriptor} -{" "}
-                  {scheduledAppraisal.kind === "ANNUAL"
-                    ? "Annual Appraisal"
-                    : "6 Month Appraisal"}
-                </span>
+          <div className="mt-5 space-y-5">
+            <div className="flex items-start gap-2 rounded-xl border border-[color-mix(in_srgb,var(--mnx-success)_30%,var(--mnx-border))] bg-[var(--mnx-success-bg)] px-4 py-3 text-sm text-[var(--mnx-success)]">
+              <Info className="mt-0.5 size-4 shrink-0" />
+              <span>
+                System determined:{" "}
+                <strong>{kindLabel(scheduledAppraisal.kind)}</strong> —{" "}
+                {scheduledAppraisal.descriptor} —{" "}
+                {scheduledAppraisal.kind === "ANNUAL"
+                  ? "Annual Appraisal"
+                  : "6 Month Appraisal"}
               </span>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <ToggleCard
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ToggleRow
                 active={includeScheduledTL}
                 label="Include TL Reviewer"
                 description="Adds TL as an assigned reviewer"
@@ -523,7 +781,7 @@ export function StartAppraisalClient({
                   if (!next) setScheduledTL("");
                 }}
               />
-              <ToggleCard
+              <ToggleRow
                 active={includeScheduledManager}
                 label="Include Manager Reviewer"
                 description="Adds Manager as an assigned reviewer"
@@ -550,44 +808,43 @@ export function StartAppraisalClient({
               tlUsers={tlUsers}
             />
 
-            <PerformanceControlButton
-              type="button"
-              onClick={() => startFlow("scheduled")}
-              disabled={saving !== "" || !scheduledReviewersReady}
-              className={
-                scheduledReviewersReady
-                  ? "rounded-2xl bg-mono-accent/10 px-5 py-3 text-sm font-medium text-mono-text transition hover:bg-mono-accent/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-mono-muted transition disabled:cursor-not-allowed"
-              }
-            >
-              {saving === "scheduled" ? "Assigning..." : "Assign Reviewers"}
-            </PerformanceControlButton>
+            <div className="flex justify-end border-t border-[var(--mnx-border)] pt-5">
+              <Button
+                onClick={() => startFlow("scheduled")}
+                disabled={saving !== "" || !scheduledReviewersReady}
+              >
+                {saving === "scheduled" ? "Assigning…" : "Assign Reviewers"}
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl border border-mono-border bg-[var(--mnx-warning-bg)] px-4 py-3 text-sm text-[var(--mnx-warning)]">
-            No system-determined appraisal is due for this employee right now.
-            You can still start a special appraisal below if you have admin
-            access.
+          <div className="mt-5 flex items-start gap-2 rounded-xl border border-[color-mix(in_srgb,var(--mnx-warning)_30%,var(--mnx-border))] bg-[var(--mnx-warning-bg)] px-4 py-3 text-sm text-[var(--mnx-warning)]">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              No system-determined appraisal is due for this employee right now.
+              You can still start a special appraisal below if you have admin
+              access.
+            </span>
           </div>
         )}
       </div>
 
       {canStartSpecial ? (
-        <div
-          className={sectionCardClass(
-            "mnx-performance-surface mnx-accent-edge-violet border-mono-border shadow-[var(--mn-shadow-panel)]",
-          )}
-        >
+        <div className={CARD}>
           <SectionHeader
-            icon={<Sparkles className="size-5 text-mono-accent" />}
+            icon={
+              <IconBadge tone="accent">
+                <Sparkles className="size-5" />
+              </IconBadge>
+            }
             title="Start Special Appraisal"
-            titleClassName="text-mono-accent"
-            description="Admin-only. Outside normal milestone schedule. Creates a special cycle immediately."
+            titleClassName="text-[var(--mnx-accent-text)]"
+            description="Admin-only. Outside the normal milestone schedule. Creates a special cycle immediately."
           />
 
-          <div className="mt-6 space-y-5">
-            <div className="grid gap-4 lg:grid-cols-2">
-              <ToggleCard
+          <div className="mt-5 space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ToggleRow
                 active={includeSpecialTL}
                 label="Include TL Reviewer"
                 description="Adds TL as an assigned reviewer"
@@ -597,7 +854,7 @@ export function StartAppraisalClient({
                   if (!next) setSpecialTL("");
                 }}
               />
-              <ToggleCard
+              <ToggleRow
                 active={includeSpecialManager}
                 label="Include Manager Reviewer"
                 description="Adds Manager as an assigned reviewer"
@@ -609,7 +866,7 @@ export function StartAppraisalClient({
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <LabeledField label="Appraisal Type">
                 <DropdownSelect
                   ariaLabel="Select appraisal type"
@@ -620,6 +877,7 @@ export function StartAppraisalClient({
                     { value: "ANNUAL", label: "Annual" },
                     { value: "INTERMEDIATE", label: "Intermediate" },
                   ]}
+                  triggerClassName="py-2.5"
                   value={specialKind}
                 />
               </LabeledField>
@@ -647,191 +905,17 @@ export function StartAppraisalClient({
               tlUsers={tlUsers}
             />
 
-            <PerformanceControlButton
-              type="button"
-              onClick={() => startFlow("special")}
-              disabled={saving !== "" || !specialReviewersReady}
-              className={
-                specialReviewersReady
-                  ? "rounded-2xl bg-mono-accent/10 px-5 py-3 text-sm font-medium text-mono-text transition hover:bg-mono-accent/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-mono-muted transition disabled:cursor-not-allowed"
-              }
-            >
-              {saving === "special" ? "Starting..." : "Start Special Appraisal"}
-            </PerformanceControlButton>
+            <div className="flex justify-end border-t border-[var(--mnx-border)] pt-5">
+              <Button
+                onClick={() => startFlow("special")}
+                disabled={saving !== "" || !specialReviewersReady}
+              >
+                {saving === "special" ? "Starting…" : "Start Special Appraisal"}
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function ReviewerSelectors({
-  hrLabel,
-  hrUsers,
-  includeManager,
-  includeTL,
-  managerUsers,
-  selectedHR,
-  selectedManager,
-  selectedTL,
-  setSelectedHR,
-  setSelectedManager,
-  setSelectedTL,
-  tlUsers,
-}: {
-  hrLabel: string;
-  hrUsers: ReviewerOption[];
-  includeManager: boolean;
-  includeTL: boolean;
-  managerUsers: ReviewerOption[];
-  selectedHR: string;
-  selectedManager: string;
-  selectedTL: string;
-  setSelectedHR: (value: string) => void;
-  setSelectedManager: (value: string) => void;
-  setSelectedTL: (value: string) => void;
-  tlUsers: ReviewerOption[];
-}) {
-  return (
-    <div className="grid gap-4 xl:grid-cols-3">
-      <ReviewerField
-        accent="bg-[var(--mnx-success-bg)]"
-        ariaLabel={hrLabel}
-        label={hrLabel}
-        onValueChange={setSelectedHR}
-        options={hrUsers}
-        value={selectedHR}
-      />
-      {includeTL ? (
-        <ReviewerField
-          accent="bg-[var(--mnx-warning-bg)]"
-          ariaLabel="TL Reviewer"
-          label="TL Reviewer"
-          onValueChange={setSelectedTL}
-          options={tlUsers}
-          value={selectedTL}
-        />
-      ) : null}
-      {includeManager ? (
-        <ReviewerField
-          accent="bg-mono-accent/10"
-          ariaLabel="Manager Reviewer"
-          label="Manager Reviewer"
-          onValueChange={setSelectedManager}
-          options={managerUsers}
-          value={selectedManager}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function ReviewerField({
-  accent,
-  ariaLabel,
-  label,
-  onValueChange,
-  options,
-  value,
-}: {
-  accent: string;
-  ariaLabel: string;
-  label: string;
-  onValueChange: (value: string) => void;
-  options: ReviewerOption[];
-  value: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm text-mono-text">
-        <span className={`h-2.5 w-2.5 rounded-full ${accent}`} />
-        {label}
-      </div>
-      <DropdownSelect
-        ariaLabel={ariaLabel}
-        onValueChange={onValueChange}
-        options={[
-          { value: "", label: `Select ${label}` },
-          ...options.map((option) => ({
-            value: option.id,
-            label: option.name,
-          })),
-        ]}
-        triggerClassName="py-2.5"
-        value={value}
-      />
-    </div>
-  );
-}
-
-function LabeledField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-mono-text">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function EmployeeInfo({
-  accent,
-  icon,
-  label,
-  value,
-}: {
-  accent?: boolean;
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-sm text-mono-muted">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-2">
-        {accent ? (
-          <span className="inline-flex rounded-full bg-mono-soft px-2 py-0.5 text-xs font-medium text-mono-accent">
-            {value}
-          </span>
-        ) : (
-          <p className="mt-0.5 text-[0.95rem] font-normal text-mono-text sm:text-[1rem]">
-            {value}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function SectionHeader({
-  description,
-  icon,
-  title,
-  titleClassName = "text-mono-text",
-}: {
-  description?: string;
-  icon: React.ReactNode;
-  title: string;
-  titleClassName?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-mono-text">{icon}</div>
-      <div>
-        <h2 className={`mnx-title-2 ${titleClassName}`}>{title}</h2>
-        {description ? (
-          <p className="mt-1 text-sm text-mono-muted">{description}</p>
-        ) : null}
-      </div>
     </div>
   );
 }
