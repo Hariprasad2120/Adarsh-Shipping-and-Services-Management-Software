@@ -1,6 +1,26 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
+
+## 2026-08-28 Shared Monolith iconography foundation handoff
+
+Standardized the Monolith icon language so shared UI can use one theme-reactive icon contract instead of scattered local sizing, color, and mixed visual treatments.
+
+Delivered:
+
+- added `src/components/ui/monolith-icon.tsx` as the canonical shared icon primitive with:
+  - token-driven tones;
+  - bare, soft, and solid surface modes;
+  - consistent stroke weight and sizing;
+  - accessibility support for decorative and labeled icons;
+- exposed the new icon primitive through the shared UI barrel and added workspace convenience wrappers for page-header, metric, and route-state icon usage;
+- updated the live design-system catalogue so iconography is now a first-class approved specimen and the shared workspace examples demonstrate the new Monolith icon language;
+- updated `docs/MONOLITH_UI_DESIGN_SYSTEM.md` with explicit iconography rules so future UI work uses the same icon contract.
+
+Known limits:
+
+- this batch establishes the canonical icon system but does not yet replace every existing route-local icon usage across the repository;
+- runtime browser verification across Light, Night, and Violet themes is still pending in this Codex session.
 
 ## 2026-08-27 Mona Work Pet Phase 9-11 closeout handoff
 

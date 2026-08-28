@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { MonolithIcon } from "@/components/ui/monolith-icon";
 import {
   MonolithPage,
   MonolithSpecLabel,
@@ -120,6 +121,7 @@ export function WorkspaceSectionHeading({
     <header className={cn("mnx-section-heading", className)} {...props}>
       <div className="mnx-section-heading-title">
         <Heading>
+          <span className="mnx-section-heading-index">{index}</span>
           <span className="mnx-section-heading-text">{title}</span>
           {badge ? <span className="mnx-section-heading-badge">{badge}</span> : null}
         </Heading>
@@ -576,4 +578,22 @@ export function WorkspaceState({
       {action ? <div className="mnx-workspace-state-action">{action}</div> : null}
     </section>
   );
+}
+
+export function WorkspacePageHeaderIcon(
+  props: React.ComponentProps<typeof MonolithIcon>,
+) {
+  return <MonolithIcon size="lg" surface="soft" {...props} />;
+}
+
+export function WorkspaceMetricIcon(
+  props: React.ComponentProps<typeof MonolithIcon>,
+) {
+  return <MonolithIcon size="sm" surface="soft" {...props} />;
+}
+
+export function WorkspaceStateIcon(
+  props: React.ComponentProps<typeof MonolithIcon>,
+) {
+  return <MonolithIcon size="lg" surface="solid" {...props} />;
 }

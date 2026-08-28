@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
@@ -8,6 +9,7 @@ import {
   MonolithSpecLabel,
   MonolithSurface,
 } from "@/components/ui/foundation";
+import { MonolithIcon } from "@/components/ui/monolith-icon";
 
 describe("Monolith foundation primitives", () => {
   it("preserves the dashboard page and panel class contracts", () => {
@@ -63,5 +65,15 @@ describe("Monolith foundation primitives", () => {
     expect(
       renderToStaticMarkup(<MonolithSurface interactive tabIndex={0} />),
     ).toContain('data-interactive="true"');
+  });
+
+  it("renders theme-ready iconography with one shared contract", () => {
+    expect(
+      renderToStaticMarkup(
+        <MonolithIcon icon={Search} tone="primary" size="sm" surface="soft" />,
+      ),
+    ).toBe(
+      '<span class="mnx-icon" data-size="sm" data-surface="soft" data-tone="primary" aria-hidden="true"><span class="mnx-icon-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search mnx-icon-svg"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg></span></span>',
+    );
   });
 });

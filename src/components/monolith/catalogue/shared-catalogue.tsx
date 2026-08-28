@@ -9,15 +9,19 @@ import {
   Check,
   CircleDot,
   CreditCard,
+  Heart,
   Info,
   IndianRupee,
   ListFilter,
+  MapPinned,
   MoreHorizontal,
+  MessageSquareText,
   PackageSearch,
   Plus,
   RotateCcw,
   Search,
   Settings,
+  ShieldCheck,
   Ship,
 } from "lucide-react";
 import {
@@ -32,6 +36,7 @@ import {
   Input,
   MonolithAction,
   MonolithBadge,
+  MonolithIcon,
   MonolithIconAction,
   MonolithSearchCommand,
   MonolithSurface,
@@ -68,12 +73,15 @@ import {
   WorkspaceBadge,
   WorkspaceEmptyState,
   WorkspaceField,
+  WorkspaceMetricIcon,
   WorkspaceMetric,
+  WorkspacePageHeaderIcon,
   WorkspacePageHeader,
   WorkspacePanel,
   WorkspacePanelHeader,
   WorkspaceProgress,
   WorkspaceSectionHeading,
+  WorkspaceStateIcon,
   WorkspaceState,
 } from "@/components/monolith";
 import {
@@ -383,7 +391,7 @@ export const sharedCatalogue: CatalogueEntry[] = [
         eyebrow="Production component"
         title="Shipment operations"
         description="One route header shared by application modules and this catalogue."
-        icon={<Ship aria-hidden="true" />}
+        icon={<WorkspacePageHeaderIcon icon={Ship} tone="primary" />}
         actions={<WorkspaceAction size="compact">Create job</WorkspaceAction>}
       />
     ),
@@ -391,6 +399,43 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["default", "with icon", "with actions"],
     interactive: false,
     accessibility: "Owns the route h1 and preserves action keyboard behavior.",
+  },
+  {
+    id: "monolith-iconography",
+    component: "MonolithIcon",
+    displayName: "Iconography",
+    category: "Themes",
+    scope: "foundation",
+    description: "Approved Monolith icon language with token-driven color, rounded outlined glyphs, and theme-reactive containers inspired by the provided reference.",
+    status: "stable",
+    source: "src/components/ui/monolith-icon.tsx",
+    render: () => (
+      <div className="mnx-catalogue-stack">
+        <div className="mnx-catalogue-inline">
+          <MonolithIcon icon={Search} tone="default" />
+          <MonolithIcon icon={Heart} tone="violet" />
+          <MonolithIcon icon={MapPinned} tone="info" />
+          <MonolithIcon icon={MessageSquareText} tone="teal" />
+          <MonolithIcon icon={ShieldCheck} tone="success" />
+        </div>
+        <div className="mnx-catalogue-inline">
+          <MonolithIcon icon={Search} tone="default" surface="bare" size="sm" />
+          <MonolithIcon icon={Heart} tone="warning" surface="soft" size="md" />
+          <MonolithIcon icon={Ship} tone="primary" surface="solid" size="lg" />
+        </div>
+        <WorkspaceState
+          variant="permission"
+          eyebrow="Canonical guidance"
+          title="Use one icon system everywhere"
+          description="Past, present, and future Monolith UI should use token-driven icons instead of route-local sizing, color, or mixed libraries."
+          icon={<WorkspaceStateIcon icon={ShieldCheck} tone="warning" decorative={false} label="Warning icon" />}
+        />
+      </div>
+    ),
+    themes,
+    states: ["bare glyph", "soft container", "solid emphasis", "theme-reactive tone"],
+    interactive: false,
+    accessibility: "Icons inherit currentColor, can be decorative by default, and expose an explicit accessible label when the icon carries standalone meaning.",
   },
   {
     id: "actions",
@@ -580,8 +625,14 @@ export const sharedCatalogue: CatalogueEntry[] = [
     source: "src/components/layout/workspace.tsx",
     render: () => (
       <div className="mnx-workspace-metrics mnx-catalogue-metrics">
-        <WorkspaceMetric label="Open jobs" value="24" detail="Informational" />
         <WorkspaceMetric
+          icon={<WorkspaceMetricIcon icon={MapPinned} tone="info" />}
+          label="Open jobs"
+          value="24"
+          detail="Informational"
+        />
+        <WorkspaceMetric
+          icon={<WorkspaceMetricIcon icon={ArrowRight} tone="primary" />}
           label="Due today"
           value="06"
           detail="Open queue"
@@ -718,7 +769,7 @@ export const sharedCatalogue: CatalogueEntry[] = [
           eyebrow="Route state"
           title="Nothing requires attention"
           description="The same state component is used in production routes."
-          icon={<PackageSearch aria-hidden="true" />}
+          icon={<WorkspaceStateIcon icon={PackageSearch} tone="info" decorative={false} label="Package search icon" />}
         />
       </div>
     ),

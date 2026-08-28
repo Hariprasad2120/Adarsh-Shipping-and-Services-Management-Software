@@ -1799,9 +1799,9 @@
   .dark,
   [data-theme="dark"]
 ) .mnx-people-table-cell {
-  background-color: #181b22 !important;
-  border-top-color: #353a47 !important;
-  border-bottom-color: #353a47 !important;
+  background-color: var(--mnx-surface) !important;
+  border-top-color: var(--mnx-border) !important;
+  border-bottom-color: var(--mnx-border) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
@@ -1812,7 +1812,7 @@
   .dark,
   [data-theme="dark"]
 ) .mnx-people-table-row .mnx-people-table-cell:first-child {
-  border-left-color: #353a47 !important;
+  border-left-color: var(--mnx-border) !important;
 }
 
 :where(
@@ -1822,7 +1822,7 @@
   .dark,
   [data-theme="dark"]
 ) .mnx-people-table-row .mnx-people-table-cell:last-child {
-  border-right-color: #353a47 !important;
+  border-right-color: var(--mnx-border) !important;
 }
 
 /* Row Hover Highlight Effect */
@@ -1842,8 +1842,8 @@
   .dark,
   [data-theme="dark"]
 ) .mnx-people-table-row:hover .mnx-people-table-cell {
-  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, #181b22) !important;
-  border-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 40%, #353a47) !important;
+  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, var(--mnx-surface)) !important;
+  border-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 40%, var(--mnx-border)) !important;
 }
 
 :where(

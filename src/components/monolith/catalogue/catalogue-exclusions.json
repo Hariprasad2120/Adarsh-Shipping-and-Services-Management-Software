@@ -162,6 +162,12 @@
     "owner": "Monolith design system"
   },
   {
+    "component": "WorkspacePageHeaderIcon",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal icon wrapper rendered through registered shared specimens; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
     "component": "WorkspacePanelHeader",
     "source": "src/components/layout/workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
@@ -174,6 +180,12 @@
     "owner": "Monolith design system"
   },
   {
+    "component": "WorkspaceMetricIcon",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal icon wrapper rendered through registered shared specimens; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
     "component": "WorkspaceSelect",
     "source": "src/components/layout/workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
@@ -183,6 +195,12 @@
     "component": "WorkspaceState",
     "source": "src/components/layout/workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceStateIcon",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal icon wrapper rendered through registered shared specimens; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {

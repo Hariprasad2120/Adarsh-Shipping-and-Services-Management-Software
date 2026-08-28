@@ -25,8 +25,12 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
   --mnx-text-strong: var(--mn-color-text-strong);
   --mnx-ink: var(--mn-color-text-strong);
   --mnx-muted: var(--mn-color-text-muted);
+  --mnx-text-muted: var(--mn-color-text-muted);
+  --mnx-text-tertiary: var(--mn-color-text-tertiary, var(--mn-color-text-muted));
+  --mnx-text-disabled: var(--mn-color-text-disabled, var(--mn-color-text-muted));
   --mnx-border: var(--mn-color-border);
-  --mnx-border-strong: var(--frappe-border-strong);
+  --mnx-border-subtle: var(--mn-color-border-subtle, var(--mn-color-border));
+  --mnx-border-strong: var(--mn-color-border-strong, var(--frappe-border-strong));
   --mnx-primary: var(--mn-color-primary);
   --mnx-primary-contrast: var(--mn-color-on-primary);
   --mnx-accent: var(--mn-color-accent);
@@ -45,6 +49,36 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
   --mnx-danger: var(--mn-color-danger);
   --mnx-info-bg: var(--mn-color-info-surface);
   --mnx-info: var(--mn-color-info);
+
+  /* Semantic colour system aliases — see monolith-tokens.css for the meanings.
+     Components consume these; light/dark values resolve from the token layer. */
+  --mnx-c-primary: var(--mn-sem-primary);
+  --mnx-c-info: var(--mn-sem-info);
+  --mnx-c-success: var(--mn-sem-success);
+  --mnx-c-warning: var(--mn-sem-warning);
+  --mnx-c-danger: var(--mn-sem-danger);
+  --mnx-c-violet: var(--mn-sem-violet);
+  --mnx-c-orange: var(--mn-sem-orange);
+  --mnx-c-teal: var(--mn-sem-teal);
+
+  --mnx-tint-primary: var(--mn-tint-primary);
+  --mnx-tint-info: var(--mn-tint-info);
+  --mnx-tint-success: var(--mn-tint-success);
+  --mnx-tint-warning: var(--mn-tint-warning);
+  --mnx-tint-danger: var(--mn-tint-danger);
+  --mnx-tint-violet: var(--mn-tint-violet);
+  --mnx-tint-orange: var(--mn-tint-orange);
+  --mnx-tint-teal: var(--mn-tint-teal);
+
+  --mnx-icon-primary-bg: var(--mn-icon-primary-bg);
+  --mnx-icon-info-bg: var(--mn-icon-info-bg);
+  --mnx-icon-success-bg: var(--mn-icon-success-bg);
+  --mnx-icon-warning-bg: var(--mn-icon-warning-bg);
+  --mnx-icon-danger-bg: var(--mn-icon-danger-bg);
+  --mnx-icon-violet-bg: var(--mn-icon-violet-bg);
+  --mnx-icon-orange-bg: var(--mn-icon-orange-bg);
+  --mnx-icon-teal-bg: var(--mn-icon-teal-bg);
+
   --mnx-radius-sm: var(--mn-radius-control);
   --mnx-radius-md: var(--mn-radius-panel);
   --mnx-radius-lg: var(--mn-radius-feature);
@@ -972,6 +1006,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
   font-size: var(--mn-type-body-size);
   line-height: var(--mn-type-body-line);
   isolation: isolate;
+  transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: grid-template-columns;
 }
 
 html[data-dashboard-shell="true"],
@@ -1783,26 +1819,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
   .mnx-dashboard-shell {
     --mnx-sidebar-width: 82px;
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: var(--mnx-sidebar-width) minmax(0, 1fr);
   }
 
   .mnx-dashboard-shell[data-sidebar-expanded="true"] {
     --mnx-sidebar-width: 256px;
-  }
-
-  .mnx-dashboard-shell .mnx-dashboard-frame {
-    margin-left: 0;
-    width: 100%;
-    max-width: 100%;
-    transition:
-      margin-left 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      width 220ms cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: margin-left, width;
-  }
-
-  .mnx-dashboard-shell[data-sidebar-expanded="true"] .mnx-dashboard-frame {
-    margin-left: calc(var(--mnx-sidebar-width) - 82px);
-    width: calc(100% - (var(--mnx-sidebar-width) - 82px));
   }
 
   .mnx-dashboard-shell .mnx-sidebar {
@@ -1965,7 +1986,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     border-left: 1px solid var(--mnx-border);
     max-height: 80rem;
     opacity: 1;
-    overflow: hidden;
+    overflow: visible;
     pointer-events: auto;
   }
 
@@ -2080,6 +2101,9 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   gap: 2px;
   overflow-y: auto;
   padding-right: 0;
+  padding-bottom: 1rem;
+  scroll-padding-block: 1rem 6rem;
+  scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -2193,6 +2217,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-sidebar-section.is-expanded .mnx-sidebar-chevron {
   transform: rotate(0);
+}
+
+.mnx-sidebar-section.is-expanded > .mnx-sidebar-subnav {
+  overflow: visible;
+  max-height: none;
 }
 
 .mnx-sidebar-subnav {
@@ -5768,8 +5797,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  color: var(--mnx-accent-text);
-  background: color-mix(in srgb, var(--mnx-accent-soft) 72%, var(--mnx-surface));
+  color: var(--hue-color, var(--mnx-accent-text));
+  background: var(
+    --hue-icon-bg,
+    color-mix(in srgb, var(--mnx-accent-soft) 72%, var(--mnx-surface))
+  );
   box-shadow: none;
 }
 
@@ -6152,7 +6184,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
    variant scoped to that workspace instead of changing the global default. */
 .mnx-cha-workspace .mnx-section-heading {
   display: block;
-  padding: 0 0 var(--mn-space-2);
+  padding: 0 0 var(--mn-space-2) 0.85rem;
 }
 
 .mnx-cha-workspace .mnx-section-heading h2 {
@@ -6393,10 +6425,14 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-workspace-metric-icon {
   width: 1.95rem;
   height: 1.95rem;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-border));
+  border: 1px solid
+    color-mix(in srgb, var(--hue-color, var(--mnx-accent)) 22%, var(--mnx-border));
   border-radius: 999px;
-  color: var(--mnx-accent-text);
-  background: color-mix(in srgb, var(--mnx-accent-soft) 28%, var(--mnx-surface));
+  color: var(--hue-color, var(--mnx-accent-text));
+  background: var(
+    --hue-icon-bg,
+    color-mix(in srgb, var(--mnx-accent-soft) 28%, var(--mnx-surface))
+  );
 }
 
 .mnx-workspace-metric-action {
@@ -6849,9 +6885,9 @@ svg + .mnx-field-control {
   .dark,
   [data-theme="dark"]
 ) .mnx-dialog-surface {
-  background-color: #181b22 !important;
-  border-color: #353a47 !important;
-  box-shadow: 0 25px 65px -10px rgba(0, 0, 0, 0.75) !important;
+  background-color: var(--mnx-surface) !important;
+  border-color: var(--mnx-border) !important;
+  box-shadow: var(--mnx-floating-shadow) !important;
 }
 
 .mnx-dialog-surface-compact {
@@ -7101,6 +7137,27 @@ svg + .mnx-field-control {
 .mnx-notification-record:hover {
   background: color-mix(in srgb, var(--mnx-accent, #0284c7) 12%, #ffffff) !important;
   box-shadow: inset 4px 0 0 var(--mnx-accent, #0284c7), 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Dark theme: the base rule above hard-codes a white background with !important
+   at a specificity the onyx :where() overrides cannot beat. Re-assert here. */
+html.theme-night .mnx-notification-record,
+html.theme-violet .mnx-notification-record,
+html[data-theme="dark"] .mnx-notification-record,
+.dark .mnx-notification-record,
+.mnx-dashboard-shell[data-theme="dark"] .mnx-notification-record {
+  border-color: var(--mnx-border) !important;
+  background: var(--mnx-surface) !important;
+  box-shadow: var(--mnx-shadow) !important;
+}
+
+html.theme-night .mnx-notification-record:hover,
+html.theme-violet .mnx-notification-record:hover,
+html[data-theme="dark"] .mnx-notification-record:hover,
+.dark .mnx-notification-record:hover,
+.mnx-dashboard-shell[data-theme="dark"] .mnx-notification-record:hover {
+  background: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, var(--mnx-surface)) !important;
+  box-shadow: inset 4px 0 0 var(--mnx-accent), var(--mnx-shadow) !important;
 }
 
 .mnx-panel-state {
@@ -13788,8 +13845,11 @@ button.mnx-accounting-record-card {
   height: 2rem;
   place-items: center;
   border-radius: calc(var(--mn-radius-control) - 0.125rem);
-  background: color-mix(in srgb, var(--mnx-accent) 18%, transparent);
-  color: var(--mnx-accent-text);
+  background: var(
+    --hue-icon-bg,
+    color-mix(in srgb, var(--mnx-accent) 18%, transparent)
+  );
+  color: var(--hue-color, var(--mnx-accent-text));
 }
 
 .mnx-people-summary-heading svg {
@@ -14660,7 +14720,7 @@ button.mnx-accounting-record-card {
   .mnx-workspace-table tbody tr td
 ) {
   background: transparent !important;
-  border-top-color: color-mix(in srgb, var(--mnx-border, #353a47) 82%, transparent) !important;
+  border-top-color: color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
 }
 
 :where(
@@ -14673,7 +14733,7 @@ button.mnx-accounting-record-card {
   .mnx-people-table-row:last-child td,
   .mnx-workspace-table tbody tr:last-child td
 ) {
-  border-bottom-color: color-mix(in srgb, var(--mnx-border, #353a47) 82%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
 }
 
 .mnx-people-table-row {
@@ -14714,8 +14774,8 @@ button.mnx-accounting-record-card {
   .mnx-table-card tbody tr:hover,
   table tbody tr:hover
 ) td {
-  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 24%, #181b22) !important;
-  color: #ffffff !important;
+  background-color: color-mix(in srgb, var(--mnx-accent) 16%, var(--mnx-surface)) !important;
+  color: var(--mnx-text) !important;
 }
 
 :where(
@@ -16028,21 +16088,25 @@ button.mnx-accounting-record-card {
 }
 
 .mnx-sidebar {
-  --mnx-sidebar-border-color: color-mix(in srgb, var(--mnx-border) 84%, transparent);
+  /* Contrast sidebar: inverted against the page so the active item always pops.
+     Light theme -> dark sidebar (this base rule). Dark themes -> light sidebar
+     (block further down). All descendant nav rules read these local tokens. */
+  --mnx-surface: #14161c;
+  --mnx-card: #1b1e26;
+  --mnx-soft: var(--mnx-surface-soft);
+  --mnx-text: #f8fafc;
+  --mnx-text-strong: #ffffff;
+  --mnx-muted: #98a2b3;
+  --mnx-border: #2b303b;
+  --mnx-accent-soft: color-mix(in srgb, var(--mnx-accent) 26%, #14161c);
+  --mnx-accent-text: color-mix(in srgb, var(--mnx-accent) 68%, white);
+  --mnx-sidebar-border-color: #262b35;
   --mnx-sidebar-highlight: var(--mnx-accent-soft);
-  --mnx-sidebar-background-top: color-mix(
-    in srgb,
-    var(--mnx-surface) 94%,
-    var(--mnx-sidebar-highlight)
-  );
-  --mnx-sidebar-background-bottom: color-mix(
-    in srgb,
-    var(--mnx-surface) 98%,
-    transparent
-  );
-  --mnx-sidebar-inner-edge: color-mix(in srgb, var(--mnx-card) 22%, transparent);
-  --mnx-sidebar-shadow: color-mix(in srgb, var(--mnx-shadow-color) 10%, transparent);
-  --mnx-sidebar-divider: color-mix(in srgb, var(--mnx-border) 68%, transparent);
+  --mnx-sidebar-background-top: #16181f;
+  --mnx-sidebar-background-bottom: #101217;
+  --mnx-sidebar-inner-edge: color-mix(in srgb, white 6%, transparent);
+  --mnx-sidebar-shadow: color-mix(in srgb, #020617 34%, transparent);
+  --mnx-sidebar-divider: #262b35;
   width: var(--mnx-sidebar-width);
   padding: 0.875rem;
   gap: 0.5rem;
@@ -16127,41 +16191,82 @@ button.mnx-accounting-record-card {
   border-top: 1px solid var(--mnx-sidebar-divider);
 }
 
-html.theme-light .mnx-sidebar,
-html[data-theme="light"] .mnx-sidebar,
-.mnx-dashboard-shell[data-theme="light"] .mnx-sidebar {
-  --mnx-sidebar-highlight: color-mix(in srgb, var(--mnx-accent) 12%, white);
-  --mnx-sidebar-background-top: color-mix(in srgb, white 78%, var(--mnx-accent-soft));
-  --mnx-sidebar-background-bottom: color-mix(in srgb, var(--mnx-surface) 96%, #f1f5f9);
-  --mnx-sidebar-border-color: color-mix(in srgb, var(--mnx-border) 88%, white);
-  --mnx-sidebar-inner-edge: color-mix(in srgb, white 72%, var(--mnx-border));
-  --mnx-sidebar-shadow: color-mix(in srgb, #94a3b8 18%, transparent);
-  --mnx-sidebar-divider: color-mix(in srgb, var(--mnx-border) 74%, white);
-}
+/* Light theme keeps the dark contrast sidebar defined on the base .mnx-sidebar rule. */
 
 html.theme-night .mnx-sidebar,
+html.theme-violet .mnx-sidebar,
+html[data-theme="dark"] .mnx-sidebar,
+.dark .mnx-sidebar,
 .mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar {
-  --mnx-sidebar-highlight: color-mix(in srgb, var(--mnx-accent) 16%, #10131a);
-  --mnx-sidebar-background-top: color-mix(in srgb, #1b2029 88%, var(--mnx-accent-soft));
-  --mnx-sidebar-background-bottom: color-mix(in srgb, #13171e 92%, black);
-  --mnx-sidebar-border-color: color-mix(in srgb, var(--mnx-border) 92%, #0f1218);
-  --mnx-sidebar-inner-edge: color-mix(in srgb, white 9%, transparent);
-  --mnx-sidebar-shadow: color-mix(in srgb, #020617 48%, transparent);
-  --mnx-sidebar-divider: color-mix(in srgb, var(--mnx-border) 82%, #0f1218);
+  /* Dark theme: an elevated dark panel lifted off the near-black canvas
+     (canvas ~var(--mnx-canvas)) via a lighter surface, a visible right edge and a
+     deeper drop shadow. The accent-tinted active pill carries the contrast,
+     not a full-white slab. */
+  --mnx-surface: var(--mn-color-surface);
+  --mnx-card: var(--mn-color-surface-muted);
+  --mnx-soft: var(--mn-color-surface-soft);
+  --mnx-text: var(--mn-color-text);
+  --mnx-text-strong: var(--mn-color-text-strong);
+  --mnx-muted: var(--mn-color-text-muted);
+  --mnx-border: var(--mn-color-border);
+  --mnx-accent-soft: color-mix(in srgb, var(--mnx-accent) 22%, var(--mn-color-surface));
+  --mnx-accent-text: color-mix(in srgb, var(--mnx-accent) 74%, white);
+  --mnx-sidebar-border-color: var(--mn-color-border);
+  --mnx-sidebar-highlight: var(--mnx-accent-soft);
+  --mnx-sidebar-background-top: var(--mn-color-surface);
+  --mnx-sidebar-background-bottom: var(--mn-color-canvas);
+  --mnx-sidebar-inner-edge: color-mix(in srgb, white 6%, transparent);
+  --mnx-sidebar-shadow: color-mix(in srgb, #000000 45%, transparent);
+  --mnx-sidebar-divider: var(--mn-color-border-subtle);
 }
 
-html.theme-violet .mnx-sidebar {
-  --mnx-sidebar-highlight: color-mix(in srgb, #b5aaf5 24%, #171327);
-  --mnx-sidebar-background-top: linear-gradient(
-    180deg,
-    color-mix(in srgb, #1d1830 90%, #b5aaf5),
-    color-mix(in srgb, #161222 92%, #2a2342)
-  );
-  --mnx-sidebar-background-bottom: color-mix(in srgb, #120f1e 96%, #221a38);
-  --mnx-sidebar-border-color: color-mix(in srgb, #6f63a8 44%, #2a2342);
-  --mnx-sidebar-inner-edge: color-mix(in srgb, #d8d0ff 16%, transparent);
-  --mnx-sidebar-shadow: color-mix(in srgb, #0b0714 56%, transparent);
-  --mnx-sidebar-divider: color-mix(in srgb, #6f63a8 32%, #241d38);
+/* The onyx dark engine forces every b/strong to #fff !important. Let the nav
+   labels fall back to their entry colour so inactive/active hierarchy holds. */
+html.theme-night .mnx-sidebar :is(b, strong),
+html.theme-violet .mnx-sidebar :is(b, strong),
+html[data-theme="dark"] .mnx-sidebar :is(b, strong),
+.dark .mnx-sidebar :is(b, strong),
+.mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar :is(b, strong) {
+  color: inherit !important;
+}
+
+html.theme-night .mnx-sidebar .mnx-sidebar-entry,
+html.theme-violet .mnx-sidebar .mnx-sidebar-entry,
+html[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry,
+.dark .mnx-sidebar .mnx-sidebar-entry,
+.mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry,
+html.theme-night .mnx-sidebar .mnx-sidebar-subnav a,
+html.theme-violet .mnx-sidebar .mnx-sidebar-subnav a,
+html[data-theme="dark"] .mnx-sidebar .mnx-sidebar-subnav a,
+.dark .mnx-sidebar .mnx-sidebar-subnav a,
+.mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar .mnx-sidebar-subnav a {
+  color: var(--mnx-muted);
+}
+
+html.theme-night .mnx-sidebar .mnx-sidebar-entry:is(:hover, :focus-visible, .is-active),
+html.theme-violet .mnx-sidebar .mnx-sidebar-entry:is(:hover, :focus-visible, .is-active),
+html[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry:is(:hover, :focus-visible, .is-active),
+.dark .mnx-sidebar .mnx-sidebar-entry:is(:hover, :focus-visible, .is-active),
+.mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry:is(:hover, :focus-visible, .is-active) {
+  color: var(--mnx-accent-text);
+}
+
+html.theme-night .mnx-sidebar .mnx-sidebar-entry:hover,
+html.theme-violet .mnx-sidebar .mnx-sidebar-entry:hover,
+html[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry:hover,
+.dark .mnx-sidebar .mnx-sidebar-entry:hover,
+.mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry:hover {
+  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface));
+}
+
+html.theme-night .mnx-sidebar .mnx-sidebar-entry.is-active,
+html.theme-violet .mnx-sidebar .mnx-sidebar-entry.is-active,
+html[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry.is-active,
+.dark .mnx-sidebar .mnx-sidebar-entry.is-active,
+.mnx-dashboard-shell[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry.is-active {
+  color: var(--mnx-text-strong);
+  background: color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-surface));
+  box-shadow: inset 3px 0 0 var(--mnx-accent);
 }
 
 .mnx-dashboard-frame {
@@ -19763,16 +19868,22 @@ html.theme-violet .mnx-sidebar {
   .dark,
   [data-theme="dark"]
 ) {
-  --mnx-canvas: #090a0c;
-  --mnx-surface: #181b22;
-  --mnx-surface-soft: #20242e;
-  --mnx-surface-raised: #282e3b;
-  --mnx-border: #353a47;
-  --mnx-border-strong: #484f60;
-  --mnx-glass-border: #3d4352;
-  --mnx-text-strong: #ffffff;
-  --mnx-text: #ffffff;
-  --mnx-text-muted: #e2e8f0;
+  /* Dark surfaces/text now flow from the token layer (monolith-tokens.css).
+     Kept as explicit aliases so the late-cascade component rules below still
+     resolve, but no longer hard-coded to near-black. */
+  --mnx-canvas: var(--mn-color-canvas);
+  --mnx-surface: var(--mn-color-surface);
+  --mnx-surface-soft: var(--mn-color-surface-soft);
+  --mnx-surface-raised: var(--mn-color-surface-muted);
+  --mnx-surface-hover: var(--mn-color-surface-hover);
+  --mnx-border: var(--mn-color-border);
+  --mnx-border-subtle: var(--mn-color-border-subtle);
+  --mnx-border-strong: var(--mn-color-border-strong);
+  --mnx-glass-border: var(--mn-color-border-strong);
+  --mnx-text-strong: var(--mn-color-text-strong);
+  --mnx-text: var(--mn-color-text);
+  --mnx-text-muted: var(--mn-color-text-muted);
+  --mnx-muted: var(--mn-color-text-muted);
 }
 
 :where(
@@ -19782,8 +19893,8 @@ html.theme-violet .mnx-sidebar {
   .dark,
   [data-theme="dark"]
 ) body {
-  background-color: #090a0c !important;
-  color: #ffffff !important;
+  background-color: var(--mnx-canvas) !important;
+  color: var(--mnx-text) !important;
 }
 
 :where(
@@ -19807,11 +19918,9 @@ html.theme-violet .mnx-sidebar {
   .mnx-hrms-lane-card,
   .mnx-workspace-panel
 ) {
-  background-color: #181b22 !important;
-  border: 1px solid #353a47 !important;
-  box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  background-color: var(--mnx-surface) !important;
+  border: 1px solid var(--mnx-border) !important;
+  box-shadow: var(--mnx-shadow) !important;
 }
 
 :where(
@@ -19824,9 +19933,9 @@ html.theme-violet .mnx-sidebar {
   .mnx-catalogue-module-card > span:first-child,
   .mnx-catalogue-stage > header > span
 ) {
-  background-color: #0e2016 !important;
-  border: 1px solid rgba(34, 197, 94, 0.45) !important;
-  color: #22c55e !important;
+  background-color: var(--mnx-icon-success-bg) !important;
+  border: 1px solid color-mix(in srgb, var(--mnx-c-success) 40%, transparent) !important;
+  color: var(--mnx-c-success) !important;
 }
 
 :where(
@@ -19836,7 +19945,7 @@ html.theme-violet .mnx-sidebar {
   .dark,
   [data-theme="dark"]
 ) .mnx-catalogue-module-card small {
-  color: #22c55e !important;
+  color: var(--mnx-c-success) !important;
   font-weight: 700 !important;
 }
 
@@ -19853,9 +19962,9 @@ html.theme-violet .mnx-sidebar {
   select,
   textarea
 ) {
-  background-color: #20242e !important;
-  border-color: #353a47 !important;
-  color: #ffffff !important;
+  background-color: var(--mnx-surface-soft) !important;
+  border-color: var(--mnx-border-strong) !important;
+  color: var(--mnx-text) !important;
 }
 
 /* Ensure card headers have zero background bar across entire Monolith Engine */
@@ -19887,12 +19996,9 @@ html.theme-violet .mnx-sidebar {
   .mnx-hrms-priority-card,
   .mnx-hrms-lane-card
 ):hover {
-  background-color: #242935 !important;
-  border-color: #484f60 !important;
-  box-shadow: 
-    0 8px 26px rgba(0, 0, 0, 0.65),
-    0 0 16px rgba(34, 197, 94, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  background-color: var(--mnx-surface-hover) !important;
+  border-color: var(--mnx-border-strong) !important;
+  box-shadow: var(--mnx-floating-shadow) !important;
   transform: translateY(-2px);
 }
 
@@ -19906,7 +20012,7 @@ html.theme-violet .mnx-sidebar {
   .mnx-catalogue-module-card:hover > svg:last-child,
   .mnx-catalogue-module-card:focus-visible > svg:last-child
 ) {
-  color: #22c55e !important;
+  color: var(--mnx-accent) !important;
 }
 
 :where(
@@ -19916,7 +20022,7 @@ html.theme-violet .mnx-sidebar {
   .dark,
   [data-theme="dark"]
 ) :where(h1, h2, h3, h4, h5, h6, b, strong) {
-  color: #ffffff !important;
+  color: var(--mnx-text-strong) !important;
 }
 
 /* ==========================================================================
@@ -20030,10 +20136,10 @@ hr,
 
 /* Filter Popover Container & Inputs */
 .mnx-filter-popover {
-  border: 1px solid var(--mnx-border, #353a47) !important;
+  border: 1px solid var(--mnx-border) !important;
   border-radius: 14px !important;
-  background: var(--mnx-surface, #181b22) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+  background: var(--mnx-surface) !important;
+  box-shadow: var(--mnx-floating-shadow) !important;
   z-index: 100 !important;
 }
 
@@ -20044,9 +20150,9 @@ hr,
   .dark,
   [data-theme="dark"]
 ) .mnx-filter-popover {
-  background-color: #181b22 !important;
-  border-color: #353a47 !important;
-  color: #ffffff !important;
+  background-color: var(--mnx-surface-raised) !important;
+  border-color: var(--mnx-border) !important;
+  color: var(--mnx-text) !important;
 }
 
 /* ==========================================================================
@@ -20093,10 +20199,10 @@ hr,
   .mnx-card,
   article
 ) {
-  background-color: #181b22 !important;
-  border: 1px solid #353a47 !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
+  background-color: var(--mnx-surface) !important;
+  border: 1px solid var(--mnx-border) !important;
+  box-shadow: var(--mnx-shadow) !important;
+  color: var(--mnx-text) !important;
 }
 
 :where(
@@ -20171,7 +20277,7 @@ hr,
   .mnx-card,
   article
 ) p {
-  color: #94a3b8 !important;
+  color: var(--mnx-muted) !important;
 }
 
 .mnx-panel-heading,
@@ -20221,9 +20327,9 @@ hr,
   .mnx-module-card,
   .mnx-catalogue-module-card
 ):hover {
-  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, #181b22) !important;
-  border-color: #353a47 !important;
-  box-shadow: inset 4px 0 0 var(--mnx-accent, #38bdf8), 0 6px 22px rgba(0, 0, 0, 0.5) !important;
+  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, var(--mnx-surface)) !important;
+  border-color: var(--mnx-border) !important;
+  box-shadow: inset 4px 0 0 var(--mnx-accent), var(--mnx-shadow) !important;
 }
 
 :where(
@@ -20278,9 +20384,9 @@ hr,
   .mnx-notification-record,
   .mnx-notification-card
 ) {
-  background-color: #181b22 !important;
-  border-color: #353a47 !important;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+  background-color: var(--mnx-surface) !important;
+  border-color: var(--mnx-border) !important;
+  box-shadow: var(--mnx-shadow) !important;
 }
 
 /* ==========================================================================
@@ -20498,8 +20604,8 @@ hr,
   table:not(.mnx-inline-table) tbody tr td
 ) {
   background: transparent !important;
-  border-top-color: color-mix(in srgb, var(--mnx-border, #353a47) 82%, transparent) !important;
-  color: #f1f5f9 !important;
+  border-top-color: color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
+  color: var(--mnx-text) !important;
 }
 
 :where(
@@ -20514,7 +20620,7 @@ hr,
   .mnx-table-card tbody tr:last-child td,
   table:not(.mnx-inline-table) tbody tr:last-child td
 ) {
-  border-bottom-color: color-mix(in srgb, var(--mnx-border, #353a47) 82%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
 }
 
 /* Universal Table Row Hover Highlight Standard (Light Theme) */
@@ -20550,8 +20656,8 @@ hr,
   .mnx-table-card tbody tr:hover,
   table:not(.mnx-inline-table) tbody tr:hover
 ) td {
-  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, #181b22) !important;
-  border-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 40%, #353a47) !important;
+  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, var(--mnx-surface)) !important;
+  border-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 40%, var(--mnx-border)) !important;
 }
 
 :where(
@@ -20567,4 +20673,506 @@ hr,
   table:not(.mnx-inline-table) tbody tr:hover
 ) td:first-child {
   box-shadow: inset 4px 0 0 var(--mnx-accent, #38bdf8) !important;
+}
+
+/* ==========================================================================
+   DARK THEME CARD / SURFACE BACKGROUND FIX (monolith-wide)
+
+   Several base rules hard-code `background: #ffffff !important` at class
+   specificity (0,0,1,0) — e.g. .mnx-todo-record (7143), .mnx-notification-record
+   (7091), .mnx-dialog-surface (6835), plus the universal card block (20109).
+   The onyx dark overrides above used `:where() :where()` (specificity 0) and
+   lost every time, so cards render white in dark mode.
+
+   Here the theme scope stays in :where() (specificity 0) but the card list uses
+   :is() — and because one arg (`.mnx-task-panel li`) is (0,0,1,1), the whole
+   :is() resolves to (0,0,1,1), out-specifying the white bases. Placed last in
+   the file so it also wins any equal-specificity tie.
+   ========================================================================== */
+:where(
+  html[data-theme="dark"],
+  html.theme-night,
+  html.theme-violet,
+  .dark,
+  [data-theme="dark"]
+) :is(
+  .mnx-todo-record,
+  .mnx-todo-summary,
+  .mnx-task-card,
+  .mnx-task-panel li,
+  .mnx-notification-record,
+  .mnx-notification-card,
+  .mnx-inset-card,
+  .mnx-module-card,
+  .mnx-catalogue-module-card,
+  .mnx-metric-card,
+  .mnx-hrms-priority-card,
+  .mnx-hrms-lane-card,
+  .mnx-card,
+  .mnx-dashboard-launch-link,
+  .mnx-hrms-lane-link,
+  .mnx-dialog-surface
+) {
+  background-color: var(--mnx-surface) !important;
+  background-image: none !important;
+  border-color: var(--mnx-border) !important;
+}
+
+:where(
+  html[data-theme="dark"],
+  html.theme-night,
+  html.theme-violet,
+  .dark,
+  [data-theme="dark"]
+) :is(
+  .mnx-todo-record,
+  .mnx-task-card,
+  .mnx-task-panel li,
+  .mnx-notification-record,
+  .mnx-notification-card,
+  .mnx-dashboard-launch-link,
+  .mnx-hrms-lane-link
+):hover {
+  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, var(--mnx-surface)) !important;
+  border-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 40%, var(--mnx-border)) !important;
+}
+
+/* ==========================================================================
+   SEMANTIC COLOUR SYSTEM — [data-hue] utility
+   --------------------------------------------------------------------------
+   Any element tagged data-hue="<hue>" exposes three locals that components
+   below consume: --hue-color (glyph / stat / accent bar), --hue-tint (a ~5-9%
+   surface wash) and --hue-icon-bg (icon-container fill). Light and dark values
+   resolve from monolith-tokens.css, so the same markup themes correctly.
+   Meanings are fixed app-wide: primary/info = brand + informational,
+   success = attendance in / done / approved, warning = pending,
+   danger = overdue / absent / rejected, violet = leave / people,
+   orange = holiday / calendar, teal = secondary / helpdesk.
+   ========================================================================== */
+[data-hue="primary"] {
+  --hue-color: var(--mnx-c-primary);
+  --hue-tint: var(--mnx-tint-primary);
+  --hue-icon-bg: var(--mnx-icon-primary-bg);
+}
+[data-hue="info"] {
+  --hue-color: var(--mnx-c-info);
+  --hue-tint: var(--mnx-tint-info);
+  --hue-icon-bg: var(--mnx-icon-info-bg);
+}
+[data-hue="success"] {
+  --hue-color: var(--mnx-c-success);
+  --hue-tint: var(--mnx-tint-success);
+  --hue-icon-bg: var(--mnx-icon-success-bg);
+}
+[data-hue="warning"] {
+  --hue-color: var(--mnx-c-warning);
+  --hue-tint: var(--mnx-tint-warning);
+  --hue-icon-bg: var(--mnx-icon-warning-bg);
+}
+[data-hue="danger"] {
+  --hue-color: var(--mnx-c-danger);
+  --hue-tint: var(--mnx-tint-danger);
+  --hue-icon-bg: var(--mnx-icon-danger-bg);
+}
+[data-hue="violet"] {
+  --hue-color: var(--mnx-c-violet);
+  --hue-tint: var(--mnx-tint-violet);
+  --hue-icon-bg: var(--mnx-icon-violet-bg);
+}
+[data-hue="orange"] {
+  --hue-color: var(--mnx-c-orange);
+  --hue-tint: var(--mnx-tint-orange);
+  --hue-icon-bg: var(--mnx-icon-orange-bg);
+}
+[data-hue="teal"] {
+  --hue-color: var(--mnx-c-teal);
+  --hue-tint: var(--mnx-tint-teal);
+  --hue-icon-bg: var(--mnx-icon-teal-bg);
+}
+
+/* Reusable semantic icon container. blue glyph + pale blue field, etc. */
+.mnx-icon-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  border-radius: 11px;
+  color: var(--hue-color, var(--mnx-accent));
+  background: var(--hue-icon-bg, var(--mnx-icon-primary-bg));
+}
+.mnx-icon-chip svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* ==========================================================================
+   ONE MONOLITH — UNIFIED IDENTITY
+   --------------------------------------------------------------------------
+   Every module is the same product. There is NO per-module brand colour:
+   the page-header icon, section-heading tick and any un-scoped accent all
+   resolve to the single Monolith accent (which follows the accent picker).
+   Semantic hues (success / warning / danger / violet / orange / teal) carry
+   MEANING only — status, KPI category, alerts — and mean the same thing on
+   every page via the [data-hue] utility and the KPI rotation below.
+   ========================================================================== */
+
+/* Section-heading tick — one accent rule down the left edge of every section
+   heading, app-wide. Placed on the header (not the h2) so it never collides
+   with an index/marker span or an empty gap slot. */
+.mnx-section-heading {
+  position: relative;
+  padding-left: 0.85rem;
+}
+.mnx-section-heading::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--hue-color, var(--mnx-accent));
+}
+/* a section that opts into a semantic hue tints only its own rule */
+.mnx-section-heading[data-hue]::before {
+  background: var(--hue-color);
+}
+/* the empty index slot adds a stray gap on pages that pass no marker */
+.mnx-section-heading-index:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   ENGINE-WIDE [data-hue] TREATMENT
+   Opt-in only — a rule fires solely when the author added data-hue to the
+   element, so it is safe to cast a wide net across every Monolith module.
+   The body of every surface stays neutral; the hue rides on a top bar, a
+   faint wash, the primary stat, the eyebrow marker and opted-in badges.
+   ========================================================================== */
+
+/* Cards / panels / stat tiles anywhere in the engine */
+:where(
+  .mnx-card,
+  .mnx-inset-card,
+  .mnx-metric-card,
+  .mnx-panel,
+  .mnx-table-card,
+  .mnx-workspace-panel,
+  .mnx-people-section,
+  .mnx-hrms-priority-card,
+  .mnx-hrms-lane-card,
+  .mnx-module-card,
+  .mnx-summary-card,
+  .mnx-stat-card,
+  [class*="-card"],
+  [class*="-panel"],
+  [class*="-tile"],
+  article
+)[data-hue] {
+  border-top: 3px solid var(--hue-color) !important;
+  background-color: color-mix(in srgb, var(--hue-color) 4%, var(--mnx-surface)) !important;
+}
+
+/* Left-bar variant for list rows / compact rails */
+:where(
+  .mnx-list-row,
+  .mnx-record,
+  .mnx-queue-row,
+  [class*="-row"],
+  [class*="-rail"]
+)[data-hue] {
+  border-left: 3px solid var(--hue-color) !important;
+  background-color: color-mix(in srgb, var(--hue-color) 4%, var(--mnx-surface)) !important;
+}
+
+/* Primary stat / value */
+[data-hue] > strong,
+[data-hue] > dd,
+[data-hue] .mnx-stat-value,
+[data-hue] .mnx-metric-value,
+[data-hue] [class*="stat-value"],
+[data-hue] [class*="metric-value"],
+[data-hue] [class*="kpi-value"] {
+  color: var(--hue-color);
+}
+
+/* Eyebrow / section marker gets a hue dot */
+[data-hue] > :where(
+  .mnx-section-heading-marker,
+  .mnx-dashboard-spec-label,
+  [class*="spec-label"],
+  [class*="eyebrow"]
+),
+[data-hue] header > :where(
+  .mnx-dashboard-spec-label,
+  [class*="spec-label"],
+  [class*="eyebrow"]
+) {
+  color: var(--hue-color);
+}
+[data-hue]
+  > :where(.mnx-dashboard-spec-label, [class*="spec-label"], [class*="eyebrow"])::before,
+[data-hue]
+  header
+  > :where(.mnx-dashboard-spec-label, [class*="spec-label"], [class*="eyebrow"])::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  vertical-align: 0.06em;
+  background: var(--hue-color);
+}
+
+/* Opted-in badges / chips / status pills */
+:where(.mnx-badge, .mnx-chip, .mnx-pill, .mnx-status, [class*="badge"], [class*="chip"])[data-hue] {
+  color: var(--hue-color) !important;
+  background: var(--hue-tint) !important;
+  border-color: color-mix(in srgb, var(--hue-color) 30%, transparent) !important;
+}
+
+/* Metric-card header dot (dashboard summary strip) */
+.mnx-dashboard-metrics .mnx-metric-card[data-hue] header > span::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  vertical-align: 0.08em;
+  background: var(--hue-color);
+}
+.mnx-dashboard-metrics .mnx-metric-card[data-hue] > strong {
+  color: var(--hue-color) !important;
+}
+
+/* ---- Hero insight grid: left accent bar + coloured value + wash ---------- */
+.mnx-dashboard-insight-grid > div[data-hue] {
+  border-left: 3px solid var(--hue-color);
+  background:
+    linear-gradient(var(--hue-tint), var(--hue-tint)),
+    color-mix(in srgb, var(--mnx-surface) 75%, transparent);
+}
+.mnx-dashboard-insight-grid > div[data-hue] dd {
+  color: var(--hue-color);
+}
+.mnx-dashboard-insight-grid > div[data-hue]:hover {
+  border-color: color-mix(in srgb, var(--hue-color) 55%, var(--mnx-border));
+  border-left-color: var(--hue-color);
+}
+
+/* ---- Holiday feature date chip picks up the panel hue ------------------- */
+.mnx-holiday-panel[data-hue] .mnx-holiday-feature time {
+  color: var(--hue-color);
+  background: var(--hue-icon-bg);
+  border: 1px solid color-mix(in srgb, var(--hue-color) 32%, transparent);
+  box-shadow: none;
+}
+.mnx-holiday-panel[data-hue] .mnx-holiday-feature {
+  border-color: color-mix(in srgb, var(--hue-color) 40%, var(--mnx-border));
+  background: color-mix(in srgb, var(--hue-tint) 70%, var(--mnx-surface));
+}
+
+/* ---- Attendance panel: hue-aware live badge + timer ------------------- */
+.mnx-attendance-panel[data-hue] .mnx-attendance-time-value {
+  color: var(--hue-color);
+}
+.mnx-attendance-panel[data-hue] .mnx-attendance-date-row {
+  color: var(--mnx-text-muted);
+}
+
+/* ==========================================================================
+   KPI-STRIP SEMANTIC COLOUR (engine-wide)
+   --------------------------------------------------------------------------
+   Every known summary / metric strip gets the same premium treatment as the
+   dashboard cards: a 3px hue bar, a faint wash, a coloured stat, a tinted
+   icon chip and a hue dot on the eyebrow. Cards that opt into an explicit
+   [data-hue] keep that hue; the rest follow a fixed 6-step rotation by
+   position (primary, violet, success, warning, teal, info) — stable, never
+   random. `!important` clears the late universal white-card overrides.
+   ========================================================================== */
+:where(
+  .mnx-people-summary-grid,
+  .mnx-performance-summary-grid,
+  .mnx-dashboard-metrics,
+  .mnx-org-metrics,
+  .mnx-team-metrics,
+  .mnx-workspace-metrics,
+  .mnx-crm-metrics,
+  .mnx-cha-metrics,
+  .mnx-accounting-metrics
+)
+  > :where(
+    .mnx-people-summary,
+    .mnx-performance-summary,
+    .mnx-metric-card,
+    .mnx-workspace-metric,
+    .mnx-summary-card,
+    .mnx-stat-card
+  ):not([data-hue]) {
+  --hue-color: var(--mnx-c-primary);
+}
+
+/* fixed rotation by position (does not touch [data-hue] cards) */
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :not([data-hue]):nth-child(6n + 2) {
+  --hue-color: var(--mnx-c-violet);
+}
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :not([data-hue]):nth-child(6n + 3) {
+  --hue-color: var(--mnx-c-success);
+}
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :not([data-hue]):nth-child(6n + 4) {
+  --hue-color: var(--mnx-c-warning);
+}
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :not([data-hue]):nth-child(6n + 5) {
+  --hue-color: var(--mnx-c-teal);
+}
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :not([data-hue]):nth-child(6n + 6) {
+  --hue-color: var(--mnx-c-info);
+}
+
+/* card surface: 3px bar + faint wash (skips :hover so hover feedback wins) */
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :where(.mnx-people-summary, .mnx-performance-summary, .mnx-metric-card, .mnx-workspace-metric, .mnx-summary-card, .mnx-stat-card):not([data-hue]):not(:hover):not(:focus-visible) {
+  border-top: 3px solid var(--hue-color) !important;
+  background-color: color-mix(in srgb, var(--hue-color) 4%, var(--mnx-surface)) !important;
+}
+
+/* coloured stat */
+:where(.mnx-people-summary-grid, .mnx-performance-summary-grid, .mnx-dashboard-metrics, .mnx-org-metrics, .mnx-team-metrics, .mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics)
+  > :where(.mnx-people-summary, .mnx-performance-summary, .mnx-metric-card, .mnx-workspace-metric, .mnx-summary-card, .mnx-stat-card):not([data-hue])
+  :where(.mnx-workspace-metric-value, .mnx-people-summary > strong, .mnx-metric-card > strong, .mnx-performance-summary > strong) {
+  color: var(--hue-color) !important;
+}
+
+/* hue dot on the eyebrow label */
+:where(.mnx-workspace-metrics, .mnx-crm-metrics, .mnx-cha-metrics, .mnx-accounting-metrics, .mnx-team-metrics)
+  > .mnx-workspace-metric:not([data-hue])
+  .mnx-workspace-metric-label .mnx-dashboard-spec-label::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  vertical-align: 0.06em;
+  background: var(--hue-color);
+}
+
+.mnx-icon {
+  --mnx-icon-color: var(--mn-color-text-muted);
+  --mnx-icon-surface: color-mix(in srgb, var(--mn-color-surface-muted) 78%, transparent);
+  --mnx-icon-border: color-mix(in srgb, var(--mn-color-border) 72%, transparent);
+  --mnx-icon-shadow: 0 10px 24px -18px color-mix(in srgb, var(--mn-color-text-strong) 28%, transparent);
+  --mnx-icon-size: var(--mn-icon-size-md);
+  --mnx-icon-surface-size: var(--mn-icon-surface-size-md);
+  align-items: center;
+  color: var(--mnx-icon-color);
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.mnx-icon[data-size="xs"] {
+  --mnx-icon-size: var(--mn-icon-size-xs);
+  --mnx-icon-surface-size: var(--mn-icon-surface-size-xs);
+}
+
+.mnx-icon[data-size="sm"] {
+  --mnx-icon-size: var(--mn-icon-size-sm);
+  --mnx-icon-surface-size: var(--mn-icon-surface-size-sm);
+}
+
+.mnx-icon[data-size="lg"] {
+  --mnx-icon-size: var(--mn-icon-size-lg);
+  --mnx-icon-surface-size: var(--mn-icon-surface-size-lg);
+}
+
+.mnx-icon-glyph {
+  align-items: center;
+  backdrop-filter: var(--mn-filter-glass-compact);
+  background: var(--mnx-icon-surface);
+  border: 1px solid var(--mnx-icon-border);
+  border-radius: var(--mn-icon-radius);
+  box-shadow: var(--mnx-icon-shadow);
+  display: inline-flex;
+  height: var(--mnx-icon-surface-size);
+  justify-content: center;
+  transition:
+    background-color var(--mn-motion-fast) var(--mn-ease-standard),
+    border-color var(--mn-motion-fast) var(--mn-ease-standard),
+    color var(--mn-motion-fast) var(--mn-ease-standard);
+  width: var(--mnx-icon-surface-size);
+}
+
+.mnx-icon[data-surface="bare"] .mnx-icon-glyph {
+  backdrop-filter: none;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  height: auto;
+  width: auto;
+}
+
+.mnx-icon[data-surface="solid"] .mnx-icon-glyph {
+  background: color-mix(in srgb, var(--mnx-icon-color) 14%, var(--mn-color-surface));
+  border-color: color-mix(in srgb, var(--mnx-icon-color) 16%, var(--mn-color-border));
+}
+
+.mnx-icon-svg {
+  height: var(--mnx-icon-size);
+  stroke: currentColor;
+  width: var(--mnx-icon-size);
+}
+
+.mnx-icon[data-tone="default"] {
+  --mnx-icon-color: var(--mn-color-text-muted);
+}
+
+.mnx-icon[data-tone="primary"] {
+  --mnx-icon-color: var(--mn-sem-primary);
+  --mnx-icon-surface: var(--mn-icon-primary-bg);
+}
+
+.mnx-icon[data-tone="info"] {
+  --mnx-icon-color: var(--mn-sem-info);
+  --mnx-icon-surface: var(--mn-icon-info-bg);
+}
+
+.mnx-icon[data-tone="success"] {
+  --mnx-icon-color: var(--mn-sem-success);
+  --mnx-icon-surface: var(--mn-icon-success-bg);
+}
+
+.mnx-icon[data-tone="warning"] {
+  --mnx-icon-color: var(--mn-sem-warning);
+  --mnx-icon-surface: var(--mn-icon-warning-bg);
+}
+
+.mnx-icon[data-tone="danger"] {
+  --mnx-icon-color: var(--mn-sem-danger);
+  --mnx-icon-surface: var(--mn-icon-danger-bg);
+}
+
+.mnx-icon[data-tone="violet"] {
+  --mnx-icon-color: var(--mn-sem-violet);
+  --mnx-icon-surface: var(--mn-icon-violet-bg);
+}
+
+.mnx-icon[data-tone="orange"] {
+  --mnx-icon-color: var(--mn-sem-orange);
+  --mnx-icon-surface: var(--mn-icon-orange-bg);
+}
+
+.mnx-icon[data-tone="teal"] {
+  --mnx-icon-color: var(--mn-sem-teal);
+  --mnx-icon-surface: var(--mn-icon-teal-bg);
 }

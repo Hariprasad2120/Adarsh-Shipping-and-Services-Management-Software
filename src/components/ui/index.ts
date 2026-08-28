@@ -10,6 +10,7 @@ export * from "@/components/ui/foundation";
 export * from "@/components/ui/input";
 export * from "@/components/ui/label";
 export * from "@/components/ui/modal";
+export * from "@/components/ui/monolith-icon";
 export * from "@/components/ui/native-select";
 export * from "@/components/ui/neon-checkbox";
 export * from "@/components/ui/tabs";

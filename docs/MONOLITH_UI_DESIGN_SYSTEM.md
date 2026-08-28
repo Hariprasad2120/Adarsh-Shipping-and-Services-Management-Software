@@ -227,6 +227,14 @@ Approved semantic families include:
 - shadows;
 - glass surfaces.
 
+### 3.5.1 Iconography
+
+- Use the shared `MonolithIcon` contract for reusable iconography.
+- Monolith icons must inherit theme color from semantic tokens, not hardcoded fills or route-local hex values.
+- Prefer the shared rounded outlined icon language with `currentColor` strokes and token-backed containers.
+- Page headers, metrics, route states, and future shared navigation specimens should use the approved workspace icon wrappers or `MonolithIcon` directly.
+- Do not introduce a second production icon system or mix unrelated icon families in the same surface when an approved Monolith icon exists.
+
 ### 3.6 Motion
 
 - Fast interaction response: `--mn-motion-fast`.

@@ -126,19 +126,72 @@ html[data-theme="dark"] {
   --mn-color-accent-soft: var(--frappe-primary-soft);
   --mn-color-accent-text: var(--frappe-primary-strong);
   --mn-color-on-accent: var(--frappe-primary-foreground);
-  --mn-color-success-surface: var(--frappe-success-bg);
+  --mn-color-success-surface: var(--frappe-success-soft);
   --mn-color-success: var(--frappe-success);
-  --mn-color-warning-surface: var(--frappe-warning-bg);
+  --mn-color-warning-surface: var(--frappe-warning-soft);
   --mn-color-warning: var(--frappe-warning);
-  --mn-color-danger-surface: var(--frappe-danger-bg);
+  --mn-color-danger-surface: var(--frappe-danger-soft);
   --mn-color-danger: var(--frappe-danger);
-  --mn-color-info-surface: var(--frappe-info-bg);
+  --mn-color-info-surface: var(--frappe-info-soft);
   --mn-color-info: var(--frappe-info);
+
+  /*
+   * Semantic colour system (LIGHT).
+   *
+   * Every hue carries a fixed meaning across the whole application:
+   *   primary/info  -> blue / cyan   (brand, informational)
+   *   success       -> green         (attendance in, completed, approved)
+   *   warning       -> amber         (pending, yet to check in)
+   *   danger        -> red           (overdue, absent, rejected)
+   *   violet        -> violet        (leave, people)
+   *   orange        -> orange        (holiday, calendar)
+   *   teal          -> teal          (secondary / helpdesk)
+   *
+   *   --mn-sem-<hue>          glyph / stat / accent-bar colour (AA on surface)
+   *   --mn-tint-<hue>         ~6-9% wash for tinted card surfaces & soft badges
+   *   --mn-icon-<hue>-bg      icon-container fill (a touch stronger than tint)
+   */
+  --mn-sem-primary: #0b83c9;
+  --mn-sem-info: #0e7490;
+  --mn-sem-success: #15803d;
+  --mn-sem-warning: #b45309;
+  --mn-sem-danger: #b91c1c;
+  --mn-sem-violet: #6d28d9;
+  --mn-sem-orange: #c2410c;
+  --mn-sem-teal: #0f766e;
+
+  --mn-tint-primary: #0bc1ff14;
+  --mn-tint-info: #06b6d414;
+  --mn-tint-success: #16a34a14;
+  --mn-tint-warning: #f59e0b1f;
+  --mn-tint-danger: #dc262614;
+  --mn-tint-violet: #7c3aed14;
+  --mn-tint-orange: #ea580c14;
+  --mn-tint-teal: #0d948814;
+
+  --mn-icon-primary-bg: #0bc1ff24;
+  --mn-icon-info-bg: #06b6d424;
+  --mn-icon-success-bg: #16a34a24;
+  --mn-icon-warning-bg: #f59e0b2e;
+  --mn-icon-danger-bg: #dc26261f;
+  --mn-icon-violet-bg: #7c3aed24;
+  --mn-icon-orange-bg: #ea580c24;
+  --mn-icon-teal-bg: #0d94881f;
 
   --mn-shadow-panel: var(--frappe-shadow-base);
   --mn-shadow-floating: var(--frappe-shadow-md);
   --mn-shadow-accent: var(--frappe-shadow-md);
   --mn-shadow-accent-soft: var(--frappe-shadow-sm);
+
+  --mn-icon-size-xs: 0.875rem;
+  --mn-icon-size-sm: 1rem;
+  --mn-icon-size-md: 1.125rem;
+  --mn-icon-size-lg: 1.25rem;
+  --mn-icon-surface-size-xs: 1.75rem;
+  --mn-icon-surface-size-sm: 2rem;
+  --mn-icon-surface-size-md: 2.375rem;
+  --mn-icon-surface-size-lg: 2.75rem;
+  --mn-icon-radius: calc(var(--mn-radius-control) + 0.375rem);
 
   --mn-gradient-canvas: linear-gradient(
     180deg,
@@ -207,12 +260,80 @@ html.theme-violet,
 html[data-theme="dark"],
 .dark {
   color-scheme: dark;
-  --mn-color-canvas: #090a0c;
-  --mn-color-surface: #181b22;
-  --mn-color-surface-soft: #20242e;
-  --mn-color-border: #353a47;
-  --mn-color-glass-border: #484f60;
-  --mn-color-text: #ffffff;
+
+  /* Layered dark-gray surfaces — never pure black. */
+  --mn-color-canvas: #0d1117;
+  --mn-color-surface: #111820;
+  --mn-color-surface-soft: #151d27;
+  --mn-color-surface-muted: #1a2430;
+  --mn-color-surface-hover: #202c39;
+
+  /* Text hierarchy: primary / secondary / tertiary / disabled. */
+  --mn-color-text: #f1f4f8;
   --mn-color-text-strong: #ffffff;
-  --mn-color-text-muted: #e2e8f0;
+  --mn-color-text-muted: #bdc6d1;
+  --mn-color-text-tertiary: #8d99a8;
+  --mn-color-text-disabled: #616d7d;
+
+  /* Separation via subtle borders, not glow. */
+  --mn-color-border: #2c3745;
+  --mn-color-border-subtle: #222c38;
+  --mn-color-border-strong: #3b485a;
+  --mn-color-glass-border: #3b485a;
+
+  /*
+   * Accent follows the selected [data-accent] hue (frappe-ui-design-system.css
+   * defines a bright dark variant per accent). Default accent = Monolith cyan.
+   */
+  --mn-color-primary: var(--frappe-primary);
+  --mn-color-on-primary: var(--frappe-primary-foreground);
+  --mn-color-accent: var(--frappe-primary);
+  --mn-color-accent-soft: var(--frappe-primary-soft);
+  --mn-color-accent-text: var(--frappe-primary-active);
+  --mn-color-on-accent: var(--frappe-primary-foreground);
+
+  /* Status colours track the brighter dark semantic hues for readability. */
+  --mn-color-success: #4ade80;
+  --mn-color-success-surface: #4ade801f;
+  --mn-color-warning: #fbbf24;
+  --mn-color-warning-surface: #fbbf241f;
+  --mn-color-danger: #f87171;
+  --mn-color-danger-surface: #f871711f;
+  --mn-color-info: #7cd9ff;
+  --mn-color-info-surface: rgb(11 193 255 / 12%);
+
+  --mn-shadow-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 10px -2px rgb(0 0 0 / 0.28);
+  --mn-shadow-floating: 0 2px 4px rgb(0 0 0 / 0.36), 0 12px 26px -8px rgb(0 0 0 / 0.42);
+
+  /*
+   * Semantic colour system (DARK).
+   * Same meanings as light; hues lifted for contrast on dark surfaces but kept
+   * below neon. Tints raised to ~14-20% so they read on #0d1117.
+   */
+  --mn-sem-primary: #38ccff;
+  --mn-sem-info: #22d3ee;
+  --mn-sem-success: #4ade80;
+  --mn-sem-warning: #fbbf24;
+  --mn-sem-danger: #f87171;
+  --mn-sem-violet: #a78bfa;
+  --mn-sem-orange: #fb923c;
+  --mn-sem-teal: #2dd4bf;
+
+  --mn-tint-primary: #0bc1ff1f;
+  --mn-tint-info: #22d3ee1f;
+  --mn-tint-success: #4ade801f;
+  --mn-tint-warning: #fbbf241f;
+  --mn-tint-danger: #f871711f;
+  --mn-tint-violet: #a78bfa24;
+  --mn-tint-orange: #fb923c1f;
+  --mn-tint-teal: #2dd4bf1f;
+
+  --mn-icon-primary-bg: #0bc1ff2e;
+  --mn-icon-info-bg: #22d3ee2e;
+  --mn-icon-success-bg: #4ade8033;
+  --mn-icon-warning-bg: #fbbf2433;
+  --mn-icon-danger-bg: #f8717129;
+  --mn-icon-violet-bg: #a78bfa33;
+  --mn-icon-orange-bg: #fb923c2e;
+  --mn-icon-teal-bg: #2dd4bf29;
 }

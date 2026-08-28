@@ -90,37 +90,54 @@ export const monolithAccentThemes: {
   { id: "violet", label: "Violet" },
 ];
 
+/*
+ * Each accent maps to a theme-scoped hue ramp defined in
+ * frappe-ui-design-system.css. The values here are `var()` references, not
+ * literal colors, so the SAME inline style resolves to the light ramp in light
+ * mode and the brighter dark ramp under [data-theme="dark"].
+ */
 const ACCENT_HUE_STOPS: Record<
   MonolithAccent,
-  { primary: string; hover: string; active: string; softLight: string; softBorderLight: string }
+  {
+    primary: string;
+    hover: string;
+    active: string;
+    soft: string;
+    softBorder: string;
+    fg: string;
+  }
 > = {
   blue: {
-    primary: "var(--frappe-blue-500)",
-    hover: "var(--frappe-blue-600)",
-    active: "var(--frappe-blue-700)",
-    softLight: "var(--frappe-blue-50)",
-    softBorderLight: "var(--frappe-blue-200)",
+    primary: "var(--mn-hue-blue)",
+    hover: "var(--mn-hue-blue-hover)",
+    active: "var(--mn-hue-blue-active)",
+    soft: "var(--mn-hue-blue-soft)",
+    softBorder: "var(--mn-hue-blue-soft-border)",
+    fg: "var(--mn-hue-blue-fg)",
   },
   green: {
-    primary: "var(--frappe-green-500)",
-    hover: "var(--frappe-green-600)",
-    active: "var(--frappe-green-700)",
-    softLight: "var(--frappe-green-50)",
-    softBorderLight: "var(--frappe-green-200)",
+    primary: "var(--mn-hue-green)",
+    hover: "var(--mn-hue-green-hover)",
+    active: "var(--mn-hue-green-active)",
+    soft: "var(--mn-hue-green-soft)",
+    softBorder: "var(--mn-hue-green-soft-border)",
+    fg: "var(--mn-hue-green-fg)",
   },
   amber: {
-    primary: "var(--frappe-amber-500)",
-    hover: "var(--frappe-amber-600)",
-    active: "var(--frappe-amber-700)",
-    softLight: "var(--frappe-amber-50)",
-    softBorderLight: "var(--frappe-amber-200)",
+    primary: "var(--mn-hue-amber)",
+    hover: "var(--mn-hue-amber-hover)",
+    active: "var(--mn-hue-amber-active)",
+    soft: "var(--mn-hue-amber-soft)",
+    softBorder: "var(--mn-hue-amber-soft-border)",
+    fg: "var(--mn-hue-amber-fg)",
   },
   violet: {
-    primary: "var(--frappe-violet-500)",
-    hover: "var(--frappe-violet-600)",
-    active: "var(--frappe-violet-700)",
-    softLight: "var(--frappe-violet-50)",
-    softBorderLight: "var(--frappe-violet-200)",
+    primary: "var(--mn-hue-violet)",
+    hover: "var(--mn-hue-violet-hover)",
+    active: "var(--mn-hue-violet-active)",
+    soft: "var(--mn-hue-violet-soft)",
+    softBorder: "var(--mn-hue-violet-soft-border)",
+    fg: "var(--mn-hue-violet-fg)",
   },
 };
 
@@ -130,15 +147,12 @@ function applyAccentInlineStyles(root: HTMLElement, accent: MonolithAccent) {
   root.style.setProperty("--frappe-primary", stops.primary);
   root.style.setProperty("--frappe-primary-hover", stops.hover);
   root.style.setProperty("--frappe-primary-active", stops.active);
-  root.style.setProperty("--frappe-primary-soft", stops.softLight);
-  root.style.setProperty("--frappe-primary-soft-border", stops.softBorderLight);
+  root.style.setProperty("--frappe-primary-soft", stops.soft);
+  root.style.setProperty("--frappe-primary-soft-border", stops.softBorder);
   // --mnx-accent-text / --mnx-accent-contrast (used app-wide for accent-colored
-  // text and for text-on-solid-accent-fill) resolve through these two — they
-  // were never set here, so every such usage silently computed to nothing
-  // (invisible text/fills). `active` (700-weight) reads well as text on light
-  // backgrounds; white reads well as text on any of the four accent hues.
+  // text and for text-on-solid-accent-fill) resolve through these two.
   root.style.setProperty("--frappe-primary-strong", stops.active);
-  root.style.setProperty("--frappe-primary-foreground", "#ffffff");
+  root.style.setProperty("--frappe-primary-foreground", stops.fg);
 }
 
 const MonolithThemeContext = createContext<{
@@ -429,6 +443,9 @@ function MonolithAppShellBody({
     null,
   );
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const pendingScrollSectionIdRef = useRef<string | null>(null);
   const sidebarIsExpanded = sidebarPinned || sidebarExpanded || profileOpen;
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds, enabledFeatureIds),
@@ -523,6 +540,41 @@ function MonolithAppShellBody({
     return () => window.cancelAnimationFrame(frameId);
   }, [pathname, visibleSections]);
 
+  useEffect(() => {
+    if (
+      !sidebarIsExpanded ||
+      !expandedSectionId ||
+      pendingScrollSectionIdRef.current !== expandedSectionId
+    ) {
+      return;
+    }
+
+    const navElement = navRef.current;
+    const sectionElement = sectionRefs.current[expandedSectionId];
+    if (!navElement || !sectionElement) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const navBounds = navElement.getBoundingClientRect();
+      const sectionBounds = sectionElement.getBoundingClientRect();
+      const overflowTop = sectionBounds.top - navBounds.top;
+      const overflowBottom = sectionBounds.bottom - navBounds.bottom;
+
+      if (overflowTop < 0) {
+        navElement.scrollBy({ top: overflowTop - 12, behavior: "smooth" });
+        pendingScrollSectionIdRef.current = null;
+        return;
+      }
+
+      if (overflowBottom > 0) {
+        navElement.scrollBy({ top: overflowBottom + 12, behavior: "smooth" });
+      }
+
+      pendingScrollSectionIdRef.current = null;
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [expandedSectionId, sidebarIsExpanded]);
+
   return (
     <div
       className="mnx-dashboard-shell"
@@ -593,7 +645,7 @@ function MonolithAppShellBody({
           </button>
         </div>
 
-        <nav className="mnx-sidebar-nav">
+        <nav className="mnx-sidebar-nav" ref={navRef}>
           <p>WORKSPACES</p>
           {visibleSections.map((section) => {
             const Icon = section.icon;
@@ -628,6 +680,9 @@ function MonolithAppShellBody({
               <div
                 key={section.id}
                 className={`mnx-sidebar-section ${isExpanded ? "is-expanded" : ""}`}
+                ref={(node) => {
+                  sectionRefs.current[section.id] = node;
+                }}
               >
                 <button
                   type="button"
@@ -636,9 +691,12 @@ function MonolithAppShellBody({
                   aria-controls={`mnx-sidebar-items-${section.id}`}
                   onClick={() => {
                     if (!sidebarPinned) setSidebarExpanded(true);
-                    setExpandedSectionId((current) =>
-                      current === section.id ? null : section.id,
-                    );
+                    setExpandedSectionId((current) => {
+                      const nextSectionId =
+                        current === section.id ? null : section.id;
+                      pendingScrollSectionIdRef.current = nextSectionId;
+                      return nextSectionId;
+                    });
                   }}
                 >
                   <span>

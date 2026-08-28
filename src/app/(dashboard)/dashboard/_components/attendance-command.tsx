@@ -34,10 +34,21 @@ type DashboardActionItem = {
   signal: string;
 };
 
+type SemanticHue =
+  | "primary"
+  | "info"
+  | "success"
+  | "warning"
+  | "danger"
+  | "violet"
+  | "orange"
+  | "teal";
+
 type DashboardInsightItem = {
   label: string;
   value: string;
   detail: string;
+  hue: SemanticHue;
 };
 
 const attendanceCopy: Record<
@@ -134,6 +145,8 @@ export function AttendanceCommand({
   const [actionBursting, setActionBursting] = useState(false);
   const [lastPunchAction, setLastPunchAction] = useState<PunchAction | null>(null);
   const status = attendanceCopy[profile.attendanceStatus];
+  const attendanceHue: SemanticHue =
+    status.tone === "success" ? "success" : "warning";
   const pending = profile.pendingCounts ?? { tasks: 0, leaves: 0, cases: 0 };
   const productCatalogueVisible = moduleSnapshot.modules.some(
     (module) => module.id === "product-catalogue" && module.available,
@@ -190,16 +203,19 @@ export function AttendanceCommand({
       label: "Priority queue",
       value: String(pending.tasks).padStart(2, "0"),
       detail: pending.tasks > 0 ? "Tasks ready for review" : "No urgent tasks waiting",
+      hue: pending.tasks > 0 ? "danger" : "warning",
     },
     {
       label: "Leave desk",
       value: String(pending.leaves).padStart(2, "0"),
       detail: pending.leaves > 0 ? "Requests need a response" : "Approvals are under control",
+      hue: "violet",
     },
     {
       label: "Helpdesk watch",
       value: String(pending.cases).padStart(2, "0"),
       detail: pending.cases > 0 ? "Support signals are open" : "Service desk is quiet",
+      hue: "teal",
     },
   ];
 
@@ -256,7 +272,7 @@ export function AttendanceCommand({
 
             <dl className="mnx-dashboard-insight-grid" aria-label="Dashboard highlights">
               {insightItems.map((item) => (
-                <div key={item.label}>
+                <div key={item.label} data-hue={item.hue}>
                   <dt>{item.label}</dt>
                   <dd>{item.value}</dd>
                   <p>{item.detail}</p>
@@ -272,7 +288,7 @@ export function AttendanceCommand({
           </div>
         </div>
 
-        <div className="mnx-attendance-panel">
+        <div className="mnx-attendance-panel" data-hue={attendanceHue}>
           <header className="mnx-attendance-header">
             <div>
               <MonolithSpecLabel>LIVE ATTENDANCE</MonolithSpecLabel>

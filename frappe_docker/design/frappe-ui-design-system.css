@@ -191,10 +191,73 @@
   --frappe-table-row-height: 40px;
   --frappe-table-header-bg: var(--frappe-gray-50);
   --frappe-table-border: var(--frappe-gray-200);
+
+  /*
+   * Accent-picker hue ramps (LIGHT). The app writes the selected ramp onto
+   * <html> as inline --frappe-primary* styles; because these vars are
+   * theme-scoped, the same inline reference resolves to a brighter value in
+   * dark mode (see the [data-theme="dark"] block). fg = text on solid fill.
+   */
+  --mn-hue-blue: var(--frappe-blue-500);
+  --mn-hue-blue-hover: var(--frappe-blue-600);
+  --mn-hue-blue-active: var(--frappe-blue-700);
+  --mn-hue-blue-soft: var(--frappe-blue-50);
+  --mn-hue-blue-soft-border: var(--frappe-blue-200);
+  --mn-hue-blue-fg: #ffffff;
+
+  --mn-hue-green: var(--frappe-green-500);
+  --mn-hue-green-hover: var(--frappe-green-600);
+  --mn-hue-green-active: var(--frappe-green-700);
+  --mn-hue-green-soft: var(--frappe-green-50);
+  --mn-hue-green-soft-border: var(--frappe-green-200);
+  --mn-hue-green-fg: #ffffff;
+
+  --mn-hue-amber: var(--frappe-amber-500);
+  --mn-hue-amber-hover: var(--frappe-amber-600);
+  --mn-hue-amber-active: var(--frappe-amber-700);
+  --mn-hue-amber-soft: var(--frappe-amber-50);
+  --mn-hue-amber-soft-border: var(--frappe-amber-200);
+  --mn-hue-amber-fg: #ffffff;
+
+  --mn-hue-violet: var(--frappe-violet-500);
+  --mn-hue-violet-hover: var(--frappe-violet-600);
+  --mn-hue-violet-active: var(--frappe-violet-700);
+  --mn-hue-violet-soft: var(--frappe-violet-50);
+  --mn-hue-violet-soft-border: var(--frappe-violet-200);
+  --mn-hue-violet-fg: #ffffff;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
+
+  /* Accent-picker hue ramps (DARK) — brighter, still below neon. */
+  --mn-hue-blue: #0bc1ff;
+  --mn-hue-blue-hover: #32caff;
+  --mn-hue-blue-active: #7cdcff;
+  --mn-hue-blue-soft: #0bc1ff1f;
+  --mn-hue-blue-soft-border: #0bc1ff4d;
+  --mn-hue-blue-fg: #06212c;
+
+  --mn-hue-green: #34d399;
+  --mn-hue-green-hover: #4ade80;
+  --mn-hue-green-active: #86efac;
+  --mn-hue-green-soft: #34d3991f;
+  --mn-hue-green-soft-border: #34d3994d;
+  --mn-hue-green-fg: #04241a;
+
+  --mn-hue-amber: #fbbf24;
+  --mn-hue-amber-hover: #fcd34d;
+  --mn-hue-amber-active: #fde68a;
+  --mn-hue-amber-soft: #fbbf241f;
+  --mn-hue-amber-soft-border: #fbbf244d;
+  --mn-hue-amber-fg: #2a1c00;
+
+  --mn-hue-violet: #a78bfa;
+  --mn-hue-violet-hover: #c4b5fd;
+  --mn-hue-violet-active: #ddd6fe;
+  --mn-hue-violet-soft: #a78bfa1f;
+  --mn-hue-violet-soft-border: #a78bfa4d;
+  --mn-hue-violet-fg: #1c1340;
 
   --frappe-gray-50: #f8f8f8;
   --frappe-gray-100: #d9d9d9;
@@ -264,57 +327,59 @@
   --frappe-violet-800: #3c2a92;
   --frappe-violet-900: #2f236c;
 
-  --frappe-shadow-sm: inset 0px 0.5px 0.5px 0.5px #ffffff08, 0px 0px 14px 0px #0000002e, 0px 1px 3px 0px #000000b2;
-  --frappe-shadow-base: inset 0px 0.5px 0.5px 0.5px #ffffff08, 0px 0px 14px 0px #0000002e, 0px 2px 5px 0px #00000099;
-  --frappe-shadow-md: inset 0px 0.5px 0.5px 0.5px #ffffff08, 0px 0px 16px 2px #00000033, 0px 6px 12px -2px #00000099;
-  --frappe-shadow-lg: inset 0px 0.5px 1.5px 0.5px #ffffff0a, 0px 0px 16px 0px #0000001a, 0px 18px 20px -8px #00000085;
-  --frappe-focus-ring: 0px 0px 0px 3px #0e3d62cc;
+  /* Elevation: soft depth, no neon. Borders carry separation, not glow. */
+  --frappe-shadow-sm: 0px 1px 2px 0px #00000059, 0px 1px 3px 0px #0000003d;
+  --frappe-shadow-base: 0px 1px 2px 0px #00000066, 0px 4px 10px -2px #00000047;
+  --frappe-shadow-md: 0px 2px 4px 0px #0000005c, 0px 10px 22px -6px #0000006b;
+  --frappe-shadow-lg: 0px 4px 8px 0px #0000005c, 0px 24px 40px -12px #00000080;
+  --frappe-focus-ring: 0px 0px 0px 3px #0bc1ff40;
 
-  --frappe-bg: var(--frappe-gray-950);
-  --frappe-bg-subtle: var(--frappe-gray-900);
-  --frappe-bg-muted: var(--frappe-gray-800);
-  --frappe-surface: var(--frappe-gray-900);
-  --frappe-surface-raised: var(--frappe-gray-800);
-  --frappe-surface-hover: var(--frappe-gray-700);
-  --frappe-surface-selected: #0a2e5c;
-  --frappe-sidebar-bg: transparent;
-  --frappe-navbar-bg: var(--frappe-gray-950);
+  /* Layered dark surfaces — no pure black. Page < card < raised < hover. */
+  --frappe-bg: #0d1117;
+  --frappe-bg-subtle: #111820;
+  --frappe-bg-muted: #151d27;
+  --frappe-surface: #111820;
+  --frappe-surface-raised: #1a2430;
+  --frappe-surface-hover: #202c39;
+  --frappe-surface-selected: #0bc1ff1f;
+  --frappe-sidebar-bg: #0f1620;
+  --frappe-navbar-bg: #0d1117;
 
-  --frappe-border: var(--frappe-gray-700);
-  --frappe-border-strong: var(--frappe-gray-600);
-  --frappe-border-subtle: #ffffff14;
+  --frappe-border: #2c3745;
+  --frappe-border-strong: #3b485a;
+  --frappe-border-subtle: #222c38;
 
-  --frappe-text: var(--frappe-gray-50);
-  --frappe-text-muted: var(--frappe-gray-200);
-  --frappe-text-soft: var(--frappe-gray-300);
-  --frappe-text-inverse: var(--frappe-gray-950);
-  --frappe-link: var(--frappe-blue-500);
+  --frappe-text: #f1f4f8;
+  --frappe-text-muted: #bdc6d1;
+  --frappe-text-soft: #8d99a8;
+  --frappe-text-inverse: #06212c;
+  --frappe-link: #0bc1ff;
 
-  --frappe-primary: var(--frappe-blue-500);
-  --frappe-primary-foreground: #ffffff;
-  --frappe-primary-hover: var(--frappe-blue-400);
-  --frappe-primary-active: var(--frappe-blue-300);
-  --frappe-primary-soft: #0f233d;
-  --frappe-primary-soft-border: #063465;
+  --frappe-primary: #0bc1ff;
+  --frappe-primary-foreground: #06212c;
+  --frappe-primary-hover: #32caff;
+  --frappe-primary-active: #5ad5ff;
+  --frappe-primary-soft: #0bc1ff1f;
+  --frappe-primary-soft-border: #0bc1ff4d;
 
   --frappe-success: var(--frappe-green-300);
-  --frappe-success-soft: #072716;
-  --frappe-success-border: #0a4229;
+  --frappe-success-soft: #0d2a1c;
+  --frappe-success-border: #1f5138;
 
   --frappe-warning: var(--frappe-amber-200);
-  --frappe-warning-soft: #331c06;
-  --frappe-warning-border: #5a2d07;
+  --frappe-warning-soft: #33240c;
+  --frappe-warning-border: #6b4a1a;
 
   --frappe-danger: var(--frappe-red-200);
-  --frappe-danger-soft: #391416;
-  --frappe-danger-border: #742a2a;
+  --frappe-danger-soft: #3a1a1c;
+  --frappe-danger-border: #7a3535;
 
-  --frappe-info: var(--frappe-blue-200);
-  --frappe-info-soft: #0f233d;
-  --frappe-info-border: #063465;
+  --frappe-info: #7cd9ff;
+  --frappe-info-soft: #0bc1ff1a;
+  --frappe-info-border: #0bc1ff40;
 
-  --frappe-table-header-bg: var(--frappe-gray-900);
-  --frappe-table-border: var(--frappe-gray-700);
+  --frappe-table-header-bg: #151d27;
+  --frappe-table-border: #2c3745;
 }
 
 /* Accent themes for product-level customization on top of the neutral Frappe base */
@@ -348,6 +413,54 @@
   --frappe-primary-active: var(--frappe-violet-700);
   --frappe-primary-soft: var(--frappe-violet-50);
   --frappe-primary-soft-border: var(--frappe-violet-200);
+}
+
+/*
+ * Dark accent variants. The [data-accent] blocks above resolve to the LIGHT
+ * primitive ramp, which is muddy on a dark canvas. These per-accent overrides
+ * (specificity 0,2,0 — they beat the single-attribute blocks above) supply a
+ * brighter hue for each accent in dark mode. Default accent (blue) is the
+ * Monolith cyan #0BC1FF; the others still theme so the picker keeps working.
+ */
+[data-theme="dark"] {
+  /* fallback when no [data-accent] is present */
+  --frappe-primary: #0bc1ff;
+  --frappe-primary-hover: #32caff;
+  --frappe-primary-active: #5ad5ff;
+  --frappe-primary-soft: #0bc1ff1f;
+  --frappe-primary-soft-border: #0bc1ff4d;
+}
+
+[data-theme="dark"][data-accent="blue"] {
+  --frappe-primary: #0bc1ff;
+  --frappe-primary-hover: #32caff;
+  --frappe-primary-active: #5ad5ff;
+  --frappe-primary-soft: #0bc1ff1f;
+  --frappe-primary-soft-border: #0bc1ff4d;
+}
+
+[data-theme="dark"][data-accent="green"] {
+  --frappe-primary: #34d399;
+  --frappe-primary-hover: #4ade80;
+  --frappe-primary-active: #86efac;
+  --frappe-primary-soft: #34d3991f;
+  --frappe-primary-soft-border: #34d3994d;
+}
+
+[data-theme="dark"][data-accent="amber"] {
+  --frappe-primary: #fbbf24;
+  --frappe-primary-hover: #fcd34d;
+  --frappe-primary-active: #fde68a;
+  --frappe-primary-soft: #fbbf241f;
+  --frappe-primary-soft-border: #fbbf244d;
+}
+
+[data-theme="dark"][data-accent="violet"] {
+  --frappe-primary: #a78bfa;
+  --frappe-primary-hover: #c4b5fd;
+  --frappe-primary-active: #ddd6fe;
+  --frappe-primary-soft: #a78bfa1f;
+  --frappe-primary-soft-border: #a78bfa4d;
 }
 
 .frappe-ui {

@@ -66,16 +66,19 @@ export function DashboardOverview({
       label: "Announcements",
       value: data.announcements.length,
       note: nextAnnouncement?.title || "No new broadcast",
+      hue: "primary",
     },
     {
       label: "Pending tasks",
       value: data.recentTasks.length,
       note: nextTask?.title || "Your queue is clear",
+      hue: data.recentTasks.length > 0 ? "warning" : "success",
     },
     {
       label: "Upcoming holidays",
       value: data.upcomingHolidays.length,
       note: nextHoliday?.name || "Nothing scheduled",
+      hue: "violet",
     },
   ] as const;
 
@@ -87,7 +90,7 @@ export function DashboardOverview({
         data-workpet-target="dashboard-summary-metrics"
       >
         {metrics.map((metric) => (
-          <article className="mnx-metric-card" key={metric.label}>
+          <article className="mnx-metric-card" key={metric.label} data-hue={metric.hue}>
             <header>
               <span>{metric.label}</span>
             </header>
@@ -109,7 +112,7 @@ export function DashboardOverview({
 
       <div className="mnx-dashboard-main-hub" data-workpet-target="dashboard-operations-hub">
         <div className="mnx-hub-primary">
-          <section className="mnx-feed-panel">
+          <section className="mnx-feed-panel" data-hue="primary">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>MY COMMAND FEED</MonolithSpecLabel>
@@ -264,7 +267,15 @@ export function DashboardOverview({
         </div>
 
         <aside className="mnx-hub-secondary">
-          <section className="mnx-dashboard-brief-panel" data-workpet-target="dashboard-exceptions">
+          <section
+            className="mnx-dashboard-brief-panel"
+            data-hue={
+              attentionItems.some((item) => item.severity === "critical")
+                ? "danger"
+                : "warning"
+            }
+            data-workpet-target="dashboard-exceptions"
+          >
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>EXCEPTIONS</MonolithSpecLabel>
@@ -304,7 +315,7 @@ export function DashboardOverview({
             )}
           </section>
 
-          <section className="mnx-dashboard-brief-panel" data-workpet-target="dashboard-quick-launch">
+          <section className="mnx-dashboard-brief-panel" data-hue="info" data-workpet-target="dashboard-quick-launch">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>QUICK LAUNCH</MonolithSpecLabel>
@@ -324,7 +335,7 @@ export function DashboardOverview({
             </div>
           </section>
 
-          <section className="mnx-holiday-panel">
+          <section className="mnx-holiday-panel" data-hue="violet">
             <header className="mnx-panel-heading">
               <div>
                 <MonolithSpecLabel>COMPANY CALENDAR</MonolithSpecLabel>

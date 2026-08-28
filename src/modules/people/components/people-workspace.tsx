@@ -404,19 +404,32 @@ export function PeopleSummaryGrid({
   );
 }
 
+export type SemanticHue =
+  | "primary"
+  | "info"
+  | "success"
+  | "warning"
+  | "danger"
+  | "violet"
+  | "orange"
+  | "teal";
+
 export function PeopleSummary({
   detail,
+  hue,
   icon,
   label,
   value,
 }: {
   detail?: ReactNode;
+  /** Optional semantic colour. When set, overrides the KPI-strip rotation. */
+  hue?: SemanticHue;
   icon?: ReactNode;
   label: ReactNode;
   value: ReactNode;
 }) {
   return (
-    <article className="mnx-people-summary">
+    <article className="mnx-people-summary" data-hue={hue}>
       <div className="mnx-people-summary-heading">
         {icon ? <span>{icon}</span> : null}
         <p>{label}</p>
