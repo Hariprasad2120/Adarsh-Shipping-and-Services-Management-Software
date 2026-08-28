@@ -46,6 +46,13 @@ type MyReviewDetail = {
     submissionStatus: string | null;
     submittedAt: string | null;
   }[];
+  ratingDisagreementEnabled: boolean;
+  myRatingReview: {
+    selfEval: "AGREE" | "OVERRATED" | "UNDERRATED";
+    reason: string | null;
+    status: string;
+    revisedCategoryPoints: Record<string, number> | null;
+  } | null;
 };
 
 const ACCENT_CHIP =
@@ -65,6 +72,7 @@ const STAGE_COLOR: Record<string, string> = {
   SELF_ASSESSMENT_OPEN: ACCENT_CHIP,
   REVIEWER_RATING: ACCENT_CHIP,
   MANAGEMENT_REVIEW: WARNING_CHIP,
+  DATE_VOTING: ACCENT_CHIP,
   MEETING_PENDING: ACCENT_CHIP,
   MEETING_LIVE: SUCCESS_CHIP,
   HIKE_FINALISATION: ACCENT_CHIP,
@@ -672,6 +680,185 @@ export function MyReviewDetailClient({
           ) : null}
         </div>
       </div>
+
+      {appraisal.ratingDisagreementEnabled &&
+      appraisal.stage === "MANAGEMENT_REVIEW" &&
+      appraisal.submissionStatus === "SUBMITTED" ? (
+        <RatingAccuracyCard
+          appraisalId={appraisal.id}
+          criteria={criteria}
+          existing={appraisal.myRatingReview}
+          onDone={() => router.refresh()}
+          notify={{ success, error }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+const SELF_EVAL_OPTIONS: { value: "AGREE" | "OVERRATED" | "UNDERRATED"; label: string; hint: string }[] = [
+  { value: "AGREE", label: "My rating was accurate", hint: "No change needed." },
+  { value: "OVERRATED", label: "I rated too high", hint: "Enter revised, lower scores below." },
+  { value: "UNDERRATED", label: "I rated too low", hint: "Enter revised, higher scores below." },
+];
+
+function RatingAccuracyCard({
+  appraisalId,
+  criteria,
+  existing,
+  onDone,
+  notify,
+}: {
+  appraisalId: string;
+  criteria: CriterionPoint[];
+  existing: MyReviewDetail["myRatingReview"];
+  onDone: () => void;
+  notify: { success: (m: string) => void; error: (m: string) => void };
+}) {
+  const submitted = existing?.status === "SUBMITTED";
+  const [editing, setEditing] = useState(!submitted);
+  const [selfEval, setSelfEval] = useState<"AGREE" | "OVERRATED" | "UNDERRATED">(
+    existing?.selfEval ?? "AGREE",
+  );
+  const [reason, setReason] = useState(existing?.reason ?? "");
+  const [revised, setRevised] = useState<Record<string, string>>(() => {
+    const seed: Record<string, string> = {};
+    for (const [id, value] of Object.entries(existing?.revisedCategoryPoints ?? {})) {
+      seed[id] = String(value);
+    }
+    return seed;
+  });
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    setSaving(true);
+    const revisedCategoryPoints: Record<string, number> = {};
+    if (selfEval !== "AGREE") {
+      for (const [id, value] of Object.entries(revised)) {
+        const numeric = Number(value);
+        if (value !== "" && Number.isFinite(numeric)) revisedCategoryPoints[id] = numeric;
+      }
+    }
+    const res = await fetch(`/api/ams/appraisals/${appraisalId}/rating-review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "SUBMITTED", selfEval, reason, revisedCategoryPoints }),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      notify.error(data.error ?? "Unable to save rating review");
+      return;
+    }
+    notify.success("Rating review submitted");
+    setEditing(false);
+    onDone();
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Rating accuracy review</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-[var(--mnx-text-muted)]">
+          All ratings are in and the aggregate is visible to management. Confirm whether your rating
+          held up, or submit revised scores.
+        </p>
+
+        {submitted && !editing ? (
+          <div className="space-y-2 text-sm">
+            <p className="font-semibold text-[var(--mnx-text-strong)]">
+              {SELF_EVAL_OPTIONS.find((option) => option.value === selfEval)?.label}
+            </p>
+            {existing?.reason ? (
+              <p className="text-[var(--mnx-text-muted)]">{existing.reason}</p>
+            ) : null}
+            {existing?.revisedCategoryPoints &&
+            Object.keys(existing.revisedCategoryPoints).length > 0 ? (
+              <ul className="text-[var(--mnx-text-muted)]">
+                {criteria
+                  .filter((criterion) => existing.revisedCategoryPoints?.[criterion.id] != null)
+                  .map((criterion) => (
+                    <li key={criterion.id}>
+                      {criterion.label}: {existing.revisedCategoryPoints?.[criterion.id]}
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              Update
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {SELF_EVAL_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex items-start gap-3 rounded-xl border border-[var(--mnx-border)] p-3"
+                >
+                  {/* eslint-disable-next-line no-restricted-syntax -- native radio input */}
+                  <input
+                    type="radio"
+                    name="selfEval"
+                    className="mt-0.5 h-4 w-4"
+                    checked={selfEval === option.value}
+                    onChange={() => setSelfEval(option.value)}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-[var(--mnx-text-strong)]">
+                      {option.label}
+                    </span>
+                    <span className="block text-xs text-[var(--mnx-text-muted)]">{option.hint}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {selfEval !== "AGREE" ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-[var(--mnx-text-muted)]">Reason</label>
+                  <textarea
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                    rows={2}
+                    className="mt-1 w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-sm"
+                    placeholder="Explain what changed your assessment."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-[var(--mnx-text-muted)]">
+                    Revised scores (leave blank to keep the original)
+                  </p>
+                  {criteria.map((criterion) => (
+                    <div key={criterion.id} className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-[var(--mnx-text-strong)]">{criterion.label}</span>
+                      {/* eslint-disable-next-line no-restricted-syntax -- compact numeric field */}
+                      <input
+                        type="number"
+                        min={0}
+                        max={criterion.maxPoints || undefined}
+                        value={revised[criterion.id] ?? ""}
+                        onChange={(event) =>
+                          setRevised((current) => ({ ...current, [criterion.id]: event.target.value }))
+                        }
+                        className="h-9 w-24 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-2 text-sm"
+                        placeholder={criterion.maxPoints ? `/ ${criterion.maxPoints}` : ""}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <Button onClick={submit} disabled={saving}>
+              {saving ? "Saving…" : "Submit rating review"}
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

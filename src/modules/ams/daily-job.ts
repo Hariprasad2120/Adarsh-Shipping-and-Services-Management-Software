@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { notifyMany } from "@/lib/notify";
 import { dueOnDate } from "./due-dates";
-import { createAppraisalForEmployee, openPastDeadlineAssessments, advancePastDeadlineStages, notifyStalePendingReviewers, syncOrgAppraisalSchedules } from "./service";
+import { createAppraisalForEmployee, openPastDeadlineAssessments, advancePastDeadlineStages, notifyStalePendingReviewers, syncOrgAppraisalSchedules, sweepDateVotingDeadlines, escalateOverdueStages, sendAppraisalDigest } from "./service";
 
 const EXEMPT_PERMISSION_KEYS = ["ams.appraisal.management_review", "admin.org.manage"];
 
@@ -63,6 +63,9 @@ export async function runAppraisalDailyJob(now: Date): Promise<{ created: number
   const opened = await openPastDeadlineAssessments();
   const { selfAdvanced, reviewerAdvanced } = await advancePastDeadlineStages();
   await notifyStalePendingReviewers();
+  await sweepDateVotingDeadlines();
+  await escalateOverdueStages();
+  await sendAppraisalDigest(today);
 
   return { created, opened, selfAdvanced, reviewerAdvanced };
 }

@@ -428,7 +428,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/ams/appraisals",
         label: "Appraisals",
         icon: Folder,
-        permission: "ams.appraisal.assign_reviewers",
+        permission: ["ams.appraisal.assign_reviewers", "ams.appraisal.view_all"],
         matchPaths: ["/ams/appraisals"],
       },
       {
@@ -481,11 +481,25 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/ams/extensions"],
       },
       {
+        href: "/ams/arrears",
+        label: "Arrears",
+        icon: Report,
+        permission: ["ams.hike.finalise", "ams.appraisal.view_all"],
+        matchPaths: ["/ams/arrears"],
+      },
+      {
         href: "/ams/kpi",
         label: "Department KPI",
         icon: Report,
         permission: "ams.cycle.manage",
         matchPaths: ["/ams/kpi"],
+      },
+      {
+        href: "/ams/analytics",
+        label: "Analytics",
+        icon: Analytics,
+        permission: "ams.appraisal.view_all",
+        matchPaths: ["/ams/analytics"],
       },
       {
         href: "/ams/history",

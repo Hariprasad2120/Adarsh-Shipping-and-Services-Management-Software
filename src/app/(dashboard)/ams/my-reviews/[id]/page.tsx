@@ -72,6 +72,17 @@ export default async function MyReviewDetailPage({ params }: { params: Promise<{
           currentRating: currentRatingRow?.ratings as ReviewerRatingAnswers | null,
           submittedAt: currentRatingRow?.submittedAt?.toISOString() ?? null,
           submissionStatus: currentRatingRow?.status ?? null,
+          ratingDisagreementEnabled: appraisal.ratingDisagreementEnabled,
+          myRatingReview: appraisal.myRatingReview
+            ? {
+                selfEval: appraisal.myRatingReview.selfEval as "AGREE" | "OVERRATED" | "UNDERRATED",
+                reason: appraisal.myRatingReview.reason,
+                status: appraisal.myRatingReview.status,
+                revisedCategoryPoints:
+                  (appraisal.myRatingReview.revisedRatings as { categoryPoints?: Record<string, number> } | null)
+                    ?.categoryPoints ?? null,
+              }
+            : null,
           assignedReviewers: appraisal.reviewers.map((reviewer) => ({
             id: reviewer.id,
             kind: reviewer.kind,

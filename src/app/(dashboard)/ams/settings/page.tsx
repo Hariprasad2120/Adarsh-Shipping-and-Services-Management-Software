@@ -1,50 +1,44 @@
-import {
-  CalendarClock,
-  FileText,
-  Layers3,
-  Settings2,
-  Sparkles,
-  Target,
-} from "lucide-react";
+import { CalendarClock, FileText, Layers3, Target } from "lucide-react";
 import { WorkspacePanel, WorkspacePanelHeader } from "@/components/layout/workspace";
 import {
   PerformanceActionLink,
   PerformanceGrid,
   PerformanceSection,
   PerformanceSectionHeader,
-  PerformanceSummary,
-  PerformanceSummaryGrid,
 } from "@/modules/performance/components/performance-workspace";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { can } from "@/lib/rbac";
+import { getAppraisalSettings } from "@/modules/ams/settings";
+import { AppraisalSettingsForm } from "./settings-client";
 
-const controlAreas = [
-  {
-    href: "/ams/cycles",
-    title: "Cycle governance",
-    description:
-      "Open and maintain the appraisal periods that control due dates, review timing, and review readiness.",
-    icon: CalendarClock,
-  },
+export const metadata = {
+  title: "Appraisal Settings | AMS | Adarsh Shipping",
+};
+
+const linkedControls = [
   {
     href: "/ams/criteria",
-    title: "Criteria and scoring",
-    description:
-      "Manage the question sets, scoring behavior, and reviewer structure used across appraisal workflows.",
+    title: "Criteria and self-assessment form",
+    description: "Question sets, scoring behaviour, reviewer visibility, and the self-assessment template.",
     icon: FileText,
   },
   {
     href: "/ams/slabs",
     title: "Increment slabs",
-    description:
-      "Maintain compensation bands and score-linked increment guidance for controlled appraisal outcomes.",
+    description: "Score-to-hike bands used when a decision is finalised.",
     icon: Layers3,
+  },
+  {
+    href: "/ams/cycles",
+    title: "Cycle governance",
+    description: "Open and maintain the appraisal periods that drive due dates.",
+    icon: CalendarClock,
   },
   {
     href: "/ams/kpi",
     title: "Department KPI",
-    description:
-      "Define measurable performance outcomes that support structured appraisal evaluation by function.",
+    description: "Measurable performance outcomes that support structured evaluation.",
     icon: Target,
   },
 ];
@@ -53,48 +47,35 @@ export default async function AmsSettingsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  return (
-    <>
-      <PerformanceSummaryGrid>
-        <PerformanceSummary
-          icon={<Settings2 aria-hidden="true" />}
-          label="Control areas"
-          value={controlAreas.length}
-          detail="Core appraisal administration surfaces"
-        />
-        <PerformanceSummary
-          icon={<CalendarClock aria-hidden="true" />}
-          label="Primary cadence"
-          value="Cycle-led"
-          detail="Appraisal periods remain the top-level control"
-        />
-        <PerformanceSummary
-          icon={<FileText aria-hidden="true" />}
-          label="Evaluation model"
-          value="Criteria"
-          detail="Questions, scoring, and reviewer logic"
-        />
-        <PerformanceSummary
-          icon={<Sparkles aria-hidden="true" />}
-          label="Outcome tuning"
-          value="Increment"
-          detail="Use slabs and KPI guidance for calibration"
-        />
-      </PerformanceSummaryGrid>
+  const orgId = session.user.orgId;
+  if (!orgId) redirect("/ams");
 
+  const canManage = await can(session.user.id, "ams.cycle.manage");
+  if (!canManage) redirect("/ams");
+
+  const settings = await getAppraisalSettings(orgId);
+
+  return (
+    <div className="space-y-6">
       <PerformanceSection>
         <PerformanceSectionHeader
           eyebrow="Configuration workspace"
-          title="AMS settings and governance"
-          description="These settings destinations own the appraisal structures that shape review timing, scoring, department targets, and outcome calibration."
-          actions={
-            <PerformanceActionLink href="/ams/appraisals">
-              Open appraisals
-            </PerformanceActionLink>
-          }
+          title="Appraisal settings"
+          description="Central control for appraisal workflow timing, scoring weights, optional stages, and escalation. These apply to new appraisals across the organisation."
+          actions={<PerformanceActionLink href="/ams/appraisals">Open appraisals</PerformanceActionLink>}
+        />
+      </PerformanceSection>
+
+      <AppraisalSettingsForm settings={settings} />
+
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Linked controls"
+          title="Related administration surfaces"
+          description="Structures managed on their own pages but governed alongside these settings."
         />
         <PerformanceGrid className="p-5">
-          {controlAreas.map((area) => {
+          {linkedControls.map((area) => {
             const Icon = area.icon;
             return (
               <WorkspacePanel key={area.href} className="h-full">
@@ -102,11 +83,7 @@ export default async function AmsSettingsPage() {
                   eyebrow="Linked control"
                   title={area.title}
                   description={area.description}
-                  actions={
-                    <PerformanceActionLink href={area.href}>
-                      Open
-                    </PerformanceActionLink>
-                  }
+                  actions={<PerformanceActionLink href={area.href}>Open</PerformanceActionLink>}
                 />
                 <div className="px-5 pb-5">
                   <span className="mnx-icon-badge">
@@ -118,6 +95,6 @@ export default async function AmsSettingsPage() {
           })}
         </PerformanceGrid>
       </PerformanceSection>
-    </>
+    </div>
   );
 }

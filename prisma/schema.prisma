@@ -1321,7 +1321,10 @@ model Appraisal {
   availabilityDeadline   DateTime?
   selfAssessmentDeadline DateTime?
   reviewerRatingDeadline DateTime?
+  dateVotingDeadline     DateTime?
   hikeFinal              Json?
+  outcomeAckedAt         DateTime?
+  outcomeAckedById       String?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
@@ -1337,6 +1340,9 @@ model Appraisal {
   scheduleEntry      AppraisalSchedule?          @relation("ScheduledAppraisal")
   extensionRequests  AppraisalExtensionRequest[]
   meetingReschedules MeetingReschedule[]
+  ratingReviews      ReviewerRatingReview[]
+  dateVotes          MeetingDateVote[]
+  arrear             AppraisalArrear?
 
   @@unique([cycleId, employeeId])
   @@index([cycleId])
@@ -1352,9 +1358,11 @@ model AppraisalReviewer {
   decidedAt          DateTime?
   assignedAt         DateTime  @default(now())
 
-  appraisal Appraisal        @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
-  user      User             @relation(fields: [userId], references: [id])
-  ratings   ReviewerRating[]
+  appraisal     Appraisal              @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
+  user          User                  @relation(fields: [userId], references: [id])
+  ratings       ReviewerRating[]
+  ratingReviews ReviewerRatingReview[]
+  dateVotes     MeetingDateVote[]
 
   @@unique([appraisalId, userId])
   @@index([appraisalId])
@@ -1416,6 +1424,8 @@ model AppraisalMeeting {
   confirmedById String
   status        String    @default("SCHEDULED") // SCHEDULED | LIVE | DONE | CANCELLED
   lockedAt      DateTime?
+  dateVotingClosedAt DateTime?
+  dateSource         String?  // HR_CONFIRMED | VOTE
   updatedAt     DateTime  @updatedAt
 
   appraisal   Appraisal       @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
@@ -1482,11 +1492,22 @@ model AppraisalAuditLog {
 }
 
 model OrgAppraisalSettings {
-  id                       String   @id @default(cuid())
-  orgId                    String   @unique
-  availabilityDeadlineDays Int      @default(2)
-  reviewerRoleWeights      Json     @default("{\"HR\":1,\"TL\":1,\"MANAGER\":1}")
-  updatedAt                DateTime @updatedAt
+  id                        String   @id @default(cuid())
+  orgId                     String   @unique
+  availabilityDeadlineDays  Int      @default(2)
+  selfAssessmentWindowDays  Int      @default(3)
+  reviewerRatingWindowDays  Int      @default(3)
+  dateVotingWindowDays      Int      @default(2)
+  arrearBufferDays          Int      @default(7)
+  enableDateVoting          Boolean  @default(false)
+  enableRatingDisagreement  Boolean  @default(false)
+  useRevisedScores          Boolean  @default(true)
+  reviewerRoleWeights       Json     @default("{\"HR\":1,\"TL\":1,\"MANAGER\":1}")
+  gradeBands                Json?
+  hikeTable                 Json?
+  escalationLadder          Json?
+  digestDayOfWeek           Int      @default(1)
+  updatedAt                 DateTime @updatedAt
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -1711,6 +1732,71 @@ model MeetingReschedule {
   appraisal     Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
   rescheduledBy User      @relation("RescheduledBy", fields: [rescheduledById], references: [id])
   confirmedBy   User?     @relation("RescheduleConfirmer", fields: [confirmedById], references: [id])
+}
+
+// Reviewer self-evaluation of rating accuracy after the aggregate is visible,
+// plus optional revised per-criterion scores. Gated by
+// OrgAppraisalSettings.enableRatingDisagreement.
+model ReviewerRatingReview {
+  id             String    @id @default(cuid())
+  appraisalId    String
+  reviewerId     String // -> AppraisalReviewer.id
+  selfEval       String    @default("AGREE") // AGREE | OVERRATED | UNDERRATED
+  revisedRatings Json?
+  reason         String?
+  status         String    @default("DRAFT") // DRAFT | SUBMITTED
+  submittedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  appraisal Appraisal         @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
+  reviewer  AppraisalReviewer @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([appraisalId, reviewerId])
+  @@index([appraisalId])
+}
+
+// Reviewer vote on a management-proposed meeting date. Gated by
+// OrgAppraisalSettings.enableDateVoting.
+model MeetingDateVote {
+  id          String   @id @default(cuid())
+  appraisalId String
+  reviewerId  String // -> AppraisalReviewer.id
+  votedDate   DateTime
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appraisal Appraisal         @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
+  reviewer  AppraisalReviewer @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([appraisalId, reviewerId])
+  @@index([appraisalId])
+}
+
+// Salary arrear owed when the appraisal meeting is held more than
+// OrgAppraisalSettings.arrearBufferDays after self-assessment submission.
+model AppraisalArrear {
+  id              String    @id @default(cuid())
+  appraisalId     String    @unique
+  periodFrom      DateTime
+  periodTo        DateTime
+  arrearDays      Int
+  dailyRate       Float
+  amount          Float
+  annualIncrement Float
+  status          String    @default("PENDING_APPROVAL") // PENDING_APPROVAL | APPROVED | PAID | REJECTED
+  approvedById    String?
+  decidedAt       DateTime?
+  paidAt          DateTime?
+  payrollRef      String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  appraisal Appraisal @relation(fields: [appraisalId], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }
 
 model CrmTicket {

@@ -28,6 +28,8 @@ const PATH_LABELS: Record<string, string> = {
   "/ams/criteria": "Criteria Questions",
   "/ams/slabs": "Increment Slabs",
   "/ams/extensions": "Extensions",
+  "/ams/arrears": "Arrears",
+  "/ams/analytics": "Analytics",
   "/ams/kpi": "Department KPI",
   "/ams/history": "History",
   "/ams/settings": "Settings",

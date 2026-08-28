@@ -5,6 +5,7 @@ import { getUsersWithPermission } from "@/modules/notifications/service";
 import { assertTransition, type Stage, type ReviewerKind } from "./workflow";
 import { computeSchedule, dueInMonth, addBusinessDays, type AppraisalKind } from "./due-dates";
 import { getAppraisalSettings } from "./settings";
+import { computeArrear } from "./arrears";
 import { getNow, setFrozenDate } from "@/lib/clock";
 import {
   buildDefaultSelfFormTemplate,
@@ -269,7 +270,8 @@ async function maybeOpenSelfAssessment(appraisalId: string): Promise<boolean> {
   if (!deadlinePassed) return false;
 
   const holidaySet = await loadHolidaySet(appraisal.cycle.orgId, appraisal.employee.branchId);
-  const selfDeadline = addBusinessDays(await getNow(), 3, holidaySet);
+  const selfSettings = await getAppraisalSettings(appraisal.cycle.orgId);
+  const selfDeadline = addBusinessDays(await getNow(), selfSettings.selfAssessmentWindowDays, holidaySet);
 
   await db.appraisal.update({
     where: { id: appraisalId },
@@ -837,11 +839,17 @@ export async function getAppraisal(id: string) {
       selfAssessment: true,
       reviewerRatings: { include: { reviewer: { include: { user: { select: { id: true, name: true } } } } } },
       managementReviews: { include: { reviewer: { select: { id: true, name: true } } } },
+      dateVotes: {
+        include: { reviewer: { include: { user: { select: { id: true, name: true } } } } },
+      },
+      meetingReschedules: { orderBy: { createdAt: "desc" } },
+      arrear: true,
       meeting: {
         select: {
           id: true,
           scheduledAt: true,
           status: true,
+          dateSource: true,
           minutes: {
             include: { author: { select: { id: true, name: true } } },
           },
@@ -880,7 +888,8 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
         },
       },
       employee: { select: { name: true, designation: true } },
-      cycle: { select: { name: true, year: true } },
+      cycle: { select: { orgId: true, name: true, year: true } },
+      managementReviews: { select: { proposedDates: true } },
       reviewers: {
         select: {
           id: true,
@@ -898,16 +907,37 @@ export async function getMyReviewView(appraisalId: string, userId: string) {
             take: 1,
             select: { ratings: true, submittedAt: true, updatedAt: true, status: true },
           },
+          ratingReviews: {
+            select: { selfEval: true, revisedRatings: true, reason: true, status: true, submittedAt: true },
+          },
+          dateVotes: { select: { votedDate: true, comment: true } },
         },
       },
     },
   });
   if (!result) return null;
 
+  const settings = await getAppraisalSettings(result.cycle.orgId);
+  const myReviewer = result.reviewers.find(
+    (reviewer) => reviewer.userId === userId && reviewer.kind !== "MANAGEMENT",
+  ) ?? null;
+  const proposedMeetingDates = [
+    ...new Set(
+      result.managementReviews
+        .flatMap((review) => review.proposedDates)
+        .map((date) => date.toISOString()),
+    ),
+  ].sort();
+
   return {
     ...result,
     reviewers: result.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT"),
-    myReviewer: result.reviewers.find((reviewer) => reviewer.userId === userId && reviewer.kind !== "MANAGEMENT") ?? null,
+    myReviewer,
+    ratingDisagreementEnabled: settings.enableRatingDisagreement,
+    myRatingReview: myReviewer?.ratingReviews[0] ?? null,
+    dateVotingEnabled: settings.enableDateVoting,
+    proposedMeetingDates,
+    myDateVote: myReviewer?.dateVotes[0] ?? null,
   };
 }
 
@@ -1077,7 +1107,8 @@ export async function advancePastDeadlineStages(): Promise<{ selfAdvanced: numbe
   });
   for (const a of selfDue) {
     const holidaySet = await loadHolidaySet(a.cycle.orgId, a.employee.branchId);
-    const reviewerDeadline = addBusinessDays(now, 3, holidaySet);
+    const stageSettings = await getAppraisalSettings(a.cycle.orgId);
+    const reviewerDeadline = addBusinessDays(now, stageSettings.reviewerRatingWindowDays, holidaySet);
     await db.appraisal.update({
       where: { id: a.id },
       data: { stage: "REVIEWER_RATING", reviewerRatingDeadline: reviewerDeadline },
@@ -1174,6 +1205,26 @@ async function notifyManagementReviewOpen(appraisalId: string, orgId: string) {
       link: `/ams/appraisals/${appraisalId}`,
     }
   );
+
+  // Prompt reviewers to confirm rating accuracy when the org uses the step.
+  const settings = await getAppraisalSettings(orgId);
+  if (!settings.enableRatingDisagreement) return;
+  const reviewers = await db.appraisalReviewer.findMany({
+    where: { appraisalId, kind: { in: ["HR", "TL", "MANAGER"] } },
+    include: { ratingReviews: { select: { status: true } } },
+  });
+  const pendingReviewerIds = reviewers
+    .filter((row) => !row.ratingReviews.some((review) => isSubmittedStatus(review.status)))
+    .map((row) => row.userId);
+  if (pendingReviewerIds.length > 0) {
+    await notifyMany([...new Set(pendingReviewerIds)], {
+      orgId,
+      kind: "RATING_REVIEW_OPEN",
+      title: "Confirm your rating accuracy",
+      body: "Ratings are complete. Confirm whether your rating was accurate, or submit revised scores.",
+      link: `/ams/my-reviews/${appraisalId}`,
+    });
+  }
 }
 
 async function openManagementReviewStage(appraisalId: string, reason?: string) {
@@ -1393,6 +1444,125 @@ export async function submitReviewerRating(
   await openManagementReviewStage(appraisalId);
 }
 
+export type ReviewerRatingReviewInput = {
+  selfEval: "AGREE" | "OVERRATED" | "UNDERRATED";
+  revisedCategoryPoints?: Record<string, number>;
+  reason?: string;
+};
+
+// Reviewer confirms whether their submitted rating was accurate once the
+// aggregate is visible, and may submit revised per-criterion scores.
+// Gated by OrgAppraisalSettings.enableRatingDisagreement.
+export async function submitReviewerRatingReview(
+  appraisalId: string,
+  reviewerUserId: string,
+  input: ReviewerRatingReviewInput,
+  action: SubmissionStatus,
+) {
+  const now = await getNow();
+  const reviewer = await db.appraisalReviewer.findFirstOrThrow({
+    where: { appraisalId, userId: reviewerUserId },
+    include: {
+      appraisal: { include: { cycle: { select: { orgId: true, name: true } } } },
+      ratings: { select: { status: true } },
+    },
+  });
+
+  if (!["HR", "TL", "MANAGER"].includes(reviewer.kind)) {
+    throw new Error("Only assigned HR, TL, or Manager reviewers have a rating review.");
+  }
+
+  const settings = await getAppraisalSettings(reviewer.appraisal.cycle.orgId);
+  if (!settings.enableRatingDisagreement) {
+    throw new Error("The rating disagreement step is not enabled for this organisation.");
+  }
+  if (reviewer.appraisal.stage !== "MANAGEMENT_REVIEW") {
+    throw new Error("The rating review is only open during management review.");
+  }
+  if (!reviewer.ratings.some((rating) => isSubmittedStatus(rating.status))) {
+    throw new Error("Submit your reviewer rating before recording a rating review.");
+  }
+
+  const criteria = await loadCriteriaPointsForPhase(
+    reviewer.appraisal.cycle.orgId,
+    "REVIEWER",
+    reviewer.kind as EvaluatorRole,
+  );
+  const allowedIds = new Set(criteria.map((criterion) => criterion.id));
+  const maxByCriterion = new Map(criteria.map((criterion) => [criterion.id, criterion.maxPoints]));
+
+  const cleanRevised: Record<string, number> = {};
+  for (const [criterionId, value] of Object.entries(input.revisedCategoryPoints ?? {})) {
+    if (!allowedIds.has(criterionId)) continue;
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) continue;
+    const max = maxByCriterion.get(criterionId) ?? 0;
+    cleanRevised[criterionId] = Math.min(Math.max(numeric, 0), max || numeric);
+  }
+
+  const revisedRatings =
+    input.selfEval !== "AGREE" && Object.keys(cleanRevised).length > 0
+      ? { version: "v2", categoryPoints: cleanRevised }
+      : undefined;
+
+  if (action === "SUBMITTED" && input.selfEval !== "AGREE" && !input.reason?.trim()) {
+    throw new Error("Give a reason when your rating was over- or under-stated.");
+  }
+
+  const existing = await db.reviewerRatingReview.findUnique({
+    where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewer.id } },
+    select: { selfEval: true, revisedRatings: true, reason: true, status: true },
+  });
+
+  await db.reviewerRatingReview.upsert({
+    where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewer.id } },
+    update: {
+      selfEval: input.selfEval,
+      revisedRatings: revisedRatings ?? undefined,
+      reason: input.reason?.trim() || null,
+      status: action,
+      submittedAt: action === "SUBMITTED" ? now : null,
+    },
+    create: {
+      appraisalId,
+      reviewerId: reviewer.id,
+      selfEval: input.selfEval,
+      revisedRatings: revisedRatings ?? undefined,
+      reason: input.reason?.trim() || null,
+      status: action,
+      submittedAt: action === "SUBMITTED" ? now : null,
+    },
+  });
+
+  await createAuditEvent({
+    appraisalId,
+    actorId: reviewerUserId,
+    actorRole: reviewer.kind,
+    action: action === "SUBMITTED" ? "RATING_REVIEW_SUBMITTED" : "RATING_REVIEW_DRAFT_SAVED",
+    note:
+      input.selfEval === "AGREE"
+        ? "Reviewer confirmed the original rating was accurate."
+        : `Reviewer marked the rating ${input.selfEval === "OVERRATED" ? "over-stated" : "under-stated"}.`,
+    fromStage: reviewer.appraisal.stage,
+    toStage: reviewer.appraisal.stage,
+    oldValue: existing ?? null,
+    newValue: { selfEval: input.selfEval, revisedRatings: revisedRatings ?? null, reason: input.reason?.trim() || null },
+  });
+
+  if (action !== "SUBMITTED") return;
+
+  const reviewers = await db.appraisalReviewer.findMany({
+    where: { appraisalId, kind: { in: ["HR", "TL", "MANAGER"] } },
+    include: { ratingReviews: { select: { status: true } } },
+  });
+  const allReviewed = reviewers.every((row) =>
+    row.ratingReviews.some((review) => isSubmittedStatus(review.status)),
+  );
+  if (allReviewed) {
+    await notifyManagementReviewOpen(appraisalId, reviewer.appraisal.cycle.orgId);
+  }
+}
+
 export async function submitManagementReview(
   appraisalId: string,
   reviewerUserId: string,
@@ -1510,6 +1680,36 @@ export async function submitManagementReview(
 
   if (action !== "SUBMITTED") return;
 
+  const mgmtSettings = await getAppraisalSettings(reviewer.appraisal.cycle.orgId);
+
+  if (mgmtSettings.enableDateVoting && normalizedProposedDates.length > 1) {
+    const holidaySet = await loadHolidaySet(reviewer.appraisal.cycle.orgId, null);
+    const votingDeadline = addBusinessDays(now, mgmtSettings.dateVotingWindowDays, holidaySet);
+    await db.appraisal.update({
+      where: { id: appraisalId },
+      data: { stage: "DATE_VOTING", dateVotingDeadline: votingDeadline },
+    });
+    await logTransition(appraisalId, "MANAGEMENT_REVIEW", "DATE_VOTING");
+
+    const voters = await db.appraisalReviewer.findMany({
+      where: { appraisalId, kind: { in: ["HR", "TL", "MANAGER"] } },
+      select: { userId: true },
+    });
+    await notifyMany(
+      [...new Set([reviewer.appraisal.employeeId, ...voters.map((v) => v.userId)])],
+      {
+        kind: "MEETING_DATE_VOTING",
+        orgId: reviewer.appraisal.cycle.orgId,
+        title: `Vote on the meeting date for ${reviewer.appraisal.employee.name}`,
+        body: `Management proposed ${normalizedProposedDates.length} options. Cast your preferred date before ${votingDeadline.toLocaleDateString("en-IN")}.`,
+        link: `/ams/appraisals/${appraisalId}`,
+        email: true,
+        payload: { appraisalId, proposedDates: normalizedProposedDates.map((date) => date.toISOString()) },
+      },
+    );
+    return;
+  }
+
   await db.appraisal.update({ where: { id: appraisalId }, data: { stage: "MEETING_PENDING" } });
   await logTransition(appraisalId, "MANAGEMENT_REVIEW", "MEETING_PENDING");
 
@@ -1539,6 +1739,270 @@ export async function submitManagementReview(
       },
     }
   );
+}
+
+// ─── Meeting date-voting ──────────────────────────────────────────────────────
+
+function pickWinningVoteDate(
+  proposedDates: Date[],
+  votes: { votedDate: Date }[],
+): Date | null {
+  if (proposedDates.length === 0) return null;
+  const tally = new Map<number, number>();
+  for (const vote of votes) {
+    const key = vote.votedDate.getTime();
+    tally.set(key, (tally.get(key) ?? 0) + 1);
+  }
+  const ranked = [...proposedDates].sort((left, right) => {
+    const diff = (tally.get(right.getTime()) ?? 0) - (tally.get(left.getTime()) ?? 0);
+    if (diff !== 0) return diff;
+    return left.getTime() - right.getTime();
+  });
+  return ranked[0] ?? null;
+}
+
+export async function castMeetingDateVote(
+  appraisalId: string,
+  userId: string,
+  votedDate: Date,
+  comment?: string,
+) {
+  const reviewer = await db.appraisalReviewer.findFirstOrThrow({
+    where: { appraisalId, userId, kind: { in: ["HR", "TL", "MANAGER"] } },
+    include: {
+      appraisal: {
+        include: {
+          cycle: { select: { orgId: true, name: true } },
+          managementReviews: { select: { proposedDates: true } },
+        },
+      },
+    },
+  });
+
+  if (reviewer.appraisal.stage !== "DATE_VOTING") {
+    throw new Error("Meeting date-voting is not currently open.");
+  }
+
+  const proposedDates = normalizeMeetingDateOptions(
+    reviewer.appraisal.managementReviews.flatMap((review) => review.proposedDates),
+  );
+  if (!proposedDates.some((date) => date.getTime() === votedDate.getTime())) {
+    throw new Error("Pick one of the proposed meeting dates.");
+  }
+
+  await db.meetingDateVote.upsert({
+    where: { appraisalId_reviewerId: { appraisalId, reviewerId: reviewer.id } },
+    update: { votedDate, comment: comment?.trim() || null },
+    create: { appraisalId, reviewerId: reviewer.id, votedDate, comment: comment?.trim() || null },
+  });
+
+  await createAuditEvent({
+    appraisalId,
+    actorId: userId,
+    actorRole: reviewer.kind,
+    action: "MEETING_DATE_VOTE_CAST",
+    note: `Voted for ${votedDate.toLocaleString("en-IN")}`,
+    fromStage: "DATE_VOTING",
+    toStage: "DATE_VOTING",
+  });
+
+  const [voterCount, castVotes] = await Promise.all([
+    db.appraisalReviewer.count({ where: { appraisalId, kind: { in: ["HR", "TL", "MANAGER"] } } }),
+    db.meetingDateVote.findMany({ where: { appraisalId }, select: { votedDate: true } }),
+  ]);
+
+  if (castVotes.length >= voterCount) {
+    await closeDateVoting(appraisalId, "All reviewers voted");
+  }
+}
+
+export async function closeDateVoting(appraisalId: string, reason: string) {
+  const appraisal = await db.appraisal.findUniqueOrThrow({
+    where: { id: appraisalId },
+    include: {
+      cycle: { select: { orgId: true, name: true } },
+      employee: { select: { name: true } },
+      reviewers: { where: { kind: "HR" }, select: { userId: true } },
+      managementReviews: { select: { proposedDates: true } },
+      dateVotes: { select: { votedDate: true } },
+    },
+  });
+  if (appraisal.stage !== "DATE_VOTING") return;
+
+  const proposedDates = normalizeMeetingDateOptions(
+    appraisal.managementReviews.flatMap((review) => review.proposedDates),
+  );
+  const winner = pickWinningVoteDate(proposedDates, appraisal.dateVotes);
+
+  await db.appraisal.update({
+    where: { id: appraisalId },
+    data: { stage: "MEETING_PENDING" },
+  });
+  await logTransition(appraisalId, "DATE_VOTING", "MEETING_PENDING", undefined, reason);
+  await createAuditEvent({
+    appraisalId,
+    action: "MEETING_DATE_VOTING_CLOSED",
+    note: winner ? `Leading date: ${winner.toLocaleString("en-IN")}` : "No votes cast",
+    fromStage: "DATE_VOTING",
+    toStage: "MEETING_PENDING",
+  });
+
+  const hrRecipients = appraisal.reviewers.length > 0
+    ? appraisal.reviewers.map((row) => row.userId)
+    : await getUsersWithPermission(appraisal.cycle.orgId, "ams.meeting.confirm");
+  await notifyMany([...new Set(hrRecipients)], {
+    kind: "MEETING_PENDING",
+    orgId: appraisal.cycle.orgId,
+    title: `Confirm the meeting date for ${appraisal.employee.name}`,
+    body: winner
+      ? `Reviewer voting closed. Leading date: ${winner.toLocaleString("en-IN")}. Confirm to finalise.`
+      : `Reviewer voting closed with no votes. Pick a date to finalise.`,
+    link: `/ams/appraisals/${appraisalId}`,
+    email: true,
+    payload: { appraisalId, suggestedDate: winner?.toISOString() ?? null },
+  });
+}
+
+export async function sweepDateVotingDeadlines(): Promise<number> {
+  const now = await getNow();
+  const due = await db.appraisal.findMany({
+    where: { stage: "DATE_VOTING", dateVotingDeadline: { lte: now } },
+    select: { id: true },
+  });
+  for (const row of due) {
+    await closeDateVoting(row.id, "Voting deadline passed");
+  }
+  return due.length;
+}
+
+// ─── Meeting reschedule ───────────────────────────────────────────────────────
+
+export async function requestMeetingReschedule(
+  appraisalId: string,
+  userId: string,
+  newDate: Date,
+  reason: string,
+) {
+  const appraisal = await db.appraisal.findUniqueOrThrow({
+    where: { id: appraisalId },
+    include: {
+      cycle: { select: { orgId: true, name: true } },
+      employee: { select: { name: true } },
+      meeting: true,
+    },
+  });
+  if (!appraisal.meeting || appraisal.meeting.status === "DONE") {
+    throw new Error("There is no active meeting to reschedule.");
+  }
+  if (!reason.trim()) {
+    throw new Error("Give a reason for the reschedule request.");
+  }
+
+  const created = await db.meetingReschedule.create({
+    data: {
+      appraisalId,
+      originalDate: appraisal.meeting.scheduledAt,
+      newDate,
+      reason: reason.trim(),
+      status: "PENDING",
+      rescheduledById: userId,
+    },
+  });
+
+  await createAuditEvent({
+    appraisalId,
+    actorId: userId,
+    action: "MEETING_RESCHEDULE_REQUESTED",
+    note: `Requested move to ${newDate.toLocaleString("en-IN")}: ${reason.trim()}`,
+    fromStage: appraisal.stage,
+    toStage: appraisal.stage,
+    newValue: { newDate: newDate.toISOString(), reason: reason.trim() },
+  });
+
+  const approvers = await getUsersWithPermission(appraisal.cycle.orgId, "ams.meeting.confirm");
+  await notifyMany([...new Set(approvers)], {
+    kind: "MEETING_RESCHEDULE_REQUESTED",
+    orgId: appraisal.cycle.orgId,
+    title: `Reschedule requested for ${appraisal.employee.name}`,
+    body: `Proposed new time: ${newDate.toLocaleString("en-IN")}. Reason: ${reason.trim()}`,
+    link: `/ams/appraisals/${appraisalId}`,
+    email: true,
+    payload: { appraisalId, rescheduleId: created.id },
+  });
+
+  return created;
+}
+
+export async function decideMeetingReschedule(
+  rescheduleId: string,
+  userId: string,
+  approve: boolean,
+) {
+  const row = await db.meetingReschedule.findUniqueOrThrow({
+    where: { id: rescheduleId },
+    include: {
+      appraisal: {
+        include: {
+          cycle: { select: { orgId: true, name: true } },
+          employee: { select: { name: true } },
+          reviewers: { select: { userId: true } },
+          meeting: true,
+        },
+      },
+    },
+  });
+  if (row.status !== "PENDING") {
+    throw new Error("This reschedule request has already been decided.");
+  }
+
+  const now = await getNow();
+
+  await db.meetingReschedule.update({
+    where: { id: rescheduleId },
+    data: { status: approve ? "APPROVED" : "REJECTED", confirmedById: userId },
+  });
+
+  if (approve && row.appraisal.meeting) {
+    await db.appraisalMeeting.update({
+      where: { appraisalId: row.appraisalId },
+      data: { scheduledAt: row.newDate, lockedAt: now, dateSource: "HR_CONFIRMED" },
+    });
+  }
+
+  await createAuditEvent({
+    appraisalId: row.appraisalId,
+    actorId: userId,
+    actorRole: "HR",
+    action: approve ? "MEETING_RESCHEDULE_APPROVED" : "MEETING_RESCHEDULE_REJECTED",
+    note: approve
+      ? `Meeting moved to ${row.newDate.toLocaleString("en-IN")}`
+      : "Reschedule request rejected",
+    fromStage: row.appraisal.stage,
+    toStage: row.appraisal.stage,
+    oldValue: { scheduledAt: row.originalDate.toISOString() },
+    newValue: approve ? { scheduledAt: row.newDate.toISOString() } : null,
+  });
+
+  const participants = [
+    row.appraisal.employeeId,
+    ...row.appraisal.reviewers.map((reviewer) => reviewer.userId),
+    row.rescheduledById,
+  ];
+  await notifyMany([...new Set(participants)], {
+    kind: approve ? "MEETING_RESCHEDULED" : "MEETING_RESCHEDULE_REJECTED",
+    orgId: row.appraisal.cycle.orgId,
+    title: approve
+      ? `Meeting rescheduled for ${row.appraisal.employee.name}`
+      : `Reschedule rejected for ${row.appraisal.employee.name}`,
+    body: approve
+      ? `New meeting time: ${row.newDate.toLocaleString("en-IN")}`
+      : `The request to move the meeting was rejected. Original time stands: ${row.originalDate.toLocaleString("en-IN")}`,
+    link: `/ams/appraisals/${row.appraisalId}`,
+    email: true,
+    payload: { appraisalId: row.appraisalId, rescheduleId },
+  });
+
+  return row;
 }
 
 export async function confirmMeeting(appraisalId: string, hrUserId: string, scheduledAt: Date) {
@@ -1705,9 +2169,23 @@ export async function addMeetingMinute(
 }
 
 export async function closeMeeting(appraisalId: string) {
+  const meeting = await db.appraisalMeeting.findUniqueOrThrow({
+    where: { appraisalId },
+    include: { minutes: { select: { role: true } } },
+  });
+  if (!meeting.minutes.some((minute) => minute.role === "MANAGEMENT")) {
+    throw new Error("Record the Management meeting minutes before closing the meeting.");
+  }
   await db.appraisalMeeting.update({ where: { appraisalId }, data: { status: "DONE" } });
   await db.appraisal.update({ where: { id: appraisalId }, data: { stage: "HIKE_FINALISATION" } });
   await logTransition(appraisalId, "MEETING_LIVE", "HIKE_FINALISATION");
+  await createAuditEvent({
+    appraisalId,
+    action: "MEETING_CLOSED",
+    note: "Meeting closed after Management minutes recorded.",
+    fromStage: "MEETING_LIVE",
+    toStage: "HIKE_FINALISATION",
+  });
 }
 
 export async function finaliseHike(
@@ -1724,6 +2202,9 @@ export async function finaliseHike(
       employee: { include: { employmentRecord: true } },
       reviewers: true,
       hikeDecision: true,
+      selfAssessment: { select: { submittedAt: true } },
+      meeting: { select: { scheduledAt: true } },
+      arrear: { select: { id: true } },
     },
   });
   if (appraisal.hikeDecision?.isLocked) {
@@ -1885,6 +2366,230 @@ export async function finaliseHike(
       }),
     ),
   );
+
+  // Late-meeting arrear: raise a pending-approval record when the meeting was
+  // held well after the self-assessment was submitted.
+  if (!appraisal.arrear && appraisal.selfAssessment?.submittedAt && appraisal.meeting?.scheduledAt) {
+    const arrearSettings = await getAppraisalSettings(appraisal.cycle.orgId);
+    const arrear = computeArrear({
+      selfSubmittedAt: appraisal.selfAssessment.submittedAt,
+      scheduledDate: appraisal.meeting.scheduledAt,
+      bufferDays: arrearSettings.arrearBufferDays,
+      annualIncrement: amount,
+    });
+    if (arrear) {
+      await db.appraisalArrear.create({
+        data: {
+          appraisalId,
+          periodFrom: arrear.periodFrom,
+          periodTo: arrear.periodTo,
+          arrearDays: arrear.arrearDays,
+          dailyRate: arrear.dailyRate,
+          amount: arrear.amount,
+          annualIncrement: amount,
+          status: "PENDING_APPROVAL",
+        },
+      });
+      await createAuditEvent({
+        appraisalId,
+        actorId: decidedById,
+        actorRole: "MANAGEMENT",
+        action: "ARREAR_RAISED",
+        note: `Arrear of ₹${arrear.amount.toLocaleString("en-IN")} for ${arrear.arrearDays} day(s) of delayed meeting.`,
+        fromStage: "CLOSED",
+        toStage: "CLOSED",
+        newValue: {
+          amount: arrear.amount,
+          arrearDays: arrear.arrearDays,
+          periodFrom: arrear.periodFrom.toISOString(),
+          periodTo: arrear.periodTo.toISOString(),
+        },
+      });
+      const arrearApprovers = await getUsersWithPermission(appraisal.cycle.orgId, "ams.hike.finalise");
+      await notifyMany([...new Set([...arrearApprovers, ...adminUsers, ...payrollUsers])], {
+        orgId: appraisal.cycle.orgId,
+        kind: "ARREAR_RAISED",
+        title: `Arrear pending approval for ${appraisal.employee.name}`,
+        body: `₹${arrear.amount.toLocaleString("en-IN")} arrear for ${arrear.arrearDays} day(s) of delayed appraisal meeting.`,
+        link: `/ams/arrears`,
+        email: true,
+        payload: { appraisalId, amount: arrear.amount },
+      });
+    }
+  }
+}
+
+// ─── Outcome acknowledgement ─────────────────────────────────────────────────
+
+export async function acknowledgeOutcome(appraisalId: string, userId: string) {
+  const appraisal = await db.appraisal.findUniqueOrThrow({
+    where: { id: appraisalId },
+    select: {
+      employeeId: true,
+      stage: true,
+      outcomeAckedAt: true,
+      hikeDecision: { select: { id: true } },
+      cycle: { select: { orgId: true } },
+    },
+  });
+  if (appraisal.employeeId !== userId) {
+    throw new Error("Only the appraisee can acknowledge this outcome.");
+  }
+  if (!appraisal.hikeDecision) {
+    throw new Error("There is no finalised outcome to acknowledge yet.");
+  }
+  if (appraisal.outcomeAckedAt) return;
+
+  const now = await getNow();
+  await db.appraisal.update({
+    where: { id: appraisalId },
+    data: { outcomeAckedAt: now, outcomeAckedById: userId },
+  });
+  await createAuditEvent({
+    appraisalId,
+    actorId: userId,
+    actorRole: "EMPLOYEE",
+    action: "OUTCOME_ACKNOWLEDGED",
+    note: "Appraisee acknowledged the appraisal outcome.",
+    fromStage: appraisal.stage,
+    toStage: appraisal.stage,
+  });
+
+  const hrRecipients = await getUsersWithPermission(appraisal.cycle.orgId, "ams.appraisal.view_all");
+  await notifyMany([...new Set(hrRecipients)], {
+    orgId: appraisal.cycle.orgId,
+    kind: "OUTCOME_ACKNOWLEDGED",
+    title: "Appraisal outcome acknowledged",
+    body: "The appraisee has acknowledged their appraisal outcome letter.",
+    link: `/ams/appraisals/${appraisalId}`,
+  });
+}
+
+// ─── Arrears ─────────────────────────────────────────────────────────────────
+
+export async function listArrears(orgId: string, status?: string) {
+  return db.appraisalArrear.findMany({
+    where: {
+      ...(status ? { status } : {}),
+      appraisal: { cycle: { orgId } },
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      appraisal: {
+        select: {
+          id: true,
+          employee: { select: { id: true, name: true, designation: true } },
+          cycle: { select: { name: true, year: true } },
+          meeting: { select: { scheduledAt: true } },
+        },
+      },
+    },
+  });
+}
+
+export async function decideArrear(
+  arrearId: string,
+  actorId: string,
+  action: "APPROVE" | "REJECT" | "MARK_PAID",
+  notes?: string,
+) {
+  const row = await db.appraisalArrear.findUniqueOrThrow({
+    where: { id: arrearId },
+    include: {
+      appraisal: {
+        select: {
+          id: true,
+          employeeId: true,
+          employee: { select: { name: true, employmentRecord: { select: { payrollMeta: true } } } },
+          cycle: { select: { orgId: true } },
+          reviewers: { where: { kind: "HR" }, select: { userId: true } },
+        },
+      },
+    },
+  });
+
+  const now = await getNow();
+  const orgId = row.appraisal.cycle.orgId;
+
+  if (action === "APPROVE") {
+    if (row.status !== "PENDING_APPROVAL") throw new Error("Only a pending arrear can be approved.");
+    await db.appraisalArrear.update({
+      where: { id: arrearId },
+      data: { status: "APPROVED", approvedById: actorId, decidedAt: now, notes: notes?.trim() || row.notes },
+    });
+
+    // Payroll handoff: append to payrollMeta.arrears and raise a payroll task.
+    const payrollMeta = (row.appraisal.employee.employmentRecord?.payrollMeta ?? null) as
+      | { arrears?: Record<string, unknown>[] | null }
+      | null;
+    const arrearRow = {
+      source: "APPRAISAL",
+      appraisalId: row.appraisalId,
+      amount: row.amount,
+      arrearDays: row.arrearDays,
+      periodFrom: row.periodFrom.toISOString().slice(0, 10),
+      periodTo: row.periodTo.toISOString().slice(0, 10),
+      approvedAt: now.toISOString(),
+      status: "APPROVED",
+    };
+    const existingArrears = Array.isArray(payrollMeta?.arrears) ? payrollMeta?.arrears : [];
+    await db.employmentRecord.update({
+      where: { userId: row.appraisal.employeeId },
+      data: {
+        payrollMeta: {
+          ...(payrollMeta ?? {}),
+          arrears: [arrearRow, ...existingArrears],
+        } as never,
+      },
+    });
+    const payrollUsers = await getUsersWithPermission(orgId, "hrms.salary.manage");
+    await Promise.all(
+      [...new Set(payrollUsers)].map((userId) =>
+        db.todoTask.create({
+          data: {
+            userId,
+            orgId,
+            title: `Pay appraisal arrear for ${row.appraisal.employee.name}`,
+            description: `Approved arrear ₹${row.amount.toLocaleString("en-IN")} for ${row.arrearDays} day(s) (${arrearRow.periodFrom} to ${arrearRow.periodTo}).`,
+            reminderEnabled: true,
+          },
+        }),
+      ),
+    );
+  } else if (action === "REJECT") {
+    if (row.status !== "PENDING_APPROVAL") throw new Error("Only a pending arrear can be rejected.");
+    await db.appraisalArrear.update({
+      where: { id: arrearId },
+      data: { status: "REJECTED", approvedById: actorId, decidedAt: now, notes: notes?.trim() || row.notes },
+    });
+  } else {
+    if (row.status !== "APPROVED") throw new Error("Only an approved arrear can be marked paid.");
+    await db.appraisalArrear.update({
+      where: { id: arrearId },
+      data: { status: "PAID", paidAt: now, payrollRef: notes?.trim() || null },
+    });
+  }
+
+  await createAppraisalAuditLogCompat({
+    appraisalId: row.appraisalId,
+    actorId,
+    actorRole: "MANAGEMENT",
+    action: `ARREAR_${action}`,
+    toStage: "NO_STAGE_CHANGE",
+    note: notes?.trim(),
+  });
+
+  const recipients = [
+    row.appraisal.employeeId,
+    ...row.appraisal.reviewers.map((reviewer) => reviewer.userId),
+  ];
+  await notifyMany([...new Set(recipients)], {
+    orgId,
+    kind: `ARREAR_${action}`,
+    title: `Arrear ${action === "MARK_PAID" ? "paid" : action.toLowerCase()} for ${row.appraisal.employee.name}`,
+    body: `₹${row.amount.toLocaleString("en-IN")} arrear is now ${action === "APPROVE" ? "approved" : action === "REJECT" ? "rejected" : "paid"}.`,
+    link: `/ams/appraisals/${row.appraisalId}`,
+  });
 }
 
 export async function computeAppraisalScore(
@@ -1896,6 +2601,7 @@ export async function computeAppraisalScore(
     include: {
       selfAssessment: { select: { answers: true } },
       reviewerRatings: { include: { reviewer: { select: { kind: true } } } },
+      ratingReviews: { where: { status: "SUBMITTED" }, select: { reviewerId: true, revisedRatings: true } },
       managementReviews: { select: { ratings: true } },
       cycle: { select: { orgId: true } },
       employee: { include: { employmentRecord: { select: { payrollMeta: true, ctc: true } } } },
@@ -1940,13 +2646,33 @@ export async function computeAppraisalScore(
     return max > 0 ? normalizeScore(raw, max) : null;
   })();
 
+  // Revised per-criterion scores from the reviewer rating-disagreement step
+  // override the reviewer's original categoryPoints when the org opts in.
+  const revisedByReviewer = new Map<string, Record<string, number>>();
+  if (settings.useRevisedScores) {
+    for (const review of appraisal.ratingReviews) {
+      const revised = (review.revisedRatings as { categoryPoints?: Record<string, number> } | null)?.categoryPoints;
+      if (revised && Object.keys(revised).length > 0) {
+        revisedByReviewer.set(review.reviewerId, revised);
+      }
+    }
+  }
+
   const reviewerScores: { kind: string; normalized: number }[] = [];
   for (const rr of appraisal.reviewerRatings) {
     const kind = rr.reviewer?.kind ?? "HR";
-    const { raw, max } = sumPoints(
-      rr.ratings as Record<string, unknown>,
-      criteriaForPhaseRole("REVIEWER", kind),
-    );
+    const original = rr.ratings as Record<string, unknown>;
+    const revised = revisedByReviewer.get(rr.reviewerId);
+    const answers = revised
+      ? {
+          ...original,
+          categoryPoints: {
+            ...((original.categoryPoints as Record<string, number> | undefined) ?? {}),
+            ...revised,
+          },
+        }
+      : original;
+    const { raw, max } = sumPoints(answers, criteriaForPhaseRole("REVIEWER", kind));
     if (max > 0) reviewerScores.push({ kind, normalized: normalizeScore(raw, max) });
   }
 
@@ -2072,6 +2798,139 @@ export async function notifyStalePendingReviewers(): Promise<number> {
   }
 
   return stale.length;
+}
+
+// ─── Overdue escalation + weekly digest ──────────────────────────────────────
+
+const ESCALATION_STAGE_DEADLINE: { stage: string; field: "availabilityDeadline" | "selfAssessmentDeadline" | "reviewerRatingDeadline" | "dateVotingDeadline"; label: string }[] = [
+  { stage: "REVIEWERS_ASSIGNED", field: "availabilityDeadline", label: "reviewer availability" },
+  { stage: "SELF_ASSESSMENT_OPEN", field: "selfAssessmentDeadline", label: "self-assessment" },
+  { stage: "REVIEWER_RATING", field: "reviewerRatingDeadline", label: "reviewer rating" },
+  { stage: "DATE_VOTING", field: "dateVotingDeadline", label: "meeting date voting" },
+];
+
+async function resolveEscalationRecipients(
+  target: "REVIEWER" | "TL" | "HR" | "ADMIN",
+  appraisal: { id: string; cycleOrgId: string; reviewers: { userId: string; kind: string; availabilityStatus: string }[] },
+): Promise<string[]> {
+  if (target === "REVIEWER") {
+    return appraisal.reviewers.filter((r) => r.kind !== "MANAGEMENT").map((r) => r.userId);
+  }
+  if (target === "TL") {
+    const tlReviewers = appraisal.reviewers.filter((r) => r.kind === "TL").map((r) => r.userId);
+    if (tlReviewers.length > 0) return tlReviewers;
+    const rows = await db.userRole.findMany({
+      where: { role: { orgId: appraisal.cycleOrgId, name: "TL" } },
+      select: { userId: true },
+    });
+    return rows.map((row) => row.userId);
+  }
+  if (target === "HR") {
+    return getUsersWithPermission(appraisal.cycleOrgId, "ams.meeting.confirm");
+  }
+  return getUsersWithPermission(appraisal.cycleOrgId, "ams.appraisal.view_all");
+}
+
+export async function escalateOverdueStages(): Promise<number> {
+  const now = await getNow();
+  let fired = 0;
+
+  for (const { stage, field, label } of ESCALATION_STAGE_DEADLINE) {
+    const overdue = await db.appraisal.findMany({
+      where: { stage, [field]: { lte: now } },
+      include: {
+        cycle: { select: { orgId: true, name: true } },
+        employee: { select: { name: true } },
+        reviewers: { select: { userId: true, kind: true, availabilityStatus: true } },
+        auditLog: { where: { action: { startsWith: "ESCALATION:" } }, select: { action: true } },
+      },
+    });
+
+    for (const appraisal of overdue) {
+      const deadline = appraisal[field];
+      if (!deadline) continue;
+      const daysOverdue = Math.floor((now.getTime() - deadline.getTime()) / (24 * 60 * 60 * 1000));
+      if (daysOverdue < 1) continue;
+
+      const settings = await getAppraisalSettings(appraisal.cycle.orgId);
+      const alreadyFired = new Set(appraisal.auditLog.map((entry) => entry.action));
+
+      for (const step of settings.escalationLadder) {
+        if (daysOverdue < step.afterDays) continue;
+        const marker = `ESCALATION:${stage}:${step.afterDays}:${step.notify}`;
+        if (alreadyFired.has(marker)) continue;
+
+        const recipients = await resolveEscalationRecipients(step.notify, {
+          id: appraisal.id,
+          cycleOrgId: appraisal.cycle.orgId,
+          reviewers: appraisal.reviewers,
+        });
+        if (recipients.length > 0) {
+          await notifyMany([...new Set(recipients)], {
+            orgId: appraisal.cycle.orgId,
+            kind: "APPRAISAL_STAGE_OVERDUE",
+            title: `Overdue: ${label} for ${appraisal.employee.name}`,
+            body: `The ${label} step is ${daysOverdue} day(s) past its deadline (${appraisal.cycle.name}). Please act to unblock the appraisal.`,
+            link: `/ams/appraisals/${appraisal.id}`,
+            email: step.notify === "HR" || step.notify === "ADMIN",
+          });
+        }
+        await createAppraisalAuditLogCompat({
+          appraisalId: appraisal.id,
+          action: marker,
+          toStage: "NO_STAGE_CHANGE",
+          note: `Escalated ${label} to ${step.notify} after ${step.afterDays} day(s) overdue.`,
+        });
+        fired++;
+      }
+    }
+  }
+
+  return fired;
+}
+
+export async function sendAppraisalDigest(referenceDate?: Date): Promise<number> {
+  const now = referenceDate ?? (await getNow());
+  const orgs = await db.organisation.findMany({ where: { active: true }, select: { id: true, name: true } });
+  let sent = 0;
+
+  for (const org of orgs) {
+    const settings = await getAppraisalSettings(org.id);
+    if (now.getDay() !== settings.digestDayOfWeek) continue;
+
+    const grouped = await db.appraisal.groupBy({
+      by: ["stage"],
+      where: { cycle: { orgId: org.id }, stage: { notIn: ["CLOSED", "DUE_NOTIFIED"] } },
+      _count: { _all: true },
+    });
+    if (grouped.length === 0) continue;
+
+    const lines = grouped
+      .map((row) => `- ${humanizeStage(row.stage)}: ${row._count._all}`)
+      .join("\n");
+    const admins = await getUsersWithPermission(org.id, "ams.appraisal.view_all");
+    if (admins.length === 0) continue;
+
+    await notifyMany([...new Set(admins)], {
+      orgId: org.id,
+      kind: "APPRAISAL_WEEKLY_DIGEST",
+      title: "Weekly appraisal digest",
+      body: `Open appraisals by stage:\n${lines}`,
+      link: `/ams/appraisals`,
+      email: true,
+    });
+    sent++;
+  }
+
+  return sent;
+}
+
+function humanizeStage(stage: string): string {
+  return stage
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 export async function resetAmsData(orgId: string): Promise<void> {

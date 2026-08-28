@@ -83,6 +83,7 @@ const STAGE_COLOR: Record<string, string> = {
   REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent border-mono-border",
   MANAGEMENT_REVIEW:
     "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  DATE_VOTING: "bg-mono-accent/10 text-mono-accent border-mono-border",
   MEETING_PENDING: "bg-mono-accent/10 text-mono-accent border-mono-border",
   MEETING_LIVE:
     "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",

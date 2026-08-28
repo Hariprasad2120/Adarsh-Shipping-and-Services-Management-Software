@@ -6,6 +6,7 @@ export type Stage =
   | "SELF_ASSESSMENT_OPEN"
   | "REVIEWER_RATING"
   | "MANAGEMENT_REVIEW"
+  | "DATE_VOTING"
   | "MEETING_PENDING"
   | "MEETING_LIVE"
   | "HIKE_FINALISATION"
@@ -21,6 +22,8 @@ const TRANSITIONS: [Stage, Stage][] = [
   ["SELF_ASSESSMENT_OPEN", "REVIEWER_RATING"],
   ["REVIEWER_RATING", "MANAGEMENT_REVIEW"],
   ["MANAGEMENT_REVIEW", "MEETING_PENDING"],
+  ["MANAGEMENT_REVIEW", "DATE_VOTING"],
+  ["DATE_VOTING", "MEETING_PENDING"],
   ["MEETING_PENDING", "MEETING_LIVE"],
   ["MEETING_LIVE", "HIKE_FINALISATION"],
   ["HIKE_FINALISATION", "CLOSED"],
@@ -42,6 +45,7 @@ export const TRANSITION_PERMISSIONS: Partial<Record<Stage, string>> = {
   SELF_ASSESSMENT_OPEN: "ams.appraisal.assign_reviewers",
   REVIEWER_RATING: "ams.appraisal.self_assess",
   MANAGEMENT_REVIEW: "ams.appraisal.review",
+  DATE_VOTING: "ams.appraisal.management_review",
   MEETING_PENDING: "ams.appraisal.management_review",
   MEETING_LIVE: "ams.meeting.confirm",
   HIKE_FINALISATION: "ams.meeting.minutes",

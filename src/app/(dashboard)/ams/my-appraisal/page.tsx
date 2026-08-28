@@ -28,6 +28,7 @@ const STAGE_LABEL: Record<string, string> = {
   SELF_ASSESSMENT_OPEN: "Self-Assessment Open",
   REVIEWER_RATING: "Under Review",
   MANAGEMENT_REVIEW: "Management Review",
+  DATE_VOTING: "Meeting Date Voting",
   MEETING_PENDING: "Meeting Pending",
   MEETING_LIVE: "Meeting in Progress",
   HIKE_FINALISATION: "Hike Finalisation",

@@ -158,6 +158,37 @@ export default async function AppraisalDetailPage({ params }: { params: Promise<
       ...entry,
       createdAt: entry.createdAt.toISOString(),
     })),
+    proposedMeetingDates: [
+      ...new Set(
+        appraisal.managementReviews
+          .flatMap((review) => review.proposedDates)
+          .map((date) => date.toISOString()),
+      ),
+    ].sort(),
+    dateVotes: appraisal.dateVotes.map((vote) => ({
+      reviewerKind: vote.reviewer.kind,
+      reviewerName: vote.reviewer.user.name,
+      votedDate: vote.votedDate.toISOString(),
+      comment: vote.comment,
+    })),
+    meetingReschedules: appraisal.meetingReschedules.map((row) => ({
+      id: row.id,
+      originalDate: row.originalDate.toISOString(),
+      newDate: row.newDate.toISOString(),
+      reason: row.reason,
+      status: row.status,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    arrear: appraisal.arrear
+      ? {
+          status: appraisal.arrear.status,
+          amount: appraisal.arrear.amount,
+          arrearDays: appraisal.arrear.arrearDays,
+          periodFrom: appraisal.arrear.periodFrom.toISOString(),
+          periodTo: appraisal.arrear.periodTo.toISOString(),
+        }
+      : null,
+    outcomeAckedAt: appraisal.outcomeAckedAt?.toISOString() ?? null,
   };
 
   return (

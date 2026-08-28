@@ -25,7 +25,7 @@ import {
 import { WorkspaceBadge } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import {
   listAppraisals,
   listAppraisalEligibleUsers,
@@ -104,7 +104,14 @@ export default async function AppraisalsPage({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
+  // Reviewer-panel managers manage appraisals; Director / Management see all as observers.
+  const [canManageAppraisals, canObserveAppraisals] = await Promise.all([
+    can(session.user.id, "ams.appraisal.assign_reviewers"),
+    can(session.user.id, "ams.appraisal.view_all"),
+  ]);
+  if (!canManageAppraisals && !canObserveAppraisals) {
+    await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
+  }
 
   const sp = await searchParams;
   const now = await getNow();

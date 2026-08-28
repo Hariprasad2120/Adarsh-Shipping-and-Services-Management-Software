@@ -36,6 +36,7 @@ const STAGE_COLOR: Record<string, string> = {
   SELF_ASSESSMENT_OPEN: "bg-mono-accent/10 text-mono-accent",
   REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent",
   MANAGEMENT_REVIEW: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  DATE_VOTING: "bg-mono-accent/10 text-mono-accent",
   MEETING_PENDING: "bg-mono-accent/10 text-mono-accent",
   MEETING_LIVE: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
   HIKE_FINALISATION: "bg-mono-accent/10 text-mono-accent",
@@ -78,6 +79,7 @@ function getActionLabel(stage: string): string {
   if (stage === "REVIEWER_RATING") return "Review";
   if (stage === "REVIEWERS_ASSIGNED") return "Open";
   if (stage === "MANAGEMENT_REVIEW") return "Open";
+  if (stage === "DATE_VOTING") return "Vote";
   return "View";
 }
 

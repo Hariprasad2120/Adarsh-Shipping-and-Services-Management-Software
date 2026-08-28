@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Info, Users } from "lucide-react";
 import { CycleProgressCard } from "@/modules/ams/components/cycle-progress-card";
+import { ARREAR_STATUS_LABELS } from "@/modules/ams/arrears";
 import { FormPreviewModal } from "@/modules/ams/components/form-preview-modal";
 import { Button } from "@/components/ui/button";
 import type {
@@ -41,8 +42,23 @@ type Meeting = {
   id: string;
   scheduledAt: string;
   status: string;
+  dateSource?: string | null;
   minutes: MeetingMinute[];
 } | null;
+type DateVoteRow = {
+  reviewerKind: string;
+  reviewerName: string;
+  votedDate: string;
+  comment: string | null;
+};
+type MeetingRescheduleRow = {
+  id: string;
+  originalDate: string;
+  newDate: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+};
 type HikeDecision = {
   percent: number;
   amount: number;
@@ -89,14 +105,37 @@ type Appraisal = {
   managementReviews: ManagementReviewRow[];
   meeting: Meeting;
   hikeDecision: HikeDecision;
+  proposedMeetingDates: string[];
+  dateVotes: DateVoteRow[];
+  meetingReschedules: MeetingRescheduleRow[];
+  arrear: {
+    status: string;
+    amount: number;
+    arrearDays: number;
+    periodFrom: string;
+    periodTo: string;
+  } | null;
+  outcomeAckedAt: string | null;
   auditLog: {
     id: string;
+    action: string | null;
     fromStage: string | null;
     toStage: string;
     note: string | null;
     createdAt: string;
   }[];
 };
+
+function humanizeAuditLabel(log: { action: string | null; toStage: string }): string {
+  const nonTransition = log.toStage === "NO_STAGE_CHANGE" || !log.toStage;
+  if (nonTransition && log.action) {
+    return log.action
+      .replace(/^ESCALATION:/, "Escalation ")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return `→ ${log.toStage.replace(/_/g, " ")}`;
+}
 
 type ScoreData = {
   selfNormalized: number | null;
@@ -123,6 +162,7 @@ const STAGE_COLOR: Record<string, string> = {
   REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent border-mono-border",
   MANAGEMENT_REVIEW:
     "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  DATE_VOTING: "bg-mono-accent/10 text-mono-accent border-mono-border",
   MEETING_PENDING: "bg-mono-accent/10 text-mono-accent border-mono-border",
   MEETING_LIVE:
     "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",
@@ -288,12 +328,42 @@ export function AppraisalDetail({
             scoreData={scoreData}
           />
 
+          {appraisal.stage === "DATE_VOTING" && (
+            <DateVotingCard
+              proposedDates={appraisal.proposedMeetingDates}
+              votes={appraisal.dateVotes}
+              canVote={isReviewer && Boolean(myReviewer)}
+              canSeeTally={Boolean(caps["ams.meeting.confirm"]) || Boolean(caps["ams.appraisal.view_all"])}
+              saving={saving}
+              onVote={(votedDate) => api("date-vote", { votedDate })}
+            />
+          )}
+
           {appraisal.meeting && (
             <MeetingSection
               meeting={appraisal.meeting}
               onAddMinute={(role, content) => api("minutes", { role, content })}
               caps={caps}
               saving={saving}
+              serverNow={serverNow}
+              isEmployee={isEmployee}
+              myReviewerKind={myReviewer?.kind ?? null}
+              canRecordManagementMinute={isClaimant || Boolean(caps["ams.appraisal.view_all"])}
+            />
+          )}
+
+          {appraisal.meeting && appraisal.meeting.status !== "DONE" && (
+            <RescheduleCard
+              rows={appraisal.meetingReschedules}
+              canRequest={isReviewer || isClaimant || Boolean(caps["ams.meeting.confirm"])}
+              canDecide={Boolean(caps["ams.meeting.confirm"])}
+              saving={saving}
+              onRequest={(newDate, reason) =>
+                api("reschedule", { action: "request", newDate, reason })
+              }
+              onDecide={(rescheduleId, approve) =>
+                api("reschedule", { action: "decide", rescheduleId, approve })
+              }
             />
           )}
         </div>
@@ -328,6 +398,66 @@ export function AppraisalDetail({
                   <Dt label="Notes">{appraisal.hikeDecision.notes}</Dt>
                 )}
               </dl>
+
+              <div className="mt-3 flex flex-wrap gap-3 border-t border-mono-border/40 pt-3 text-xs font-semibold">
+                <a
+                  href={`/api/ams/appraisals/${appraisal.id}/letter?type=outcome`}
+                  className="text-mono-accent hover:underline"
+                >
+                  Outcome letter (PDF)
+                </a>
+                <a
+                  href={`/api/ams/appraisals/${appraisal.id}/letter?type=increment`}
+                  className="text-mono-accent hover:underline"
+                >
+                  Increment letter (PDF)
+                </a>
+              </div>
+
+              <div className="mt-3">
+                {appraisal.outcomeAckedAt ? (
+                  <p className="text-xs text-mono-muted">
+                    Acknowledged by employee on{" "}
+                    {new Date(appraisal.outcomeAckedAt).toLocaleDateString("en-IN")}.
+                  </p>
+                ) : isEmployee ? (
+                  <Button
+                    size="sm"
+                    disabled={saving}
+                    onClick={() => api("acknowledge", {})}
+                  >
+                    Acknowledge outcome
+                  </Button>
+                ) : (
+                  <p className="text-xs text-mono-muted">Awaiting employee acknowledgement.</p>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {appraisal.arrear && (
+            <Card title="Late-Meeting Arrear">
+              <dl className="space-y-2 text-sm">
+                <Dt label="Status">
+                  {ARREAR_STATUS_LABELS[appraisal.arrear.status] ?? appraisal.arrear.status}
+                </Dt>
+                <Dt label="Amount">
+                  ₹{Number(appraisal.arrear.amount).toLocaleString("en-IN")}
+                </Dt>
+                <Dt label="Days">{appraisal.arrear.arrearDays}</Dt>
+                <Dt label="Period">
+                  {new Date(appraisal.arrear.periodFrom).toLocaleDateString("en-IN")} –{" "}
+                  {new Date(appraisal.arrear.periodTo).toLocaleDateString("en-IN")}
+                </Dt>
+              </dl>
+              {caps["ams.hike.finalise"] && (
+                <Link
+                  href="/ams/arrears"
+                  className="mt-3 inline-block text-xs font-semibold text-mono-accent hover:underline"
+                >
+                  Manage in Arrears →
+                </Link>
+              )}
             </Card>
           )}
 
@@ -339,7 +469,7 @@ export function AppraisalDetail({
                   className="text-xs text-mono-muted border-l-2 border-mono-border pl-3"
                 >
                   <p className="font-medium text-mono-text">
-                    → {log.toStage.replace(/_/g, " ")}
+                    {humanizeAuditLabel(log)}
                   </p>
                   {log.note && <p>{log.note}</p>}
                   <p>{new Date(log.createdAt).toLocaleString("en-IN")}</p>
@@ -1159,20 +1289,32 @@ function StageActions({
               disabled={saving}
               className="mt-3"
             >
-              Open MOM Window
+              Open Minutes Window
             </Button>
           </Card>
         )}
 
-      {stage === "MEETING_LIVE" && caps["ams.meeting.confirm"] && (
-        <Button
-          variant="destructive"
-          onClick={() => onAction("meeting", { action: "close" })}
-          disabled={saving}
-        >
-          Close Meeting
-        </Button>
-      )}
+      {stage === "MEETING_LIVE" && caps["ams.meeting.confirm"] && (() => {
+        const hasManagementMinute = (appraisal.meeting?.minutes ?? []).some(
+          (minute) => minute.role === "MANAGEMENT",
+        );
+        return (
+          <div className="space-y-2">
+            <Button
+              variant="destructive"
+              onClick={() => onAction("meeting", { action: "close" })}
+              disabled={saving || !hasManagementMinute}
+            >
+              Close Meeting
+            </Button>
+            {!hasManagementMinute && (
+              <p className="text-xs text-mono-muted">
+                Record the Management meeting minutes before closing the meeting.
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Finalise hike */}
       {stage === "HIKE_FINALISATION" &&
@@ -1427,30 +1569,252 @@ function ReviewersPanel({
 
 // ─── Meeting Section ──────────────────────────────────────────────────────────
 
+const MINUTE_ROLE_LABELS: Record<string, string> = {
+  HR: "HR",
+  MANAGEMENT: "Management",
+  EMPLOYEE: "Employee",
+  ADMIN: "Admin",
+  TL: "Team Lead",
+  MANAGER: "Manager",
+};
+
+function DateVotingCard({
+  proposedDates,
+  votes,
+  canVote,
+  canSeeTally,
+  saving,
+  onVote,
+}: {
+  proposedDates: string[];
+  votes: DateVoteRow[];
+  canVote: boolean;
+  canSeeTally: boolean;
+  saving: boolean;
+  onVote: (votedDate: string) => void;
+}) {
+  const [selected, setSelected] = useState(proposedDates[0] ?? "");
+  const tally = new Map<string, number>();
+  for (const vote of votes) {
+    tally.set(vote.votedDate, (tally.get(vote.votedDate) ?? 0) + 1);
+  }
+
+  return (
+    <Card title="Meeting Date Voting">
+      <p className="text-sm text-mono-muted">
+        Management proposed these meeting dates. Cast your preferred option — HR confirms the final date.
+      </p>
+      <div className="mt-3 space-y-2">
+        {proposedDates.map((iso) => {
+          const count = tally.get(iso) ?? 0;
+          return (
+            <label
+              key={iso}
+              className="flex items-center justify-between gap-3 rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-sm"
+            >
+              <span className="flex items-center gap-2">
+                {canVote && (
+                  // eslint-disable-next-line no-restricted-syntax -- native radio input
+                  <input
+                    type="radio"
+                    name="dateVote"
+                    className="h-4 w-4 accent-mono-accent"
+                    checked={selected === iso}
+                    onChange={() => setSelected(iso)}
+                  />
+                )}
+                <span className="text-mono-text">{new Date(iso).toLocaleString("en-IN")}</span>
+              </span>
+              {canSeeTally && (
+                <span className="text-xs text-mono-muted">
+                  {count} vote{count === 1 ? "" : "s"}
+                </span>
+              )}
+            </label>
+          );
+        })}
+      </div>
+      {canVote && (
+        <Button
+          className="mt-3"
+          size="sm"
+          disabled={saving || !selected}
+          onClick={() => onVote(selected)}
+        >
+          Submit vote
+        </Button>
+      )}
+      {canSeeTally && votes.length > 0 && (
+        <div className="mt-3 border-t border-mono-border/40 pt-3">
+          <p className="text-xs text-mono-muted">Votes cast</p>
+          {votes.map((vote, index) => (
+            <p key={`${vote.reviewerName}:${index}`} className="text-xs text-mono-text">
+              {vote.reviewerName} ({MINUTE_ROLE_LABELS[vote.reviewerKind] ?? vote.reviewerKind}) →{" "}
+              {new Date(vote.votedDate).toLocaleString("en-IN")}
+            </p>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function RescheduleCard({
+  rows,
+  canRequest,
+  canDecide,
+  saving,
+  onRequest,
+  onDecide,
+}: {
+  rows: MeetingRescheduleRow[];
+  canRequest: boolean;
+  canDecide: boolean;
+  saving: boolean;
+  onRequest: (newDate: string, reason: string) => void;
+  onDecide: (rescheduleId: string, approve: boolean) => void;
+}) {
+  const [newDate, setNewDate] = useState("");
+  const [reason, setReason] = useState("");
+  const statusLabel: Record<string, string> = {
+    PENDING: "Pending approval",
+    APPROVED: "Approved",
+    REJECTED: "Rejected",
+  };
+
+  return (
+    <Card title="Meeting Reschedule">
+      {rows.length === 0 ? (
+        <p className="text-sm text-mono-muted/60">No reschedule requests.</p>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <div key={row.id} className="rounded-xl border border-mono-border bg-mono-card p-3 text-sm">
+              <p className="text-mono-text">
+                {new Date(row.originalDate).toLocaleString("en-IN")} →{" "}
+                {new Date(row.newDate).toLocaleString("en-IN")}
+              </p>
+              <p className="text-xs text-mono-muted">{row.reason}</p>
+              <p className="mt-1 text-xs font-medium text-mono-accent">
+                {statusLabel[row.status] ?? row.status}
+              </p>
+              {canDecide && row.status === "PENDING" && (
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" disabled={saving} onClick={() => onDecide(row.id, true)}>
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() => onDecide(row.id, false)}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {canRequest && (
+        <div className="mt-3 space-y-2 border-t border-mono-border/40 pt-3">
+          <label className="text-xs text-mono-muted">Proposed new date &amp; time</label>
+          <Input
+            type="datetime-local"
+            value={newDate}
+            onChange={(e) => setNewDate(e.target.value)}
+            className="w-full"
+          />
+          <PerformanceControlTextarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason for the reschedule…"
+            rows={2}
+            className="w-full border border-mono-border rounded-lg px-3 py-2 text-sm resize-none"
+          />
+          <Button
+            size="sm"
+            disabled={saving || !newDate || !reason.trim()}
+            onClick={() => {
+              onRequest(new Date(newDate).toISOString(), reason.trim());
+              setNewDate("");
+              setReason("");
+            }}
+          >
+            Request reschedule
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function MeetingSection({
   meeting,
   onAddMinute,
   caps,
   saving,
+  serverNow,
+  isEmployee,
+  myReviewerKind,
+  canRecordManagementMinute,
 }: {
   meeting: NonNullable<Appraisal["meeting"]>;
   onAddMinute: (role: string, content: string) => void;
   caps: Record<string, boolean>;
   saving: boolean;
+  serverNow: string;
+  isEmployee: boolean;
+  myReviewerKind: string | null;
+  canRecordManagementMinute: boolean;
 }) {
-  const availableRoles = [
-    "HR",
-    "MANAGEMENT",
-    "EMPLOYEE",
-    ...(caps["ams.appraisal.view_all"] ? ["ADMIN"] : []),
-  ] as const;
-  const [minuteRole, setMinuteRole] = useState<(typeof availableRoles)[number]>(
-    availableRoles[0],
-  );
+  const ownedRoles = [
+    isEmployee ? "EMPLOYEE" : null,
+    myReviewerKind === "HR" ? "HR" : null,
+    canRecordManagementMinute ? "MANAGEMENT" : null,
+    caps["ams.appraisal.view_all"] ? "ADMIN" : null,
+  ].filter((role): role is string => role !== null);
+
+  const [minuteRole, setMinuteRole] = useState<string>(ownedRoles[0] ?? "HR");
   const [minuteContent, setMinuteContent] = useState("");
+
+  const isClosed = meeting.status === "DONE";
+  const windowOpen = new Date(serverNow) >= new Date(meeting.scheduledAt);
+  const canEdit =
+    Boolean(caps["ams.meeting.minutes"]) && !isClosed && ownedRoles.length > 0 && windowOpen;
+
+  const submittedByRole = new Map(meeting.minutes.map((m) => [m.role, m.author.name]));
+  const trackedRoles = ["HR", "MANAGEMENT", "EMPLOYEE"];
 
   return (
     <Card title="Meeting Minutes">
+      {isClosed && (
+        <p className="mb-3 text-xs text-mono-muted">
+          Meeting closed — minutes are final.
+        </p>
+      )}
+
+      <div className="mb-3 flex flex-wrap gap-2">
+        {trackedRoles.map((role) => {
+          const author = submittedByRole.get(role);
+          return (
+            <span
+              key={role}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                author
+                  ? "border-mono-border bg-mono-accent/10 text-mono-accent"
+                  : "border-mono-border/60 bg-mono-card text-mono-muted"
+              }`}
+            >
+              {MINUTE_ROLE_LABELS[role]}: {author ? "Recorded" : "Pending"}
+              {role === "MANAGEMENT" && !author ? " · needed to close" : ""}
+            </span>
+          );
+        })}
+      </div>
+
       <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
         {meeting.minutes.length === 0 ? (
           <p className="text-sm text-mono-muted/60">No minutes yet.</p>
@@ -1458,40 +1822,59 @@ function MeetingSection({
           meeting.minutes.map((m) => (
             <div key={m.id} className="border-l-2 border-mono-border pl-3">
               <p className="text-xs font-semibold text-mono-accent">
-                {m.role} — {m.author.name}
+                {MINUTE_ROLE_LABELS[m.role] ?? m.role} — {m.author.name}
               </p>
-              <p className="text-sm text-mono-text">{m.content}</p>
+              <p className="text-sm text-mono-text whitespace-pre-wrap">{m.content}</p>
             </div>
           ))
         )}
       </div>
-      {caps["ams.meeting.minutes"] && meeting.status !== "DONE" && (
+
+      {!isClosed && Boolean(caps["ams.meeting.minutes"]) && !windowOpen && (
+        <p className="text-xs text-mono-muted pt-3 border-t border-mono-border/40">
+          Minutes open on {new Date(meeting.scheduledAt).toLocaleString("en-IN")}.
+        </p>
+      )}
+
+      {!isClosed && Boolean(caps["ams.meeting.minutes"]) && windowOpen && ownedRoles.length === 0 && (
+        <p className="text-xs text-mono-muted pt-3 border-t border-mono-border/40">
+          You do not have a minutes role for this meeting.
+        </p>
+      )}
+
+      {canEdit && (
         <div className="space-y-2 pt-3 border-t border-mono-border/40">
-          <div className="flex flex-wrap gap-2">
-            {availableRoles.map((r) => {
-              const active = minuteRole === r;
-              return (
-                // eslint-disable-next-line no-restricted-syntax -- role filter chip, not a standard Button
-                <button
-                  key={r}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setMinuteRole(r)}
-                  style={{
-                    background: active
-                      ? "var(--mnx-accent-soft)"
-                      : "var(--mnx-soft)",
-                    color: active
-                      ? "var(--mnx-accent-text)"
-                      : "var(--mnx-text-muted)",
-                  }}
-                  className="rounded-full border border-[var(--mnx-border)] px-3 py-1 text-xs font-medium"
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
+          {ownedRoles.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              {ownedRoles.map((r) => {
+                const active = minuteRole === r;
+                return (
+                  // eslint-disable-next-line no-restricted-syntax -- role filter chip, not a standard Button
+                  <button
+                    key={r}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setMinuteRole(r)}
+                    style={{
+                      background: active
+                        ? "var(--mnx-accent-soft)"
+                        : "var(--mnx-soft)",
+                      color: active
+                        ? "var(--mnx-accent-text)"
+                        : "var(--mnx-text-muted)",
+                    }}
+                    className="rounded-full border border-mono-border px-3 py-1 text-xs font-medium"
+                  >
+                    {MINUTE_ROLE_LABELS[r]}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <p className="text-xs text-mono-muted">
+            Recording as {MINUTE_ROLE_LABELS[minuteRole] ?? minuteRole}
+            {submittedByRole.has(minuteRole) ? " — this replaces your existing note." : ""}
+          </p>
           <PerformanceControlTextarea
             value={minuteContent}
             onChange={(e) => setMinuteContent(e.target.value)}
@@ -1507,7 +1890,7 @@ function MeetingSection({
             }}
             disabled={saving || !minuteContent}
           >
-            Add
+            {submittedByRole.has(minuteRole) ? "Update" : "Add"}
           </Button>
         </div>
       )}

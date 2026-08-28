@@ -27,6 +27,8 @@ const STAGE_COLORS: Record<string, string> = {
     "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
   MANAGEMENT_REVIEW:
     "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/30 dark:text-mono-accent",
+  DATE_VOTING:
+    "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/30 dark:text-mono-accent",
   MEETING_PENDING:
     "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
   MEETING_LIVE:
