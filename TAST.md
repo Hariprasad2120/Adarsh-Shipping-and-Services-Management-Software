@@ -565,6 +565,24 @@ stack. Cleared in order:
 - `Extra files/Legacy/monolith-shims/` — 16 retired 1-line re-export shim files,
   preserved, out of the build graph.
 
+### Module component barrels added (2026-08-29)
+
+Before: 7 modules had a `components/index.ts` (cha, crm, freight-forwarding, items,
+mona, people, performance). Added one to **10 more** that have a `components/` dir with
+≥1 non-test file: `accounting` (11 exports), `admin` (2), `ams` (3), `auth` (3),
+`communication` (4), `core` (3), `customer-portal` (3), `hrms` (29), `notifications`
+(1), `payroll` (33). Each is `export * from "./<file>"` over the direct `.tsx/.ts`
+children (excludes `.test.` and subdirs like `routes/`, `pdf/`).
+
+- Verified **zero export-name collisions** across each barrel's files.
+- Additive only — no existing import changed. Gives cross-module importers and route
+  files a public path (`@/modules/<m>/components`) instead of deep component paths,
+  matching the convention `verify-code-organization.mjs` already enforces.
+- Not added: `attendance`, `expense`, `google-chat`, `incentives`, `leave`, `recruit`,
+  `todo` (no `components/` dir), `dashboard` (components live only in
+  `components/landing-page/`).
+- Validation: `tsc --noEmit` ✅, `architecture:check` ✅, `npm run build` ✅.
+
 ## Duplicate Implementations Found
 
 | Pattern | Locations | Currently active | Action |
