@@ -623,17 +623,6 @@ html:not([data-dashboard-shell="true"]) main:not(.mnx-public-shell) table td {
   animation: page-enter 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-html.dark .card-top-accent,
-html.dark .card-cyan-outline,
-html.dark .card-left-accent {
-  border-color: rgba(0, 206, 196, 0.55) !important;
-}
-
-html.dark .card-top-accent-orange,
-html.dark .card-left-accent-orange {
-  border-color: rgba(251, 146, 60, 0.55) !important;
-}
-
 /* Global light mode: prevent text-white from becoming invisible on light surfaces */
 html.light [class*="text-white"],
 html.light [class*="text-[#ffffff]"],
@@ -741,13 +730,6 @@ label[class~="bg-cha-primary"]:active {
   padding: 22px 16px;
 }
 
-.ds-nav-item.is-active {
-  border-color: rgba(0, 206, 196, 0.35);
-  background: rgba(0, 206, 196, 0.1);
-  box-shadow: inset 3px 0 0 #00cec4;
-  color: var(--color-on-surface);
-}
-
 html:not([data-dashboard-shell="true"])
   main:not(.mnx-public-shell)
   button:not(.ds-plain):not([data-mode="icon"]):not(
@@ -758,111 +740,10 @@ html:not([data-dashboard-shell="true"])
     0 10px 24px -18px rgba(0, 206, 196, 0.75);
 }
 
-.ds-stage.done .ds-stage-dot {
-  border-color: #00cec4;
-  background: rgba(0, 206, 196, 0.1);
-  color: #00cec4;
-}
-
-.ds-stage.active .ds-stage-dot {
-  border-color: #00cec4;
-  color: #00cec4;
-  box-shadow: 0 0 0 4px rgba(0, 206, 196, 0.1);
-}
-
 @media (max-width: 900px) {
-  .ds-portal-shell {
-    grid-template-columns: 1fr;
-  }
-
   .ds-sidebar {
     display: none;
   }
-
-  .ds-topbar {
-    padding: 0 18px;
-  }
-
-  .ds-portal-content {
-    padding: 20px 18px 92px;
-  }
-
-  .ds-mobile-nav {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    z-index: 50;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    border: 1px solid var(--color-outline-variant);
-    border-radius: var(--radius-xl);
-    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-    box-shadow: var(--shadow-ambient-hover);
-    padding: 8px;
-  }
-
-  .ds-mobile-nav a {
-    display: grid;
-    place-items: center;
-    gap: 4px;
-    color: var(--color-on-surface-variant);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    text-align: center;
-  }
-
-  .ds-mobile-nav a.is-active {
-    color: #00cec4;
-  }
-
-  .ds-mobile-nav svg {
-    width: 17px;
-    height: 17px;
-  }
-}
-
-@media (max-width: 600px) {
-  .ds-topbar [data-portal-designation] {
-    display: none;
-  }
-}
-
-@keyframes ds-calendar-panel-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(10px) rotateX(-10deg) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) rotateX(0deg) scale(1);
-  }
-}
-
-@keyframes ds-calendar-day-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.92);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.ds-date-panel__glow {
-  position: absolute;
-  inset: 18px;
-  border-radius: var(--radius-card-lg);
-  background:
-    radial-gradient(circle at top, rgba(0, 206, 196, 0.14), transparent 60%),
-    radial-gradient(
-      circle at bottom right,
-      rgba(251, 146, 60, 0.08),
-      transparent 44%
-    );
-  filter: blur(24px);
-  pointer-events: none;
 }
 
 /* ─── Theme Compliance Overrides ─── */
@@ -991,23 +872,6 @@ html.light main:not(.mnx-public-shell) [class*="bg-[var(--color-surface)]"]::pla
 .bg-orange-500,
 .bg-blue-600 {
   color: #ffffff !important;
-}
-
-/* Ensure text inside intentionally dark banners (such as Employee Cockpit) remains white/light in both themes */
-html.light main .ds-dark-banner [class*="text-white"] {
-  color: #ffffff !important;
-}
-html.light main .ds-dark-banner [class*="text-white/70"] {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-html.light main .ds-dark-banner [class*="text-white/72"] {
-  color: rgba(255, 255, 255, 0.72) !important;
-}
-html.light main .ds-dark-banner [class*="text-white/66"] {
-  color: rgba(255, 255, 255, 0.66) !important;
-}
-html.light main .ds-dark-banner [class*="text-white/56"] {
-  color: rgba(255, 255, 255, 0.56) !important;
 }
 
 /* ─── Mona AI Companion ─────────────────────────────────────────────────── */
@@ -1212,9 +1076,6 @@ html:not([data-dashboard-shell="true"])
   left: 50%;
   transform: translate(-50%, -50%) scale(0.9);
   color: rgba(255, 255, 255, 0.66) !important;
-}
-html.light main .ds-dark-banner [class*="text-white/56"] {
-  color: rgba(255, 255, 255, 0.56) !important;
 }
 
 /* ─── Mona AI Companion ─────────────────────────────────────────────────── */

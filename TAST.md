@@ -603,26 +603,31 @@ zero references** — an entire abandoned parallel `.ds-*` / `.card-*` design sy
 (nav, sidebar variants, topbar, portal shell, timeline, stage dots, buttons, avatar,
 brand, date-panel, table, form-section, labels, icon-badge, …), superseded by `.mnx-*`.
 
-**Done:** a scripted, comment-aware pass (`prune-legacy-css.mjs`) removed every
-top-level rule block whose entire selector list references only confirmed-dead
-classes — **72 rule blocks, `legacy-compatibility.css` 2175 → 1551 lines (−624)**.
-Removed blocks written verbatim (with provenance header) to
-`Extra files/Legacy/legacy-compatibility-dead-selectors.css` (631 lines, **not
-imported, not in the build**). Brace-balanced; `npm run build` re-run green.
+**Done in two passes:**
+
+1. Scripted comment-aware pass (`prune-legacy-css.mjs`) — removed every top-level
+   rule block whose entire selector list references only confirmed-dead classes:
+   **72 blocks**.
+2. Manual pass — the ~10 compound-selector rules the script kept conservatively
+   (`html.dark .card-*`, `.ds-nav-item.is-active`, `.ds-stage.* .ds-stage-dot`,
+   `.ds-date-panel__glow`, `html.light main .ds-dark-banner [...]` ×6, the dead
+   `.ds-portal-*` / `.ds-topbar` / `.ds-mobile-nav` rules inside two `@media` blocks,
+   and the now-orphaned `@keyframes ds-calendar-*`). Verified `.ds-dark-banner`
+   references a removed "Employee Cockpit" feature — no component uses it.
+
+**Result: `legacy-compatibility.css` 2175 → 1412 lines (−763).** All removed rules
+preserved verbatim (provenance header) in
+`Extra files/Legacy/legacy-compatibility-dead-selectors.css` (~710 lines, **not
+imported, not in the build**). Brace-balanced 211/211. `tsc` + `npm run build` green.
 
 **Kept in the active file:**
-- `.ds-sidebar` (used ×1), `.no-scrollbar` (×1), `.cyan-range-slider` (×1),
-  `.animate-page-enter` (×2), `.animate-current-stage-number`,
-  `.animate-doc-missing-blink`, `.animate-pulse-red`
-- All non-class rules: `:root` tokens, `@theme inline` (`mono-*` palette shim —
-  AMS/LMS `bg-mono-*` utilities depend on it), `[data-main-shell-scroll]` scrollbar
-  rules, `html:not([data-dashboard-shell])` input/placeholder normalizers, `@keyframes`
-- **~10 conservatively-kept** dead-ish rules where a dead class is compounded with an
-  unknown/generic token the script won't assume about — `html.dark .card-*`,
-  `.ds-nav-item.is-active`, `.ds-stage.done .ds-stage-dot`, `.ds-date-panel__glow`,
-  `html.light main .ds-dark-banner [...]`, and a `@media` wrapping `.ds-portal-*` that
-  also contains the live `.ds-sidebar`. Harmless (no matching DOM); a follow-up can
-  finish these by hand.
+- `.ds-sidebar` (still used ×1, incl. its `@media (max-width:900px)` `display:none`),
+  `.no-scrollbar`, `.cyan-range-slider`, live `.animate-*` rules.
+- `button:not(.ds-plain):not(...)` — a **live** rule styling all dashboard buttons;
+  `.ds-plain` is just a harmless no-op `:not()` guard.
+- All non-class rules: `:root` tokens, `@theme inline` (`mono-*` shim — AMS/LMS
+  `bg-mono-*` utilities depend on it), `[data-main-shell-scroll]` scrollbar rules,
+  `html:not([data-dashboard-shell])` input/placeholder normalizers, live `@keyframes`.
 
 ## Files Intentionally Left Untouched
 
