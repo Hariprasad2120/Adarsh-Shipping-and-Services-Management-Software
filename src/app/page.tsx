@@ -13,7 +13,7 @@ import {
   getEnabledFeatureIds,
   getEnabledModuleIds,
 } from "@/modules/core/organisation/module-settings";
-import { isRootControlEmail } from "@/lib/root-access";
+import { hasRootModuleControl } from "@/lib/root-access";
 
 export default async function RootPage() {
   const session = await getSession();
@@ -22,7 +22,7 @@ export default async function RootPage() {
     redirect("/login");
   }
 
-  if (!isRootControlEmail(session.user.email)) {
+  if (!(await hasRootModuleControl(session.user.id))) {
     redirect("/dashboard");
   }
 

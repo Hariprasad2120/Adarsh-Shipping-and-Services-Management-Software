@@ -1,9 +1,30 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   expandPermissionKeys,
   getDepartmentScopedPermissionKeys,
+  isLegacyDepartmentGrantEnabled,
 } from "../rbac";
+
+const originalFlag = process.env.RBAC_LEGACY_DEPARTMENT_GRANTS;
+afterEach(() => {
+  if (originalFlag === undefined) delete process.env.RBAC_LEGACY_DEPARTMENT_GRANTS;
+  else process.env.RBAC_LEGACY_DEPARTMENT_GRANTS = originalFlag;
+});
+
+describe("legacy department-name permission grants (MON-S1-014)", () => {
+  it("are DISABLED by default", () => {
+    delete process.env.RBAC_LEGACY_DEPARTMENT_GRANTS;
+    expect(isLegacyDepartmentGrantEnabled()).toBe(false);
+  });
+
+  it("only enable on the explicit opt-in flag", () => {
+    process.env.RBAC_LEGACY_DEPARTMENT_GRANTS = "true";
+    expect(isLegacyDepartmentGrantEnabled()).toBe(true);
+    process.env.RBAC_LEGACY_DEPARTMENT_GRANTS = "1";
+    expect(isLegacyDepartmentGrantEnabled()).toBe(false);
+  });
+});
 
 describe("Accounting RBAC compatibility", () => {
   it("expands legacy coarse Accounting grants into current operational permissions", () => {

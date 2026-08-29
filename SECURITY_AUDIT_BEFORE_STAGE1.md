@@ -48,6 +48,26 @@ tests 38/38 green (`vitest.unit.config.ts`); `npm run build` green (497/497
 static pages); ESLint clean on changed files (1 pre-existing `any` warning
 untouched).
 
+### Cluster 2 — authorization bypass (checkpoint 2)
+
+| ID | Was | Now | What changed |
+|---|---|---|---|
+| MON-S1-003 | CRITICAL / OPEN | **FIXED** | Hardcoded `ROOT_CONTROL_EMAIL = "obj268version4@gmail.com"` removed from source. `root-access.ts` now exposes `hasRootModuleControl(userId)` → permission check on `admin.modules.manage` (already role-granted). `app/page.tsx` gates on the permission, not an email string. `auth.ts` no longer special-cases `redirectPath`. Login component drops the email branch. `special-account-bootstrap.ts` takes emails from `SPECIAL_ROOT_ACCOUNT_EMAIL` / `SPECIAL_CHA_TEST_EMAIL` and refuses to run without a real `SPECIAL_ACCOUNTS_INITIAL_PASSWORD` (was defaulting to `password@123`). No hardcoded identity literals remain (`grep` clean). |
+| MON-S1-010 | HIGH / OPEN | **FIXED (baseline) + gated** | New canonical `src/lib/api-auth.ts` — `requireApiActor()` / `requireApiPermission()` / `withApiAuth()` (deny-by-default, `ApiAuthError` → clean 401/403). Repo-wide scan (`scripts/scan-route-auth-coverage.mjs`): **297 routes → 282 guarded, 15 reviewed-public, 0 missing**. Every previously-"unguarded" route was individually reviewed and is either a pre-auth credential flow, a static endpoint, a token-verified webhook re-export, or dev-only. New regression test `route-auth-coverage.test.ts` fails CI if any route loses its check or a new unguarded route appears. `accounting/reports/catalog` (the one genuine gap) now uses `requireApiActor`. Retrofitting the remaining 281 from ad-hoc `auth()` to the canonical helper is mechanical follow-up, not a security gap. |
+| MON-S1-012 | HIGH / OPEN | **FIXED** | `validateSession()` now **fails closed** on a datastore error — returns `{ valid: false }` instead of `{ valid: true }`, so a degraded DB can no longer be used to slip revoked/expired sessions through. Test `session-fail-closed.test.ts`. |
+| MON-S1-014 | HIGH / OPEN | **FIXED (default) + migration** | The implicit "department name looks like accounts + role name = manager → full accounting permissions" grant is **off by default**. It only applies when `RBAC_LEGACY_DEPARTMENT_GRANTS=true`, intended purely as a bridge while running the new `scripts/backfill-department-permission-grants.ts`, which materialises every currently-implied grant into explicit, auditable `RolePermission` rows on a per-org "Accounting Department (migrated)" role (dry-run by default; rollback = delete that role). Tests updated in `rbac.test.ts`. |
+
+Verification for checkpoint 2: `npx tsc --noEmit` clean; cluster-2 unit tests
+23/23 green; full security unit set green; `npm run build` green; ESLint clean
+on changed files (pre-existing UI-component warnings untouched).
+
+Deferred to later clusters (not gaps, tracked):
+- Retrofit the 281 ad-hoc `auth()` routes to `requireApiActor()`.
+- Wire `assertRequestIntegrity` (cluster 1 helper) into every mutating handler.
+- `SPECIAL_ROOT_ACCOUNT_EMAIL` / `SPECIAL_CHA_TEST_EMAIL` /
+  `RBAC_LEGACY_DEPARTMENT_GRANTS` added to `.env.example` (repo-ignored file —
+  also documented here).
+
 ---
 
 ## 1. Architecture discovered

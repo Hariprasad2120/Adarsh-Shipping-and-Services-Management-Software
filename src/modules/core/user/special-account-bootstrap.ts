@@ -1,12 +1,25 @@
 import { hash } from "bcryptjs";
 import { db } from "@/lib/db";
-import { ROOT_CONTROL_EMAIL } from "@/lib/root-access";
 
 const ROOT_ROLE_NAME = "Root Module Controller";
 const CHA_FULL_ACCESS_ROLE_NAME = "CHA Full Access";
-const TEST_CHA_EMAIL = "test@adarshshipping.in";
+
+// Emails are environment-configured, never hardcoded (MON-S1-003). If an email
+// is not set, that special account is simply not created.
+const ROOT_CONTROL_EMAIL = process.env.SPECIAL_ROOT_ACCOUNT_EMAIL?.trim().toLowerCase();
+const TEST_CHA_EMAIL = process.env.SPECIAL_CHA_TEST_EMAIL?.trim().toLowerCase();
 
 export async function ensureSpecialAccounts(orgId: string, defaultPassword: string) {
+  if (!ROOT_CONTROL_EMAIL && !TEST_CHA_EMAIL) {
+    throw new Error(
+      "ensureSpecialAccounts: set SPECIAL_ROOT_ACCOUNT_EMAIL and/or SPECIAL_CHA_TEST_EMAIL.",
+    );
+  }
+  if (!defaultPassword || defaultPassword.length < 12) {
+    throw new Error(
+      "ensureSpecialAccounts: SPECIAL_ACCOUNTS_INITIAL_PASSWORD must be set (>= 12 chars).",
+    );
+  }
   const passwordHash = await hash(defaultPassword, 12);
 
   const [rootPermission, chaPermissions] = await Promise.all([
@@ -41,47 +54,23 @@ export async function ensureSpecialAccounts(orgId: string, defaultPassword: stri
     syncRolePermissionIds(chaRole.id, chaPermissions.map((permission) => permission.id)),
   ]);
 
-  const [rootUser, chaUser] = await Promise.all([
-    db.user.upsert({
-      where: { email: ROOT_CONTROL_EMAIL },
-      update: {
-        orgId,
-        name: "OBJ268 Version4",
-        passwordHash,
-        active: true,
-      },
-      create: {
-        orgId,
-        email: ROOT_CONTROL_EMAIL,
-        name: "OBJ268 Version4",
-        passwordHash,
-        active: true,
-      },
+  async function upsertSpecialUser(email: string, name: string, roleId: string) {
+    const user = await db.user.upsert({
+      where: { email },
+      update: { orgId, name, passwordHash, active: true },
+      create: { orgId, email, name, passwordHash, active: true },
       select: { id: true, email: true },
-    }),
-    db.user.upsert({
-      where: { email: TEST_CHA_EMAIL },
-      update: {
-        orgId,
-        name: "CHA Test User",
-        passwordHash,
-        active: true,
-      },
-      create: {
-        orgId,
-        email: TEST_CHA_EMAIL,
-        name: "CHA Test User",
-        passwordHash,
-        active: true,
-      },
-      select: { id: true, email: true },
-    }),
-  ]);
+    });
+    await syncUserRole(user.id, roleId);
+    return user;
+  }
 
-  await Promise.all([
-    syncUserRole(rootUser.id, rootRole.id),
-    syncUserRole(chaUser.id, chaRole.id),
-  ]);
+  const rootUser = ROOT_CONTROL_EMAIL
+    ? await upsertSpecialUser(ROOT_CONTROL_EMAIL, "Root Module Controller", rootRole.id)
+    : null;
+  const chaUser = TEST_CHA_EMAIL
+    ? await upsertSpecialUser(TEST_CHA_EMAIL, "CHA Test User", chaRole.id)
+    : null;
 
   return { rootUser, chaUser };
 }

@@ -296,9 +296,12 @@ export async function validateSession(
     });
     return result;
   } catch (e) {
-    // DB error — fail open for availability on transient issues, but log loudly.
-    console.error("[session] Validation DB error:", e);
-    return { valid: true };
+    // DB error — fail CLOSED. Treating an unverifiable session as valid would
+    // let revoked / expired / disabled-user sessions through exactly when the
+    // datastore is degraded (which an attacker may be able to induce). The
+    // caller redirects to /login; the user re-authenticates once the DB is back.
+    console.error("[session] Validation DB error — failing closed:", e);
+    return { valid: false, reason: "NOT_FOUND" };
   }
 }
 

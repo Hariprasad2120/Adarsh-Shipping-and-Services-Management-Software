@@ -2,8 +2,15 @@ import "dotenv/config";
 import { db } from "../src/lib/db";
 import { ensureSpecialAccounts } from "../src/modules/core/user/special-account-bootstrap";
 
-const DEFAULT_PASSWORD = process.env.SPECIAL_ACCOUNTS_INITIAL_PASSWORD ?? "password@123";
+const DEFAULT_PASSWORD = process.env.SPECIAL_ACCOUNTS_INITIAL_PASSWORD;
 const ORG_SLUG = process.env.SPECIAL_ACCOUNTS_ORG_SLUG ?? "adarsh-shipping";
+
+if (!DEFAULT_PASSWORD) {
+  throw new Error(
+    "SPECIAL_ACCOUNTS_INITIAL_PASSWORD is required (no hardcoded default). " +
+      "Also set SPECIAL_ROOT_ACCOUNT_EMAIL and/or SPECIAL_CHA_TEST_EMAIL.",
+  );
+}
 
 async function main() {
   const org = await db.organisation.findFirst({
@@ -17,8 +24,9 @@ async function main() {
 
   const result = await ensureSpecialAccounts(org.id, DEFAULT_PASSWORD);
 
+  const created = [result.rootUser?.email, result.chaUser?.email].filter(Boolean);
   console.log(
-    `Bootstrapped ${result.rootUser.email} and ${result.chaUser.email} in organisation ${org.name}.`,
+    `Bootstrapped ${created.join(", ") || "no"} account(s) in organisation ${org.name}.`,
   );
 }
 

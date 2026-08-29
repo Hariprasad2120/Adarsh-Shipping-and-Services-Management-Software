@@ -5,7 +5,6 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 import { cache } from "react";
 import { db } from "@/lib/db";
-import { isRootControlEmail } from "@/lib/root-access";
 import {
   CALLBACK_URL_COOKIE_NAME,
   CSRF_COOKIE_NAME,
@@ -205,7 +204,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isPlatformAdmin: user.isPlatformAdmin,
           roleIds: user.roles.map((ur) => ur.roleId),
           sessionNonce,
-          redirectPath: isRootControlEmail(user.email) ? "/" : "/dashboard",
+          // Everyone lands on /dashboard. The root module-control surface at "/"
+          // is permission-gated on the page itself (admin.modules.manage).
+          redirectPath: "/dashboard",
         };
       },
     }),

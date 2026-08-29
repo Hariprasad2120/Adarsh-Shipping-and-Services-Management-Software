@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { clearStaleSessionData } from "@/lib/logout";
-import { isRootControlEmail } from "@/lib/root-access";
 import {
   DEFAULT_CALLBACK_URL,
   SUCCESS_TRANSITION_MS,
@@ -102,16 +101,14 @@ function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 }
 
-function getSafeCallbackUrl(identifier: string) {
+function getSafeCallbackUrl() {
   const requestedCallbackUrl = new URLSearchParams(window.location.search).get(
     "callbackUrl",
   );
-  const fallbackTarget = isRootControlEmail(identifier)
-    ? "/"
-    : DEFAULT_CALLBACK_URL;
-  return requestedCallbackUrl?.startsWith("/")
+  return requestedCallbackUrl?.startsWith("/") &&
+    !requestedCallbackUrl.startsWith("//")
     ? requestedCallbackUrl
-    : fallbackTarget;
+    : DEFAULT_CALLBACK_URL;
 }
 
 function getSameOriginRedirectUrl(
@@ -318,7 +315,7 @@ export function MonolithLogisticsLogin() {
     setMood("charging");
     setPetMessage("Verifying your cargo route…");
 
-    const callbackUrl = getSafeCallbackUrl(normalizedEmail);
+    const callbackUrl = getSafeCallbackUrl();
     let result: Awaited<ReturnType<typeof signIn>> | undefined;
 
     try {
@@ -565,7 +562,7 @@ export function MonolithLogisticsLogin() {
                 disabled={busy}
                 onClick={() =>
                   void signIn("google", {
-                    callbackUrl: getSafeCallbackUrl(email.trim()),
+                    callbackUrl: getSafeCallbackUrl(),
                   })
                 }
               >

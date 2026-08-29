@@ -304,10 +304,25 @@ async function loadPermissionBundle(userId: string): Promise<PermissionBundle> {
   return bundle;
 }
 
+/**
+ * Legacy behaviour: users whose free-text department name matched
+ * "accounts"/"accounting" were auto-granted accounting permissions based on
+ * their role *name*. This is silent, unauditable privilege escalation
+ * (MON-S1-014) and is now OFF by default.
+ *
+ * Set `RBAC_LEGACY_DEPARTMENT_GRANTS=true` only as a temporary bridge while
+ * running `scripts/backfill-department-permission-grants.ts`, which converts
+ * every currently-implied grant into explicit RolePermission rows.
+ */
+export function isLegacyDepartmentGrantEnabled(): boolean {
+  return process.env.RBAC_LEGACY_DEPARTMENT_GRANTS === "true";
+}
+
 function loadDepartmentScopedPermissionKeys(
   departmentContext: AccountingDepartmentAccessContext,
   existingKeys: Iterable<string>,
-) {
+): Set<string> {
+  if (!isLegacyDepartmentGrantEnabled()) return new Set<string>();
   return getDepartmentScopedPermissionKeys(departmentContext, existingKeys);
 }
 
