@@ -143,7 +143,7 @@ export default function CRMModule({ leads }: Props) {
               <div className="space-y-1">
                 <p className="text-sm font-bold text-black font-sans leading-none">{lead.company}</p>
                 <p className="text-[11px] text-neutral-400 font-mono uppercase">
-                  CONTACT: {lead.contactName} // EMAIL: {lead.email}
+                  CONTACT: {lead.contactName} {"//"} EMAIL: {lead.email}
                 </p>
               </div>
 

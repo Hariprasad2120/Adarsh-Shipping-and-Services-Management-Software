@@ -26,7 +26,7 @@ interface AlertProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<
   onClose?: () => void;
 }
 
-interface AlertIconProps extends React.HTMLAttributes<HTMLDivElement> {}
+type AlertIconProps = React.HTMLAttributes<HTMLDivElement>;
 
 function Alert({ className, variant, close = false, onClose, children, ...props }: AlertProps) {
   return (

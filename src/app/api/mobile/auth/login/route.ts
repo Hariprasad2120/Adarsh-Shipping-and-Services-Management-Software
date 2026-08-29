@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const email = sanitizeText(body.email, 254).toLowerCase();
     const password = typeof body.password === "string" ? body.password : "";
-    const module = sanitizeText(body.module || "crm", 16);
+    const requestedModule = sanitizeText(body.module || "crm", 16);
 
     if (!email || !password) {
       return mobileJson({ error: "Email and password are required" }, 400);
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
     }
 
     // Validate requested module (normalize to lowercase — Android sends UPPERCASE)
-    const selectedModule = (module || "crm").toLowerCase();
+    const selectedModule = (requestedModule || "crm").toLowerCase();
     if (!availableModules.includes(selectedModule)) {
       return mobileJson({
         error: `You don't have access to the ${selectedModule.toUpperCase()} module`,

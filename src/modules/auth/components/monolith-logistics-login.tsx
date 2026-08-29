@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { clearStaleSessionData } from "@/lib/logout";
 import { isRootControlEmail } from "@/lib/root-access";
@@ -527,9 +528,9 @@ export function MonolithLogisticsLogin() {
                   />
                   <span>Remember me</span>
                 </label>
-                <a href="/forgot-password" className={styles.textButton}>
+                <Link href="/forgot-password" className={styles.textButton}>
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
               <p id="login-message" className={styles.formMessage} role="alert">
@@ -573,9 +574,9 @@ export function MonolithLogisticsLogin() {
 
               <p className={styles.signup}>
                 Don’t have access?
-                <a href="/request-access" className={styles.textButton}>
+                <Link href="/request-access" className={styles.textButton}>
                   Request access
-                </a>
+                </Link>
               </p>
             </form>
           </div>

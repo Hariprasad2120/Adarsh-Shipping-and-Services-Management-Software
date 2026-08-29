@@ -101,7 +101,7 @@ export default async function CrmLeadSourcesPage() {
                 <div className="space-y-1">
                   <span className="font-bold">Integration Offline</span>
                   <p className="text-[var(--mnx-muted)] leading-relaxed">
-                    The latest automation run failed: <span className="text-[var(--mnx-danger)]">"{logs[0].errorMessage || "Unknown scraper error"}"</span>. This usually indicates that the session cookies have expired or the dashboard URL is invalid. Please configure the importer with updated parameters.
+                    The latest automation run failed: <span className="text-[var(--mnx-danger)]">&quot;{logs[0].errorMessage || "Unknown scraper error"}&quot;</span>. This usually indicates that the session cookies have expired or the dashboard URL is invalid. Please configure the importer with updated parameters.
                   </p>
                 </div>
               </div>

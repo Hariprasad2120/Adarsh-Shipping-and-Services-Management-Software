@@ -55,7 +55,8 @@ export async function POST(request: Request) {
     if (!user.orgId) return mobileJson({ error: "No organization" }, 400);
 
     const body = await request.json();
-    let { location, batteryLevel, deviceId, networkStatus, isMocked, source } = body;
+    const { batteryLevel, deviceId, networkStatus, isMocked, source } = body;
+    let { location } = body;
 
     // Fallback: If location is not provided but latitude/longitude are present at root level
     if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {

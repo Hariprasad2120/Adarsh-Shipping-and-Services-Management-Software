@@ -326,7 +326,7 @@ export default async function CrmCallsPage() {
                     </p>
                     {rec.transcript?.summary && (
                       <p className="text-[10px] text-[var(--mnx-muted)] line-clamp-2 italic">
-                        "{rec.transcript.summary}"
+                        &quot;{rec.transcript.summary}&quot;
                       </p>
                     )}
                     <div className="flex justify-end pt-1">

@@ -10,6 +10,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -256,12 +257,12 @@ export default function NewJobPage() {
           >
             {saving ? "Saving..." : "Post Job"}
           </MnxAction>
-          <a
+          <Link
             href="/hrms/recruit/employer/jobs"
             className="rounded-xl border border-mono-border px-6 py-2 text-sm text-mono-muted transition hover:text-mono-text"
           >
             Cancel
-          </a>
+          </Link>
         </div>
       </form>
     </div>

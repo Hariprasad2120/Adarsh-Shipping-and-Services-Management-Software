@@ -499,7 +499,7 @@ export function PolicyWizard({
           {config.entitlement.model === "ATTENDANCE_BASED" && (
             <div className="space-y-3">
               <p role="alert" className="rounded-lg border border-[var(--mnx-warning-text,inherit)] bg-[var(--mnx-warning-bg,inherit)] p-3 text-xs text-[var(--mnx-text)]">
-                ⚠ No automatic attendance-linked accrual engine exists yet. This model's metric/ratio are recorded but
+                ⚠ No automatic attendance-linked accrual engine exists yet. This model&apos;s metric/ratio are recorded but
                 balances under this policy will not increase unless credited manually via a leave grant or ledger
                 adjustment — the same warning is shown again when you publish this policy.
               </p>

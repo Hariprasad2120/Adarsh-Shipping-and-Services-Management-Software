@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Megaphone, Calendar, CheckSquare, Gift, Users, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -112,22 +113,22 @@ export function DashboardWidgets({
       case "QUICKLINKS":
         return (
           <div className="grid grid-cols-2 gap-2">
-            <a href="/attendance/leaves" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            <Link href="/attendance/leaves" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <Calendar className="size-4 text-[#F9D972] mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">Apply Leave</span>
-            </a>
-            <a href="/hrms/helpdesk" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            </Link>
+            <Link href="/hrms/helpdesk" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <Megaphone className="size-4 text-indigo-500 mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">Ask HR</span>
-            </a>
-            <a href="/attendance/timesheets" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            </Link>
+            <Link href="/attendance/timesheets" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <CheckSquare className="size-4 text-emerald-500 mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">Log Timesheet</span>
-            </a>
-            <a href="/hrms/files" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            </Link>
+            <Link href="/hrms/files" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <FileText className="size-4 text-amber-500 mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">My Files</span>
-            </a>
+            </Link>
           </div>
         );
 

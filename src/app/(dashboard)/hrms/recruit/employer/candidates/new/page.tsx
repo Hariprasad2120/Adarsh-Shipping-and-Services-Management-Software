@@ -8,6 +8,7 @@ import {
 import { NativeSelect } from "@/components/ui/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Duplicate = {
   id: string;
@@ -101,12 +102,12 @@ export default function NewCandidatePage() {
                     {d.candidateNumber}
                   </span>
                 </span>
-                <a
+                <Link
                   href={`/hrms/recruit/employer/candidates/${d.id}`}
                   className="text-[var(--mnx-accent)] hover:underline"
                 >
                   View
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -254,12 +255,12 @@ export default function NewCandidatePage() {
           >
             {saving ? "Saving..." : "Add Candidate"}
           </MnxAction>
-          <a
+          <Link
             href="/hrms/recruit/employer/candidates"
             className="rounded-xl border border-mono-border px-6 py-2 text-sm text-mono-muted transition hover:text-mono-text"
           >
             Cancel
-          </a>
+          </Link>
         </div>
       </form>
     </div>

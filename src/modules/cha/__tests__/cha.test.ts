@@ -1778,7 +1778,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const instanceAfterFirstNode = await chaService.getFilingWorkflowInstance(org.id, job.id);
     expect(instanceAfterFirstNode?.currentNodeKey).toBe("node_second");
-    const activeRun2 = instanceAfterFirstNode?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
+    const activeRun2 = instanceAfterFirstNode!.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     expect(activeRun2.nodeKey).toBe("node_second");
 
     // H. Test double-back transition: Move back from node_second to node_start
@@ -1800,7 +1800,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
     const instanceDoubleBack = await chaService.getFilingWorkflowInstance(org.id, job.id);
     expect(instanceDoubleBack?.currentNodeKey).toBe(expandedStartKey);
-    const activeRun3 = instanceDoubleBack?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
+    const activeRun3 = instanceDoubleBack!.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     expect(activeRun3.nodeKey).toBe(expandedStartKey);
 
     // I. Test transition to complete (File bill copy)
@@ -1821,7 +1821,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     const instanceRestored = await chaService.getFilingWorkflowInstance(org.id, job.id);
-    const activeRun4 = instanceRestored?.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
+    const activeRun4 = instanceRestored!.nodeRuns.find((run: any) => run.status === "ACTIVE")!;
     
     // Complete the workflow at node_second (pass nextNodeKey as null / undefined since no subsequent nodes)
     await chaService.completeFilingNode(managerUser.id, org.id, job.id, activeRun4.id, {
@@ -1933,7 +1933,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       edges: [{ sourceKey: "duty", targetKey: "delivery", label: "Next" }],
     });
 
-    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions?.[0]?.id!);
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions![0]!.id);
 
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-PREREQ-${Date.now()}`,
@@ -2033,7 +2033,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       edges: [],
     });
 
-    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions?.[0]?.id!);
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions![0]!.id);
 
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-FILING-DOCSYNC-${Date.now()}`,
@@ -2149,7 +2149,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
       edges: [{ sourceKey: "legacy_start", targetKey: "legacy_finish", label: "Next" }],
     });
-    const legacyPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, legacyDraft.versions?.[0]?.id!);
+    const legacyPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, legacyDraft.versions![0]!.id);
 
     const existingJob = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-FILING-LEGACY-${Date.now()}`,
@@ -2220,7 +2220,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
       edges: [{ sourceKey: "replacement_start", targetKey: "replacement_finish", label: "Continue" }],
     });
-    const replacementPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, replacementDraft.versions?.[0]?.id!);
+    const replacementPublished = await chaService.publishFilingWorkflow(ownerUser.id, org.id, replacementDraft.versions![0]!.id);
 
     const workflows = await chaService.listFilingWorkflows(org.id);
     const legacyTemplate = workflows.find((workflow: any) => workflow.id === legacyPublished.templateId);
@@ -2322,7 +2322,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(reloadedDraft.versions[0]?.nodes.map((node: any) => node.key)).toEqual(["replacement_start"]);
     expect(reloadedDraft.versions[0]?.edges).toHaveLength(0);
 
-    const published = await chaService.publishFilingWorkflow(ownerUser.id, org.id, updatedDraft.versions?.[0]?.id!);
+    const published = await chaService.publishFilingWorkflow(ownerUser.id, org.id, updatedDraft.versions![0]!.id);
     const publishedDetails = await chaService.getFilingWorkflowDetails(ownerUser.id, org.id, published.templateId);
     expect(publishedDetails.versions[0]?.nodes.some((node: any) => node.key === "bill_filing")).toBe(false);
 
@@ -2364,7 +2364,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(details.versions[0]?.edges).toHaveLength(0);
 
     await expect(
-      chaService.publishFilingWorkflow(ownerUser.id, org.id, emptyDraft.versions?.[0]?.id!),
+      chaService.publishFilingWorkflow(ownerUser.id, org.id, emptyDraft.versions![0]!.id),
     ).rejects.toThrow(/Validation Failed/);
   }, 30000);
 
@@ -2450,7 +2450,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
       ],
     });
 
-    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions?.[0]?.id!);
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions![0]!.id);
 
     const job = await chaService.createJob(ownerUser.id, org.id, {
       jobNumber: `CHA-FILING-NOTIFY-${Date.now()}`,

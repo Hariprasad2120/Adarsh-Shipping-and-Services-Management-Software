@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     // Get a valid access token for file uploads
     let userAccessToken: string | undefined;
     try {
-      const { getValidAccessToken } = require("@/lib/workspace-oauth");
+      const { getValidAccessToken } = await import("@/lib/workspace-oauth");
       userAccessToken = await getValidAccessToken(session.user.id);
     } catch (e) {
       console.warn("[MailLinkAPI] Could not get user access token:", e);

@@ -17,7 +17,8 @@ export async function POST(request: Request) {
     if (!user.orgId) return mobileJson({ error: "No organization" }, 400);
 
     const body = await request.json();
-    let { sessionId, location, faceDescriptor, deviceId } = body;
+    const { sessionId, faceDescriptor, deviceId } = body;
+    let { location } = body;
 
     // Fallback: If location is not provided but latitude/longitude are present at root level
     if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {

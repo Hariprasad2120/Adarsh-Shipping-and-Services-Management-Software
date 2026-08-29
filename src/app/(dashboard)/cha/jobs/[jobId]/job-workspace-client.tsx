@@ -9,6 +9,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DateInput } from "@/components/ui/date-input";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
@@ -7680,9 +7681,9 @@ export function JobWorkspaceClient({
                               <div className="mt-4 space-y-4">
                                 <p className="max-w-3xl text-sm mnx-text-muted leading-relaxed">
                                   No active filing workflow instance found. Ensure a workflow is published in{" "}
-                                  <a href="/cha/settings/filing-workflows" className="mnx-text-accent underline underline-offset-2">
+                                  <Link href="/cha/settings/filing-workflows" className="mnx-text-accent underline underline-offset-2">
                                     CHA Settings -&gt; Filing Workflows
-                                  </a>
+                                  </Link>
                                   , then start the workflow below.
                                 </p>
                                 <Button
@@ -10728,7 +10729,7 @@ export function JobWorkspaceClient({
                               {/* Rework / Escalation Alerts */}
                               {req.isUrgent && req.urgencyReason && (
                                 <div className="p-3 mnx-bg-danger border mnx-border-danger rounded-lg text-xs leading-relaxed mnx-text-danger">
-                                  <strong>Urgent escalation reason:</strong> "{req.urgencyReason}"
+                                  <strong>Urgent escalation reason:</strong> &quot;{req.urgencyReason}&quot;
                                 </div>
                               )}
 
@@ -10737,13 +10738,13 @@ export function JobWorkspaceClient({
                                 <div key={q.id} className="p-3 mnx-bg-warning border mnx-border-warning rounded-lg text-xs space-y-2">
                                   <div>
                                     <strong className="mnx-text-warning">DISBURSEMENT QUERY:</strong>
-                                    <p className="mnx-text-primary italic mt-0.5">"{q.queryText}"</p>
+                                    <p className="mnx-text-primary italic mt-0.5">&quot;{q.queryText}&quot;</p>
                                     <span className="text-[10px] mnx-text-muted block mt-0.5">Raised by: {q.author?.name}</span>
                                   </div>
 
                                   {q.resolved ? (
                                     <div className="border-t mnx-border-warning pt-2 text-[11px] mnx-text-success">
-                                      <strong>Resolution:</strong> "{q.resolutionText}" (Resolved by {q.resolvedBy?.name})
+                                      <strong>Resolution:</strong> &quot;{q.resolutionText}&quot; (Resolved by {q.resolvedBy?.name})
                                     </div>
                                   ) : (
                                     resolveQueryId === q.id ? (
@@ -11172,7 +11173,7 @@ export function JobWorkspaceClient({
 
                       {run.remarks ? (
                         <div className="mt-3 rounded-xl border mnx-border mnx-bg-soft p-3 text-xs italic mnx-text-muted">
-                          "{run.remarks}"
+                          &quot;{run.remarks}&quot;
                         </div>
                       ) : null}
 

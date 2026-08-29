@@ -141,7 +141,7 @@ export default function AppraisalsModule({ appraisals }: Props) {
                 <div>
                   <h4 className="text-sm font-bold text-black leading-none">{appraisal.employeeName}</h4>
                   <p className="text-[11px] text-neutral-400 font-mono mt-1 uppercase">
-                    {appraisal.department} // AUDITED BY: {appraisal.reviewer}
+                    {appraisal.department} {"//"} AUDITED BY: {appraisal.reviewer}
                   </p>
                 </div>
 

@@ -57,7 +57,8 @@ export async function POST(request: Request) {
 
     // Start Trip
     if (action === "start") {
-      let { requestId, location } = body;
+      const { requestId } = body;
+      let { location } = body;
       if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
         location = {
           lat: body.latitude,
@@ -75,7 +76,8 @@ export async function POST(request: Request) {
 
     // Complete Trip
     if (action === "complete") {
-      let { requestId, location } = body;
+      const { requestId } = body;
+      let { location } = body;
       if (!location && (body.latitude !== undefined) && (body.longitude !== undefined)) {
         location = {
           lat: body.latitude,

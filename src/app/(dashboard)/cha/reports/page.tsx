@@ -382,7 +382,7 @@ export default async function ChaReportsPage({
                   {log.event.replace(/_/g, " ")}
                 </p>
                 <p className="text-[11px] mnx-text-muted leading-relaxed">
-                  "{log.remarks}"
+                  &quot;{log.remarks}&quot;
                 </p>
                 <div className="flex justify-between items-center text-[9px] mnx-text-muted">
                   <span>Actor: {log.actor.name}</span>

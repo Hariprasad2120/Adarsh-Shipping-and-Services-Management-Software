@@ -141,7 +141,7 @@ export default function HRModule({ employees }: Props) {
                 <div>
                   <h4 className="text-sm font-bold text-black font-sans leading-none">{emp.name}</h4>
                   <p className="text-[11px] text-neutral-400 font-mono mt-1 uppercase">
-                    {emp.role} // {emp.department}
+                    {emp.role} {"//"} {emp.department}
                   </p>
                 </div>
               </div>

@@ -1028,7 +1028,7 @@ function CriterionCard({
               {/* Footer */}
               <div className="flex flex-col gap-3 border-t border-mono-border/30 pt-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-xs text-mono-muted">
-                  Changes are saved to the server on "Save".
+                  Changes are saved to the server on &quot;Save&quot;.
                 </span>
                 <div className="flex items-center gap-2 self-end">
                   <PerformanceControlButton
