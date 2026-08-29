@@ -32,6 +32,9 @@ export async function GET(req: NextRequest) {
   });
   if (!parsed.success) return err("Invalid params");
 
+  const orgId = session!.user.orgId;
+  if (!orgId) return err("No active organisation", 403);
+
   let hrmsEmployeeId = session!.user.id;
   if (parsed.data.employeeId && parsed.data.employeeId !== session!.user.id) {
     const isManageable = await can(session!.user.id, "attendance.punch.manage");
@@ -41,9 +44,10 @@ export async function GET(req: NextRequest) {
     await requirePermission(session!.user.id, "attendance.punch.self");
   }
 
-  // Get the employee's eSSL UserId (= employeeNumber)
-  const employee = await db.user.findUnique({
-    where: { id: hrmsEmployeeId },
+  // Tenant scope: a target employee id from another org must 404, even for a
+  // caller who holds attendance.punch.manage in their own org.
+  const employee = await db.user.findFirst({
+    where: { id: hrmsEmployeeId, orgId },
     select: { employeeNumber: true, name: true },
   });
   if (!employee?.employeeNumber) {

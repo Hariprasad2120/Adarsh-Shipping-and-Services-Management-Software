@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { contentDisposition } from "@/lib/security";
 import fs from "fs";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const session = await auth();
-    if (!session || !session.user) {
+    if (!session?.user?.orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const recording = await db.crmCallRecording.findUnique({
-      where: { id },
+    // Tenant scope: a recording id from another organisation must 404.
+    const recording = await db.crmCallRecording.findFirst({
+      where: { id, orgId: session.user.orgId },
     });
 
     if (!recording) {
@@ -60,13 +62,15 @@ export async function GET(
 
     return new Response(new Uint8Array(fileBuffer), {
       headers: {
-        "Content-Disposition": `attachment; filename="${recording.fileName}"`,
+        "Content-Disposition": contentDisposition(recording.fileName, "attachment"),
         "Content-Type": recording.mimeType || "audio/mpeg",
         "Content-Length": fileBuffer.length.toString(),
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("download API error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

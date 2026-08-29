@@ -18,8 +18,19 @@ export async function POST(
   const { session, error } = await getSessionOrUnauth();
   if (error) return error;
   await requirePermission(session!.user.id, "hrms.salary.manage");
+  const orgId = session!.user.orgId;
+  if (!orgId) return err("No active organisation", 403);
 
   const { id: userId } = await params;
+
+  // Tenant scope: the target employee must belong to the caller's org.
+  // EmploymentRecord has no orgId column, so it is checked via the user.
+  const targetEmployee = await db.user.findFirst({
+    where: { id: userId, orgId },
+    select: { id: true },
+  });
+  if (!targetEmployee) return err("Employee not found", 404);
+
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 

@@ -11,10 +11,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { session, error } = await getSessionOrUnauth();
     if (error) return error;
     await requirePermission(session!.user.id, "attendance.leave.manage");
+    const orgId = session!.user.orgId;
+    if (!orgId) return err("No active organisation", 403);
 
     const { id } = await params;
-    const version = await db.leavePolicyVersion.findUnique({
-      where: { id },
+    // Scope by the owning LeaveType's org — a cross-tenant id must 404.
+    const version = await db.leavePolicyVersion.findFirst({
+      where: { id, leaveType: { orgId } },
       include: { applicabilityRules: true, leaveType: true },
     });
     if (!version) return err("Policy version not found", 404);
@@ -34,9 +37,13 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const { session, error } = await getSessionOrUnauth();
     if (error) return error;
     await requirePermission(session!.user.id, "attendance.leave.manage");
+    const orgId = session!.user.orgId;
+    if (!orgId) return err("No active organisation", 403);
 
     const { id } = await params;
-    const version = await db.leavePolicyVersion.findUnique({ where: { id } });
+    const version = await db.leavePolicyVersion.findFirst({
+      where: { id, leaveType: { orgId } },
+    });
     if (!version) return err("Policy version not found", 404);
     if (version.status !== "DRAFT") {
       return err("Only draft versions can be deleted — published versions must be archived instead.");

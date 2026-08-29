@@ -68,6 +68,50 @@ Deferred to later clusters (not gaps, tracked):
   `RBAC_LEGACY_DEPARTMENT_GRANTS` added to `.env.example` (repo-ignored file —
   also documented here).
 
+### Cluster 3 — tenant isolation / IDOR (checkpoint 3)
+
+Section 7 of this document said a full BOLA sweep was pending. Done for the
+by-id risk class:
+
+| Item | Result |
+|---|---|
+| `src/lib/tenant.ts` | New helpers: `tenantWhere(orgId)`, `assertSameOrg(record, orgId, orgKey?)` (404 on missing **or** cross-org — indistinguishable), `assertFound`, `assertOrgMatchesSession`. Codifies the two safe patterns (scope-the-query / fetch-then-check). Unit-tested. |
+| `scripts/scan-tenant-scope-coverage.mjs` | Scans every API route + `"use server"` file for `db.<model>.findUnique(...)` (which cannot filter by non-unique `orgId`) with no org-scoping signal. Baseline: **50 files with a by-id lookup → 6 flagged → 6 reviewed → 0 remaining**. Regression test `tenant-scope-coverage.test.ts`. |
+
+**Confirmed IDOR / cross-tenant defects found and fixed (4):**
+
+| Route | Defect | Fix |
+|---|---|---|
+| `api/attendance/day-punches` | A caller with `attendance.punch.manage` in org A could pass `?employeeId=<org B user>` and read another tenant's attendance punches (org never checked after the permission gate). | Employee lookup now `findFirst({ where: { id, orgId } })`. |
+| `api/crm/recordings/[id]/download` | Any "manager"/"admin"-named-role user could download **any** org's call recording by id (`findUnique({ where: { id } })`, no org check). Also unsanitised `Content-Disposition` filename and raw error echoed to client. | `findFirst({ where: { id, orgId } })`; `contentDisposition()` helper; generic 500 body; `no-store` + `nosniff`. |
+| `api/hrms/employees/[id]/salary-structure` | `hrms.salary.manage` holder in org A could read/write **any** org's employee salary structure (`EmploymentRecord` has no `orgId`; keyed only on `userId` from the URL). | Guard: target user must be `findFirst({ where: { id, orgId } })` before touching the record. |
+| `api/leave/policies/[id]` (GET + DELETE) | `attendance.leave.manage` holder could view and **hard-delete** any org's leave-policy version (`LeavePolicyVersion` has no `orgId`; no scope). | Scoped via the owning `leaveType: { orgId }` on both verbs. |
+
+Also spot-reviewed and **confirmed already correctly scoped** (no change needed):
+`cha/checklist-files/[id]`, `cha/documents/[id]`, `cha/customer-documents/[id]`,
+`hrms/files/[id]/download`, `customer-portal/{document-versions,documents,checklist-files}/[id]`
+— all use `findFirst({ where: { id, <relation>.orgId } })` plus per-object
+ownership checks. The two `communication/chat/*` matches are display-only
+lookups gated by Google Chat membership (listed in `REVIEWED_OK`).
+
+`cross-tenant-isolation.test.ts` — DB-backed matrix (Company A vs Company B for
+user / employment / leave-policy / crm-recording), runs under `npm test`
+(staging DB); `skipIf` no-DB.
+
+**Schema hardening — deferred with plan:** adding `orgId` to more `@@unique`
+constraints (e.g. `EmploymentRecord`, `LeavePolicyVersion` gaining an `orgId`
+column + composite uniqueness) requires a Prisma migration + backfill and
+coordination with the concurrently-running accounting work. Tracked for the
+schema-migration cluster; the query-level scoping above closes the exploitable
+path in the meantime.
+
+Verification for checkpoint 3: `tsc --noEmit` clean; cluster-3 unit tests
+11 passed / 5 skipped (DB); ESLint clean on changed files; `npm run build`
+green. Pre-existing unrelated failure noted: `performance-boundaries.test.ts`
+"deduplicates authentication" flags two concurrently-added
+`accounting/banking` pages using raw `auth()` instead of `getSession()` — fails
+at the cluster-2 commit too; not a security regression.
+
 ---
 
 ## 1. Architecture discovered
