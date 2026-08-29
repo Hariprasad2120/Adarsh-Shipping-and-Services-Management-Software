@@ -592,41 +592,37 @@ stack. Cleared in order:
 
 ## Potentially Deletable Files
 
-Nothing deleted during this operation (absolute rule). Candidates for a future,
-reviewed removal pass:
+Nothing **deleted** during this operation (absolute rule). Dead code is *extracted
+and preserved*, not removed from the repo.
 
-### Dead selectors in `src/styles/legacy-compatibility.css` (census 2026-08-29)
+### Dead selectors in `legacy-compatibility.css` — ✅ EXTRACTED 2026-08-29
 
-Verified **zero references** across all of `src/` (`.tsx`/`.ts`/`.css`, incl. the
-design-system showcase, catalogue registry, dev-console) — an abandoned parallel
-`.ds-*` / `.card-*` class set, superseded by `.mnx-*`:
+Full census: enumerated every custom class in `src/styles/legacy-compatibility.css`
+and grepped each against `src/` + `scripts/` + `public/`. Found **~48 classes with
+zero references** — an entire abandoned parallel `.ds-*` / `.card-*` design system
+(nav, sidebar variants, topbar, portal shell, timeline, stage dots, buttons, avatar,
+brand, date-panel, table, form-section, labels, icon-badge, …), superseded by `.mnx-*`.
 
-| Selector group | approx. lines | refs |
-|---|---|---|
-| `.ds-numeric` | ~523–530 | 0 |
-| `.ds-h1` / `.ds-h2` / `.ds-h3` (+ `@media ≤640` block) | ~532–575 | 0 |
-| `.ds-textarea` (+ `:hover` / `:focus` / `:focus-visible`) | ~629–657 | 0 |
-| `.card-top-accent` / `.card-cyan-outline` / `.card-top-accent-orange` / `.card-left-accent` / `.card-left-accent-orange` (+ `html.dark` variants) | ~711–748 | 0 |
-| `.ds-label` | ~847–854 | 0 |
-| `.ds-icon-badge` (+ ` svg`, ` *`) | ~856–873 | 0 |
-| `.ds-form-section > h2/h3/h4` (+ `::before`) | ~876–899 | 0 |
-| `.ds-table` / `.ds-table-contained` (+ ` th`, ` td`, ` tbody tr:last-child td`) | ~902–940 | 0 |
-| `.ds-row-link` (+ `:hover`) | ~943–956 | 0 |
+**Done:** a scripted, comment-aware pass (`prune-legacy-css.mjs`) removed every
+top-level rule block whose entire selector list references only confirmed-dead
+classes — **72 rule blocks, `legacy-compatibility.css` 2175 → 1551 lines (−624)**.
+Removed blocks written verbatim (with provenance header) to
+`Extra files/Legacy/legacy-compatibility-dead-selectors.css` (631 lines, **not
+imported, not in the build**). Brace-balanced; `npm run build` re-run green.
 
-**NOT removed now** because: (a) blocks are interleaved with live rules
-(input/placeholder/table-cell styling, `@keyframes`, `.animate-page-enter` which
-**is** used ×2) — needs surgical multi-range edits; (b) `legacy-compatibility.css` is
-a known transitional file the concurrent agent may also be reducing; (c) global
-`!important`-heavy CSS warrants visual verification. Removal should be its own small
-reviewed commit — extract the dead blocks verbatim into
-`Extra files/Legacy/legacy-compatibility-dead-selectors.css`, drop from the active
-file, rebuild + eyeball.
-
-**Keep (load-bearing despite the "legacy" filename):** the `:root` token block,
-`@theme inline` (the `mono-*` palette shim — AMS/LMS `bg-mono-*` utilities depend on
-it), `[data-main-shell-scroll]` / `.no-scrollbar` scrollbar rules, the
-`html:not([data-dashboard-shell])` input/placeholder normalizers, `@keyframes` +
-`.animate-page-enter`, `.cyan-range-slider`.
+**Kept in the active file:**
+- `.ds-sidebar` (used ×1), `.no-scrollbar` (×1), `.cyan-range-slider` (×1),
+  `.animate-page-enter` (×2), `.animate-current-stage-number`,
+  `.animate-doc-missing-blink`, `.animate-pulse-red`
+- All non-class rules: `:root` tokens, `@theme inline` (`mono-*` palette shim —
+  AMS/LMS `bg-mono-*` utilities depend on it), `[data-main-shell-scroll]` scrollbar
+  rules, `html:not([data-dashboard-shell])` input/placeholder normalizers, `@keyframes`
+- **~10 conservatively-kept** dead-ish rules where a dead class is compounded with an
+  unknown/generic token the script won't assume about — `html.dark .card-*`,
+  `.ds-nav-item.is-active`, `.ds-stage.done .ds-stage-dot`, `.ds-date-panel__glow`,
+  `html.light main .ds-dark-banner [...]`, and a `@media` wrapping `.ds-portal-*` that
+  also contains the live `.ds-sidebar`. Harmless (no matching DOM); a follow-up can
+  finish these by hand.
 
 ## Files Intentionally Left Untouched
 
