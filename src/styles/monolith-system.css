@@ -14221,15 +14221,25 @@ button.mnx-accounting-record-card {
   margin-inline: auto;
 }
 
+/* Unified decorative icon container — matches .mnx-icon[data-surface="soft"].
+   Legacy alias kept so existing call sites converge without markup churn. */
 .mnx-icon-badge {
   display: inline-grid;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: var(--mn-icon-surface-size-md);
+  height: var(--mn-icon-surface-size-md);
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-border));
-  border-radius: var(--mn-radius-control);
-  background: color-mix(in srgb, var(--mnx-accent) 14%, transparent);
-  color: var(--mnx-accent-text);
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 72%, transparent);
+  border-radius: var(--mn-icon-radius);
+  background: var(--hue-icon-bg, var(--mn-icon-primary-bg));
+  color: var(--hue-color, var(--mn-sem-primary));
+  backdrop-filter: var(--mn-filter-glass-compact);
+  box-shadow: 0 10px 24px -18px color-mix(in srgb, var(--mn-color-text-strong) 28%, transparent);
+}
+
+.mnx-icon-badge svg {
+  width: var(--mn-icon-size-md);
+  height: var(--mn-icon-size-md);
 }
 
 .mnx-row-link {
@@ -15024,12 +15034,20 @@ button.mnx-accounting-record-card {
 
 .mnx-performance-summary-heading > span {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: var(--mn-icon-surface-size-md);
+  height: var(--mn-icon-surface-size-md);
   place-items: center;
-  border-radius: calc(var(--mn-radius-control) - 0.125rem);
-  background: color-mix(in srgb, var(--mnx-accent) 18%, transparent);
-  color: var(--mnx-accent-text);
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 72%, transparent);
+  border-radius: var(--mn-icon-radius);
+  background: var(--hue-icon-bg, var(--mn-icon-primary-bg));
+  color: var(--hue-color, var(--mn-sem-primary));
+  backdrop-filter: var(--mn-filter-glass-compact);
+}
+
+.mnx-performance-summary-heading > span svg {
+  width: var(--mn-icon-size-md);
+  height: var(--mn-icon-size-md);
 }
 
 .mnx-performance-summary p,
@@ -20790,20 +20808,24 @@ hr,
   --hue-icon-bg: var(--mnx-icon-teal-bg);
 }
 
-/* Reusable semantic icon container. blue glyph + pale blue field, etc. */
+/* Reusable semantic icon container — unified with .mnx-icon[data-surface="soft"].
+   blue glyph + pale blue field, etc. Per-hue tint via [data-hue]. */
 .mnx-icon-chip {
   display: inline-grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: var(--mn-icon-surface-size-md);
+  height: var(--mn-icon-surface-size-md);
   flex: none;
-  border-radius: 11px;
-  color: var(--hue-color, var(--mnx-accent));
-  background: var(--hue-icon-bg, var(--mnx-icon-primary-bg));
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 72%, transparent);
+  border-radius: var(--mn-icon-radius);
+  color: var(--hue-color, var(--mn-sem-primary));
+  background: var(--hue-icon-bg, var(--mn-icon-primary-bg));
+  backdrop-filter: var(--mn-filter-glass-compact);
+  box-shadow: 0 10px 24px -18px color-mix(in srgb, var(--mn-color-text-strong) 28%, transparent);
 }
 .mnx-icon-chip svg {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: var(--mn-icon-size-md);
+  height: var(--mn-icon-size-md);
 }
 
 /* ==========================================================================
@@ -21175,4 +21197,127 @@ hr,
 .mnx-icon[data-tone="teal"] {
   --mnx-icon-color: var(--mn-sem-teal);
   --mnx-icon-surface: var(--mn-icon-teal-bg);
+}
+
+/* ==========================================================================
+   UNIFIED DECORATIVE ICON CONTAINERS
+   --------------------------------------------------------------------------
+   Every module used to ship its own decorative icon box (2rem / 2.25rem /
+   2.5rem / 3rem / 40px / 44px, radius 999px / 14px / control / sm, ad-hoc
+   tints). This block converges all of them onto ONE spec so an icon looks
+   the same on every monolith page:
+
+     - box            var(--mn-icon-surface-size-md)  (2.375rem)
+     - radius         var(--mn-icon-radius)
+     - fill / glyph   soft semantic tint, honours [data-hue]
+     - glyph size     var(--mn-icon-size-md)          (1.125rem)
+
+   Page-header icons keep a larger box (tier "lg", 3rem) for page-level
+   hierarchy but share the same radius / border / tint language.
+   New code should prefer <MonolithIcon /> (.mnx-icon); these aliases exist
+   so the existing ~40 call-site classes converge without markup churn.
+   Placed last in the file so single-class rules win by source order.
+   ========================================================================== */
+.mnx-workspace-metric-icon,
+.mnx-workspace-state-icon,
+.mnx-record-icon,
+.mnx-root-module-feature-icon,
+.mnx-crm-icon-badge,
+.mnx-crm-placeholder-icon,
+.mnx-dev-icon-badge,
+.mnx-communication-icon,
+.mnx-communication-icon-badge,
+.mnx-communication-folder-icon,
+.mnx-communication-overview-kpi-icon,
+.mnx-tracking-kpi-icon,
+.mnx-tracking-alert-icon,
+.mnx-tracking-governance-icon,
+.mnx-accounting-workflow-card-icon,
+.mnx-accounting-banking-card-icon,
+.mnx-account-structure-icon,
+.mnx-on-duty-card-icon,
+.mnx-on-duty-lane-icon,
+.mnx-helpdesk-template-icon,
+.mnx-employee-profile-section-icon,
+.mnx-employee-profile-alert-icon,
+.mnx-cha-job-meta-icon,
+.mnx-cha-success-icon,
+.mnx-attendance-check-icon,
+.mnx-org-visual-company-icon,
+.mnx-public-header-icon,
+.mnx-public-status-icon,
+.mnx-public-inset-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--mn-icon-surface-size-md);
+  height: var(--mn-icon-surface-size-md);
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 72%, transparent);
+  border-radius: var(--mn-icon-radius);
+  background: var(--hue-icon-bg, var(--mn-icon-primary-bg));
+  color: var(--hue-color, var(--mn-sem-primary));
+  backdrop-filter: var(--mn-filter-glass-compact);
+  box-shadow: 0 10px 24px -18px
+    color-mix(in srgb, var(--mn-color-text-strong) 28%, transparent);
+}
+
+.mnx-workspace-metric-icon > svg,
+.mnx-workspace-state-icon > svg,
+.mnx-record-icon > svg,
+.mnx-root-module-feature-icon > svg,
+.mnx-crm-icon-badge > svg,
+.mnx-crm-placeholder-icon > svg,
+.mnx-dev-icon-badge > svg,
+.mnx-communication-icon > svg,
+.mnx-communication-folder-icon > svg,
+.mnx-communication-overview-kpi-icon > svg,
+.mnx-tracking-kpi-icon > svg,
+.mnx-tracking-alert-icon > svg,
+.mnx-tracking-governance-icon > svg,
+.mnx-accounting-workflow-card-icon > svg,
+.mnx-accounting-banking-card-icon > svg,
+.mnx-account-structure-icon > svg,
+.mnx-on-duty-card-icon > svg,
+.mnx-on-duty-lane-icon > svg,
+.mnx-helpdesk-template-icon > svg,
+.mnx-employee-profile-section-icon > svg,
+.mnx-employee-profile-alert-icon > svg,
+.mnx-cha-job-meta-icon > svg,
+.mnx-cha-success-icon > svg,
+.mnx-attendance-check-icon > svg,
+.mnx-org-visual-company-icon > svg,
+.mnx-public-header-icon > svg,
+.mnx-public-status-icon > svg,
+.mnx-public-inset-icon > svg {
+  width: var(--mn-icon-size-md);
+  height: var(--mn-icon-size-md);
+}
+
+/* Page-header tier — larger box, same radius / border / tint language. */
+.mnx-page-header-icon,
+.mnx-customer-portal-page-header .mnx-page-header-icon,
+.mnx-people-page-header .mnx-page-header-icon,
+.mnx-performance-page-header .mnx-page-header-icon,
+.mnx-catalogue-page-header .mnx-page-header-icon,
+.mnx-communication-page-header .mnx-page-header-icon,
+.mnx-admin-page-header .mnx-page-header-icon,
+.mnx-accounting-page-header .mnx-page-header-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid color-mix(in srgb, var(--mn-color-border) 72%, transparent);
+  border-radius: var(--mn-icon-radius);
+  background: var(--hue-icon-bg, var(--mn-icon-primary-bg));
+  color: var(--hue-color, var(--mn-sem-primary));
+  backdrop-filter: var(--mn-filter-glass-compact);
+  box-shadow: var(--mn-shadow-accent-soft);
+}
+
+.mnx-page-header-icon > svg,
+.mnx-people-page-header .mnx-page-header-icon > svg,
+.mnx-performance-page-header .mnx-page-header-icon > svg {
+  width: 1.375rem;
+  height: 1.375rem;
 }
