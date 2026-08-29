@@ -8,7 +8,7 @@
 
 | Field | Value |
 |---|---|
-| Current phase | **Checkpoint — STEP 5 + STEP 6 (freight-forwarding, accounting inspected) + full `npm run build` GREEN.** |
+| Current phase | **Inspection complete — all 25 modules + all 15 CSS files classified. Structural cleanup phase 1 committed (2 local commits, not pushed). `npm run build` GREEN.** |
 | Last updated | 2026-08-29 |
 | Production build status | ✅ **`npm run build` (`prisma generate && next build`) exit 0** — full route table generated, no errors. Plus `architecture:check` ✅, `tsc --noEmit` ✅, `eslint` ✅ 0 errors. Known-good state banked. |
 | Files deleted | **0** |
@@ -23,8 +23,13 @@
 - [x] **STEP 7 batch 1 — root clutter → `Extra files/`**
 - [x] **STEP 6 batch 2 — `src/components/monolith/` reorg + full `architecture:check` cleanup**
 - [x] **STEP 5 — duplicate primitives `@deprecated`-tagged** (full call-site migration deferred — rationale in "Duplicate Implementations Found")
-- [~] STEP 6 cont. — Module-by-module. Done: `freight-forwarding` (compliant, no action). Remaining: 23 modules.
-- [ ] STEP 7 cont. — `Extra files/` (further passes if needed)
+- [x] **STEP 6 — all 25 modules inspected.** Verdict: **none need structural reorg** (repo already well-organized; no dead/backup/duplicate files; no Scrap folders required). Details in "Module Inspection Checklist".
+- [x] **All 15 CSS files classified** — 7 module CSS files all verdict **KEEP module-local** (layout composition, token-clean bar `people.css`); `cha-expense.css` flagged split-candidate.
+- [x] **Committed locally** (2 commits on `ams-completion`, not pushed): `0108384b` icon unification, `124bd4c7` cleanup phase 1.
+- [ ] **Remaining = separate efforts, NOT this "no behavior change" cleanup:**
+  - DS raw-control migration (`<button>/<input>` → primitives, ~349 sites; heaviest: hrms 20, communication 18, mona 17, payroll 15 in modules + accounting routes 216)
+  - Optional: `components/index.ts` barrels for the 18 modules lacking one; split `cha-expense.css`; tokenize `people.css` hex/px; audit `legacy-compatibility.css` (52 KB, self-marked temporary) for dead selectors
+  - `npm run design-system:verify`, `npm test` (needs staging DB), `npm run quality` end-to-end
 
 ### Per-module STEP 6 — approach learned from `freight-forwarding`
 
@@ -304,9 +309,12 @@ From `scratchpad-design-system-audit.md` §2 + this pass:
 | `styles/modules/cha-expense.css` | 1741 | module (**two modules**) | px=236 — heavy raw spacing; split cha vs expense later |
 | `styles/modules/communication-admin.css` | 3435 | module | px=90 |
 | `styles/modules/crm.css` | 2465 | module | hosts `--mnx-*` local vars per prior audit; px=68 |
-| `styles/modules/freight-forwarding.css` | 524 | module | px=14 |
-| `styles/modules/people.css` | 3649 | module | **hex=15** (only module CSS with raw colors), px=85 |
-| `styles/modules/performance.css` | 408 | module | px=12 |
+| `styles/modules/freight-forwarding.css` | 524 | module | ✅ **KEEP module-local** — px=14, hex=0; layout composition |
+| `styles/modules/crm.css` | 2465 | module | ✅ **KEEP module-local** — 522 sel, ~410 layout / ~270 visual, hex=0, px=68. Visual rules use semantic tokens. Future: tokenize the 68 raw px. |
+| `styles/modules/people.css` | 3649 | module | ✅ **KEEP module-local** — 786 sel, ~603 layout / ~401 visual, **hex=15** (only module CSS w/ raw colors), px=85. Future: replace the 15 hex + 85 px with tokens. |
+| `styles/modules/communication-admin.css` | 3435 | module | ✅ **KEEP module-local** — 560 sel, ~559 layout / ~440 visual, hex=0, px=90. Large but token-clean. |
+| `styles/modules/cha-expense.css` | 1741 | module (**2 modules**) | ✅ **KEEP** but **split candidate** (cha vs expense). 257 sel, visual≈layout, hex=0, **px=236** (heaviest raw-spacing file). Future: split + tokenize. |
+| `styles/modules/performance.css` | 408 | module | ✅ **KEEP module-local** — small (63 sel), px=12, hex=0. |
 | `app/globals.css` | ~30 | **Global entry** | keep |
 | `app/(dashboard)/admin/design-system/design-system.css` | — | showcase-local | keep |
 | `app/(dashboard)/admin/design-system/design-system-catalogue.css` | — | showcase-local | keep |
@@ -352,33 +360,40 @@ Worst single file: `app/(dashboard)/accounting/configuration/admin/page.tsx`
 
 Generated from `src/modules/` (file counts = `.ts`+`.tsx`).
 
-| Module | Files | Has tests | Status |
-|---|---:|:---:|---|
-| accounting | 113 | ✔ | ✅ **inspected — no structural reorg needed** (2026-08-29); route raw-controls logged as separate DS-migration debt |
-| admin | 2 | ✗ | ☐ not started |
-| ams | 20 | ✔ | ☐ not started |
-| attendance | 1 | ✗ | ☐ not started |
-| auth | 4 | ✗ | ☐ not started |
-| cha | 71 | ✔ | ☐ not started |
-| communication | 8 | ✔ | ☐ not started |
-| core | 12 | ✗ | ☐ not started |
-| crm | 69 | ✔ | ☐ not started |
-| customer-portal | 16 | ✔ | ☐ not started |
-| dashboard | 10 | ✗ | ☐ not started |
-| expense | 1 | ✗ | ☐ not started |
-| freight-forwarding | 10 | ✗ | ✅ **inspected — compliant, no action** (2026-08-29) |
-| google-chat | 8 | ✗ | ☐ not started |
-| hrms | 80 | ✔ | ☐ not started |
-| incentives | 2 | ✗ | ☐ not started |
-| items | 18 | ✗ | ☐ not started |
-| leave | 44 | ✔ | ☐ not started |
-| mona | 29 | ✔ | ☐ not started |
-| notifications | 3 | ✗ | ☐ not started |
-| payroll | 65 | ✗ | ☐ not started |
-| people | 4 | ✗ | ☐ not started |
-| performance | 5 | ✗ | ☐ not started |
-| recruit | 4 | ✗ | ☐ not started |
-| todo | 1 | ✗ | ☐ not started |
+All 25 modules inspected 2026-08-29 (structure + subdirs + misplaced-file scan +
+`@/app/*` route-import scan + raw-control / inline-style counts). **Result: no module
+needs structural reorganization, no Scrap folders needed** — no dead code, no backup
+files, no duplicate implementations, no cross-module route imports (the one such
+violation, `expense`, was fixed in cleanup phase 1). "rawCtl" = raw form controls in
+that module's own components (DS-migration debt, tracked separately; not a cleanup item).
+
+| Module | Files | rawCtl | inline | Status |
+|---|---:|---:|---:|---|
+| accounting | 93 | 6 | 0 | ✅ compliant. `migration/`+`rollout/` = operational deploy code (used by `scripts/accounting-phase*`), keep. |
+| admin | 2 | 0 | 0 | ✅ compliant (thin) |
+| ams | 18 | 3 | 1 | ✅ compliant. subdirs `components/ pdf/` |
+| attendance | 1 | 0 | 0 | ✅ compliant (single file) |
+| auth | 4 | 4 | 0 | ✅ compliant. `animated-login.module.css` = intentional scoped style |
+| cha | 69 | 7 | 1 | ✅ compliant. `labs/` = live experimental-features area (routed, in nav) — keep |
+| communication | 7 | 18 | 2 | ✅ structure OK. High rawCtl → DS-migration debt |
+| core | 12 | 10 | 0 | ✅ compliant. subdirs `hooks/ organisation/ user/` |
+| crm | 67 | 10 | 6 | ✅ compliant. subdirs `config/ pdf/ services/` |
+| customer-portal | 13 | 3 | 0 | ✅ compliant |
+| dashboard | 10 | 1 | 0 | ✅ compliant |
+| expense | 1 | 0 | 0 | ✅ compliant (route-import fixed in phase 1) |
+| freight-forwarding | 10 | 2 | 0 | ✅ compliant — CSS classified KEEP |
+| google-chat | 8 | 0 | 0 | ✅ compliant (flat) |
+| hrms | 70 | 20 | 2 | ✅ structure OK. Highest rawCtl → DS-migration debt |
+| incentives | 2 | 0 | 0 | ✅ compliant |
+| items | 18 | 0 | 0 | ✅ compliant. has `components/index.ts` |
+| leave | 25 | 0 | 0 | ✅ compliant. zero raw controls |
+| mona | 25 | 17 | 6 | ✅ structure OK. rawCtl mostly chat UI → DS-migration debt |
+| notifications | 3 | 1 | 0 | ✅ compliant |
+| payroll | 65 | 15 | 0 | ✅ structure OK. subdirs `components/ pdf/`. rawCtl → debt |
+| people | 4 | 2 | 0 | ✅ compliant. `people.css` KEEP (has 15 hex — future tokenize) |
+| performance | 5 | 1 | 0 | ✅ compliant |
+| recruit | 4 | 0 | 0 | ✅ compliant |
+| todo | 1 | 0 | 0 | ✅ compliant |
 
 ### Cross-cutting areas (also require inspection)
 
@@ -663,13 +678,37 @@ can now progress past its first gate.
 
 ## Final Cleanup Summary
 
-_To be completed at STEP 12._
+### Phase 1 (2026-08-29) — structural cleanup + full inspection
 
 ```
-Total modules inspected:        0 / 25
-Total files reorganized:        0
-Total files moved to Scrap:     0
-Total files moved to Extra files: 0
-Total files deleted:            0
-Build status:                   pending
+Total modules inspected:          25 / 25
+Total CSS files classified:       15 / 15
+Total files reorganized (git mv): 40   (16 root -> Extra files/, 24 src/ moves)
+Total import/reference rewrites:   ~130 files
+Total files moved to Scrap:        0    (no Scrap folders needed - no dead/backup/dup code found)
+Total files moved to Extra files:  16
+Total files deleted:               0
+architecture:check:                RED -> GREEN (10 pre-existing violations fixed)
+tsc --noEmit:                      exit 0
+eslint (changed files):            0 errors
+npm run build:                     exit 0  (prisma generate + next build)
+Local commits (not pushed):        0108384b, 124bd4c7  on ams-completion
 ```
+
+### Key finding
+
+The repository was already organized to a high standard before this phase
+(module-based `src/modules/*`, dedicated `architecture:check` / `design-system:verify`
+tooling, prior ownership audits). There was **no accumulation of legacy / backup /
+duplicate / abandoned code** to sweep — the versioned-filename scan came back empty
+across 24 of 25 modules. The one real structural defect, `src/components/monolith/`
+holding 22 stray implementations, is now fixed and the architecture linter is green
+for the first time.
+
+### Remaining (deliberately out of scope for a "no behavior change" cleanup)
+
+1. **Design-system raw-control migration** — replace ~349 raw `<button>/<input>/…`
+   with DS primitives. Behavior-sensitive; its own project.
+2. **Optional polish** — module `components/index.ts` barrels; split `cha-expense.css`;
+   tokenize `people.css` hex/px; prune `legacy-compatibility.css`.
+3. **Full gate run** — `design-system:verify`, `npm test` (staging DB), `npm run quality`.
