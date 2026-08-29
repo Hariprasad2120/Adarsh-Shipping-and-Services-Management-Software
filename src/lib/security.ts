@@ -41,13 +41,15 @@ export function requireCronSecret(request: Request) {
   }
   if (!cronSecret) return null;
 
-  const url = new URL(request.url);
+  // Header-only. Secrets in the query string leak via access logs, proxy logs,
+  // Referer headers and browser history. Vercel Cron sends the Bearer header.
   const provided =
     request.headers.get("x-cron-secret") ||
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
-    url.searchParams.get("secret");
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
 
-  return provided === cronSecret ? null : forbiddenJson("Unauthorized", 401);
+  return provided && provided === cronSecret
+    ? null
+    : forbiddenJson("Unauthorized", 401);
 }
 
 export function rateLimit(

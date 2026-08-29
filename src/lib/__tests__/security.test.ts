@@ -33,11 +33,22 @@ describe("shared security helpers", () => {
     expect(requireProductionSecret("AUTH_SECRET", "real-secret", "fallback")).toBe("real-secret");
   });
 
-  it("requires cron secret in production and accepts header/query/bearer tokens", async () => {
+  it("requires cron secret in production via header/bearer only (never query string)", async () => {
     process.env.NODE_ENV = "production";
     process.env.CRON_SECRET = "cron-secret";
 
-    expect(requireCronSecret(new Request("https://app.test/api/cron?secret=cron-secret"))).toBeNull();
+    // Query-string secrets leak in logs — no longer accepted.
+    expect(
+      requireCronSecret(new Request("https://app.test/api/cron?secret=cron-secret"))?.status,
+    ).toBe(401);
+
+    expect(
+      requireCronSecret(
+        new Request("https://app.test/api/cron", {
+          headers: { "x-cron-secret": "cron-secret" },
+        }),
+      ),
+    ).toBeNull();
     expect(
       requireCronSecret(
         new Request("https://app.test/api/cron", {

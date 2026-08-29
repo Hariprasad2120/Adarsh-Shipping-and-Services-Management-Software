@@ -9,6 +9,7 @@ import { can, ForbiddenError } from "@/lib/rbac";
 import { submitPortalCustomerChecklistDecision as submitChaPortalCustomerChecklistDecision } from "@/modules/cha/service";
 import type { Prisma } from "@/generated/prisma/client";
 import { assertAllowedFile, resolveInside, sanitizeFilename, sanitizeText } from "@/lib/security";
+import { assertSafeFileContent } from "@/lib/upload-validation";
 import type { PortalShipmentDetailView } from "./types";
 import {
   buildPortalLink,
@@ -967,6 +968,12 @@ export async function uploadPortalDocument(params: {
     maxSizeBytes: PORTAL_MAX_FILE_SIZE,
   });
   const buffer = Buffer.from(await params.file.arrayBuffer());
+  // Defence in depth: the declared type/extension passed, now confirm the
+  // actual bytes are not markup/script and match the claimed extension.
+  assertSafeFileContent(
+    new Uint8Array(buffer.subarray(0, 64)),
+    path.extname(sanitizeFilename(params.file.name)).replace(/^\./, "").toLowerCase(),
+  );
   const uploadsDir = resolveInside(PORTAL_UPLOAD_ROOT, portalUser.orgId, params.jobId);
   await fs.mkdir(uploadsDir, { recursive: true });
   const displayName = sanitizeFilename(params.file.name);

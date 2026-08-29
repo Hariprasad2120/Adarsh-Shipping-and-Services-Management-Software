@@ -7,6 +7,7 @@ import { resolveDriveFolderForCategory } from "@/modules/cha/service";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { getValidAccessToken } from "@/lib/workspace-oauth";
+import { safeFetch } from "@/lib/safe-fetch";
 
 const CHECKLIST_DOCUMENT_CATEGORY = "Checklist Documents";
 const FILING_DOCUMENT_CATEGORY = "Filing Documents";
@@ -81,7 +82,12 @@ async function syncStoredFile(params: {
 
   if (!isUnsyncedFileKey(currentFileKey) && /^https?:\/\//i.test(currentFileKey)) {
     try {
-      const response = await fetch(currentFileKey);
+      // SSRF guard: the file key can be an arbitrary stored URL. Block
+      // loopback / private / metadata destinations and cap size + time.
+      const response = await safeFetch(currentFileKey, {
+        timeoutMs: 15_000,
+        maxBytes: 50 * 1024 * 1024,
+      });
       if (response.ok) {
         const buffer = Buffer.from(await response.arrayBuffer());
         const uploaded = await driveClient.uploadFile({

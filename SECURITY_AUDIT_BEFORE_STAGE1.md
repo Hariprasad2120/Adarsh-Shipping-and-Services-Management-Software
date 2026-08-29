@@ -21,6 +21,35 @@ Severity scale: CRITICAL / HIGH / MEDIUM / LOW / INFORMATIONAL.
 
 ---
 
+## 0.1 Remediation progress log
+
+Findings below are the **baseline** (all `OPEN` at Stage 1 start). Progress is
+recorded here as clusters land; final `FIXED / MITIGATED / ACCEPTED RISK / NOT
+FIXED` verdicts with evidence go in `SECURITY_AUDIT_AFTER_STAGE1.md`.
+
+### Cluster 1 — request-integrity (checkpoint 1)
+
+| ID | Was | Now | What changed |
+|---|---|---|---|
+| MON-S1-001 | CRITICAL / OPEN | **PARTIALLY FIXED** | `next` 16.2.6 → **16.2.12** (proxy-bypass advisory cleared; 16.3.3 breaks the Turbopack+Tailwind build). `@auth/core` → **0.41.3** via `overrides` + `next-auth` **beta.32** (homoglyph `@` bypass cleared). `npm audit --omit=dev`: 18→5 vulns, **0 critical**. Defence-in-depth (route-level gate) is cluster 2. |
+| MON-S1-015 | HIGH / OPEN | **FIXED** | `Strict-Transport-Security` (prod), `Cross-Origin-Opener-Policy: same-origin`, `upgrade-insecure-requests` (prod), global `X-Content-Type-Options` / `X-Frame-Options` / `Referrer-Policy` added. `script-src 'unsafe-eval'` → `'wasm-unsafe-eval'` in production. Central `src/lib/security-headers.ts`; `next.config.ts` + `src/proxy.ts` aligned; unit test enforces sync. `'unsafe-inline'` for scripts still present pending a nonce migration (tracked). |
+| MON-S1-016 | HIGH / OPEN | **DOWNGRADED → LOW** | Re-inspection: `sanitizePaletteOverride()` already validates against a fixed key allowlist **and** an anchored colour grammar (`^#[0-9a-fA-F]{3,8}$` / `rgb()/hsl()` with a digit-only char class), applied on **both** write and read (`theme-settings.ts`). `buildPaletteOverrideCss` only interpolates validated tokens; no `postcss` stringify path involved. No breakout is possible. Residual is defence-in-depth only (CSP nonce) — deferred. Hardening test owed. |
+| MON-S1-017 | HIGH / OPEN | **PARTIALLY FIXED** | See `DEPENDENCY_REMEDIATION.md`. Patched `next`, `@auth/core`, `postcss`, `undici`, `sharp`, `valibot`. Residual (documented, deferred): `xlsx` (no fix — mitigation + `exceljs` plan), `nodemailer` (major bump planned; unreachable fields today), `prisma`/`deepmerge-ts` (build-time CLI only — ACCEPTED RISK). |
+| MON-S1-018 | HIGH / OPEN | **FIXED** | Wildcard `Access-Control-Allow-Origin: *` on `/api/mobile/*` replaced with an env-driven exact-origin allowlist (`MOBILE_ALLOWED_ORIGINS`) that is *reflected only on match*, plus `Vary: Origin`. Native clients (no `Origin`) unaffected. Unit test (cluster 2 will add the e2e). |
+| MON-S1-031 | MEDIUM / OPEN | **IN PROGRESS** | `src/lib/safe-redirect.ts` (`safeRedirectPath` / `safeRedirectUrl`) added + tested (blocks `//evil`, `https://evil`, `\`-tricks, CRLF, whitespace). Wiring into the NextAuth `redirect` callback and `callbackUrl`/`returnTo` consumers is cluster 4 (auth). |
+| MON-S1-034 | MEDIUM / OPEN | **MITIGATED** | `src/lib/safe-fetch.ts` (protocol allowlist, IPv4/IPv6 private/loopback/link-local/CGNAT/metadata block, per-hop redirect re-validation, timeout + size cap, injectable resolver) added + tested. Wired into the one confirmed user-influenced server fetch (`communication/drive/actions.ts`). |
+| MON-S1-035 | MEDIUM / OPEN | **PARTIALLY FIXED** | `src/lib/upload-validation.ts` (`validateUpload` + `assertSafeFileContent` + `sniffType`) added + tested. Portal document upload now runs a magic-byte + HTML/script-sniff check after the existing type/size gate. Rolling the helper across the other uploaders (CHA, HR, face, bank statements) + download-authz review is a later cluster. |
+| MON-S1-036 | MEDIUM / OPEN | **FIXED** | `requireCronSecret()` no longer accepts `?secret=` — header/Bearer only. Test updated. |
+| MON-S1-037 | MEDIUM / OPEN | **FIXED** | `/api/setup` no longer accepts `?secret=` — `x-setup-secret` / Bearer only. |
+| §8 CSRF / request integrity | OPEN | **IN PROGRESS** | `src/lib/request-integrity.ts` (`checkRequestIntegrity` / `assertRequestIntegrity`: `Sec-Fetch-Site` + `Origin` allowlist, Bearer bypass) added + tested. Per-route wiring across mutating handlers is cluster 2/3. |
+
+Verification for checkpoint 1: `npx tsc --noEmit` clean; new security unit
+tests 38/38 green (`vitest.unit.config.ts`); `npm run build` green (497/497
+static pages); ESLint clean on changed files (1 pre-existing `any` warning
+untouched).
+
+---
+
 ## 1. Architecture discovered
 
 ### 1.1 Stack

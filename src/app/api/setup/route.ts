@@ -24,11 +24,11 @@ export async function POST(req: NextRequest) {
     } catch {
       return forbiddenJson("Setup secret is not configured.", 503);
     }
+    // Header-only — never accept the secret via query string (leaks in logs).
     const provided =
       req.headers.get("x-setup-secret") ||
-      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
-      req.nextUrl.searchParams.get("secret");
-    if (provided !== setupSecret) {
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+    if (!provided || provided !== setupSecret) {
       return forbiddenJson("Unauthorized", 401);
     }
   }

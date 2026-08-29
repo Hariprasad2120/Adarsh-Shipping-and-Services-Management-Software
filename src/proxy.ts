@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isBlockedApiPath, isBlockedRoutePath } from "@/lib/app-edition";
-import { SESSION_COOKIE_NAME } from "@/lib/session-config";
+import { SESSION_COOKIE_NAME, USE_SECURE_COOKIES } from "@/lib/session-config";
+import { securityHeaders } from "@/lib/security-headers";
 import { PORTAL_COOKIE_NAME, PORTAL_LOGIN_PATH } from "@/modules/customer-portal/config";
 
 /**
@@ -35,12 +36,35 @@ const PUBLIC_PATHS = [
 // Static asset prefixes — always public
 const STATIC_PREFIXES = ["/_next", "/favicon.ico", "/Logo", "/logo"];
 
-const MOBILE_CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+const MOBILE_CORS_BASE = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
   "Access-Control-Max-Age": "86400",
 };
+
+// Native mobile clients send no `Origin` (or `null`) and are unaffected by CORS.
+// Browser origins must be explicitly allowlisted — never `*`. Configure extra
+// origins (e.g. a WebView shell) via MOBILE_ALLOWED_ORIGINS (comma-separated).
+const MOBILE_ALLOWED_ORIGINS = new Set(
+  (process.env.MOBILE_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean)
+    .concat(
+      process.env.NODE_ENV !== "production"
+        ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+        : [],
+    ),
+);
+
+function mobileCorsHeaders(req: NextRequest): Record<string, string> {
+  const headers: Record<string, string> = { ...MOBILE_CORS_BASE, Vary: "Origin" };
+  const origin = req.headers.get("origin");
+  if (origin && MOBILE_ALLOWED_ORIGINS.has(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
+}
 
 function isPublicPath(pathname: string): boolean {
   // Dev-only utilities (e.g. /api/dev/clear-auth-cookies) — never public in prod
@@ -84,7 +108,7 @@ export function proxy(req: NextRequest) {
   requestHeaders.set("x-current-pathname", pathname);
 
   if (isMobileApi && req.method === "OPTIONS") {
-    return new NextResponse(null, { status: 204, headers: MOBILE_CORS_HEADERS });
+    return new NextResponse(null, { status: 204, headers: mobileCorsHeaders(req) });
   }
 
   if (isBlockedApiPath(pathname)) {
@@ -104,7 +128,7 @@ export function proxy(req: NextRequest) {
     });
 
     if (isMobileApi) {
-      Object.entries(MOBILE_CORS_HEADERS).forEach(([key, value]) => {
+      Object.entries(mobileCorsHeaders(req)).forEach(([key, value]) => {
         response.headers.set(key, value);
       });
     }
@@ -141,22 +165,13 @@ export function proxy(req: NextRequest) {
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
 
-  // Security headers
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set(
-    "X-Frame-Options",
-    isHrLetterPreviewFile ? "SAMEORIGIN" : "DENY",
-  );
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self)",
-  );
-  if (isHrLetterPreviewFile) {
-    response.headers.set(
-      "Content-Security-Policy",
-      "default-src 'self'; frame-ancestors 'self';",
-    );
+  // Security headers (HSTS in prod, CSP incl. frame-ancestors, nosniff, etc.)
+  const headers = securityHeaders({
+    secure: USE_SECURE_COOKIES,
+    frameAncestorsSelf: isHrLetterPreviewFile,
+  });
+  for (const [key, value] of Object.entries(headers)) {
+    response.headers.set(key, value);
   }
 
   return response;
