@@ -566,7 +566,41 @@ stack. Cleared in order:
 
 ## Potentially Deletable Files
 
-_Populated later. Nothing to be deleted during this operation._
+Nothing deleted during this operation (absolute rule). Candidates for a future,
+reviewed removal pass:
+
+### Dead selectors in `src/styles/legacy-compatibility.css` (census 2026-08-29)
+
+Verified **zero references** across all of `src/` (`.tsx`/`.ts`/`.css`, incl. the
+design-system showcase, catalogue registry, dev-console) — an abandoned parallel
+`.ds-*` / `.card-*` class set, superseded by `.mnx-*`:
+
+| Selector group | approx. lines | refs |
+|---|---|---|
+| `.ds-numeric` | ~523–530 | 0 |
+| `.ds-h1` / `.ds-h2` / `.ds-h3` (+ `@media ≤640` block) | ~532–575 | 0 |
+| `.ds-textarea` (+ `:hover` / `:focus` / `:focus-visible`) | ~629–657 | 0 |
+| `.card-top-accent` / `.card-cyan-outline` / `.card-top-accent-orange` / `.card-left-accent` / `.card-left-accent-orange` (+ `html.dark` variants) | ~711–748 | 0 |
+| `.ds-label` | ~847–854 | 0 |
+| `.ds-icon-badge` (+ ` svg`, ` *`) | ~856–873 | 0 |
+| `.ds-form-section > h2/h3/h4` (+ `::before`) | ~876–899 | 0 |
+| `.ds-table` / `.ds-table-contained` (+ ` th`, ` td`, ` tbody tr:last-child td`) | ~902–940 | 0 |
+| `.ds-row-link` (+ `:hover`) | ~943–956 | 0 |
+
+**NOT removed now** because: (a) blocks are interleaved with live rules
+(input/placeholder/table-cell styling, `@keyframes`, `.animate-page-enter` which
+**is** used ×2) — needs surgical multi-range edits; (b) `legacy-compatibility.css` is
+a known transitional file the concurrent agent may also be reducing; (c) global
+`!important`-heavy CSS warrants visual verification. Removal should be its own small
+reviewed commit — extract the dead blocks verbatim into
+`Extra files/Legacy/legacy-compatibility-dead-selectors.css`, drop from the active
+file, rebuild + eyeball.
+
+**Keep (load-bearing despite the "legacy" filename):** the `:root` token block,
+`@theme inline` (the `mono-*` palette shim — AMS/LMS `bg-mono-*` utilities depend on
+it), `[data-main-shell-scroll]` / `.no-scrollbar` scrollbar rules, the
+`html:not([data-dashboard-shell])` input/placeholder normalizers, `@keyframes` +
+`.animate-page-enter`, `.cyan-range-slider`.
 
 ## Files Intentionally Left Untouched
 
