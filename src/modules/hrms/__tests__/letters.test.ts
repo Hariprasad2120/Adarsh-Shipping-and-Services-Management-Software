@@ -1,11 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { db } from "@/lib/db";
 import {
   formatCurrency,
   formatDate,
   maskAadhaar,
   createHRLetterTemplate,
-  getHRLetterTemplates,
   createHRLetterRequest,
   transitionHRLetterRequest
 } from "../letters-service";

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { updateTicketStatusAction, assignTicketAction } from "./actions";
-import { MessageSquare, User, Calendar, AlertTriangle, ArrowRight, Shield } from "lucide-react";
+import { MessageSquare, User, Calendar, ArrowRight, Shield } from "lucide-react";
 
 type UserBasic = {
   id: string;

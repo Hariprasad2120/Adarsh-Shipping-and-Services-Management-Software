@@ -3,7 +3,7 @@
 import { PeopleControlButton as MnxAction } from "@/modules/people/components";
 
 import React, { useState, useEffect } from "react";
-import { Settings, CheckCircle, AlertCircle, Save } from "lucide-react";
+import { Settings, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface SettingsServicesProps {

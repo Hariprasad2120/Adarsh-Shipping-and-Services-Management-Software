@@ -20,8 +20,6 @@ import {
 } from "lucide-react";
 import {
   ChaPageHeader,
-  ChaMetricCard,
-  ChaSectionShell,
 } from "@/modules/cha/components/workspace/cha-operations-shared";
 
 export default async function ChaReportsPage({

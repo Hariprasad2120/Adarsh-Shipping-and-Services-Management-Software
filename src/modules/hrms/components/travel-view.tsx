@@ -10,16 +10,11 @@ import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import {
   Plane,
-  DollarSign,
   Plus,
-  Save,
   Loader2,
-  AlertCircle,
   Calendar,
   MapPin,
   Receipt,
-  CheckCircle,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 

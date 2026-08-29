@@ -5,7 +5,6 @@
 
 import React from 'react';
 import type { CRMLead } from "@/types/types";
-import { Landmark, ArrowRight, TrendingUp, DollarSign, Wallet, Percent } from 'lucide-react';
 
 interface Props {
   leads: CRMLead[];

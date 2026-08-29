@@ -8,14 +8,7 @@ import { requirePermission } from "@/lib/rbac";
 import {
   Clock,
   TrendingUp,
-  UserCheck,
-  DollarSign,
-  Users,
-  Building,
-  Target,
-  ArrowRight,
-  ChevronRight,
-  History
+  UserCheck
 } from "lucide-react";
 
 export default async function CrmEfficiencyPage() {

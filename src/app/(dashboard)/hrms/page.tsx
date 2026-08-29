@@ -12,22 +12,16 @@ import {
   ArrowUpRight,
   BriefcaseBusiness,
   Building2,
-  CalendarClock,
-  CheckCircle2,
   ClipboardCheck,
-  FileText,
   FolderKanban,
   HelpCircle,
   IdCard,
-  MapPinned,
   ReceiptIndianRupee,
   ShieldCheck,
   UserPlus,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { MonolithEmptyState } from "@/components/ui/foundation";
 import {
   PeopleActionLink,
   PeoplePerson,

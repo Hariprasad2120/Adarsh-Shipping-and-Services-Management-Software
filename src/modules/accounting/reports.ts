@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
-import { GLEntryLine, TrialBalanceRow, ProfitAndLossStatement, BalanceSheetStatement } from "./types";
+import { TrialBalanceRow, ProfitAndLossStatement, BalanceSheetStatement } from "./types";
 import { assertStatutoryReportAvailability } from "./tax-controls";
 
 // Helper to check the default account balance type

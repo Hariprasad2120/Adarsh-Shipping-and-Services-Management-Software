@@ -5,7 +5,7 @@ import { CrmButton, CrmTextarea } from "@/modules/crm/components/workspace/crm-w
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createNoteAction, deleteNoteAction } from "@/modules/crm/actions";
-import { MessageSquare, Trash2, Pin, User, Clock } from "lucide-react";
+import { MessageSquare, Trash2, User, Clock } from "lucide-react";
 
 interface Note {
   id: string;

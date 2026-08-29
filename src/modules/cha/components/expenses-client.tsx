@@ -16,7 +16,6 @@ import {
   CreditCard,
   Search,
   Filter,
-  ExternalLink,
   MessageSquare,
   ChevronDown,
   Plus,

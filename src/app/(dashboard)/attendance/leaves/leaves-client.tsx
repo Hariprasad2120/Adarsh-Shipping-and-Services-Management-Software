@@ -2,7 +2,6 @@
 
 import {
   PeopleControlButton as MnxAction,
-  PeopleControlInput as MnxInput,
 } from "@/modules/people/components/people-controls";
 
 import { useRouter } from "next/navigation";

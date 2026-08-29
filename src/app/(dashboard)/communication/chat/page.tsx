@@ -8,10 +8,10 @@ import {
   CommunicationTextarea,
 } from "@/modules/communication/components/workspace/communication-workspace";
 import { WorkspaceDialogLayer } from "@/components/layout/workspace-dialog";
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import {Search, Send, Video, ExternalLink, Hash, User, Briefcase, Folder, Users,AlertCircle, RefreshCw, Mail, Phone, Clock, ArrowRight, Shield, Plus,ChevronDown, Check, CheckCheck, X, Star, Info, MessageSquare, Paperclip, Bell,Smile, Bold, Italic, Code, Trash2, Edit2, Pin, ChevronRight, Sparkles, AtSign, FileText, Download} from "lucide-react";
+import {Search, Send, Video, ExternalLink, Hash, Briefcase, Folder, Users,AlertCircle, RefreshCw, Mail, Phone, Clock, Plus,ChevronDown, Check, CheckCheck, X, Star, Info, MessageSquare, Bell, Bold, Italic, Code, Trash2, Edit2, Pin, ChevronRight, AtSign, FileText, Download} from "lucide-react";
 import Link from "next/link";
 import { useChatContext } from "../_components/chat-provider";
 

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import type { Appraisal } from "@/types/types";
-import { Award, FileText, CheckCircle2, Star, ShieldCheck, ArrowRight, HelpCircle } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 interface Props {
   appraisals: Appraisal[];

@@ -14,7 +14,6 @@ import {
   CheckSquare,
   AlertTriangle,
   User,
-  Star,
   Activity,
   ArrowUpRight,
   Sparkles,

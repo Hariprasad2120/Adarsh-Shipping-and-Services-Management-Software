@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import unusedImports from "eslint-plugin-unused-imports";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -106,6 +107,26 @@ const eslintConfig = defineConfig([
       "@next/next/no-html-link-for-pages": "off",
       "@next/next/no-img-element": "off",
       "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    // Auto-remove dead imports (autofixable) and report unused vars via
+    // eslint-plugin-unused-imports; underscore-prefixed names are intentional.
+    files: ["**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+    plugins: { "unused-imports": unusedImports },
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "warn",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          caughtErrors: "none",
+        },
+      ],
     },
   },
   {

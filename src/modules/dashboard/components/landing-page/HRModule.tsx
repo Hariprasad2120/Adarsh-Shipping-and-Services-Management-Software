@@ -5,7 +5,6 @@
 
 import React from 'react';
 import type { Employee } from "@/types/types";
-import { ShieldCheck, UserCheck, AlertCircle, FileSpreadsheet, Group, ArrowUpRight } from 'lucide-react';
 
 interface Props {
   employees: Employee[];

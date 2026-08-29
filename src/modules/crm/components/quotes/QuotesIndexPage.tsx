@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronRight,
-  Copy,
   Download,
   Plus,
   Search,

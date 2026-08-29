@@ -3,7 +3,7 @@
 import { NativeSelect } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
-import { Calendar, Search, Plus, Download, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface LeaveTrackerProps {

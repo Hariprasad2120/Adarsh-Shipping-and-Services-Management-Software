@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAppUrl } from "@/lib/app-url";
 import { db } from "@/lib/db";
 import * as driveClient from "./google-drive-client";
-import { sendMessage, createMembership, getAccessToken, type ChatCard } from "./google-chat-client";
+import { sendMessage, getAccessToken, type ChatCard } from "./google-chat-client";
 import {
   createJobWorkspaceProfileCompat,
   createOrUpdateJobWorkspaceProfile,

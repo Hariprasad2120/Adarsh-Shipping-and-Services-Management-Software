@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
-import { createNotification, getUsersWithPermission, recordNotificationActivity } from "@/modules/notifications/service";
+import { createNotification, getUsersWithPermission } from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
 import fs from "fs/promises";
 import path from "path";

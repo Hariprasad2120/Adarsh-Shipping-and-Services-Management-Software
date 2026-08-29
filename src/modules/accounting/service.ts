@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { Prisma } from "@/generated/prisma/client";
-import { RootType, AccountType } from "./types";
 import {
   postApprovedPayrollRun,
   resolveCanonicalPostingConfiguration,

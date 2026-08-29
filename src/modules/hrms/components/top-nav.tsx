@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Plus, Bell, HelpCircle, User } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { ModuleKey } from "@/modules/hrms/types";
 import { Input } from "@/components/ui/input";
 

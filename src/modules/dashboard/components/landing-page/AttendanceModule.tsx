@@ -5,7 +5,6 @@
 
 import React from 'react';
 import type { AttendanceRecord, Employee } from "@/types/types";
-import { MapPin, Clock, Radio, ShieldCheck, Activity, Milestone } from 'lucide-react';
 
 interface Props {
   attendanceRecords: AttendanceRecord[];

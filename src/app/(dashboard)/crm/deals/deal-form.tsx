@@ -8,11 +8,11 @@ import {
 
 import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createDealAction, updateDealAction } from "@/modules/crm/actions";
-import { Save, Landmark, Building, User, Calendar, Tag } from "lucide-react";
+import { Save, Landmark, Tag } from "lucide-react";
 
 interface Option {
   id: string;

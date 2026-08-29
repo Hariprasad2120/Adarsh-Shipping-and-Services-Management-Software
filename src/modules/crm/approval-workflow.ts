@@ -347,7 +347,7 @@ async function buildUniqueFreightBookingNumber(params: {
 }
 
 // Reserved for the next CRM quote-to-freight conversion phase.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function createFreightBookingFromQuote(params: {
   actorId: string;
   actorName: string | null;
@@ -597,7 +597,7 @@ async function resolveQuoteManager(
 }
 
 // Reserved for the next CRM quote-to-CHA conversion phase.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function createChaJobFromQuote(params: {
   actorId: string;
   orgId: string;

@@ -4,7 +4,7 @@ import { CrmButton, CrmInput, CrmTable } from "@/modules/crm/components/workspac
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {ArrowLeft,ChevronDown,FileText,MoreHorizontal,Plus,Search,ShieldAlert,Calendar,User,DollarSign,Briefcase,History,} from "lucide-react";
+import {ArrowLeft,MoreHorizontal,Search,ShieldAlert,Calendar,User,History,} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ApprovalActionBar, ApprovalLogList, type ApprovalCaps, type ApprovalLogEntry } from "@/modules/crm/components/ApprovalActionBar";
 import type { ApprovalStatus } from "@/modules/crm/approval-workflow";

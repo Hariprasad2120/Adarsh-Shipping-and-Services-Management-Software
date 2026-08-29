@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutGrid,
   FileText,
-  CheckCircle,
   Plus,
   Info,
   Award,

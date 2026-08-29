@@ -5,7 +5,7 @@ import { CrmButton, CrmInput } from "@/modules/crm/components/workspace/crm-work
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createAttachmentAction, deleteAttachmentAction } from "@/modules/crm/actions";
-import { Paperclip, Trash2, Download, File, UploadCloud, User, Clock } from "lucide-react";
+import { Paperclip, Trash2, Download, File, UploadCloud } from "lucide-react";
 
 interface Attachment {
   id: string;

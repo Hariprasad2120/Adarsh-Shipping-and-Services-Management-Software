@@ -17,16 +17,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Plus,
-  Calendar,
-  Settings,
-  FolderOpen,
-  DollarSign,
-  Activity,
   Calculator,
   Loader2,
-  ChevronRight,
-  Sparkles,
   Eye,
 } from "lucide-react";
 import {

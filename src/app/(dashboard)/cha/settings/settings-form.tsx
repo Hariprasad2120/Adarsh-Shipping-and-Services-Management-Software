@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {updateSettingsAction,createJobTypeAction,updateJobTypeManifestConfigAction,deleteJobTypeAction,createShipmentTypeAction,deleteShipmentTypeAction,createTeamGroupAction,deleteTeamGroupAction,upsertDocumentCategoryAction,deleteDocumentCategoryAction,upsertDocumentItemAction,deleteDocumentItemAction} from "@/modules/cha/actions";
 import { setPortalFeatureFlagAction } from "@/modules/customer-portal/actions";
-import { ChaPageHeader } from "@/modules/cha/components/workspace/cha-operations-shared";
 
 interface SettingsFormProps {
   initialSettings: {

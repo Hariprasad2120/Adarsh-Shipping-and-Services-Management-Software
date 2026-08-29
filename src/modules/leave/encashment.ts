@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { postLedgerEntry, getMaterializedBalance } from "@/modules/leave/ledger";
 import { getActivePolicyVersion, parsePolicyConfig } from "@/modules/leave/policy";

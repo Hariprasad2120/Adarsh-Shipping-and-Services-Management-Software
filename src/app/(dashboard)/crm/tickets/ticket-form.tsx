@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTicketAction } from "./actions";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, ChevronUp } from "lucide-react";
 
 const CATEGORIES = [
   "Self-Assessment Form",

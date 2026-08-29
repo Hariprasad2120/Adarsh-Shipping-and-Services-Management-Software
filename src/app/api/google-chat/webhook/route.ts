@@ -7,7 +7,7 @@ import { verifyWebhookToken } from "@/lib/google-chat-client";
 import { resolveIdentity, tryAutoLink, generateLinkToken } from "@/modules/google-chat/identity";
 import { handleCommand } from "@/modules/google-chat/commands";
 import { processMessage } from "@/modules/google-chat/gateway";
-import { buildConnectCard, buildAiResponseCard, buildErrorCard, buildProcessingCard } from "@/modules/google-chat/cards";
+import { buildConnectCard, buildAiResponseCard } from "@/modules/google-chat/cards";
 import { upsertSpace, markBotRemoved, getSpaceByResource } from "@/modules/google-chat/space";
 import { db } from "@/lib/db";
 import type { ChatInteractionEvent } from "@/modules/google-chat/types";

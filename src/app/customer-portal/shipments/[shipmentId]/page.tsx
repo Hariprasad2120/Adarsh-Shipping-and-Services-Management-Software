@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Check,
   FolderKanban,
-  MessagesSquare,
   PackageCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

@@ -6,7 +6,7 @@
  */
 import { getMobileUser } from "@/lib/mobile-auth";
 import { mobileJson, mobileOptions } from "@/lib/mobile-cors";
-import { checkUserAcceptance, recordAcceptance, getLatestAgreement, seedDefaultAgreement } from "@/modules/hrms/user-agreement";
+import { checkUserAcceptance, recordAcceptance, seedDefaultAgreement } from "@/modules/hrms/user-agreement";
 
 export async function OPTIONS() {
   return mobileOptions();

@@ -53,7 +53,6 @@ import {
   AccountingStatus,
   AccountingTable,
   AccountingTextarea,
-  AccountingToolbar,
 } from "@/modules/accounting/components/accounting-workspace";
 
 const PAGE_SIZE = 25;

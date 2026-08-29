@@ -22,10 +22,6 @@ import {
   Trash2,
   FileText,
   Building,
-  User,
-  Calendar,
-  Percent,
-  DollarSign,
 } from "lucide-react";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
 

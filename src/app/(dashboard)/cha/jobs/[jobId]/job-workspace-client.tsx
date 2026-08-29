@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
+import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LockKeyhole, Search, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, X, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
@@ -32,7 +32,6 @@ import {
 import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
 import {
   formatChaBadgeLabel,
-  getChaDocumentStatusBadgeVariant,
   getChaJobStatusBadgeVariant,
 } from "@/lib/cha-badges";
 import { cn } from "@/lib/utils";

@@ -7,7 +7,7 @@ import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createActivityAction } from "@/modules/crm/actions";
-import {Calendar,CheckSquare,PhoneCall,Plus,Clock,MapPin,Trash2,CheckCircle2,X} from "lucide-react";
+import {Calendar,CheckSquare,PhoneCall,Plus,Clock,MapPin,X} from "lucide-react";
 
 interface Activity {
   id: string;

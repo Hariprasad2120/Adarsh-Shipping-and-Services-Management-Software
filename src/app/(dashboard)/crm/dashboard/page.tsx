@@ -14,16 +14,11 @@ import { startOfMonth } from "date-fns";
 import {
   TrendingUp,
   UserCheck,
-  Briefcase,
   DollarSign,
-  AlertCircle,
   Calendar,
-  Users,
-  Building,
   Target,
   Clock,
   PhoneCall,
-  Activity,
   ChevronRight,
   CheckSquare
 } from "lucide-react";

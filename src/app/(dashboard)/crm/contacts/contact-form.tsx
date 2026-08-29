@@ -10,7 +10,7 @@ import {
   createContactAction,
   updateContactAction,
 } from "@/modules/crm/actions";
-import { Save, User, Phone, Mail, Building, Tag } from "lucide-react";
+import { Save, User, Mail, Tag } from "lucide-react";
 
 interface Option {
   id: string;
