@@ -1198,7 +1198,7 @@ ${message.bodyText || message.snippet}
 
     initialThreadIdRef.current = null;
     void openThread(targetThread);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- this one-time deep link should react to the loaded thread list only
+     
   }, [loadingThreads, selectedThread?.id, threads]);
 
   useEffect(() => {

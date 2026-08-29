@@ -80,8 +80,8 @@ export async function POST(request: Request) {
     const letterNumber = letterRequest.letterNumber;
 
     // Use custom email template from settings, or fall back to default
-    let emailSubject = `Your ${templateName} — ${letterNumber ?? ""}`.trim();
-    let emailBody = settings?.emailTemplate
+    const emailSubject = `Your ${templateName} — ${letterNumber ?? ""}`.trim();
+    const emailBody = settings?.emailTemplate
       ? (settings.emailTemplate as string)
           .replace(/\{\{employee_name\}\}/g, recipientName)
           .replace(/\{\{letter_type\}\}/g, templateName)

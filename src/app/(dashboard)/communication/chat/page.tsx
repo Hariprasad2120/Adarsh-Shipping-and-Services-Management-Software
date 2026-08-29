@@ -8,7 +8,7 @@ import {
   CommunicationTextarea,
 } from "@/modules/communication/components/workspace/communication-workspace";
 import { WorkspaceDialogLayer } from "@/components/layout/workspace-dialog";
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, prefer-const, @typescript-eslint/no-require-imports, react-hooks/immutability, react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {Search, Send, Video, ExternalLink, Hash, User, Briefcase, Folder, Users,AlertCircle, RefreshCw, Mail, Phone, Clock, ArrowRight, Shield, Plus,ChevronDown, Check, CheckCheck, X, Star, Info, MessageSquare, Paperclip, Bell,Smile, Bold, Italic, Code, Trash2, Edit2, Pin, ChevronRight, Sparkles, AtSign, FileText, Download} from "lucide-react";
@@ -350,7 +350,7 @@ export default function MonolithMessenger() {
     } else {
       setMessagesLoading(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [selectedSpaceId]);
 
   // Keep messagesRef in sync so side-effects can compare without being inside a state updater
@@ -361,7 +361,7 @@ export default function MonolithMessenger() {
   // Write-through: keep provider message cache current so warm navigation restores instantly
   useEffect(() => {
     if (selectedSpaceId && messages.length > 0) ctx.cacheMessages(selectedSpaceId, messages);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [messages, selectedSpaceId]);
 
   // Cross-space polling + seeding now live in ChatProvider (persistent across navigation).

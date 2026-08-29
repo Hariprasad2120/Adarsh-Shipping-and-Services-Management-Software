@@ -154,7 +154,7 @@ export function InvoiceForm({
     setItems((prev) =>
       prev.map((item, i) => {
         if (i !== index) return item;
-        let updated = {
+        const updated = {
           ...item,
           [field]:
             field === "productName" || field === "currency"

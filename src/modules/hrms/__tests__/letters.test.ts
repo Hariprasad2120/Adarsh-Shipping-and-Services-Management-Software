@@ -31,9 +31,9 @@ describe("HR Letters - Formatting Utils", () => {
 });
 
 describe("HR Letters - Service Workflows", () => {
-  let orgId = "test-org-123";
-  let userId = "test-user-456";
-  let creatorId = "test-creator-789";
+  const orgId = "test-org-123";
+  const userId = "test-user-456";
+  const creatorId = "test-creator-789";
   let templateId: string;
   let requestId: string;
 

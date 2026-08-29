@@ -33,7 +33,7 @@ function toDateKey(date: Date): string {
 function onlyNonWorkingDaysBetween(a: Date, b: Date, calendar: WorkingCalendarConfig): boolean {
   const gap = daysBetween(a, b);
   if (gap <= 1) return true; // truly adjacent, nothing between them
-  let cursor = new Date(a);
+  const cursor = new Date(a);
   cursor.setDate(cursor.getDate() + 1);
   for (let i = 1; i < gap; i++) {
     if (isWorkingDate(toDateKey(cursor), calendar)) return false;

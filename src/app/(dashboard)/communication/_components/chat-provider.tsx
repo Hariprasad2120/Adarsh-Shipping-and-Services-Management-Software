@@ -166,7 +166,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       activeSpaceIdRef.current = spaceId;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedSpaceId(spaceId);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setSelectedSpaceType(type);
 
       // Resolve richer objects from loaded data
