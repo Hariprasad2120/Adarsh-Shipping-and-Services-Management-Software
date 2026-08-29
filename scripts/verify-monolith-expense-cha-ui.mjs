@@ -259,7 +259,7 @@ for (const [sourceName, signals] of Object.entries({
 }
 
 const sharedStyles = read("src/styles/monolith-system.css");
-const moduleStyles = read("src/styles/modules/cha-expense.css");
+const moduleStyles = read("src/styles/modules/cha.css");
 const styles = `${sharedStyles}\n${moduleStyles}`;
 const tokens = read("src/styles/monolith-tokens.css");
 for (const className of [

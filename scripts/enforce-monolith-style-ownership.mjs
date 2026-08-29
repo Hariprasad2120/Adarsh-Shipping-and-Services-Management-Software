@@ -8,7 +8,7 @@ const systemRoot = postcss.parse(fs.readFileSync(systemFile, "utf8"), {
   from: systemFile,
 });
 const moduleTargets = {
-  cha: "cha-expense.css",
+  cha: "cha.css",
   accounting: "accounting.css",
   crm: "crm.css",
   people: "people.css",

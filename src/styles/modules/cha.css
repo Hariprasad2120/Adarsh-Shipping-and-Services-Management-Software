@@ -1,9 +1,11 @@
 /*
- * CHA and Expense module composition styles.
+ * CHA module composition styles (Customs House Agent — includes the CHA-owned
+ * expense-request workspace). Renamed from cha-expense.css 2026-08-29; every
+ * selector here is CHA-namespaced (.mnx-cha*, .mnx-operations*, .mnx-activity*, …).
  * Shared primitives remain owned by monolith-system.css.
  */
 
-/* Customs House Agent and Expense operations */
+/* Customs House Agent operations */
 .mnx-cha-page {
   gap: var(--mn-layout-workspace-stack-gap);
 }

@@ -88,7 +88,7 @@ describe("Monolith popup contract", () => {
     );
     const styles = [
       source("src/styles/monolith-system.css"),
-      source("src/styles/modules/cha-expense.css"),
+      source("src/styles/modules/cha.css"),
     ].join("\n");
 
     expect(chaSource).toContain("export function ChaModal");

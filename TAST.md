@@ -24,7 +24,7 @@
 - [x] **STEP 6 batch 2 — `src/components/monolith/` reorg + full `architecture:check` cleanup**
 - [x] **STEP 5 — duplicate primitives `@deprecated`-tagged** (full call-site migration deferred — rationale in "Duplicate Implementations Found")
 - [x] **STEP 6 — all 25 modules inspected.** Verdict: **none need structural reorg** (repo already well-organized; no dead/backup/duplicate files; no Scrap folders required). Details in "Module Inspection Checklist".
-- [x] **All 15 CSS files classified** — 7 module CSS files all verdict **KEEP module-local** (layout composition, token-clean bar `people.css`); `cha-expense.css` flagged split-candidate.
+- [x] **All 15 CSS files classified** — 7 module CSS files all verdict **KEEP module-local** (layout composition, token-clean bar `people.css`). `cha-expense.css` investigated for split → 100% CHA-namespaced, no expense selectors → renamed to `cha.css` instead (2026-08-29).
 - [x] **Committed locally** (2 commits on `ams-completion`, not pushed): `0108384b` icon unification, `124bd4c7` cleanup phase 1.
 - [ ] **Remaining = separate efforts, NOT this "no behavior change" cleanup:**
   - DS raw-control migration (`<button>/<input>` → primitives, ~349 sites; heaviest: hrms 20, communication 18, mona 17, payroll 15 in modules + accounting routes 216)
@@ -313,7 +313,7 @@ From `scratchpad-design-system-audit.md` §2 + this pass:
 | `styles/modules/crm.css` | 2465 | module | ✅ **KEEP module-local** — 522 sel, ~410 layout / ~270 visual, hex=0, px=68. Visual rules use semantic tokens. Future: tokenize the 68 raw px. |
 | `styles/modules/people.css` | 3649 | module | ✅ **KEEP module-local** — 786 sel, ~603 layout / ~401 visual, **hex=15** (only module CSS w/ raw colors), px=85. Future: replace the 15 hex + 85 px with tokens. |
 | `styles/modules/communication-admin.css` | 3435 | module | ✅ **KEEP module-local** — 560 sel, ~559 layout / ~440 visual, hex=0, px=90. Large but token-clean. |
-| `styles/modules/cha-expense.css` | 1741 | module (**2 modules**) | ✅ **KEEP** but **split candidate** (cha vs expense). 257 sel, visual≈layout, hex=0, **px=236** (heaviest raw-spacing file). Future: split + tokenize. |
+| `styles/modules/cha.css` (was `cha-expense.css`) | 1743 | module | ✅ **KEEP module-local.** Investigated the "split" idea: the file has **zero `expense`-prefixed selectors** — it is 100% CHA-namespaced (`.mnx-cha*`, `.mnx-operations*`, `.mnx-activity*`, …); the expense module's UI (`expenses-client.tsx`, now in the CHA module) reuses those CHA classes. So there was nothing to split — **renamed `cha-expense.css` → `cha.css`** (misleading name) 2026-08-29, updated `globals.css` + 4 script/test path refs. `px=236` raw-spacing tokenization is still a future nicety. |
 | `styles/modules/performance.css` | 408 | module | ✅ **KEEP module-local** — small (63 sel), px=12, hex=0. |
 | `app/globals.css` | ~30 | **Global entry** | keep |
 | `app/(dashboard)/admin/design-system/design-system.css` | — | showcase-local | keep |
@@ -669,6 +669,16 @@ imported, not in the build**). Brace-balanced 211/211. `tsc` + `npm run build` g
   `/graphify-out/`, `/_cleanup_review/` — pre-wired scratch ignores. Note: the
   planned per-module `Scrap/` folders are **capital-S** (`src/modules/*/Scrap/`), so
   the lowercase `/scrap/` ignore will NOT hide them — they stay tracked, as intended.
+- **`scripts/enforce-monolith-style-ownership.mjs` and
+  `scripts/split-monolith-module-styles.mjs` are destructive fixers, not verifiers** —
+  they rewrite `monolith-system.css` + the per-module CSS in place (one run moved
+  ~11k lines out of `monolith-system.css`). Not part of `npm run quality`. Do not run
+  exploratorily. (Ran once here by mistake during the `cha.css` rename; reverted with
+  `git reset --hard` — no commit affected.)
+- **PRE-EXISTING: `scripts/verify-monolith-expense-cha-ui.mjs` fails** —
+  "Expected 11 CHA routes, found 17". Hardcoded route count drifted as CHA routes were
+  added over time; unrelated to the `cha.css` rename (a rename adds no routes). Not in
+  `npm run quality`. Left for the CHA team to re-baseline.
 
 ---
 
