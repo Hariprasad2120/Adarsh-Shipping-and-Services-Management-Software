@@ -348,11 +348,37 @@ widths) — legitimate. Enumerate per module in STEP 6; migrate only static ones
 - To inventory in STEP 6: `next/font` config, `font-family` declarations, size/weight
   scales in `monolith-tokens.css` vs raw values in module CSS.
 
-### Raw unmanaged form controls (from prior audit, still valid)
+### Raw unmanaged form controls — accurate census (2026-08-29)
 
-`<button>` 155 · `<input>` 167 · `<select>` 11 · `<textarea>` 7 · `<table>` 9.
-Worst single file: `app/(dashboard)/accounting/configuration/admin/page.tsx`
-(49 `<button>`, 87 `<input>`).
+Repo-wide grep of `src/app` + `src/modules` + `src/components` (`.tsx`, excluding
+lines already carrying `eslint-disable`):
+
+| Element | Count | Assessment |
+|---|---:|---|
+| `<button>` | 181 | **~90% intentional custom widgets** — icon buttons, menu rows, clickable cards, toggles, mail-toolbar actions. Sampled `notification-provider` (circular animated dismiss), `dashboard/CompanyOverview` (clickable module card), `people-controls` (`PeopleToggleButton`, a forwardRef `aria-pressed` toggle), all of `communication/mail-workspace` (Gmail-style toolbar). Forcing these into `<Button variant>` **regresses** styling/semantics. Correct fix per the eslint rule: `eslint-disable-next-line no-restricted-syntax -- <reason>`, not a swap. |
+| `<input type="hidden">` | 62 | **Legitimately raw** — form plumbing for server actions, no styling. Leave. |
+| `<input>` non-hidden | 155 | The **real migration target**. Concentrated: `accounting/configuration/admin/page.tsx` (49), `accounting/customization/page.tsx` (13), `payroll/settings/org-profile` (8), `accounting/tax-settlement` (8) — i.e. **~74 in 4 FormData + server-action route pages**. Rest scattered 1–5/file. `admin/design-system/*` inputs are `type="color"`/`range` token-editor controls — leave. |
+| `<select>` | 18 | migrate with `<NativeSelect>` (note: no `forwardRef` — check ref usage) |
+| `<textarea>` | 12 | migrate with `<Textarea>` |
+
+**Primitives are drop-in** (`Input`/`Textarea` forwardRef + full prop spread;
+`Button` defaults `type="button"` vs raw `<button>`'s `submit` — must add
+`type="submit"` where a raw button drove form submit).
+
+**Why this is not a mechanical sweep / not done here:**
+
+- The `<button>` bulk is deliberate UI. A blind pass would break it. The only safe
+  automated action is adding `eslint-disable` comments — which silences a warning
+  that **does not currently block** anything (`npm run lint` = bare `eslint`, exits 0
+  on warnings). Low value, high churn.
+- The genuine `<input>` targets sit in **server-action FormData forms**. Each input's
+  `name`/`value`/`defaultValue` is read by a server action; a wrapper that alters
+  prop forwarding breaks submission **silently**. Verifying requires the running app
+  + a database + submitting each form. Not doable blind in this environment.
+
+**Recommended path:** treat as a dedicated, QA-backed migration — one route page at a
+time, `<input>`→primitive, run the app, submit the form, diff the payload. Out of
+scope for an autonomous "no behavior change" cleanup pass.
 
 ---
 
