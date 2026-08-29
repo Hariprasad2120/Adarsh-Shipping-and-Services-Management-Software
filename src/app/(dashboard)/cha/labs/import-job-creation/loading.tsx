@@ -1,4 +1,4 @@
-import { ChaLoadingState } from "@/components/monolith/cha-workspace";
+import { ChaLoadingState } from "@/components/monolith";
 
 export default function ImportJobCreationLabLoading() {
   return <ChaLoadingState />;

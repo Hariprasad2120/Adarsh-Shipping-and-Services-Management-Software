@@ -4,21 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { FileUploadField } from "@/components/monolith/file-upload-field";
-import {
-  AccountingAction,
-  AccountingAlert,
-  AccountingDialog,
-  AccountingEmptyTableRow,
-  AccountingField,
-  AccountingInput,
-  AccountingMoney,
-  AccountingPanel,
-  AccountingSelect,
-  AccountingStatus,
-  AccountingTable,
-  AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingAction, AccountingAlert, AccountingDialog, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMoney, AccountingPanel, AccountingSelect, AccountingStatus, AccountingTable, AccountingTextarea, FileUploadField } from "@/components/monolith";
 import {
   commitBankStatementImportAction,
   previewBankStatementImportAction,

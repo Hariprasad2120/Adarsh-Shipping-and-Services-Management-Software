@@ -11,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/monolith/dropdown-menu";
+} from "@/components/monolith";
 import {
   AccountingAction,
   AccountingAlert,

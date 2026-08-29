@@ -1,11 +1,6 @@
 import { Plus } from "lucide-react";
 
-import { CanonicalPaymentRegister } from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingActionLink,
-  AccountingRoutePageHeader,
-  AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingRoutePageHeader, AccountingSection, CanonicalPaymentRegister } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { listCanonicalAccountingPayments } from "@/modules/accounting/operational-queries";
 

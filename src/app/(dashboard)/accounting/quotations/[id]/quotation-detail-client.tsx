@@ -40,7 +40,7 @@ import {
   AccountingSelect,
   AccountingStatus,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";

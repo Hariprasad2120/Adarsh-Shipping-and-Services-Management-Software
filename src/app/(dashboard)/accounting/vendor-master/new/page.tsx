@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
-import { VendorMasterCreateForm } from "@/components/monolith/vendor-master-create-form";
+import { VendorMasterCreateForm } from "@/components/forms/vendor-master-create-form";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function AccountingNewVendorPage() {

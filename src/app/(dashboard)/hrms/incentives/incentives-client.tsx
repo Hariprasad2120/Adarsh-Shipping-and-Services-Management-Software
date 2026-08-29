@@ -8,26 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  PeopleControlButton as MnxAction,
-  PeopleControlInput as MnxInput,
-} from "@/components/monolith/people-controls";
-import {
-  PeopleField,
-  PeopleSection,
-  PeopleSectionHeader,
-  PeopleSelect,
-  PeopleSummary,
-  PeopleSummaryGrid,
-  PeopleTable,
-  PeopleTableBody,
-  PeopleTableCell,
-  PeopleTableHead,
-  PeopleTableHeader,
-  PeopleTableRow,
-  PeopleTextarea,
-} from "@/components/monolith/people-workspace";
-import { WorkspaceAlert, WorkspaceBadge } from "@/components/monolith/workspace";
+import { PeopleControlButton as MnxAction, PeopleControlInput as MnxInput, PeopleField, PeopleSection, PeopleSectionHeader, PeopleSelect, PeopleSummary, PeopleSummaryGrid, PeopleTable, PeopleTableBody, PeopleTableCell, PeopleTableHead, PeopleTableHeader, PeopleTableRow, PeopleTextarea, WorkspaceAlert, WorkspaceBadge } from "@/components/monolith";
 
 type IncentiveRow = {
   id: string;

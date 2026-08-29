@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import {
   defaultBankingWorkspaceFilters,

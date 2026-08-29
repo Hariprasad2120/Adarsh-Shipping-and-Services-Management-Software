@@ -1,11 +1,4 @@
-import {
-  AccountingOutboxTable,
-  AccountingPolicyGate,
-} from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingRoutePageHeader,
-  AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingOutboxTable, AccountingPolicyGate, AccountingRoutePageHeader, AccountingSection } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import {
   getAccountingConfigurationOverview,

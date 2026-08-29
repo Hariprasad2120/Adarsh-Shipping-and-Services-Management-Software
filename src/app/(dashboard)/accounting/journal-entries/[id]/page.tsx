@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { CanonicalJournalDetailView } from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingJournalApprovalAction,
-  AccountingJournalDraftActions,
-} from "@/components/monolith/accounting-operational-actions";
+import { AccountingJournalApprovalAction, AccountingJournalDraftActions, CanonicalJournalDetailView } from "@/components/monolith";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,

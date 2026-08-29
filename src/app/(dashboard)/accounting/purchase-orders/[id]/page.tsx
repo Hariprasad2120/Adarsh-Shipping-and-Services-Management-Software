@@ -2,7 +2,7 @@
 
 import { notFound } from "next/navigation";
 
-import { AccountingActionLink, AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingRoutePageHeader } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingPurchaseOrder } from "@/modules/accounting/purchase-orders";
 import { PurchaseOrderDetailClient } from "./detail-client";

@@ -1,15 +1,6 @@
 import Link from "next/link";
 import { Phone, Mail, Search, Plus } from "lucide-react";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
-import {
-  AccountingActionLink,
-  AccountingEmptyTableRow,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingSection,
-  AccountingTable,
-} from "@/components/monolith/accounting-workspace";
-import { Badge } from "@/components/monolith/badge";
+import { AccountingActionLink, AccountingEmptyTableRow, AccountingMetric, AccountingMetrics, AccountingRoutePageHeader, AccountingSection, AccountingTable, Badge } from "@/components/monolith";
 import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 import { deleteVendorAction } from "@/modules/crm/actions";
 import { listVendors } from "@/modules/crm/service";

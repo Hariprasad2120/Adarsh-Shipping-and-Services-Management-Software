@@ -33,13 +33,12 @@ export * from "@/modules/crm/components/workspace/crm-workspace";
 export * from "@/modules/people/components/people-controls";
 export * from "@/modules/people/components/people-workspace";
 export * from "@/modules/performance/components/performance-workspace";
-export * from "./accounting-note-reason-select";
-export * from "./accounting-operational-actions";
-export * from "./accounting-operational-views";
-export * from "./accounting-optional-invoice-link";
-export * from "./accounting-workflow-cards";
-export * from "./customer-portal-workspace";
-export * from "./vendor-master-create-form";
+export * from "@/modules/accounting/components/accounting-note-reason-select";
+export * from "@/modules/accounting/components/accounting-operational-actions";
+export * from "@/modules/accounting/components/accounting-operational-views";
+export * from "@/modules/accounting/components/accounting-optional-invoice-link";
+export * from "@/modules/accounting/components/accounting-workflow-cards";
+export * from "@/components/layout/customer-portal-workspace";
 export {
   MonolithThemePicker,
   MonolithThemeProvider,

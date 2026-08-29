@@ -4,13 +4,13 @@ import Link from "next/link";
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button } from "@/components/monolith/button";
-import { Input } from "@/components/monolith/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   ChaNativeSelect as NativeSelect,
   ChaPanel,
   ChaRoutePageHeader,
-} from "@/components/monolith/cha-workspace";
+} from "@/modules/cha/components/workspace/cha-workspace";
 import {
   ArrowLeft,
   Check,

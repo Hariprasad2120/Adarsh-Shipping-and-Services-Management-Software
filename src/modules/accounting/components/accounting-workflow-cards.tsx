@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AccountingActionLink,
   AccountingPanel,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 
 export type AccountingWorkflowCardItem = {
   href: string;

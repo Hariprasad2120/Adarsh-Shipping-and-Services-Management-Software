@@ -4,7 +4,7 @@ import {
   CustomerPortalPage,
   CustomerPortalPageHeader,
   CustomerPortalSectionHeading,
-} from "@/components/monolith/customer-portal-workspace";
+} from "@/components/monolith";
 import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";

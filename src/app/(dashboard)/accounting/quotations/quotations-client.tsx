@@ -13,8 +13,7 @@ import {
   updateQuotationAction,
 } from "@/modules/accounting/actions";
 import { DateInput } from "@/components/ui/date-input";
-import { AccountingNoteReasonSelect } from "@/components/monolith/accounting-note-reason-select";
-import { AccountingOptionalInvoiceLink } from "@/components/monolith/accounting-optional-invoice-link";
+import { AccountingNoteReasonSelect, AccountingOptionalInvoiceLink } from "@/components/monolith";
 import {
   AccountingAction,
   AccountingDraftEditLink,

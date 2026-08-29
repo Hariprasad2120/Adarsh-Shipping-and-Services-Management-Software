@@ -3,19 +3,7 @@
 import { useMemo, useState } from "react";
 import { CircleDollarSign, RefreshCcw, Send, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import {
-  CrmButton,
-  CrmInput,
-  CrmMetric,
-  CrmMetrics,
-  CrmPanel,
-  CrmSection,
-  CrmSelect,
-  CrmStatus,
-  CrmTable,
-  CrmTextarea,
-} from "@/components/monolith/crm-workspace";
-import { WorkspaceAlert } from "@/components/monolith/workspace";
+import { CrmButton, CrmInput, CrmMetric, CrmMetrics, CrmPanel, CrmSection, CrmSelect, CrmStatus, CrmTable, CrmTextarea, WorkspaceAlert } from "@/components/monolith";
 
 type EmployeeOption = {
   id: string;

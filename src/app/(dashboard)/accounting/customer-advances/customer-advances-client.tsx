@@ -6,20 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { DateInput } from "@/components/monolith/date-input";
-import {
-  AccountingAction,
-  AccountingEmptyTableRow,
-  AccountingField,
-  AccountingInput,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingSection,
-  AccountingSelect,
-  AccountingStatus,
-  AccountingTable,
-  AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingAction, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMetric, AccountingMetrics, AccountingSection, AccountingSelect, AccountingStatus, AccountingTable, AccountingTextarea, DateInput } from "@/components/monolith";
 import {
   cancelCustomerAdvanceRequestAction,
   createCustomerAdvanceReceiptDraftAction,

@@ -19,7 +19,7 @@ import {
   CustomerPortalPage,
   CustomerPortalPageHeader,
   CustomerPortalSectionHeading,
-} from "@/components/monolith/customer-portal-workspace";
+} from "@/components/monolith";
 import { WorkspaceMetric } from "@/components/layout/workspace";
 import {
   OperationalDataTable,

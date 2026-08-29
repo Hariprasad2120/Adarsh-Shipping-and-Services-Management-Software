@@ -13,7 +13,7 @@ import {
   type FilterMenuPanelSection,
 } from "@/components/forms/filter-menu";
 import { Input } from "@/components/ui/input";
-import { ChaFilterMenu as FilterMenu } from "@/modules/cha/components/workspace/cha-workspace";
+import { ChaFilterMenu as FilterMenu } from "@/components/monolith";
 import { CrmActionLink } from "@/modules/crm/components/workspace/crm-workspace";
 
 export type EnquiryTypeFilter = "all" | "perishable" | "future_follow";

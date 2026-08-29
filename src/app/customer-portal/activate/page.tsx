@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CustomerPortalAuth } from "@/components/monolith/customer-portal-workspace";
+import { CustomerPortalAuth } from "@/components/monolith";
 import { PublicStatus } from "@/modules/auth/components/public-workspace";
 import { TriangleAlert } from "lucide-react";
 import { PortalActivationForm } from "@/modules/customer-portal/components/client-actions";

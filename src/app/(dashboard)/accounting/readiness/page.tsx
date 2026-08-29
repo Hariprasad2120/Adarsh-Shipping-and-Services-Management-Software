@@ -9,7 +9,7 @@ import {
   AccountingSection,
   AccountingStatus,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import {
   PRODUCTION_RESPONSIBILITY_ROLES,

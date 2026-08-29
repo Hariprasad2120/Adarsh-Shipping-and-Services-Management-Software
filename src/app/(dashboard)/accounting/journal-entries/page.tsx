@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 
-import { CanonicalJournalRegister } from "@/components/monolith/accounting-operational-views";
+import { CanonicalJournalRegister } from "@/components/monolith";
 import {
   AccountingAction,
   AccountingActionLink,

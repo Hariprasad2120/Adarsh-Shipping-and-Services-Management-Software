@@ -1,12 +1,6 @@
 import { notFound } from "next/navigation";
 
-import {
-  CanonicalDocumentDetailView,
-} from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingActionLink,
-  AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingRoutePageHeader, CanonicalDocumentDetailView } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getCanonicalAccountingDocument } from "@/modules/accounting/operational-queries";
 

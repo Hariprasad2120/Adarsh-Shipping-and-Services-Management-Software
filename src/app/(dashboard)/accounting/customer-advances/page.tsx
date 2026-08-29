@@ -2,7 +2,7 @@ import {
   AccountingActionLink,
   AccountingRoutePageHeader,
   AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { listCustomerAdvanceRequests } from "@/modules/accounting/customer-advances";

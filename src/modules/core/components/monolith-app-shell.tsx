@@ -36,9 +36,12 @@ import {
 } from "@/lib/navigation";
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
 import { MonolithSearchCommand } from "@/components/navigation/monolith-search-command";
-import { MonaProvider, useMonaChat } from "@/modules/mona/components";
-import { MonaDesktopPet } from "@/modules/mona/components/mona-desktop-pet";
-import { MonaGuidanceOverlay } from "@/modules/mona/components/mona-guidance-overlay";
+import {
+  MonaDesktopPet,
+  MonaGuidanceOverlay,
+  MonaProvider,
+  useMonaChat,
+} from "@/modules/mona/components";
 import {
   MONA_PET_OPEN_SEARCH_EVENT,
   dispatchMonaPetRoute,

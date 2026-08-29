@@ -18,7 +18,7 @@ import {
   AccountingSection,
   AccountingStatus,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { convertPurchaseOrderToPurchaseInvoiceAction } from "@/modules/accounting/purchase-order-actions";
 import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";
 

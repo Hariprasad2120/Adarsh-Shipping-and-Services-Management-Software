@@ -1,18 +1,6 @@
 import { Calculator, FileSpreadsheet, Lock, Settings2 } from "lucide-react";
 import { revalidatePath } from "next/cache";
-import {
-  type AccountingWorkflowCardItem,
-  AccountingWorkflowCards,
-} from "@/components/monolith/accounting-workflow-cards";
-import {
-  AccountingActionLink,
-  AccountingEmptyTableRow,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingRoutePageHeader,
-  AccountingSection,
-  AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingEmptyTableRow, AccountingMetric, AccountingMetrics, AccountingRoutePageHeader, AccountingSection, AccountingTable, type AccountingWorkflowCardItem, AccountingWorkflowCards } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingTaxSettlementWorkspace } from "@/modules/accounting/phase9-workspaces";
 import { Button } from "@/components/ui/button";

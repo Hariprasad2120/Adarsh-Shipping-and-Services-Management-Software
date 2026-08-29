@@ -31,7 +31,7 @@ import {
   CrmTable,
   CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
-import { ItemsListPage } from "@/modules/items/components/ItemsListPage";
+import { ItemsListPage } from "@/modules/items/components";
 
 type ImportLogStatus = "success" | "failed" | "skipped";
 type MasterRecord = Record<string, string>;

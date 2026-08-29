@@ -5,24 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FileSpreadsheet, Loader2, PencilLine } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
-import { DateInput } from "@/components/monolith/date-input";
-import {
-  AccountingAction,
-  AccountingAlert,
-  AccountingDetail,
-  AccountingDetailList,
-  AccountingDialog,
-  AccountingEmptyTableRow,
-  AccountingField,
-  AccountingInput,
-  AccountingMoney,
-  AccountingSection,
-  AccountingSelect,
-  AccountingStatus,
-  AccountingTable,
-  AccountingTextarea,
-  AccountingToolbar,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingAction, AccountingAlert, AccountingDetail, AccountingDetailList, AccountingDialog, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMoney, AccountingSection, AccountingSelect, AccountingStatus, AccountingTable, AccountingTextarea, AccountingToolbar, DateInput } from "@/components/monolith";
 import {
   markBankAccountInactiveAction,
   saveManualBankAccountAction,

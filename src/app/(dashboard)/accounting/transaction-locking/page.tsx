@@ -2,7 +2,7 @@ import { TransactionLockingClient } from "./transaction-locking-client";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingConfigurationOverview } from "@/modules/accounting/operational-queries";
 import { getTransactionLock } from "@/modules/accounting/service";

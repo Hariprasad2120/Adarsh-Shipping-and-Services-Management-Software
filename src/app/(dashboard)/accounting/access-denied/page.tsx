@@ -3,7 +3,7 @@ import { ShieldAlert } from "lucide-react";
 import {
   AccountingActionLink,
   AccountingState,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 

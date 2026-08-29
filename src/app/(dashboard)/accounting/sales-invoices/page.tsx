@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import {
   CanonicalDocumentRegister,
   LegacyAccountingDraftRegister,
-} from "@/components/monolith/accounting-operational-views";
+} from "@/components/monolith";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,

@@ -1,9 +1,4 @@
-import { AccountingAllocationRegister } from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingActionLink,
-  AccountingRoutePageHeader,
-  AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingAllocationRegister, AccountingRoutePageHeader, AccountingSection } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { listAccountingAllocations } from "@/modules/accounting/operational-queries";
 

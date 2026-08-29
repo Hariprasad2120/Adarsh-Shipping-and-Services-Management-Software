@@ -4,7 +4,7 @@ import { FileText } from "lucide-react";
 import {
   CustomerPortalPage,
   CustomerPortalPageHeader,
-} from "@/components/monolith/customer-portal-workspace";
+} from "@/components/monolith";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getPortalAccountingQuotation } from "@/modules/customer-portal/accounting-quotations";
 import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";

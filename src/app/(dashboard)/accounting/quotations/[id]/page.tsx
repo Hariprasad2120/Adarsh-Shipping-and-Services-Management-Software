@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getQuotation } from "@/modules/accounting/service";
 import { QuotationDetailClient } from "./quotation-detail-client";

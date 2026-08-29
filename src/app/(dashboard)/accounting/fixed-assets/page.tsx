@@ -1,17 +1,5 @@
 import { BookOpenText, Calculator, RefreshCcw, Settings2 } from "lucide-react";
-import { AccountingPolicyGate } from "@/components/monolith/accounting-operational-views";
-import {
-  type AccountingWorkflowCardItem,
-  AccountingWorkflowCards,
-} from "@/components/monolith/accounting-workflow-cards";
-import {
-  AccountingActionLink,
-  AccountingAlert,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingRoutePageHeader,
-  AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingAlert, AccountingMetric, AccountingMetrics, AccountingPolicyGate, AccountingRoutePageHeader, AccountingSection, type AccountingWorkflowCardItem, AccountingWorkflowCards } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingConfigurationOverview } from "@/modules/accounting/operational-queries";
 

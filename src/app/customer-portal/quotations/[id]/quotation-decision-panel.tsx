@@ -2,9 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
-import { Textarea } from "@/components/monolith/textarea";
+import { Badge, Button, Textarea } from "@/components/monolith";
 import { respondToPortalQuotationAction } from "@/modules/customer-portal/actions";
 
 type PortalQuotationDecisionPanelProps = {

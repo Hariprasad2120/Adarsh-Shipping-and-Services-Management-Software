@@ -1,10 +1,4 @@
-import { AccountingPolicyGate } from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingAlert,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingAlert, AccountingMetric, AccountingMetrics, AccountingPolicyGate, AccountingRoutePageHeader } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingConfigurationOverview } from "@/modules/accounting/operational-queries";
 

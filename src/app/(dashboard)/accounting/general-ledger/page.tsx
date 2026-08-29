@@ -1,5 +1,5 @@
 import { DateInput } from "@/components/ui/date-input";
-import { OperationalLedgerTable } from "@/components/monolith/accounting-operational-views";
+import { OperationalLedgerTable } from "@/components/monolith";
 import {
   AccountingAction,
   AccountingField,

@@ -1,4 +1,4 @@
-import { AccountingLoadingState } from "@/components/monolith/accounting-workspace";
+import { AccountingLoadingState } from "@/components/monolith";
 
 export default function BankingLoading() {
   return <AccountingLoadingState />;

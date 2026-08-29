@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can, requirePermission } from "@/lib/rbac";
 import { listAllExpenses, listExpenseJobOptions } from "@/modules/cha/service";
-import { ExpensesClient } from "./expenses-client";
+import { ExpensesClient } from "@/modules/cha/components/expenses-client";
 
 export default async function ChaExpensesPage({
   searchParams,

@@ -2,20 +2,7 @@
 
 import { BookOpenText, Loader2, Lock, RefreshCcw, Settings2 } from "lucide-react";
 import { useState } from "react";
-import { DateInput } from "@/components/monolith/date-input";
-import { AccountingWorkflowCards } from "@/components/monolith/accounting-workflow-cards";
-import {
-  AccountingAction,
-  AccountingAlert,
-  AccountingDialog,
-  AccountingEmptyTableRow,
-  AccountingField,
-  AccountingInput,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingSection,
-  AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingAction, AccountingAlert, AccountingDialog, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMetric, AccountingMetrics, AccountingSection, AccountingTable, AccountingWorkflowCards, DateInput } from "@/components/monolith";
 import { updateTransactionLockAction } from "@/modules/accounting/actions";
 
 type PeriodLock = {

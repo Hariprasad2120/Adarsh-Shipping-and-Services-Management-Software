@@ -14,6 +14,11 @@ export interface MonolithSurfaceProps
   interactive?: boolean;
 }
 
+/**
+ * @deprecated Prefer `Card` from `@/components/ui/card` (same `.mnx-panel`
+ * surface). `MonolithSurface` only adds `as` / `interactive`; kept for the
+ * design-system showcase and a few shared shells. Do not use in new code.
+ */
 export function MonolithSurface({
   as = "article",
   className,
@@ -39,6 +44,11 @@ export interface MonolithBadgeProps
   tone?: MonolithBadgeTone;
 }
 
+/**
+ * @deprecated Prefer `Badge` from `@/components/ui/badge` (CVA, same
+ * `.mnx-badge` classes). Map `tone` → `variant`: accent→default,
+ * neutral→secondary, danger→destructive, success→success, warning→warning.
+ */
 export function MonolithBadge({
   className,
   tone,
@@ -64,6 +74,12 @@ export interface MonolithActionProps
   variant?: MonolithActionVariant;
 }
 
+/**
+ * @deprecated Prefer `Button` from `@/components/ui/button` (CVA, same
+ * `.mnx-button` classes, plus `size`/`mode`). Map `variant`:
+ * primary→default, accent→accent, secondary→inverse, outline→outline,
+ * destructive→destructive.
+ */
 export const MonolithAction = React.forwardRef<
   HTMLButtonElement,
   MonolithActionProps
@@ -78,6 +94,10 @@ export const MonolithAction = React.forwardRef<
 
 MonolithAction.displayName = "MonolithAction";
 
+/**
+ * @deprecated Prefer `Button` from `@/components/ui/button` with `mode="icon"`
+ * (renders the same `.mnx-icon-button`).
+ */
 export const MonolithIconAction = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement>

@@ -4,22 +4,7 @@ import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { DateInput } from "@/components/monolith/date-input";
-import {
-  AccountingAction,
-  AccountingDetail,
-  AccountingDetailList,
-  AccountingEmptyTableRow,
-  AccountingField,
-  AccountingInput,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingSection,
-  AccountingSelect,
-  AccountingStatus,
-  AccountingTable,
-  AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingAction, AccountingDetail, AccountingDetailList, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMetric, AccountingMetrics, AccountingSection, AccountingSelect, AccountingStatus, AccountingTable, AccountingTextarea, DateInput } from "@/components/monolith";
 import {
   cancelRecurringExpenseProfileAction,
   createRecurringExpenseProfileAction,

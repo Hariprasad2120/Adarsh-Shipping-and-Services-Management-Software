@@ -12,7 +12,7 @@ import {
   AccountingStatus,
   AccountingTable,
   AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import {
   approveAccountingExchangeRateAction,
   approveAccountingPeriodLockAction,

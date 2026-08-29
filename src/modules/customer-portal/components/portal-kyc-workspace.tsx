@@ -26,7 +26,7 @@ import {
   CustomerPortalMetrics,
   CustomerPortalPage,
   CustomerPortalPageHeader,
-} from "@/components/monolith/customer-portal-workspace";
+} from "@/components/monolith";
 import { WorkspaceMetric } from "@/components/layout/workspace";
 import type {
   PortalDocumentRequirementSummary,

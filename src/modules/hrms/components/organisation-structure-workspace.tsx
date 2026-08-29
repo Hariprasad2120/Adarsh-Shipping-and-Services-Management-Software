@@ -37,7 +37,7 @@ import {
   PeopleSection,
   PeopleSummary,
   PeopleSummaryGrid,
-} from "@/modules/people/components/people-workspace";
+} from "@/components/monolith";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 

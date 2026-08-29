@@ -26,7 +26,7 @@ import {
   PeopleTableHeader,
   PeopleTableRow,
   PeopleTableToolbar,
-} from "@/modules/people/components/people-workspace";
+} from "@/components/monolith";
 import {
   WorkspaceAction,
   WorkspaceAlert,

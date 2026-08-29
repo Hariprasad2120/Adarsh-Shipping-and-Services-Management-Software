@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CustomerPortalAuth } from "@/components/monolith/customer-portal-workspace";
+import { CustomerPortalAuth } from "@/components/monolith";
 import {
   PortalActivationForm,
   PortalForgotPasswordRequestForm,

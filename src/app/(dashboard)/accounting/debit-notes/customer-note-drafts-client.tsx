@@ -11,7 +11,7 @@ import {
   AccountingEmptyTableRow,
   AccountingStatus,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { submitCustomerNoteAction } from "@/modules/accounting/actions";
 import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";
 

@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can, requirePermission } from "@/lib/rbac";
 import { listAllExpenses, listExpenseJobOptions } from "@/modules/cha/service";
-// eslint-disable-next-line no-restricted-imports -- shared expense workspace currently lives in the CHA route folder
-import { ExpensesClient } from "@/app/(dashboard)/cha/expenses/expenses-client";
+import { ExpensesClient } from "@/modules/cha/components";
 
 export async function renderExpenseWorkspacePage({
   basePath,

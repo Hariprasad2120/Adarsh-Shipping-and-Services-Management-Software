@@ -4,7 +4,7 @@ import {
   AccountingRoutePageHeader,
   AccountingSection,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import {
   accountingAutomationRuleInputSchema,

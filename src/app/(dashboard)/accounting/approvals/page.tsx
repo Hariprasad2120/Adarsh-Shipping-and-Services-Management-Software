@@ -1,13 +1,4 @@
-import {
-  AccountingRoutePageHeader,
-  AccountingSection,
-} from "@/components/monolith/accounting-workspace";
-import {
-  CanonicalDocumentRegister,
-  CanonicalJournalRegister,
-  CanonicalPaymentRegister,
-  resolveCanonicalDocumentQueueHref,
-} from "@/components/monolith/accounting-operational-views";
+import { AccountingRoutePageHeader, AccountingSection, CanonicalDocumentRegister, CanonicalJournalRegister, CanonicalPaymentRegister, resolveCanonicalDocumentQueueHref } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import {
   listCanonicalAccountingDocuments,

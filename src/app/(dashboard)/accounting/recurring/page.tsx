@@ -1,6 +1,6 @@
 import {
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { db } from "@/lib/db";
 import { listRecurringSalesInvoiceProfiles } from "@/modules/accounting/recurring-sales-invoices";

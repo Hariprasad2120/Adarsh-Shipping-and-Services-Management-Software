@@ -2,7 +2,7 @@
 
 /**
  * Minimal accessible tab strip. No dedicated tab primitive existed anywhere in
- * the design system prior to this (tracking-dashboard-view.tsx and other HRMS
+ * the design system prior to this (tracking-dashboard-view.tsx and other module
  * pages stack panels instead) — added here as a reusable ui/ component rather
  * than a one-off, per pages that need a sub-navigation strip inside a single
  * route (e.g. Location & Field Tracking's Overview/Tracker/Visits/... tabs).

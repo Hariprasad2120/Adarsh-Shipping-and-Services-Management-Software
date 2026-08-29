@@ -6,8 +6,8 @@ import { requirePermission } from "@/lib/rbac";
 import {
   CrmConfigurationState,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
-import { VendorMasterCreateForm } from "@/components/monolith/vendor-master-create-form";
+} from "@/components/monolith";
+import { VendorMasterCreateForm } from "@/components/forms/vendor-master-create-form";
 
 export default async function CrmNewVendorPage() {
   const session = await getSession();

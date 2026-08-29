@@ -1,7 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { NewDebitNoteClient } from "./new-note-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/components/monolith";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 interface PageProps {

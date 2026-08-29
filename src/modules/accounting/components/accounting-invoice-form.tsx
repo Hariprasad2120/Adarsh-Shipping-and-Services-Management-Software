@@ -6,8 +6,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DateInput } from "@/components/ui/date-input";
 import { Button } from "@/components/ui/button";
-import { AccountingNoteReasonSelect } from "@/components/monolith/accounting-note-reason-select";
-import { AccountingOptionalInvoiceLink } from "@/components/monolith/accounting-optional-invoice-link";
+import { AccountingNoteReasonSelect, AccountingOptionalInvoiceLink } from "@/components/monolith";
 import {
   AccountingAction,
   AccountingField,

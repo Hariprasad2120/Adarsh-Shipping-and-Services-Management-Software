@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AccountingInvoiceForm } from "@/components/monolith/accounting-invoice-form";
+import { AccountingInvoiceForm } from "@/components/monolith";
 
 export function NewDebitNoteClient({
   noteKind,

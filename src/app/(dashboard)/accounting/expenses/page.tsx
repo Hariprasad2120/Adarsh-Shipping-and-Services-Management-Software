@@ -1,22 +1,6 @@
 import { BriefcaseBusiness, CreditCard, HandCoins } from "lucide-react";
 
-import {
-  type AccountingWorkflowCardItem,
-  AccountingWorkflowCards,
-} from "@/components/monolith/accounting-workflow-cards";
-import {
-  AccountingActionLink,
-  AccountingAlert,
-  AccountingDetail,
-  AccountingDetailList,
-  AccountingEmptyTableRow,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingRoutePageHeader,
-  AccountingSection,
-  AccountingStatus,
-  AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingAlert, AccountingDetail, AccountingDetailList, AccountingEmptyTableRow, AccountingMetric, AccountingMetrics, AccountingRoutePageHeader, AccountingSection, AccountingStatus, AccountingTable, type AccountingWorkflowCardItem, AccountingWorkflowCards } from "@/components/monolith";
 import { can } from "@/lib/rbac";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";

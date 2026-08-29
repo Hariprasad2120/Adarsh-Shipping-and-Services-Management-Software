@@ -17,7 +17,7 @@ import {
 import {
   AccountingWorkflowCards,
   type AccountingWorkflowCardItem,
-} from "@/components/monolith/accounting-workflow-cards";
+} from "@/components/monolith";
 import { getVisibleSectionById } from "@/lib/navigation";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingOperationalDashboard } from "@/modules/accounting/operational-queries";

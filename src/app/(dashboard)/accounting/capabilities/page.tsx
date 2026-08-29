@@ -29,7 +29,7 @@ import {
   AccountingStatus,
   AccountingTable,
   AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+} from "@/components/monolith";
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("en-IN", {

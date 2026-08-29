@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import {
   MonolithThemePicker,
   MonolithThemeProvider,
-} from "@/modules/core/components/monolith-app-shell";
+} from "@/components/monolith";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WorkspaceDialog } from "@/components/layout/workspace-dialog";

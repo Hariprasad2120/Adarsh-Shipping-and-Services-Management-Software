@@ -1,10 +1,4 @@
-import { CanonicalDocumentRegister } from "@/components/monolith/accounting-operational-views";
-import {
-  AccountingActionLink,
-  AccountingAlert,
-  AccountingRoutePageHeader,
-  AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+import { AccountingActionLink, AccountingAlert, AccountingRoutePageHeader, AccountingSection, CanonicalDocumentRegister } from "@/components/monolith";
 import { db } from "@/lib/db";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { listCanonicalAccountingDocuments } from "@/modules/accounting/operational-queries";
