@@ -311,7 +311,7 @@ From `scratchpad-design-system-audit.md` §2 + this pass:
 | `styles/modules/crm.css` | 2465 | module | hosts `--mnx-*` local vars per prior audit; px=68 |
 | `styles/modules/freight-forwarding.css` | 524 | module | ✅ **KEEP module-local** — px=14, hex=0; layout composition |
 | `styles/modules/crm.css` | 2465 | module | ✅ **KEEP module-local** — 522 sel, ~410 layout / ~270 visual, hex=0, px=68. Visual rules use semantic tokens. Future: tokenize the 68 raw px. |
-| `styles/modules/people.css` | 3649 | module | ✅ **KEEP module-local** — 786 sel, ~603 layout / ~401 visual, **hex=15** (only module CSS w/ raw colors), px=85. Future: replace the 15 hex + 85 px with tokens. |
+| `styles/modules/people.css` | 3649 | module | ✅ **KEEP module-local.** **hex=0 now** (was 15) — tokenized 2026-08-29: 11 were dead `var(--mnx-x, #hex)` fallbacks (var always defined → never rendered), `#ffffff` → `var(--mnx-surface)` (light chain resolves to `#ffffff` exactly; dark path already used the var). Rendering proven identical; `build` re-run green. `px=85` raw spacing still a future nicety. |
 | `styles/modules/communication-admin.css` | 3435 | module | ✅ **KEEP module-local** — 560 sel, ~559 layout / ~440 visual, hex=0, px=90. Large but token-clean. |
 | `styles/modules/cha.css` (was `cha-expense.css`) | 1743 | module | ✅ **KEEP module-local.** Investigated the "split" idea: the file has **zero `expense`-prefixed selectors** — it is 100% CHA-namespaced (`.mnx-cha*`, `.mnx-operations*`, `.mnx-activity*`, …); the expense module's UI (`expenses-client.tsx`, now in the CHA module) reuses those CHA classes. So there was nothing to split — **renamed `cha-expense.css` → `cha.css`** (misleading name) 2026-08-29, updated `globals.css` + 4 script/test path refs. `px=236` raw-spacing tokenization is still a future nicety. |
 | `styles/modules/performance.css` | 408 | module | ✅ **KEEP module-local** — small (63 sel), px=12, hex=0. |
@@ -416,7 +416,7 @@ that module's own components (DS-migration debt, tracked separately; not a clean
 | mona | 25 | 17 | 6 | ✅ structure OK. rawCtl mostly chat UI → DS-migration debt |
 | notifications | 3 | 1 | 0 | ✅ compliant |
 | payroll | 65 | 15 | 0 | ✅ structure OK. subdirs `components/ pdf/`. rawCtl → debt |
-| people | 4 | 2 | 0 | ✅ compliant. `people.css` KEEP (has 15 hex — future tokenize) |
+| people | 4 | 2 | 0 | ✅ compliant. `people.css` KEEP, tokenized (hex 15 → 0, 2026-08-29) |
 | performance | 5 | 1 | 0 | ✅ compliant |
 | recruit | 4 | 0 | 0 | ✅ compliant |
 | todo | 1 | 0 | 0 | ✅ compliant |

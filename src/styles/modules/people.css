@@ -1758,7 +1758,7 @@
 
 .mnx-people-table-head {
   padding: 0.65rem 1rem !important;
-  color: var(--mnx-text-muted, #64748b) !important;
+  color: var(--mnx-text-muted) !important;
   font-size: 0.72rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.08em !important;
@@ -1769,24 +1769,24 @@
 
 .mnx-people-table-cell {
   padding: 0.85rem 1rem !important;
-  background-color: #ffffff !important;
-  border-top: 1px solid var(--mnx-border, #e2e8f0) !important;
-  border-bottom: 1px solid var(--mnx-border, #e2e8f0) !important;
+  background-color: var(--mnx-surface) !important;
+  border-top: 1px solid var(--mnx-border) !important;
+  border-bottom: 1px solid var(--mnx-border) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
   vertical-align: middle !important;
-  color: var(--mnx-text, #0f172a);
+  color: var(--mnx-text);
   font-size: var(--mn-type-body-size);
 }
 
 .mnx-people-table-row .mnx-people-table-cell:first-child {
-  border-left: 1px solid var(--mnx-border, #e2e8f0) !important;
+  border-left: 1px solid var(--mnx-border) !important;
   border-top-left-radius: 12px !important;
   border-bottom-left-radius: 12px !important;
 }
 
 .mnx-people-table-row .mnx-people-table-cell:last-child {
-  border-right: 1px solid var(--mnx-border, #e2e8f0) !important;
+  border-right: 1px solid var(--mnx-border) !important;
   border-top-right-radius: 12px !important;
   border-bottom-right-radius: 12px !important;
 }
@@ -1827,12 +1827,12 @@
 
 /* Row Hover Highlight Effect */
 .mnx-people-table-row:hover .mnx-people-table-cell {
-  background-color: color-mix(in srgb, var(--mnx-accent, #0284c7) 12%, #ffffff) !important;
-  border-color: color-mix(in srgb, var(--mnx-accent, #0284c7) 40%, var(--mnx-border, #e2e8f0)) !important;
+  background-color: color-mix(in srgb, var(--mnx-accent) 12%, var(--mnx-surface)) !important;
+  border-color: color-mix(in srgb, var(--mnx-accent) 40%, var(--mnx-border)) !important;
 }
 
 .mnx-people-table-row:hover .mnx-people-table-cell:first-child {
-  box-shadow: inset 4px 0 0 var(--mnx-accent, #0284c7) !important;
+  box-shadow: inset 4px 0 0 var(--mnx-accent) !important;
 }
 
 :where(
@@ -1842,8 +1842,8 @@
   .dark,
   [data-theme="dark"]
 ) .mnx-people-table-row:hover .mnx-people-table-cell {
-  background-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 22%, var(--mnx-surface)) !important;
-  border-color: color-mix(in srgb, var(--mnx-accent, #38bdf8) 40%, var(--mnx-border)) !important;
+  background-color: color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-surface)) !important;
+  border-color: color-mix(in srgb, var(--mnx-accent) 40%, var(--mnx-border)) !important;
 }
 
 :where(
@@ -1853,7 +1853,7 @@
   .dark,
   [data-theme="dark"]
 ) .mnx-people-table-row:hover .mnx-people-table-cell:first-child {
-  box-shadow: inset 4px 0 0 var(--mnx-accent, #38bdf8) !important;
+  box-shadow: inset 4px 0 0 var(--mnx-accent) !important;
 }
 
 .mnx-people-person {
