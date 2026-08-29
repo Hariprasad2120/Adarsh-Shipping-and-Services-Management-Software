@@ -217,175 +217,175 @@
   },
   {
     "component": "AccountingNoteReasonSelect",
-    "source": "src/components/monolith/accounting-note-reason-select.tsx",
+    "source": "src/modules/accounting/components/accounting-note-reason-select.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingFinancialActions",
-    "source": "src/components/monolith/accounting-operational-actions.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-actions.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingJournalApprovalAction",
-    "source": "src/components/monolith/accounting-operational-actions.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-actions.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingJournalDraftActions",
-    "source": "src/components/monolith/accounting-operational-actions.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-actions.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingOutboxActions",
-    "source": "src/components/monolith/accounting-operational-actions.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-actions.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingAllocationRegister",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingConfigurationView",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingOutboxTable",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingPagination",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingPolicyGate",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CanonicalDocumentDetailView",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CanonicalDocumentRegister",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CanonicalJournalDetailView",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CanonicalJournalRegister",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CanonicalPaymentDetailView",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CanonicalPaymentRegister",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "LegacyAccountingDraftRegister",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "OperationalLedgerTable",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "ScheduledOperationsTable",
-    "source": "src/components/monolith/accounting-operational-views.tsx",
+    "source": "src/modules/accounting/components/accounting-operational-views.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingOptionalInvoiceLink",
-    "source": "src/components/monolith/accounting-optional-invoice-link.tsx",
+    "source": "src/modules/accounting/components/accounting-optional-invoice-link.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "AccountingWorkflowCards",
-    "source": "src/components/monolith/accounting-workflow-cards.tsx",
+    "source": "src/modules/accounting/components/accounting-workflow-cards.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalAuth",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalMetrics",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalPage",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalPageHeader",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalPanel",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalPlaceholder",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "CustomerPortalSectionHeading",
-    "source": "src/components/monolith/customer-portal-workspace.tsx",
+    "source": "src/components/layout/customer-portal-workspace.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },
   {
     "component": "VendorMasterCreateForm",
-    "source": "src/components/monolith/vendor-master-create-form.tsx",
+    "source": "src/components/forms/vendor-master-create-form.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
     "owner": "Monolith design system"
   },

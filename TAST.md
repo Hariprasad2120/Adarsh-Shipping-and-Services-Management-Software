@@ -10,7 +10,7 @@
 |---|---|
 | Current phase | **Inspection complete — all 25 modules + all 15 CSS files classified. Structural cleanup phase 1 committed (2 local commits, not pushed). `npm run build` GREEN.** |
 | Last updated | 2026-08-29 |
-| Production build status | ✅ **`npm run build` (`prisma generate && next build`) exit 0** — full route table generated, no errors. Plus `architecture:check` ✅, `tsc --noEmit` ✅, `eslint` ✅ 0 errors. Known-good state banked. |
+| Production build status | ✅ **`npm run build` exit 0**, `tsc --noEmit` ✅, `architecture:check` ✅, `design-system:verify` ✅. `lint` ❌ exit 1 — **pre-existing** 1287 errors, not wired to CI, nothing added by this phase (see Validation Performed). |
 | Files deleted | **0** |
 | Files moved | **16** (batch 1 → `Extra files/`) + **24** (batch 2 git-mv renames) |
 
@@ -711,15 +711,24 @@ _None yet._
 
 ## Validation Performed
 
-| Check | Command | Result (2026-08-29, after STEP 6 batch 2) |
+### Final gate run — 2026-08-29 (after all phase-1 work + stale-path fix)
+
+| Check | Command | Result |
 |---|---|---|
-| Residual path refs | `grep` for old `@/components/monolith/<sub>` + moved paths | ✅ none (catalogue subpaths intentionally preserved) |
-| Architecture | `npm run architecture:check` | ✅ **exit 0** — GREEN (baseline was RED; 10 pre-existing violations cleared) |
-| TypeScript | `npx tsc --noEmit` | ✅ **exit 0** |
-| ESLint | `npx eslint` on changed files | ✅ **0 errors** (10 warnings, all pre-existing raw-`<button>` `no-restricted-syntax` in `monolith-app-shell.tsx`, not introduced here) |
-| DS coverage | `npm run design-system:verify` | not run this batch |
-| Tests | `npm test` | not run (needs staging DB env) |
-| Production build | `npm run build` | ✅ **exit 0** (2026-08-29, after STEP 5 + STEP 6 freight-forwarding/accounting). `prisma generate` + `next build` both clean; full app route table generated. |
+| **Production build** | `npm run build` (`prisma generate && next build`) | ✅ **exit 0** — compiled in ~26s, TypeScript pass, full page-data collection + route table. (One middle run hit a flaky `Next.js build worker exited with code: 1` during page-data collection; **passed clean on retry with identical code** — non-reproducible worker crash, not a code fault.) |
+| **TypeScript** | `npx tsc --noEmit` | ✅ **exit 0** |
+| **Architecture** | `npm run architecture:check` | ✅ **exit 0** — GREEN (baseline `ams-completion` was RED; 10 stacked pre-existing violations cleared this phase) |
+| **DS coverage** | `npm run design-system:verify` | ✅ **exit 0, clean** — "26 registry entries, 222 documented exclusions, 19 approved source files" + "Catalogue style boundary passed". (First run warned about stale `src/components/monolith/*` exclusion paths from the batch-2 moves — fixed in `catalogue/catalogue-exclusions.json` + `scripts/verify-monolith-accounting-ui.mjs`; re-run clean.) |
+| **ESLint** | `npm run lint` (bare `eslint`) | ❌ **exit 1 — 1287 errors / 564 warnings, PRE-EXISTING.** `eslint.config.mjs` itself notes *"no CI runs lint in this repo today"*; this is known-untended baseline debt (mostly `@typescript-eslint/no-explicit-any`). Targeted `eslint` on the 103 files this phase changed → 19 errors, **all `no-explicit-any` on deep untouched lines of large files that were moved verbatim** (`expenses-client.tsx` 100% rename, `vendor-master-create-form.tsx` 99%, `accounting-operational-views.tsx`). **No lint error introduced by this cleanup.** `tsc --noEmit` (the real type gate) is clean. |
+| Tests | `npm test` | not run — needs staging DB env (`run-with-staging-env.ts`) unavailable here |
+
+### Interpretation
+
+The two gates that matter for "does it build and type-check" — `next build` and
+`tsc --noEmit` — are **green**. `architecture:check` and `design-system:verify` are
+**green** (the former flipped from red *because* of this work). `lint` is red but was
+red before this phase and is explicitly not wired into CI; this cleanup added nothing
+to it.
 
 > STEP 6 batch 2 scope: 24 `git mv` renames + `index.ts` repoint + 84 import-path
 > rewrites + 35 duplicate-import merges + 10 targeted cross-module import fixes + 3
@@ -749,10 +758,13 @@ Total files moved to Scrap:        0    (no Scrap folders needed - no dead/backu
 Total files moved to Extra files:  16
 Total files deleted:               0
 architecture:check:                RED -> GREEN (10 pre-existing violations fixed)
+design-system:verify:              GREEN (stale exclusion paths fixed)
 tsc --noEmit:                      exit 0
-eslint (changed files):            0 errors
 npm run build:                     exit 0  (prisma generate + next build)
-Local commits (not pushed):        0108384b, 124bd4c7  on ams-completion
+npm run lint:                      exit 1  (1287 pre-existing errors, not CI-wired,
+                                            nothing added by this phase)
+Local commits (not pushed):        0108384b 124bd4c7 f9f915d4 05227802 68a819d6 +final
+                                   on ams-completion
 ```
 
 ### Key finding

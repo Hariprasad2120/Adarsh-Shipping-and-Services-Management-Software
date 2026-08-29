@@ -143,8 +143,8 @@ for (const requiredFile of [
   "src/modules/accounting/components/accounting-items.tsx",
   "src/modules/accounting/components/accounting-commercial-document-form.tsx",
   "src/modules/accounting/components/accounting-delete-action.tsx",
-  "src/components/monolith/accounting-operational-actions.tsx",
-  "src/components/monolith/accounting-operational-views.tsx",
+  "src/modules/accounting/components/accounting-operational-actions.tsx",
+  "src/modules/accounting/components/accounting-operational-views.tsx",
 ]) {
   assert(
     existsSync(path.join(repositoryRoot, requiredFile)),
@@ -197,8 +197,8 @@ const scopedSources = [
     "src/modules/accounting/components/accounting-items.tsx",
     "src/modules/accounting/components/accounting-commercial-document-form.tsx",
     "src/modules/accounting/components/accounting-delete-action.tsx",
-    "src/components/monolith/accounting-operational-actions.tsx",
-    "src/components/monolith/accounting-operational-views.tsx",
+    "src/modules/accounting/components/accounting-operational-actions.tsx",
+    "src/modules/accounting/components/accounting-operational-views.tsx",
   ].map((relativePath) => path.join(repositoryRoot, relativePath)),
 ];
 const forbiddenPatterns = [
@@ -263,7 +263,7 @@ const behaviorSources = {
   ),
   invoices: read("src/modules/accounting/components/accounting-invoice-form.tsx"),
   operationalActions: read("src/modules/accounting/operational-actions.ts"),
-  operationalViews: read("src/components/monolith/accounting-operational-views.tsx"),
+  operationalViews: read("src/modules/accounting/components/accounting-operational-views.tsx"),
   quotations: read(
     "src/app/(dashboard)/accounting/quotations/quotations-client.tsx",
   ),
