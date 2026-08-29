@@ -790,9 +790,26 @@ comment: *"no CI runs lint in this repo today"*). Split and cleared:
 - 1 `@typescript-eslint/no-empty-object-type` (`components/ui/alert.tsx`):
   `interface X extends Y {}` → `type X = Y`
 
-**Result:** `npm run lint` → **exit 0**. Remaining ~1780 warnings (mostly
-`no-explicit-any` + `no-unused-vars` + the `no-restricted-syntax` raw-control
-advisories) are a **tracked, non-blocking backlog**.
+**Result:** `npm run lint` → **exit 0**.
+
+**Warning backlog reduction:**
+- Added `eslint-plugin-unused-imports@4`; config turns off
+  `@typescript-eslint/no-unused-vars`, enables `unused-imports/no-unused-imports`
+  (autofixable) + `unused-imports/no-unused-vars` (warn, `^_` ignored).
+- `eslint --fix` auto-removed **~156 dead import specifiers across 48 files**
+  (mostly stale `lucide-react` icons + type imports). `build` re-verified.
+- **Warnings 1778 → 1622**, still **0 errors**.
+
+Remaining ~1622 warnings, by rule (all non-blocking, tracked):
+
+| Rule | ~count | Why not fixed |
+|---|---:|---|
+| `@typescript-eslint/no-explicit-any` | 1145 | Real per-callsite typing — multi-session, regression risk. See below. |
+| `no-restricted-syntax` (raw `<button>/<input>`, inline hex) | 253 | Intentional custom widgets; fix = migrate (behavior) or 253 `eslint-disable` comments (noise). Covered by the "raw-control census" section. |
+| `unused-imports/no-unused-vars` | ~119 | Unused *local* vars/assignments (not imports) — removing an assignment can change behavior if the RHS has a side effect. Needs per-site review. |
+| `react-hooks/*` (set-state-in-effect, exhaustive-deps, purity, …) | ~100 | Semantic — restructuring effects/deps. Risky blind, needs the React area owner. |
+| `@next/next/no-img-element` | 4 | `<img>` → `next/image` needs explicit width/height per site. |
+| `jsx-a11y/alt-text` | 1 | trivial — add `alt` |
 
 #### `no-explicit-any` backlog (for a future typing pass)
 
