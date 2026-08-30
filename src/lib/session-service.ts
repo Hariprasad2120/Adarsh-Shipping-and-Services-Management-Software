@@ -121,6 +121,17 @@ export type SecurityEventType =
   | "SESSION_REVOKED_BY_ADMIN"
   | "ALL_SESSIONS_REVOKED"
   | "PASSWORD_CHANGED"
+  | "PASSWORD_RESET_REQUESTED"
+  | "PASSWORD_RESET_COMPLETED"
+  | "MFA_ENABLED"
+  | "MFA_DISABLED"
+  | "MFA_FAILED"
+  | "MFA_CHALLENGE_REQUIRED"
+  | "MFA_RECOVERY_CODE_USED"
+  | "MFA_RECOVERY_CODES_REGENERATED"
+  | "SESSION_ROTATED"
+  | "OAUTH_IDENTITY_LINKED"
+  | "OAUTH_IDENTITY_CONFLICT"
   | "EMPLOYEE_INVITATION_CREATED"
   | "EMPLOYEE_INVITATION_RESENT"
   | "EMPLOYEE_INVITATION_ACCEPTED"
@@ -170,6 +181,7 @@ export async function createSession(input: {
   ip?: string | null;
   userAgent?: string | null;
   rememberMe?: boolean;
+  mfaVerified?: boolean;
 }): Promise<string> {
   const token = randomUUID();
   const now = new Date();
@@ -188,10 +200,95 @@ export async function createSession(input: {
       device: deviceLabel(input.userAgent),
       rememberMe: input.rememberMe ?? false,
       expiresAt: new Date(now.getTime() + lifetimeMs),
+      strongAuthAt: now,
+      mfaVerified: input.mfaVerified ?? false,
     },
   });
   invalidateValidatedSessionCache(token);
   return token;
+}
+
+/**
+ * Rotate a session identifier: revoke the old row and issue a fresh one with
+ * the same lifetime. Call after login, MFA completion, password change and
+ * privilege escalation (OWASP Session Management Cheat Sheet). Returns the new
+ * opaque nonce, or null if the old session was not found / already dead.
+ */
+export async function rotateSession(input: {
+  currentToken: string;
+  reason: string;
+  markMfaVerified?: boolean;
+}): Promise<string | null> {
+  const current = await db.userSession.findUnique({
+    where: { token: input.currentToken },
+    select: {
+      userId: true,
+      status: true,
+      rememberMe: true,
+      expiresAt: true,
+      ipAddress: true,
+      ipHash: true,
+      userAgent: true,
+      device: true,
+    },
+  });
+  if (!current || current.status !== "ACTIVE") return null;
+
+  const newToken = randomUUID();
+  const now = new Date();
+  await db.$transaction([
+    db.userSession.update({
+      where: { token: input.currentToken },
+      data: {
+        status: "REVOKED",
+        logoutAt: now,
+        revokedAt: now,
+        revokeReason: input.reason,
+      },
+    }),
+    db.userSession.create({
+      data: {
+        userId: current.userId,
+        token: newToken,
+        status: "ACTIVE",
+        ipAddress: current.ipAddress,
+        ipHash: current.ipHash,
+        userAgent: current.userAgent,
+        device: current.device,
+        rememberMe: current.rememberMe,
+        expiresAt: current.expiresAt,
+        strongAuthAt: now,
+        mfaVerified: input.markMfaVerified ?? false,
+      },
+    }),
+  ]);
+  invalidateValidatedSessionCache(input.currentToken);
+  invalidateValidatedSessionCache(newToken);
+
+  await logSecurityEvent({
+    event: "SESSION_ROTATED",
+    outcome: "SUCCESS",
+    userId: current.userId,
+    sessionToken: newToken,
+    reason: input.reason,
+  });
+  return newToken;
+}
+
+/** Record a fresh strong-auth event on the current session (step-up basis). */
+export async function markStrongAuth(token: string, opts: { mfaVerified?: boolean } = {}) {
+  try {
+    await db.userSession.update({
+      where: { token },
+      data: {
+        strongAuthAt: new Date(),
+        ...(opts.mfaVerified !== undefined ? { mfaVerified: opts.mfaVerified } : {}),
+      },
+    });
+    invalidateValidatedSessionCache(token);
+  } catch {
+    /* session gone — nothing to mark */
+  }
 }
 
 export type SessionInvalidReason =

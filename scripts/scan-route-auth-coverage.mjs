@@ -25,6 +25,8 @@ export const KNOWN_PUBLIC = new Set([
   "src/app/api/customer-portal/auth/logout/route.ts",
   "src/app/api/mobile/auth/login/route.ts",
   "src/app/api/mobile/crm/auth/login/route.ts",
+  "src/app/api/auth/password/forgot/route.ts", // pre-auth: request a reset link (generic response, rate-limited)
+  "src/app/api/auth/password/reset/route.ts", // pre-auth: consume a reset token (token IS the credential)
   "src/app/api/hrms/invitations/accept/route.ts", // token-bearing invite acceptance
   "src/app/api/hrms/letters/verify/route.ts", // public HR-letter QR verification
   // Static / self-gated:

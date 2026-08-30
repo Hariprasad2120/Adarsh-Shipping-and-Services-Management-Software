@@ -148,6 +148,55 @@ privilege change.
 Verification for checkpoint 4a: `tsc --noEmit` clean; 34 new primitive unit
 tests green; ESLint clean on changed files; `npm run build` green.
 
+### Cluster 4b — auth/session/MFA end-to-end (checkpoint 4b)
+
+Wired against a real Postgres (operator-provided Neon staging DB). All 122
+existing migrations were applied to that DB, then the new Stage-1 migration.
+
+**Migration** `prisma/migrations/20260830090000_stage1_security_identity_mfa`
+— **additive only**, applied and verified. New tables `AuthenticationFactor`,
+`MfaRecoveryCode`, `IdentityLink`, `PasswordResetToken`, `RateLimitCounter`;
+new columns `Organisation.requireMfa` (default false), `UserSession.strongAuthAt`,
+`UserSession.mfaVerified` (default false). Rollback SQL is in the migration
+file header (drop the 5 tables + 3 columns — they hold only Stage-1 state).
+
+| ID | Verdict | What changed |
+|---|---|---|
+| MON-S1-002 | **FIXED** | Real TOTP MFA. `src/lib/mfa/service.ts`: `beginEnrollment` (PENDING factor, encrypted secret, otpauth URI) → `confirmEnrollment` requires a valid first OTP before `ACTIVE` and issues 10 one-time recovery codes (hashed) → `verifyMfa` (TOTP or single-use recovery code) → `disableMfa` / `regenerateRecoveryCodes` (step-up enforced). `auth.ts` `authorize` replaces the `verifySecondFactor` stub: password OK + active factor → `throw MfaRequiredError` (client shows OTP field) → resubmit with `totp` → `verifyMfa` → session created with `mfaVerified: true`. `isMfaRequiredForUser` honours active factor / `Organisation.requireMfa` / mandatory for `isPlatformAdmin`. Server actions in `account/security/mfa-actions.ts`. Passkeys: `AuthenticationFactor.type` + null-secret shape is WebAuthn-ready (no redesign needed later). |
+| MON-S1-011 | **FIXED** | `src/lib/rate-limit-store.ts` — Postgres `RateLimitCounter` with an atomic `INSERT … ON CONFLICT` upsert (self-resetting window), correct across serverless instances. In-process map only as a DB-failure fallback. Wired into the new password-reset routes; the older `src/lib/security.ts` `rateLimit()` and `login-rate-limit.ts` remain and should be migrated onto this store (tracked). |
+| MON-S1-013 | **FIXED** | `auth.ts` `signIn` now binds the verified Google `sub` to an `IdentityLink` row. A `sub` already linked to a *different* Monolith user is rejected and audited (`OAUTH_IDENTITY_CONFLICT`); first successful login for a provisioned account creates the link (`OAUTH_IDENTITY_LINKED`). Combined with 4a's `email_verified` + domain-policy gate, account takeover via email-match linking is closed. |
+| MON-S1-032/033 | **FIXED** | `src/lib/password-reset.ts` + `POST /api/auth/password/{forgot,reset}`. Token: 256-bit random, sha256 at rest, 30-min TTL, single-use, link origin always `APP_URL` (never a Host header). `forgot` returns a byte-identical generic response for unknown / Google-only / rate-limited / invalid-input — no user/enumeration leak; rate-limited per IP + per email via the shared store; every request audited. `reset` sets the new hash, consumes the token, invalidates **all** the user's sessions, audits, and does **not** sign the user in. |
+| Session rotation | **FIXED** | `session-service.ts` `rotateSession()` (revoke old row, issue fresh nonce, same lifetime, stamp `strongAuthAt` + `mfaVerified`) and `markStrongAuth()`. `createSession` now stamps `strongAuthAt` at login. Call sites: MFA completion and password reset invalidate sessions today; wiring `rotateSession` into the credential login response + privilege-change paths is a thin follow-up (helper + tests are in place). |
+| MON-S1-031 | **FIXED** (recap) | NextAuth `redirect` callback clamps via `safeRedirectPath` (4a). |
+
+**Verification for checkpoint 4b:**
+- Migration applied to the Neon DB; new tables + columns confirmed present.
+- `src/lib/__tests__/mfa-flow.integration.test.ts` — **9/9 green against the real
+  DB**: enrolment rejects a bad first OTP then activates on a good one; recovery
+  code works once then is consumed; regen invalidates the previous set;
+  `isMfaRequiredForUser` reflects factor / org policy / platform-admin;
+  password-reset generic response + hashed token + single-use + session kill +
+  no enumeration; `rotateSession` revokes old / issues working new;
+  shared rate-limit counter enforces the limit across calls.
+- `session-security.test.ts` **17/17 green against the real DB** — no regression
+  from the `session-service.ts` changes.
+- `tsc --noEmit`: **0 errors in Stage-1 code.** (3 pre-existing errors in
+  `src/components/ui/sidebar.tsx`, an unfinished shadcn migration by concurrent
+  work — untracked, not part of this commit, and it currently blocks a full
+  `next build`. My files are type-clean and independently test-verified.)
+
+**Still OPEN / deferred (small, tracked):**
+- MON-S1-030 — encrypt the Google **access** token at rest. Deliberately not
+  done in this large checkpoint: it touches the live Workspace token
+  read/refresh path (`workspace-oauth.ts`) and needs its own migration + care.
+  `secret-encryption.ts` is ready to reuse.
+- Migrate `security.ts rateLimit()` + `login-rate-limit.ts` onto
+  `rate-limit-store.ts`.
+- Wire `rotateSession` into the credential-login response and privilege-change
+  server actions.
+- Security Center UI (§26) — server actions exist; the page is a follow-up.
+- `AUTHENTICATION.md` / `SESSION_SECURITY.md` / `THREAT_MODEL.md` etc. (§30).
+
 ---
 
 ## 1. Architecture discovered

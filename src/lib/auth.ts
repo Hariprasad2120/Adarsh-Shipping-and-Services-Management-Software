@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { compare } from "bcryptjs";
@@ -62,7 +62,18 @@ const loginSchema = z.object({
     .union([z.boolean(), z.string()])
     .optional()
     .transform((v) => v === true || v === "true" || v === "on"),
+  // Optional second factor: TOTP code or a one-time recovery code.
+  totp: z.string().trim().optional(),
 });
+
+/** Thrown when the password is correct but a second factor is still required. */
+class MfaRequiredError extends CredentialsSignin {
+  code = "mfa_required";
+}
+/** Thrown when the supplied second factor is wrong. */
+class MfaInvalidError extends CredentialsSignin {
+  code = "mfa_invalid";
+}
 
 type SessionUserPayload = {
   id: string;
@@ -82,15 +93,6 @@ type TokenPayload = {
   redirectPath?: string;
 };
 
-/**
- * MFA hook — placeholder for future multi-factor support.
- * When implemented, this should verify a second factor after password
- * verification succeeds and before the session is created.
- */
-async function verifySecondFactor(userId: string): Promise<boolean> {
-  void userId;
-  return true;
-}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -132,7 +134,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { email, password, rememberMe } = parsed.data;
+        const { email, password, rememberMe, totp } = parsed.data;
         const normalizedEmail = email.trim().toLowerCase();
         const { ip, userAgent } = extractRequestMeta(request);
 
@@ -175,7 +177,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        if (!(await verifySecondFactor(user.id))) return null;
+        // ── Second factor ──────────────────────────────────────────────────
+        // Password is correct. If this account has an active factor (or its
+        // org / platform-admin status mandates MFA), a valid TOTP or recovery
+        // code must be supplied before a session is created.
+        const { hasActiveMfa, verifyMfa } = await import("@/lib/mfa/service");
+        const mfaActive = await hasActiveMfa(user.id);
+        let mfaVerified = false;
+        if (mfaActive) {
+          if (!totp) {
+            await logSecurityEvent({
+              event: "MFA_CHALLENGE_REQUIRED",
+              outcome: "BLOCKED",
+              userId: user.id,
+              email: user.email,
+              ip,
+              userAgent,
+            });
+            throw new MfaRequiredError();
+          }
+          const result = await verifyMfa(user.id, totp, { ip, userAgent });
+          if (!result.ok) {
+            recordLoginFailure(normalizedEmail, ip);
+            throw new MfaInvalidError();
+          }
+          mfaVerified = true;
+        }
 
         recordLoginSuccess(normalizedEmail, ip);
 
@@ -186,6 +213,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ip,
           userAgent,
           rememberMe,
+          mfaVerified,
         });
 
         await logSecurityEvent({
@@ -263,6 +291,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               : "Google login for unknown user",
           });
           return false;
+        }
+
+        // 2. Bind the verified provider subject (sub) to this user. Linking
+        //    happens only for the pre-provisioned account whose verified email
+        //    matches; a sub already linked to a *different* user is rejected
+        //    (no silent takeover). (MON-S1-013)
+        const sub = account.providerAccountId;
+        if (sub) {
+          const existingLink = await db.identityLink.findUnique({
+            where: { provider_providerAccountId: { provider: "google", providerAccountId: sub } },
+          });
+          if (existingLink && existingLink.userId !== dbUser.id) {
+            await logSecurityEvent({
+              event: "OAUTH_IDENTITY_CONFLICT",
+              outcome: "BLOCKED",
+              userId: dbUser.id,
+              email: normalizedEmail,
+              reason: "Google subject already linked to another Monolith user",
+            });
+            return false;
+          }
+          if (!existingLink) {
+            await db.identityLink.create({
+              data: {
+                userId: dbUser.id,
+                provider: "google",
+                providerAccountId: sub,
+                email: normalizedEmail,
+                lastLoginAt: new Date(),
+              },
+            });
+            await logSecurityEvent({
+              event: "OAUTH_IDENTITY_LINKED",
+              outcome: "SUCCESS",
+              userId: dbUser.id,
+              email: normalizedEmail,
+              reason: "google",
+            });
+          } else {
+            await db.identityLink.update({
+              where: { id: existingLink.id },
+              data: { lastLoginAt: new Date(), email: normalizedEmail },
+            });
+          }
         }
 
         const tokenExpiresAt = account.expires_at
