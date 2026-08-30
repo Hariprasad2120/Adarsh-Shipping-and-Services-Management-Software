@@ -341,14 +341,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ? new Date(account.expires_at * 1000)
           : new Date(Date.now() + 3600 * 1000);
 
-        const { encryptToken } = await import("@/lib/workspace-oauth");
+        const { encryptToken, encryptAccessToken } = await import("@/lib/workspace-oauth");
         const encryptedRefreshToken = account.refresh_token ? encryptToken(account.refresh_token) : "";
+        // MON-S1-030 — access token is encrypted at rest, like the refresh token.
+        const encryptedAccessToken = encryptAccessToken(account.access_token);
         const scopes = account.scope ? account.scope.split(" ") : [];
 
         await db.googleWorkspaceConnection.upsert({
           where: { userId: dbUser.id },
           update: {
-            accessToken: account.access_token || "",
+            accessToken: encryptedAccessToken,
             refreshToken: encryptedRefreshToken || undefined,
             tokenExpiresAt,
             googleEmail: user.email || dbUser.email,
@@ -361,7 +363,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             userId: dbUser.id,
             googleEmail: user.email || dbUser.email,
             googleUserId: account.providerAccountId || "",
-            accessToken: account.access_token || "",
+            accessToken: encryptedAccessToken,
             refreshToken: encryptedRefreshToken,
             tokenExpiresAt,
             scopes,

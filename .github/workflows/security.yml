@@ -1,0 +1,87 @@
+name: security
+
+on:
+  push:
+    branches: [main, ams-completion]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-security:
+    name: SAST + coverage gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      # Deny-by-default route/auth + tenant-scope regression gates.
+      - name: Route auth + tenant-scope coverage
+        run: |
+          node scripts/scan-route-auth-coverage.mjs
+          node scripts/scan-tenant-scope-coverage.mjs
+          npx vitest run --config vitest.unit.config.ts \
+            src/lib/__tests__/route-auth-coverage.test.ts \
+            src/lib/__tests__/tenant-scope-coverage.test.ts \
+            src/lib/__tests__/security-headers.test.ts
+
+      # Security primitive unit tests (no DB).
+      - name: Security unit tests
+        run: |
+          npx vitest run --config vitest.unit.config.ts \
+            src/lib/__tests__/safe-fetch.test.ts \
+            src/lib/__tests__/safe-redirect.test.ts \
+            src/lib/__tests__/request-integrity.test.ts \
+            src/lib/__tests__/upload-validation.test.ts \
+            src/lib/__tests__/api-auth.test.ts \
+            src/lib/__tests__/session-fail-closed.test.ts \
+            src/lib/__tests__/tenant.test.ts \
+            src/lib/__tests__/oauth-linking.test.ts \
+            src/lib/__tests__/step-up.test.ts \
+            src/lib/__tests__/password-reset-token.test.ts \
+            src/lib/__tests__/workspace-token-encryption.test.ts \
+            src/lib/mfa/__tests__
+
+      - name: Lint
+        run: npx eslint
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+  dependency-security:
+    name: SCA (npm audit gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      # FAILS the pipeline on any unresolved critical/high in the prod tree.
+      - name: npm audit gate (critical/high)
+        run: node scripts/security-audit-gate.mjs
+
+      # Non-blocking full report (incl. dev) for visibility.
+      - name: npm audit (full, informational)
+        run: npm audit || true
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"

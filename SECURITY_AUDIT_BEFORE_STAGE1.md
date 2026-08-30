@@ -186,16 +186,23 @@ file header (drop the 5 tables + 3 columns — they hold only Stage-1 state).
   `next build`. My files are type-clean and independently test-verified.)
 
 **Still OPEN / deferred (small, tracked):**
-- MON-S1-030 — encrypt the Google **access** token at rest. Deliberately not
-  done in this large checkpoint: it touches the live Workspace token
-  read/refresh path (`workspace-oauth.ts`) and needs its own migration + care.
-  `secret-encryption.ts` is ready to reuse.
 - Migrate `security.ts rateLimit()` + `login-rate-limit.ts` onto
   `rate-limit-store.ts`.
 - Wire `rotateSession` into the credential-login response and privilege-change
   server actions.
 - Security Center UI (§26) — server actions exist; the page is a follow-up.
-- `AUTHENTICATION.md` / `SESSION_SECURITY.md` / `THREAT_MODEL.md` etc. (§30).
+
+### Cluster 5 — remediation finish + DevSecOps + documentation (checkpoint 5)
+
+| ID / item | Verdict | Evidence |
+|---|---|---|
+| MON-S1-030 | **FIXED** | Google **access** token now AES-256-GCM encrypted at rest on every write (`auth.ts` signIn, `workspace-oauth.ts` refresh, `communication/oauth/callback`). `readAccessToken()` tolerates legacy plaintext rows (re-encrypted on next refresh). `workspace-token-encryption.test.ts` (5/5). |
+| CI/CD security gate (§24) | **DONE** | `.github/workflows/security.yml` — SAST (eslint + tsc), security unit tests, route/tenant coverage gates, `scripts/security-audit-gate.mjs` (fails on unresolved critical/high in the prod tree, triaged allow-list with review-by dates), `gitleaks` secret scan. `npm run security:check` runs the local subset. |
+| Documentation (§29, §30) | **DONE** | `SECURITY.md`, `SECURITY_ARCHITECTURE.md`, `AUTHENTICATION.md`, `SESSION_SECURITY.md`, `THREAT_MODEL.md` (STRIDE per flow), `SECURITY_TESTING.md`, `SECURITY_DEPLOYMENT_CHECKLIST.md`, and **`SECURITY_AUDIT_AFTER_STAGE1.md`** (before→after verdicts + release-blocker checklist + residual risk + production-readiness statement). |
+
+Verification for checkpoint 5: `npm run security:check` green (19 files /
+111 tests, 0 unguarded routes, 0 flagged scopes, audit gate PASS);
+`tsc --noEmit` 0 errors in Stage-1 code; ESLint clean on changed files.
 
 ---
 

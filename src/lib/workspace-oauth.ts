@@ -40,6 +40,33 @@ export function decryptToken(encryptedText: string): string {
   return decrypted;
 }
 
+/** True when a stored value is in this module's `iv:tag:ciphertext` hex format. */
+export function isEncryptedToken(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const parts = value.split(":");
+  return (
+    parts.length === 3 &&
+    parts.every((p) => p.length > 0 && /^[0-9a-f]+$/i.test(p))
+  );
+}
+
+/**
+ * Encrypt an access token for storage (MON-S1-030). Access tokens were
+ * previously written in plaintext.
+ */
+export function encryptAccessToken(token: string | null | undefined): string {
+  return token ? encryptToken(token) : "";
+}
+
+/**
+ * Read a stored access token. Tolerates legacy plaintext rows (returned as-is);
+ * they are re-encrypted on the next refresh.
+ */
+export function readAccessToken(stored: string | null | undefined): string {
+  if (!stored) return "";
+  return isEncryptedToken(stored) ? decryptToken(stored) : stored;
+}
+
 // Generate the authorization URL
 export function getAuthorizationUrl(state: string): string {
   const scopes = [
@@ -183,7 +210,7 @@ export async function getValidAccessToken(userId: string): Promise<string> {
   const now = new Date();
   // If token is valid for another 60 seconds, return it
   if (connection.tokenExpiresAt.getTime() > now.getTime() + 60000) {
-    return connection.accessToken;
+    return readAccessToken(connection.accessToken);
   }
 
   // Otherwise, refresh the token
@@ -218,15 +245,15 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 
   const expiresAt = new Date(Date.now() + data.expires_in * 1000);
 
-  const updated = await db.googleWorkspaceConnection.update({
+  await db.googleWorkspaceConnection.update({
     where: { userId },
     data: {
-      accessToken: data.access_token,
+      accessToken: encryptAccessToken(data.access_token),
       tokenExpiresAt: expiresAt,
       status: "connected",
       ...(data.scope ? { scopes: data.scope.split(" ") } : {})
     }
   });
 
-  return updated.accessToken;
+  return data.access_token;
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { exchangeCodeForTokens, encryptToken } from "@/lib/workspace-oauth";
+import { exchangeCodeForTokens, encryptToken, encryptAccessToken } from "@/lib/workspace-oauth";
 import { db } from "@/lib/db";
 import { getAppUrl } from "@/lib/app-url";
 
@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
     }
 
     const encryptedRefresh = encryptToken(tokens.refreshToken);
+    const encryptedAccess = encryptAccessToken(tokens.accessToken);
 
     // Upsert database record
     await db.googleWorkspaceConnection.upsert({
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
         userId: session.user.id,
         googleEmail: tokens.googleEmail,
         googleUserId: tokens.googleUserId,
-        accessToken: tokens.accessToken,
+        accessToken: encryptedAccess,
         refreshToken: encryptedRefresh,
         tokenExpiresAt: tokens.expiresAt,
         scopes: tokens.scopes,
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
       update: {
         googleEmail: tokens.googleEmail,
         googleUserId: tokens.googleUserId,
-        accessToken: tokens.accessToken,
+        accessToken: encryptedAccess,
         refreshToken: encryptedRefresh,
         tokenExpiresAt: tokens.expiresAt,
         scopes: tokens.scopes,

@@ -91,17 +91,32 @@ to **5 (0 critical, 5 high)**. `next build` passes (497/497 static pages).
 
 ---
 
-## CI gate (to be added in the DevSecOps cluster — Stage 1 §24)
+## CI gate (implemented — Stage 1 §24)
 
-```
-npm audit --omit=dev --audit-level=high
-```
+`scripts/security-audit-gate.mjs` (run by `.github/workflows/security.yml`):
 
-- **Fails** the pipeline on any *new* `high`/`critical` in the production tree.
-- The three residuals above are allow-listed **by advisory ID with an expiry
-  date and this document linked**, so they stay visible but don't block, and the
-  allow-list entry forces a re-review when it lapses.
-- `npm audit` (full, incl. dev) runs as a non-blocking report.
+- Parses `npm audit --omit=dev --json` and **fails** on any `high`/`critical`
+  in the production tree that is **not** on the triaged allow-list.
+- Allow-list entries carry a `reason` and a `reviewBy` date; once the date
+  passes, the entry stops suppressing and the gate fails until re-triaged.
+- `npm audit` (full, incl. dev) also runs as a non-blocking report.
+- The two coverage scanners (`scan-route-auth-coverage`,
+  `scan-tenant-scope-coverage`), the security unit tests, `eslint`, `tsc` and a
+  `gitleaks` secret-scan run in the same workflow.
+
+### Current allow-list (also encoded in the gate script)
+
+| Advisory / package | Reason | Review by |
+|---|---|---|
+| `xlsx` GHSA-4r6h-8v6p-xvw6 / GHSA-5pgg-2g8v-p4x9 | No fixed release; parsing size/time-limited; `exceljs` migration planned | 2026-12-31 |
+| `nodemailer` (6 GHSAs incl. GHSA-vvjj-xcjg-gr5g) | Fix needs `nodemailer@9` (major); no caller-controlled `name`/`envelope`; default provider is Resend | 2026-11-30 |
+| `@prisma/config` / `prisma` / `deepmerge-ts` GHSA-ggr8-5vv4-36mx | Build-time Prisma CLI only; not in the Next.js runtime bundle | 2027-03-31 |
+| `shadcn` → `cosmiconfig` → `js-yaml` (3 GHSAs) | `shadcn` CLI is a build-time tool; **should be moved from `dependencies` to `devDependencies`** (concurrent UI work added it) | 2027-01-31 |
+
+> Note: a concurrent shadcn/UI migration added `shadcn`, `react-aria-components`,
+> `tailwind-merge`, `clsx`, `tw-animate-css` to `dependencies` and pulled in
+> `js-yaml` transitively. `shadcn` (the CLI) belongs in `devDependencies`;
+> flagged here for that team to fix.
 
 ---
 
