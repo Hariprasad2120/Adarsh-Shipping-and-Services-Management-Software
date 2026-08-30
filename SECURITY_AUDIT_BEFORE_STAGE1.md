@@ -112,6 +112,42 @@ green. Pre-existing unrelated failure noted: `performance-boundaries.test.ts`
 `accounting/banking` pages using raw `auth()` instead of `getSession()` — fails
 at the cluster-2 commit too; not a security regression.
 
+### Cluster 4a — auth/session/MFA primitives (checkpoint 4a)
+
+Cluster 4 is split: **4a is the DB-free, unit-tested primitive layer + the
+low-risk live wirings**; **4b** (needs the staging DB) adds the Prisma models +
+migration, the MFA service, the login-flow second-factor step, password-reset
+routes/UI, session rotation call-sites and the shared-store rate limiter.
+
+| Piece | State |
+|---|---|
+| `src/lib/mfa/totp.ts` | RFC 6238 TOTP (Node `crypto` HMAC-SHA1 only — no custom crypto). Secret gen, Base32, `verifyTotp` (constant-time, ±1 step skew), `buildOtpAuthUri`. RFC 6238 test vector verified. |
+| `src/lib/mfa/secret-encryption.ts` | AES-256-GCM authenticated encryption for factor secrets at rest. `MFA_ENCRYPTION_KEY` (separate from `AUTH_SECRET`; required in prod). Tamper + wrong-key rejection tested. |
+| `src/lib/mfa/recovery-codes.ts` | Crockford-ish codes, shown once, stored only as sha256+pepper hash, single-use, constant-time match, regen invalidates the set. |
+| `src/lib/password-reset-token.ts` | 256-bit random token, sha256 at rest, constant-time compare, TTL + single-use `checkResetToken`. (MON-S1-032/033 groundwork.) |
+| `src/lib/step-up.ts` | Per-action re-auth freshness policy for MFA-disable / password-change / privilege-change / API-credential generation, etc. |
+| `src/lib/oauth-linking.ts` | `assessOAuthProfile` — requires `email_verified === true`, enforces `GOOGLE_WORKSPACE_DOMAIN` allow-list + `hd` claim, normalises email. (MON-S1-013.) |
+
+Live wirings in this checkpoint (no schema change, build-verified):
+- `auth.ts signIn` Google branch now runs `assessOAuthProfile` first — an
+  unverified-email or out-of-domain Google identity is rejected and audited,
+  and the **provider-verified** normalised email is what the user lookup uses.
+  (MON-S1-013 partially fixed — the `Account`/`sub` binding is 4b.)
+- `auth.ts` gains a `redirect` callback that clamps every post-auth redirect
+  through `safeRedirectPath` (MON-S1-031 → **FIXED** for the NextAuth flow;
+  other `returnTo` consumers still to adopt the helper).
+- `MFA_ENCRYPTION_KEY`, `MFA_RECOVERY_PEPPER`, `PASSWORD_RESET_TTL_MINUTES`
+  documented in `.env.example`.
+
+Still OPEN after 4a (moves to 4b): MON-S1-002 (MFA end-to-end),
+MON-S1-011 (shared-store rate limiting), MON-S1-030 (encrypt the Google
+**access** token — trivially reuses `secret-encryption`), MON-S1-032/033
+(reset flow routes + enumeration-safe responses), session rotation on
+privilege change.
+
+Verification for checkpoint 4a: `tsc --noEmit` clean; 34 new primitive unit
+tests green; ESLint clean on changed files; `npm run build` green.
+
 ---
 
 ## 1. Architecture discovered

@@ -24,6 +24,8 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
 } from "@/lib/login-rate-limit";
+import { assessOAuthProfile, parseAllowedDomains } from "@/lib/oauth-linking";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const GOOGLE_CHAT_DELETE_AUTH_MODE =
   (process.env.GOOGLE_CHAT_DELETE_AUTH_MODE ?? "admin_oauth").toLowerCase();
@@ -223,11 +225,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
-        if (!user.email) return false;
+        // 1. Provider-asserted email ownership + domain policy (MON-S1-013).
+        const assessment = assessOAuthProfile(
+          {
+            email: profile?.email ?? user.email,
+            email_verified: (profile as { email_verified?: unknown } | undefined)
+              ?.email_verified as boolean | string | undefined,
+            hd: (profile as { hd?: string } | undefined)?.hd,
+          },
+          { allowedDomains: parseAllowedDomains(process.env.GOOGLE_WORKSPACE_DOMAIN) },
+        );
+        if (!assessment.ok) {
+          await logSecurityEvent({
+            event: "LOGIN_FAILURE",
+            outcome: "FAILURE",
+            email: (profile?.email ?? user.email) ?? null,
+            reason: `Google login rejected: ${assessment.reason}`,
+          });
+          return false;
+        }
+        const normalizedEmail = assessment.email;
+
         const dbUser = await db.user.findFirst({
-          where: { email: { equals: user.email, mode: "insensitive" } },
+          where: { email: { equals: normalizedEmail, mode: "insensitive" } },
         });
 
         // Must be pre-registered by admin and active
@@ -235,7 +257,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await logSecurityEvent({
             event: "LOGIN_FAILURE",
             outcome: "FAILURE",
-            email: user.email,
+            email: normalizedEmail,
             reason: dbUser
               ? "Google login for disabled/unprovisioned user"
               : "Google login for unknown user",
@@ -340,6 +362,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.sessionNonce = tokenPayload.sessionNonce ?? "";
       session.user.redirectPath = tokenPayload.redirectPath ?? "/dashboard";
       return session;
+    },
+    // Clamp every post-auth redirect to a same-origin path (MON-S1-031).
+    redirect({ url, baseUrl }) {
+      const path = safeRedirectPath(url, "/dashboard", [baseUrl]);
+      return path.startsWith("http") ? path : `${baseUrl}${path}`;
     },
   },
   events: {
