@@ -5,6 +5,10 @@ import { Toaster } from "sonner";
 import { ScrollNavigator } from "@/components/navigation/scroll-navigator";
 import { NavigationProgress } from "@/components/navigation/navigation-progress";
 import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const geistSans = localFont({
   src: "../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2",
@@ -27,7 +31,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", geistSans.variable, "font-sans", geist.variable)}
     >
       <head>
         <script

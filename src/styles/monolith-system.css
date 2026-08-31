@@ -994,10 +994,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
   min-width: 0;
   height: 100dvh;
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: var(--mnx-sidebar-width) minmax(0, 1fr);
-  column-gap: 1.25rem;
-  grid-template-rows: minmax(0, 1fr);
+  display: flex;
   overflow: hidden;
   color: var(--mnx-text);
   background-color: var(--mnx-page);
@@ -1006,8 +1003,6 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
   font-size: var(--mn-type-body-size);
   line-height: var(--mn-type-body-line);
   isolation: isolate;
-  transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: grid-template-columns;
 }
 
 html[data-dashboard-shell="true"],
@@ -2088,9 +2083,38 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   white-space: nowrap;
 }
 
-.mnx-sidebar-close,
-.mnx-mobile-menu {
+.mnx-sidebar-close {
   display: none;
+}
+
+.mnx-mobile-menu {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 76%, var(--mnx-accent) 18%);
+  border-radius: 0.75rem;
+  color: var(--mnx-text);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mnx-surface-soft) 88%, white 12%) 0%,
+      color-mix(in srgb, var(--mnx-surface-muted) 94%, var(--mnx-surface-soft) 6%) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 75%, transparent),
+    0 10px 24px color-mix(in srgb, var(--mnx-border) 12%, transparent);
+}
+
+.mnx-mobile-menu:hover {
+  color: var(--mnx-accent-text);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mnx-accent-soft) 60%, var(--mnx-surface-soft) 40%) 0%,
+      color-mix(in srgb, var(--mnx-accent-soft) 76%, var(--mnx-surface-muted) 24%) 100%
+    );
 }
 
 .mnx-sidebar-nav {
@@ -2464,8 +2488,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-dashboard-frame {
-  grid-column: 2;
-  grid-row: 1;
+  flex: 1 1 auto;
   width: 100%;
   min-width: 0;
   height: 100dvh;

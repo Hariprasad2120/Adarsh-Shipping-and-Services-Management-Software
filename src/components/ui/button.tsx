@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -11,17 +13,32 @@ export const buttonVariants = cva("mnx-button", {
       inverse: "mnx-button-secondary",
       outline: "mnx-button-outline",
       destructive: "mnx-button-destructive",
+      ghost: "mnx-button-outline mnx-button-ghost",
+      secondary: "mnx-button-secondary",
+      link: "mnx-button-link",
     },
     size: {
+      xs: "mnx-button-compact",
       sm: "mnx-button-compact",
       md: "",
+      default: "",
       lg: "",
+      icon: "mnx-icon-button",
+      "icon-xs": "mnx-icon-button mnx-icon-button-xs",
+      "icon-sm": "mnx-icon-button",
+      "icon-lg": "mnx-icon-button mnx-icon-button-lg",
     },
     mode: {
       default: "",
       icon: "mnx-icon-button",
     },
   },
+  compoundVariants: [
+    {
+      mode: "icon",
+      className: "mnx-icon-button",
+    },
+  ],
   defaultVariants: {
     variant: "default",
     size: "md",
@@ -30,8 +47,7 @@ export const buttonVariants = cva("mnx-button", {
 });
 
 export interface ButtonProps
-  extends
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {}
 
 export interface ButtonLinkProps
@@ -48,6 +64,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       type={type}
+      data-slot="button"
       data-variant={variant ?? "default"}
       data-size={size ?? "md"}
       data-mode={mode ?? "default"}
@@ -70,6 +87,7 @@ export function ButtonLink({
   return (
     <Link
       href={href}
+      data-slot="button"
       data-variant={variant ?? "default"}
       data-size={size ?? "md"}
       data-mode={mode ?? "default"}
@@ -78,3 +96,5 @@ export function ButtonLink({
     />
   );
 }
+
+export const LinkButton = ButtonLink;
