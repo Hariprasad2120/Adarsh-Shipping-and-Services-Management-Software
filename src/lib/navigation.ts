@@ -1186,7 +1186,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         label: "Design System",
         icon: View,
         permission: "admin.org.manage",
-        matchPaths: ["/admin/design-system"],
+        matchPaths: ["/admin/design-system", "/admin/design-system/cha-audit"],
       },
       {
         href: "/admin/settings",

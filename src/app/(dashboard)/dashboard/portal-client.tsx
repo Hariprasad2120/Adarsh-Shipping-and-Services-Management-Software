@@ -13,7 +13,7 @@ import type {
   DashboardModuleSnapshot,
 } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
-import { OperationsBar } from "./_components/operations-bar";
+import { WelcomeNote, PunchCard } from "@/components/ds";
 import { DashboardOrganization } from "./_components/dashboard-organization";
 import { DashboardOverview } from "./_components/dashboard-overview";
 import { DashboardTeam } from "./_components/dashboard-team";
@@ -240,10 +240,18 @@ export function HrmsPortalClient({
 
   return (
     <MonolithPage className="mnx-dashboard-page-shell">
-      <OperationsBar
-        profile={profile}
-        loading={attendanceLoading}
-        onPunchAction={handlePunchAction}
+      <WelcomeNote
+        title={`Hello, ${(profile.name ?? "there").split(" ")[0]}`}
+        eyebrow="My space"
+        message="Track team progress here. You're almost at a goal."
+        trailing={
+          <PunchCard
+            status={profile.attendanceStatus}
+            since={profile.totalInTime}
+            loading={attendanceLoading}
+            onPunch={handlePunchAction}
+          />
+        }
       />
 
       <Tabs

@@ -97,6 +97,11 @@ const topLevelLinks = [
     description: "Official foundations and approved catalogue",
   },
   {
+    href: "/admin/design-system/cha-audit",
+    label: "CHA Audit",
+    description: "Dedicated inventory of CHA-only UI and the shared primitives it consumes",
+  },
+  {
     href: "/admin/design-system/unverified-designs",
     label: "Unverified Designs",
     description: "Review queue, comparisons, and decisions",

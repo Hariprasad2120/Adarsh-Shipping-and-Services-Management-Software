@@ -125,6 +125,534 @@ html[data-theme="dark"],
     }
 }
 
+/* ===== BEGIN src/styles/ds-tokens.css ===== */
+/*
+ * ============================================================================
+ *  MONOLITH DESIGN SYSTEM  ·  --ds-* token layer
+ * ============================================================================
+ *
+ *  This is the NEW canonical design system. It is self-contained: it does not
+ *  read from --mn-* or --frappe-*. Over time every route migrates onto these
+ *  tokens and the older layers are deleted.
+ *
+ *  Concept: "Harbour at dawn" — a working port at first light. Steel water,
+ *  buoy-marker signal, weathered brass, fog. Four colour roles, three type
+ *  roles, four button variants, one icon contract.
+ *
+ *  Docs: .stitch/DESIGN-SYSTEM.md  (source of truth for usage rules)
+ * ============================================================================
+ */
+
+:root,
+html[data-theme="light"] {
+  /* ---- 1 · COLOUR — four roles, each with a fixed meaning ---------------- */
+
+  /* primary  — steel-harbour blue. Brand, primary action, links, focus. */
+  --ds-primary: #1f5673;
+  --ds-primary-hover: #184559;
+  --ds-primary-active: #123647;
+  --ds-primary-soft: #1f56731a; /* ~10% wash — tinted surfaces, soft badges */
+  --ds-primary-border: #1f56734d;
+  --ds-on-primary: #f4f8fa;
+
+  /* secondary — buoy-marker rust. Secondary emphasis, active nav, warnings
+     that are not danger. Use sparingly; it is a signal colour. */
+  --ds-secondary: #c66a2e;
+  --ds-secondary-hover: #ad5a24;
+  --ds-secondary-active: #914a1c;
+  --ds-secondary-soft: #c66a2e1a;
+  --ds-secondary-border: #c66a2e4d;
+  --ds-on-secondary: #fbf5f0;
+
+  /* tertiary  — weathered-brass olive. Accents, highlights, the third-rank
+     button, chart series 3. Never for primary action. */
+  --ds-tertiary: #6f7a45;
+  --ds-tertiary-hover: #5f6a3a;
+  --ds-tertiary-active: #4f582f;
+  --ds-tertiary-soft: #6f7a451f;
+  --ds-tertiary-border: #6f7a454d;
+  --ds-on-tertiary: #f7f8f2;
+
+  /* neutral   — wet-slate. A ramp: text, borders, surfaces all derive here.
+     -0 is the page ground, -12 is the strongest ink. */
+  --ds-neutral-0: #f5f7f8;
+  --ds-neutral-1: #eceff1;
+  --ds-neutral-2: #dfe4e7;
+  --ds-neutral-3: #cdd4d8;
+  --ds-neutral-4: #b3bcc2;
+  --ds-neutral-6: #8a959c;
+  --ds-neutral-8: #5c666d;
+  --ds-neutral-10: #3a444c;
+  --ds-neutral-12: #1c242a;
+
+  /* semantic surface/text/border aliases — always use these, not the ramp,
+     for structural styling so dark mode flips correctly. */
+  --ds-canvas: var(--ds-neutral-0);
+  --ds-surface: #ffffff;
+  --ds-surface-raised: #ffffff;
+  --ds-surface-sunken: var(--ds-neutral-1);
+  --ds-border: var(--ds-neutral-3);
+  --ds-border-strong: var(--ds-neutral-4);
+  --ds-text: var(--ds-neutral-12);
+  --ds-text-muted: var(--ds-neutral-8);
+  --ds-text-subtle: var(--ds-neutral-6);
+  --ds-text-on-accent: #ffffff;
+
+  /* status — derived from the palette where possible (secondary == warning). */
+  --ds-success: #2f7d4f;
+  --ds-success-soft: #2f7d4f1a;
+  --ds-warning: var(--ds-secondary);
+  --ds-warning-soft: var(--ds-secondary-soft);
+  --ds-danger: #b3352b;
+  --ds-danger-soft: #b3352b1a;
+  --ds-info: var(--ds-primary);
+  --ds-info-soft: var(--ds-primary-soft);
+
+  /* ---- 2 · TYPOGRAPHY — one family, three roles ------------------------- */
+
+  /* the currently-loaded family (Geist via next/font, Inter fallback). */
+  --ds-font-family: var(--font-sans), "Inter Variable", Inter, "Segoe UI", Roboto,
+    system-ui, sans-serif;
+
+  /* role A · DISPLAY — page & section identity. Tight, confident. */
+  --ds-display-family: var(--ds-font-family);
+  --ds-display-weight: 600;
+  --ds-display-tracking: -0.03em;
+  --ds-display-leading: 1.1;
+  --ds-display-lg: clamp(1.75rem, 2.6vw, 2.375rem); /* page title */
+  --ds-display-md: clamp(1.375rem, 1.9vw, 1.75rem); /* section title */
+  --ds-display-sm: 1.125rem; /* card / panel title */
+
+  /* role B · BODY — prose, labels, table cells. Comfortable reading. */
+  --ds-body-family: var(--ds-font-family);
+  --ds-body-weight: 400;
+  --ds-body-weight-strong: 550;
+  --ds-body-tracking: 0;
+  --ds-body-leading: 1.55;
+  --ds-body-lg: 1rem;
+  --ds-body-md: 0.9375rem; /* default */
+  --ds-body-sm: 0.8125rem;
+
+  /* role C · META — the "manifest stamp" voice. Eyebrows, dates, codes, IDs,
+     column headers. Uppercase, let-spaced, small, medium weight. */
+  --ds-meta-family: var(--ds-font-family);
+  --ds-meta-weight: 500;
+  --ds-meta-tracking: 0.08em;
+  --ds-meta-leading: 1.25;
+  --ds-meta-transform: uppercase;
+  --ds-meta-md: 0.75rem;
+  --ds-meta-sm: 0.6875rem;
+
+  /* ---- 3 · SPACE · RADIUS · MOTION · ELEVATION ------------------------- */
+  --ds-space-1: 0.25rem;
+  --ds-space-2: 0.5rem;
+  --ds-space-3: 0.75rem;
+  --ds-space-4: 1rem;
+  --ds-space-5: 1.5rem;
+  --ds-space-6: 2rem;
+  --ds-space-7: 3rem;
+
+  --ds-radius-sm: 4px; /* controls, badges */
+  --ds-radius-md: 8px; /* panels, cards */
+  --ds-radius-lg: 14px; /* feature surfaces */
+
+  --ds-motion-fast: 120ms;
+  --ds-motion-base: 200ms;
+  --ds-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --ds-shadow-sm: 0 1px 2px #1c242a14;
+  --ds-shadow-md: 0 4px 12px #1c242a1f;
+
+  /* ---- 4 · ICONS — one contract -------------------------------------- */
+  --ds-icon-sm: 14px;
+  --ds-icon-md: 16px; /* default, inline with body */
+  --ds-icon-lg: 18px; /* section headers, buttons */
+  --ds-icon-stroke: 1.75;
+
+  --ds-focus-ring: 0 0 0 2px var(--ds-canvas), 0 0 0 4px var(--ds-primary);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  DARK — flip the ramp and surfaces; hues lighten for contrast on slate.    */
+/* -------------------------------------------------------------------------- */
+html[data-theme="dark"],
+html.dark {
+  --ds-primary: #4a90b8;
+  --ds-primary-hover: #5c9ec4;
+  --ds-primary-active: #6eabce;
+  --ds-primary-soft: #4a90b826;
+  --ds-primary-border: #4a90b859;
+  --ds-on-primary: #0c1a22;
+
+  --ds-secondary: #e08542;
+  --ds-secondary-hover: #e79355;
+  --ds-secondary-active: #eda168;
+  --ds-secondary-soft: #e0854226;
+  --ds-secondary-border: #e0854259;
+  --ds-on-secondary: #1f1206;
+
+  --ds-tertiary: #9aa66a;
+  --ds-tertiary-hover: #a7b27b;
+  --ds-tertiary-active: #b4be8d;
+  --ds-tertiary-soft: #9aa66a26;
+  --ds-tertiary-border: #9aa66a59;
+  --ds-on-tertiary: #191c0e;
+
+  --ds-neutral-0: #10161a;
+  --ds-neutral-1: #161d22;
+  --ds-neutral-2: #1e262c;
+  --ds-neutral-3: #2b353c;
+  --ds-neutral-4: #3d4952;
+  --ds-neutral-6: #5f6d76;
+  --ds-neutral-8: #8b98a1;
+  --ds-neutral-10: #b8c1c8;
+  --ds-neutral-12: #e7ecef;
+
+  --ds-canvas: var(--ds-neutral-0);
+  --ds-surface: var(--ds-neutral-1);
+  --ds-surface-raised: var(--ds-neutral-2);
+  --ds-surface-sunken: #0b1013;
+  --ds-border: var(--ds-neutral-3);
+  --ds-border-strong: var(--ds-neutral-4);
+  --ds-text: var(--ds-neutral-12);
+  --ds-text-muted: var(--ds-neutral-8);
+  --ds-text-subtle: var(--ds-neutral-6);
+  --ds-text-on-accent: #0c1a22;
+
+  --ds-success: #4a9d6b;
+  --ds-success-soft: #4a9d6b26;
+  --ds-danger: #d15a4f;
+  --ds-danger-soft: #d15a4f26;
+
+  --ds-shadow-sm: 0 1px 2px #00000047;
+  --ds-shadow-md: 0 4px 14px #0000005c;
+
+  --ds-focus-ring: 0 0 0 2px var(--ds-canvas), 0 0 0 4px var(--ds-primary);
+}
+
+/* respect the legacy theme classes the boot script also sets */
+html.theme-light {
+  color-scheme: light;
+}
+html.theme-night,
+html.theme-violet {
+  color-scheme: dark;
+}
+
+/* ======================================================================== */
+/*  COMPONENT CLASSES                                                        */
+/* ======================================================================== */
+
+/* ---- Typography helpers ------------------------------------------------- */
+.ds-display {
+  font-family: var(--ds-display-family);
+  font-weight: var(--ds-display-weight);
+  letter-spacing: var(--ds-display-tracking);
+  line-height: var(--ds-display-leading);
+  color: var(--ds-text);
+  margin: 0;
+}
+.ds-display-lg { font-size: var(--ds-display-lg); }
+.ds-display-md { font-size: var(--ds-display-md); }
+.ds-display-sm { font-size: var(--ds-display-sm); }
+
+.ds-body {
+  font-family: var(--ds-body-family);
+  font-weight: var(--ds-body-weight);
+  letter-spacing: var(--ds-body-tracking);
+  line-height: var(--ds-body-leading);
+  color: var(--ds-text);
+  margin: 0;
+}
+.ds-body-lg { font-size: var(--ds-body-lg); }
+.ds-body-md { font-size: var(--ds-body-md); }
+.ds-body-sm { font-size: var(--ds-body-sm); }
+.ds-body-muted { color: var(--ds-text-muted); }
+
+.ds-meta {
+  font-family: var(--ds-meta-family);
+  font-weight: var(--ds-meta-weight);
+  letter-spacing: var(--ds-meta-tracking);
+  line-height: var(--ds-meta-leading);
+  text-transform: var(--ds-meta-transform);
+  font-size: var(--ds-meta-md);
+  color: var(--ds-text-muted);
+  margin: 0;
+}
+.ds-meta-sm { font-size: var(--ds-meta-sm); }
+
+/* ---- Icon contract --------------------------------------------------- */
+.ds-icon {
+  display: inline-flex;
+  flex: none;
+  color: currentColor;
+}
+.ds-icon svg {
+  width: var(--ds-icon-md);
+  height: var(--ds-icon-md);
+  display: block;
+}
+.ds-icon[data-size="sm"] svg { width: var(--ds-icon-sm); height: var(--ds-icon-sm); }
+.ds-icon[data-size="lg"] svg { width: var(--ds-icon-lg); height: var(--ds-icon-lg); }
+
+/* ---- Buttons — four variants --------------------------------------- */
+.ds-btn {
+  --_bg: transparent;
+  --_fg: var(--ds-text);
+  --_bd: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-2);
+  padding: 0.5rem 0.9rem;
+  min-height: 2.25rem;
+  font-family: var(--ds-body-family);
+  font-size: var(--ds-body-sm);
+  font-weight: var(--ds-body-weight-strong);
+  letter-spacing: 0.005em;
+  line-height: 1;
+  border: 1px solid var(--_bd);
+  border-radius: var(--ds-radius-sm);
+  background: var(--_bg);
+  color: var(--_fg);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--ds-motion-fast) var(--ds-ease),
+    border-color var(--ds-motion-fast) var(--ds-ease),
+    color var(--ds-motion-fast) var(--ds-ease);
+}
+.ds-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-focus-ring);
+}
+.ds-btn:disabled,
+.ds-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.ds-btn .ds-icon svg { width: var(--ds-icon-md); height: var(--ds-icon-md); }
+.ds-btn[data-size="sm"] { min-height: 1.875rem; padding: 0.35rem 0.7rem; font-size: var(--ds-meta-md); }
+.ds-btn[data-size="lg"] { min-height: 2.625rem; padding: 0.65rem 1.15rem; font-size: var(--ds-body-md); }
+
+/* primary — filled steel */
+.ds-btn[data-variant="primary"] {
+  --_bg: var(--ds-primary);
+  --_fg: var(--ds-text-on-accent);
+  --_bd: var(--ds-primary);
+}
+.ds-btn[data-variant="primary"]:hover { --_bg: var(--ds-primary-hover); --_bd: var(--ds-primary-hover); }
+.ds-btn[data-variant="primary"]:active { --_bg: var(--ds-primary-active); --_bd: var(--ds-primary-active); }
+
+/* secondary — filled rust */
+.ds-btn[data-variant="secondary"] {
+  --_bg: var(--ds-secondary);
+  --_fg: var(--ds-text-on-accent);
+  --_bd: var(--ds-secondary);
+}
+.ds-btn[data-variant="secondary"]:hover { --_bg: var(--ds-secondary-hover); --_bd: var(--ds-secondary-hover); }
+.ds-btn[data-variant="secondary"]:active { --_bg: var(--ds-secondary-active); --_bd: var(--ds-secondary-active); }
+
+/* outlined — hairline neutral, transparent fill */
+.ds-btn[data-variant="outlined"] {
+  --_bg: transparent;
+  --_fg: var(--ds-text);
+  --_bd: var(--ds-border-strong);
+}
+.ds-btn[data-variant="outlined"]:hover { --_bg: var(--ds-surface-sunken); --_bd: var(--ds-neutral-6); }
+.ds-btn[data-variant="outlined"]:active { --_bg: var(--ds-neutral-2); }
+
+/* inverted — high-contrast reverse of the current ground */
+.ds-btn[data-variant="inverted"] {
+  --_bg: var(--ds-text);
+  --_fg: var(--ds-canvas);
+  --_bd: var(--ds-text);
+}
+.ds-btn[data-variant="inverted"]:hover { --_bg: var(--ds-neutral-10); --_bd: var(--ds-neutral-10); }
+.ds-btn[data-variant="inverted"]:active { --_bg: var(--ds-neutral-8); --_bd: var(--ds-neutral-8); }
+
+/* ---- WelcomeNote ---------------------------------------------------------
+ *
+ *  One band. Left: eyebrow + title + one line. Right: a `trailing` slot
+ *  (PunchCard, date chip, …). Properties set explicitly (box-sizing, margin)
+ *  so a host layout cannot collapse it.
+ * ------------------------------------------------------------------------- */
+.ds-welcome,
+.ds-welcome * {
+  box-sizing: border-box;
+}
+.ds-welcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3) var(--ds-space-6);
+  margin: 0;
+  padding: var(--ds-space-4) 0 var(--ds-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.ds-welcome-lede {
+  min-width: 0;
+  flex: 1 1 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ds-space-1);
+}
+.ds-welcome-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  margin: 0 0 2px;
+  padding: 2px 8px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-primary-soft);
+  color: var(--ds-primary);
+}
+.ds-welcome-title {
+  margin: 0;
+  font-size: var(--ds-display-lg);
+}
+.ds-welcome-message {
+  margin: 2px 0 0;
+  max-width: 56ch;
+  font-size: var(--ds-body-md);
+  color: var(--ds-text-muted);
+}
+.ds-welcome-actions {
+  display: flex;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-3);
+  flex-wrap: wrap;
+}
+
+.ds-welcome-trailing {
+  flex: none;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* built-in date chip (only when no `trailing` given) */
+.ds-welcome-datechip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--ds-space-2);
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-surface);
+}
+.ds-welcome-datechip time {
+  font-family: var(--ds-meta-family);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: var(--ds-body-md);
+  color: var(--ds-text);
+  white-space: nowrap;
+}
+
+/* ---- PunchCard ---------------------------------------------------------- */
+.ds-punch,
+.ds-punch * {
+  box-sizing: border-box;
+}
+.ds-punch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-space-2) var(--ds-space-2) var(--ds-space-3);
+  border: 1px solid var(--ds-border-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface);
+}
+.ds-punch-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  min-width: 0;
+}
+.ds-punch-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
+}
+.ds-punch-label {
+  font-family: var(--ds-meta-family);
+  font-weight: var(--ds-meta-weight);
+  letter-spacing: var(--ds-meta-tracking);
+  text-transform: uppercase;
+  font-size: var(--ds-meta-sm);
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+}
+.ds-punch-timer {
+  font-family: var(--ds-meta-family);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  font-size: var(--ds-body-md);
+  color: var(--ds-text);
+  padding-left: var(--ds-space-2);
+  border-left: 1px solid var(--ds-border);
+  white-space: nowrap;
+}
+.ds-punch-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+.ds-punch-done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-success-soft);
+  color: var(--ds-success);
+}
+
+@media (max-width: 720px) {
+  .ds-welcome {
+    align-items: stretch;
+  }
+  .ds-welcome-trailing {
+    margin-left: 0;
+    width: 100%;
+  }
+  .ds-punch {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+@media (max-width: 480px) {
+  .ds-punch {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ds-space-2);
+  }
+  .ds-punch-timer {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .ds-punch-actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-btn { transition: none; }
+}
+/* ===== END src/styles/ds-tokens.css ===== */
+
 /* ===== BEGIN src/styles/monolith-tokens.css ===== */
 /*
  * Monolith semantic token aliases.

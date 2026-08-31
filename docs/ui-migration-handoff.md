@@ -2,6 +2,70 @@
 
 Last updated: 2026-08-31
 
+## 2026-08-31 CHA admin design audit catalogue handoff
+
+Added a new admin design-system route dedicated to the CHA module so the team
+can review the Customs House Agent UI surface separately from the broader
+Monolith catalogue.
+
+Delivered:
+
+- added `src/app/(dashboard)/admin/design-system/cha-audit/page.tsx` with the
+  same admin permission gate used by the main design-system route;
+- added
+  `src/app/(dashboard)/admin/design-system/cha-audit/cha-audit-client.tsx`,
+  which renders:
+  - the current CHA page-route audit matrix;
+  - the shared Monolith primitives already used by CHA;
+  - live CHA workspace shell specimens;
+  - live document-workflow specimens;
+  - live customs master and filing specimens;
+  - live import-job-lab specimens;
+  - CHA class/token/hover inventories;
+  - inventory-only cards for destructive or orchestration-heavy CHA elements;
+- updated `src/app/(dashboard)/admin/design-system/design-system-client.tsx`
+  so the design-system section navigation now links to the new CHA audit page;
+- updated `src/lib/navigation.ts` so the admin Design System navigation entry
+  stays active on `/admin/design-system/cha-audit`;
+- regenerated:
+  - `docs/ui-route-audit.md`;
+  - `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+  - `docs/ui-component-and-style-ownership-audit.md`;
+  the fresh route audit now reports 355 pages, 17 layouts, and 408
+  route-state rows, including `/admin/design-system/cha-audit` as a
+  `COMPLIANT` admin route.
+
+Verification on Monday, August 31, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd "src/app/(dashboard)/admin/design-system/cha-audit/page.tsx" "src/app/(dashboard)/admin/design-system/cha-audit/cha-audit-client.tsx" "src/app/(dashboard)/admin/design-system/design-system-client.tsx" "src/lib/navigation.ts" --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed `docs/ui-component-and-style-ownership-audit.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed; the build also repeated the existing Turbopack NFT tracing warning
+  from `next.config.ts` through
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Known limits:
+
+- manual browser/runtime verification across Light, Night, and Violet themes
+  for the new `/admin/design-system/cha-audit` route is still pending in this
+  Codex session;
+- some CHA elements are intentionally inventory-only on this page because they
+  redirect, depend on full job-state orchestration, or trigger destructive
+  flows;
+- the new page documents current CHA drift, but it does not migrate the
+  flagged non-compliant CHA routes yet.
+
 ## 2026-08-31 Single global stylesheet consolidation handoff
 
 Centralized the repository-owned CSS stack into one `src/app/globals.css`

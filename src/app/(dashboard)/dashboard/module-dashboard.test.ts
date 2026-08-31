@@ -52,27 +52,32 @@ describe("module-aware main dashboard", () => {
     expect(moduleCards).toContain("href={module.href}");
   });
 
-  it("opens the dashboard with an operations bar, not a greeting hero", () => {
+  it("opens the dashboard with a single welcome band: intro + inline punch card", () => {
     const portalSource = readSource(
       "src/app/(dashboard)/dashboard/portal-client.tsx",
     );
-    const opsBarSource = readSource(
-      "src/app/(dashboard)/dashboard/_components/operations-bar.tsx",
-    );
+    const punchSource = readSource("src/components/ds/punch-card.tsx");
+    const welcomeSource = readSource("src/components/ds/welcome-note.tsx");
     const overviewSource = readSource(
       "src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx",
     );
     const styles = readSource("src/app/globals.css");
 
-    // Ops bar replaced the attendance panel: no clock face, celebration,
-    // "today's guide", avatar, or "Welcome back".
-    expect(portalSource).toContain("<OperationsBar");
+    // One band: WelcomeNote carries the PunchCard in its trailing slot, so the
+    // greeting and the attendance control share a line. No separate ops bar,
+    // no clock face, celebration, "today's guide", avatar, or "Welcome back".
+    expect(portalSource).toContain("<WelcomeNote");
+    expect(portalSource).toContain("trailing={");
+    expect(portalSource).toContain("<PunchCard");
+    expect(portalSource).not.toContain("<OperationsBar");
     expect(portalSource).not.toContain("AttendanceCommand");
     expect(portalSource).toContain("<Tabs");
-    expect(opsBarSource).not.toContain("Welcome back");
-    expect(opsBarSource).not.toContain("celebrat");
-    expect(opsBarSource).not.toContain("mnx-celebration");
-    expect(opsBarSource).toContain("mnx-dash2-att");
+    expect(punchSource).not.toContain("Welcome back");
+    expect(punchSource).not.toContain("celebrat");
+    expect(punchSource).not.toContain("mnx-celebration");
+    expect(punchSource).toContain("ds-punch");
+    // The redundant standalone date header is gone.
+    expect(welcomeSource).not.toContain("ds-welcome-stamp");
 
     // Overview leads with the attention queue and its severity rail; the
     // analytics grid is no longer the first actionable surface.
