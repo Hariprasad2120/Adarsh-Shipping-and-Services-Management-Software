@@ -1,0 +1,21 @@
+{
+  "$comment": "Stitch project/screen tracking. NEVER store API credentials here. STITCH_API_KEY is read only from the environment.",
+  "stitchProject": {
+    "id": null,
+    "name": "Monolith Engine — Enterprise UX System",
+    "status": "not-created",
+    "reason": "Stitch MCP server configured but failed to connect (CONNECTION_CLOSED). Awaiting working stitch MCP tools before project creation."
+  },
+  "designSystemIds": [],
+  "screens": [],
+  "routeScreenMap": {},
+  "screenVersions": {},
+  "generatedAt": "2026-08-31",
+  "branch": "ui/stitch-system-redesign",
+  "notes": [
+    "This app is NOT greenfield. A prior design-system migration is in progress (docs/MONOLITH_UI_DESIGN_SYSTEM.md).",
+    "Canonical component layer already exists: src/components/ui, src/components/layout/workspace.tsx (25 Workspace* components), src/components/data-display (OperationalDataTable family).",
+    "Semantic token layer already exists: globals.css lines 129-469 (--mn-* / --frappe-* chain). This stays the production source of truth. Stitch is a design exploration tool only.",
+    "globals.css is a single 38,605-line file with pseudo-section markers. src/styles/ is empty on disk; the 'files' referenced in section markers are logical, not physical."
+  ]
+}
