@@ -15,7 +15,7 @@ Status ladder: `NOT AUDITED → AUDITED → STITCH DESIGNED → APPROVED → IMP
 
 | # | Task | Status |
 |---|---|---|
-| 1 | Validate Stitch MCP access | **BLOCKED** — `stitch` MCP CONNECTION_CLOSED; no `mcp__stitch__*` tools |
+| 1 | Validate Stitch MCP access | DONE — `stitch` connected; tools available after session restart |
 | 2 | Audit repository architecture | DONE — see `.stitch/SITE.md` |
 | 3 | Create route inventory | DONE — `route-inventory.md`, `.stitch/ROUTES.md` (354 pages, ~290 routes) |
 | 4 | Audit design system / global CSS | DONE — `css-audit.md` (globals.css 38,605 lines; token layer KEEP) |
@@ -24,10 +24,10 @@ Status ladder: `NOT AUDITED → AUDITED → STITCH DESIGNED → APPROVED → IMP
 | 7 | Create `.stitch` workspace | DONE — metadata.json, SITE.md, ROUTES.md, DESIGN.md, UX-RULES.md, PAGE-PATTERNS.md, COMPONENTS.md, next-prompt.md, designs/ |
 | 8 | DESIGN.md draft | DONE — `.stitch/DESIGN.md` (v0, references `--mn-*` tokens) |
 | 9 | UX-RULES.md | DONE — `.stitch/UX-RULES.md` |
-| 10 | Import existing dashboard into Stitch | **BLOCKED** (needs Stitch MCP) |
-| 11 | Generate 3 dashboard variants | **BLOCKED** (needs Stitch MCP) |
-| 12 | Save Stitch metadata | **BLOCKED** |
-| 13 | Present variants + recommendation | **BLOCKED** |
+| 10 | Import existing dashboard into Stitch | PARTIAL — no code-to-design tool in this MCP build; DESIGN.md uploaded as design system `34d797abba684e5099d8ad3c2d5d6345`; current-state captured in `page-ux-audit.md` instead |
+| 11 | Generate 3 dashboard variants | DONE — A/B/C generated, project `14247991428455987859`, screenshots + HTML in `.stitch/designs/` |
+| 12 | Save Stitch metadata | DONE — `.stitch/metadata.json` |
+| 13 | Present variants + recommendation | DONE — recommendation **Variant B**; **AWAITING USER APPROVAL** |
 
 ## Pattern migration (after dashboard approval)
 

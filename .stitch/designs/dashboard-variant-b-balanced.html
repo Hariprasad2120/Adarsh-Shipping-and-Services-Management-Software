@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>/dashboard — Variant B (Balanced Enterprise)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#00302b",
+                        "surface-container-high": "#282932",
+                        "border-strong": "#3B485A",
+                        "on-primary": "#002682",
+                        "tertiary-fixed": "#ffdbcf",
+                        "success": "#059669",
+                        "on-primary-container": "#cad3ff",
+                        "surface-tint": "#b7c4ff",
+                        "primary-fixed": "#dce1ff",
+                        "on-tertiary": "#5c1900",
+                        "surface-bright": "#373942",
+                        "outline-variant": "#434655",
+                        "secondary-fixed": "#89f5e7",
+                        "primary-fixed-dim": "#b7c4ff",
+                        "info": "#0891B2",
+                        "border-default": "#2C3745",
+                        "tertiary-fixed-dim": "#ffb59c",
+                        "on-primary-fixed": "#001551",
+                        "on-surface-variant": "#c4c5d7",
+                        "on-primary-fixed-variant": "#0039b5",
+                        "surface-dark": "#111820",
+                        "surface-container-highest": "#33343d",
+                        "teal": "#0D9488",
+                        "primary-container": "#1d4ed8",
+                        "inverse-surface": "#e2e1ed",
+                        "on-tertiary-fixed": "#390c00",
+                        "surface-container-lowest": "#0c0e16",
+                        "inverse-primary": "#2151da",
+                        "surface": "#11131b",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#832700",
+                        "inverse-on-surface": "#2e3039",
+                        "surface-variant": "#33343d",
+                        "warning": "#D97706",
+                        "on-background": "#e2e1ed",
+                        "secondary": "#6bd8cb",
+                        "on-secondary-fixed": "#00201d",
+                        "surface-container-low": "#1a1b23",
+                        "surface-container": "#1e1f27",
+                        "surface-dim": "#11131b",
+                        "orange": "#EA580C",
+                        "on-secondary-fixed-variant": "#005049",
+                        "on-tertiary-container": "#ffc9b7",
+                        "tertiary-container": "#a73400",
+                        "outline": "#8e90a0",
+                        "violet": "#7C3AED",
+                        "danger": "#DC2626",
+                        "canvas-dark": "#0D1117",
+                        "secondary-container": "#29a195",
+                        "border-subtle": "#222C38",
+                        "background": "#11131b",
+                        "on-secondary": "#003732",
+                        "error-container": "#93000a",
+                        "on-surface": "#e2e1ed",
+                        "tertiary": "#ffb59c",
+                        "secondary-fixed-dim": "#6bd8cb",
+                        "on-error-container": "#ffdad6",
+                        "error": "#ffb4ab",
+                        "primary": "#b7c4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "space-1": "4px",
+                        "space-6": "24px",
+                        "panel-gap": "16px",
+                        "space-8": "32px",
+                        "space-2": "8px",
+                        "space-4": "16px",
+                        "base": "4px",
+                        "workspace-gap": "32px",
+                        "space-3": "12px"
+                    },
+                    "fontFamily": {
+                        "numeric-stat": ["Geist Sans", "sans-serif"],
+                        "body": ["Geist Sans", "sans-serif"],
+                        "label-eyebrow": ["Geist Sans", "sans-serif"],
+                        "headline-lg": ["Geist Sans", "sans-serif"],
+                        "panel-title": ["Geist Sans", "sans-serif"],
+                        "section-heading": ["Geist Sans", "sans-serif"],
+                        "control": ["Geist Sans", "sans-serif"],
+                        "display": ["Geist Sans", "sans-serif"],
+                        "helper": ["Geist Sans", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "numeric-stat": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.04em", "fontWeight": "600" }],
+                        "body": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "panel-title": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "section-heading": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "control": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display": ["44px", { "lineHeight": "1.2", "letterSpacing": "-0.035em", "fontWeight": "600" }],
+                        "helper": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full flex flex-col py-space-4 px-space-2 bg-surface-container-low dark:bg-surface-container-low text-secondary dark:text-secondary font-control text-control border-r border-default dark:border-default w-64 z-40 transition-all duration-150 ease-in-out hidden md:flex">
+<div class="px-space-3 mb-space-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-size: 18px;">hexagon</span>
+</div>
+<div>
+<div class="font-panel-title text-panel-title text-on-surface">Dispatcher Hub</div>
+<div class="font-helper text-helper text-on-surface-variant">Terminal 04-B</div>
+</div>
+</div>
+<button class="mx-space-2 mb-space-4 bg-primary text-on-primary hover:bg-primary-fixed-dim rounded font-control text-control py-2 px-4 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+            New Shipment
+        </button>
+<ul class="flex-1 flex flex-col gap-1 overflow-y-auto px-space-2 mt-4">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container text-on-secondary-container rounded-lg group transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-on-surface">local_shipping</span>
+                    Shipments
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-on-surface">assignment</span>
+                    Manifests
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-on-surface">inventory_2</span>
+                    Inventory
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-on-surface">bar_chart</span>
+                    Reports
+                </a>
+</li>
+</ul>
+<ul class="mt-auto px-space-2 flex flex-col gap-1 pt-4 border-t border-subtle">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-on-surface">help</span>
+                    Support
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-on-surface">history</span>
+                    Logs
+                </a>
+</li>
+</ul>
+</nav>
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 md:left-64 right-0 z-30 flex items-center h-14 px-space-4 gap-panel-gap bg-surface dark:bg-surface text-primary dark:text-primary font-body text-body border-b border-subtle dark:border-subtle backdrop-blur-md bg-opacity-90">
+<div class="font-panel-title text-panel-title font-bold text-primary dark:text-primary mr-8 md:hidden">Monolith Freight</div>
+<div class="flex-1 flex items-center">
+<div class="relative w-full max-w-md hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" style="font-size: 20px;">search</span>
+<input class="w-full bg-surface-container-high border border-outline-variant rounded pl-10 pr-4 py-1.5 font-control text-control text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search operations, shipments, manifests..." type="text"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 text-helper font-helper text-on-surface-variant bg-surface-container px-1.5 rounded border border-outline-variant pointer-events-none">⌘K</div>
+</div>
+</div>
+<nav class="hidden lg:flex items-center gap-6 h-full mr-4">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 h-full flex items-center hover:bg-surface-container-high transition-colors px-2 cursor-pointer active:scale-95" href="#">Operations</a>
+<a class="text-on-surface-variant font-medium h-full flex items-center hover:bg-surface-container-high transition-colors px-2 cursor-pointer active:scale-95 border-b-2 border-transparent hover:text-on-surface" href="#">Logistics</a>
+<a class="text-on-surface-variant font-medium h-full flex items-center hover:bg-surface-container-high transition-colors px-2 cursor-pointer active:scale-95 border-b-2 border-transparent hover:text-on-surface" href="#">Analytics</a>
+<a class="text-on-surface-variant font-medium h-full flex items-center hover:bg-surface-container-high transition-colors px-2 cursor-pointer active:scale-95 border-b-2 border-transparent hover:text-on-surface" href="#">Fleet</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="hidden md:flex items-center gap-2 bg-primary-container text-on-primary-container hover:bg-primary-fixed hover:text-on-primary font-control text-control py-1.5 px-4 rounded transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 18px;">how_to_reg</span>
+                Check In
+            </button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer active:scale-95 relative">
+<span class="material-symbols-outlined" style="font-size: 20px;">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full"></span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 20px;">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden cursor-pointer active:scale-95 ml-2 shrink-0">
+<img alt="Dispatcher profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvQ6tu2rwAlaLqrW-zDIKJNsv8jNcgwUgX__Ye2ClAYV6Rryl9yhkJQqWyrgh_afU0mSF59Oj_i5ejU41e4_qYPwQkhqKQp4nVHl2Qaz-rtDgjj8TeBEk4qMtCUCp46G9fkvE_jVjynhvuZznshiSuxLq8-tARicmBt9m91lCSx-y_gWC5teVEo8q5NTbz8yCgt63BaKusvkeMYzzxR4FwBdtRD0IHI_VCHhnAUwZ_Oz3odzT7a3lJsJnePlelOvRrz_dE7R0ZEZ70"/>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 mt-14 md:ml-64 p-space-4 md:p-space-8 w-full max-w-[1440px] mx-auto overflow-x-hidden flex flex-col gap-workspace-gap pb-20">
+<!-- 1. Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-subtle pb-space-6">
+<div>
+<div class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase tracking-widest mb-1">OPERATIONS</div>
+<h1 class="font-display text-display text-on-surface mb-2">Today</h1>
+<p class="font-body text-body text-on-surface-variant max-w-2xl">Your queue, attendance, and today's priorities.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 bg-surface-container-low border border-subtle rounded px-3 py-1.5 font-control text-control text-on-surface">
+<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                    On the clock · <span class="font-mono text-on-surface-variant ml-1">03:42:17</span>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary-fixed-dim rounded font-control text-control py-1.5 px-4 transition-colors">
+                    Check in
+                </button>
+</div>
+</header>
+<!-- 3. Metric Row -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-surface-container border border-default rounded-lg p-space-4 flex flex-col gap-1 relative overflow-hidden group hover:border-outline-variant transition-colors">
+<div class="absolute right-0 top-0 w-1 h-full bg-warning opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="font-control text-control text-on-surface-variant flex items-center justify-between">
+                    Due today
+                    <span class="material-symbols-outlined text-warning" style="font-size: 16px;">calendar_today</span>
+</div>
+<div class="font-numeric-stat text-numeric-stat text-on-surface mt-2">3</div>
+</div>
+<div class="bg-surface-container border border-default rounded-lg p-space-4 flex flex-col gap-1 relative overflow-hidden group hover:border-outline-variant transition-colors">
+<div class="absolute right-0 top-0 w-1 h-full bg-violet opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="font-control text-control text-on-surface-variant flex items-center justify-between">
+                    Leave to approve
+                    <span class="material-symbols-outlined text-violet" style="font-size: 16px;">fact_check</span>
+</div>
+<div class="font-numeric-stat text-numeric-stat text-on-surface mt-2">1</div>
+</div>
+<div class="bg-surface-container border border-default rounded-lg p-space-4 flex flex-col gap-1 relative overflow-hidden group hover:border-outline-variant transition-colors">
+<div class="absolute right-0 top-0 w-1 h-full bg-info opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="font-control text-control text-on-surface-variant flex items-center justify-between">
+                    Deadlines this week
+                    <span class="material-symbols-outlined text-info" style="font-size: 16px;">date_range</span>
+</div>
+<div class="font-numeric-stat text-numeric-stat text-on-surface mt-2">5</div>
+</div>
+<div class="bg-surface-container border border-default rounded-lg p-space-4 flex flex-col gap-1 relative overflow-hidden group hover:border-outline-variant transition-colors">
+<div class="absolute right-0 top-0 w-1 h-full bg-success opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="font-control text-control text-on-surface-variant flex items-center justify-between">
+                    Active shipments
+                    <span class="material-symbols-outlined text-success" style="font-size: 16px;">local_shipping</span>
+</div>
+<div class="font-numeric-stat text-numeric-stat text-on-surface mt-2">12</div>
+</div>
+</section>
+<!-- Main Content Area Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-workspace-gap items-start">
+<!-- Left Column: Needs Attention (Spans 2 columns on XL) -->
+<div class="xl:col-span-2 flex flex-col gap-4">
+<!-- 2. "Needs your attention" (7) Panel -->
+<section class="bg-surface border border-default rounded-lg shadow-panel flex flex-col overflow-hidden">
+<header class="px-space-4 py-4 border-b border-subtle flex justify-between items-center bg-surface-container-lowest">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-warning" style="font-size: 20px;">error</span>
+<h2 class="font-panel-title text-panel-title text-on-surface">Needs your attention <span class="bg-surface-container-highest text-on-surface-variant px-1.5 py-0.5 rounded text-sm ml-1">7</span></h2>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</header>
+<div class="flex flex-col divide-y divide-subtle">
+<!-- Item 1 (Blue/Primary) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">Approvals</span> <span class="text-on-surface-variant">·</span> Clearance for Shipment #8892-B
+                                </div>
+<div class="font-helper text-helper text-on-surface-variant truncate">
+                                    REQ: J. Smith · 10m ago
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Approve
+                            </button>
+</div>
+<!-- Item 2 (Red/Danger) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5 bg-error-container bg-opacity-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-danger"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">Accounting</span> <span class="text-on-surface-variant">·</span> INV-2023-10-A is overdue
+                                </div>
+<div class="font-helper text-helper text-danger truncate flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">warning</span>
+                                    $4,500.00 · Overdue by 2 days
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Review
+                            </button>
+</div>
+<!-- Item 3 (Violet) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-violet"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">Leave</span> <span class="text-on-surface-variant">·</span> PTO Request: Oct 28 - Nov 2
+                                </div>
+<div class="font-helper text-helper text-on-surface-variant truncate">
+                                    REQ: A. Chen · 1h ago
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Review
+                            </button>
+</div>
+<!-- Item 4 (Amber/Warning) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-warning"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">Tasks</span> <span class="text-on-surface-variant">·</span> Review vendor contracts for Q4
+                                </div>
+<div class="font-helper text-helper text-warning truncate">
+                                    Due: Today, 5:00 PM
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Open
+                            </button>
+</div>
+<!-- Item 5 (Blue/Primary) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">CHA</span> <span class="text-on-surface-variant">·</span> Customs hold on SHP-9001
+                                </div>
+<div class="font-helper text-helper text-on-surface-variant truncate">
+                                    Missing doc: Form 3A · 2h ago
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Open
+                            </button>
+</div>
+<!-- Item 6 (Secondary) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">System</span> <span class="text-on-surface-variant">·</span> Database maintenance scheduled
+                                </div>
+<div class="font-helper text-helper text-on-surface-variant truncate">
+                                    Tonight at 02:00 AM UTC
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Details
+                            </button>
+</div>
+<!-- Item 7 (Info) -->
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-lowest transition-colors group relative pl-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-info"></div>
+<div class="flex flex-col gap-0.5 min-w-0 pr-4">
+<div class="font-control text-control text-on-surface flex items-center gap-2 truncate">
+<span class="font-medium">Fleet</span> <span class="text-on-surface-variant">·</span> Vehicle TRK-092 due for inspection
+                                </div>
+<div class="font-helper text-helper text-on-surface-variant truncate">
+                                    Mileage threshold reached · 4h ago
+                                </div>
+</div>
+<button class="shrink-0 bg-transparent hover:bg-surface-container border border-outline-variant text-on-surface rounded font-control text-control py-1 px-3 transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                Schedule
+                            </button>
+</div>
+</div>
+<footer class="p-3 border-t border-subtle bg-surface-container-lowest flex justify-center">
+<button class="font-control text-control text-primary hover:text-primary-fixed transition-colors flex items-center gap-1">
+                            View all <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+</button>
+</footer>
+</section>
+<!-- 4. Two-Column Row within Main Area -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+<!-- Quick actions -->
+<section class="bg-surface border border-default rounded-lg shadow-panel flex flex-col">
+<header class="px-space-4 py-4 border-b border-subtle bg-surface-container-lowest">
+<h2 class="font-panel-title text-panel-title text-on-surface">Quick actions</h2>
+</header>
+<div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1 content-start">
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary transition-all group h-24">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">add_box</span>
+<span class="font-control text-control text-on-surface text-center leading-tight">New job</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary transition-all group h-24">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">receipt_long</span>
+<span class="font-control text-control text-on-surface text-center leading-tight">New invoice</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary transition-all group h-24">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">pending_actions</span>
+<span class="font-control text-control text-on-surface text-center leading-tight">Punch report</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary transition-all group h-24">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">person_add</span>
+<span class="font-control text-control text-on-surface text-center leading-tight">Add lead</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary transition-all group h-24">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">event_available</span>
+<span class="font-control text-control text-on-surface text-center leading-tight">Team leave</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary transition-all group h-24">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">timer</span>
+<span class="font-control text-control text-on-surface text-center leading-tight">Timesheet</span>
+</button>
+</div>
+</section>
+<!-- Lower Priority: Announcements -->
+<section class="bg-surface border border-default rounded-lg shadow-panel flex flex-col opacity-90 hover:opacity-100 transition-opacity">
+<header class="px-space-4 py-3 border-b border-subtle bg-surface-container-lowest flex justify-between items-center cursor-pointer group">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-size: 18px;">campaign</span>
+<h2 class="font-control text-control font-semibold text-on-surface">Announcements &amp; Calendar</h2>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">expand_more</span>
+</header>
+<div class="p-0 flex flex-col">
+<div class="p-3 border-b border-subtle bg-info bg-opacity-5 flex gap-3">
+<span class="material-symbols-outlined text-info mt-0.5" style="font-size: 18px;">info</span>
+<div>
+<div class="font-control text-control text-on-surface">Q3 Townhall Meeting Link Updated</div>
+<div class="font-helper text-helper text-on-surface-variant mt-0.5">Please check your calendar for the new Zoom link.</div>
+</div>
+</div>
+<div class="p-3 border-b border-subtle flex gap-3">
+<span class="material-symbols-outlined text-on-surface-variant mt-0.5" style="font-size: 18px;">new_releases</span>
+<div>
+<div class="font-control text-control text-on-surface">New Expense Policy in Effect</div>
+<div class="font-helper text-helper text-on-surface-variant mt-0.5">Meal allowances have been updated. Review documentation.</div>
+</div>
+</div>
+<div class="p-3 flex gap-3 bg-surface-container-lowest">
+<span class="material-symbols-outlined text-violet mt-0.5" style="font-size: 18px;">event</span>
+<div class="w-full">
+<div class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase mb-1">Company Calendar</div>
+<div class="flex items-center justify-between">
+<span class="font-control text-control text-on-surface">Independence Day</span>
+<span class="font-helper text-helper text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">15 Aug</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Right Column: Recent Activity (Spans 1 column on XL) -->
+<div class="xl:col-span-1 flex flex-col">
+<section class="bg-surface border border-default rounded-lg shadow-panel flex flex-col h-full">
+<header class="px-space-4 py-4 border-b border-subtle bg-surface-container-lowest flex justify-between items-center">
+<h2 class="font-panel-title text-panel-title text-on-surface">Recent activity</h2>
+<button class="w-6 h-6 rounded flex items-center justify-center hover:bg-surface-container text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">filter_list</span>
+</button>
+</header>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr>
+<th class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase p-3 border-b border-subtle font-semibold whitespace-nowrap">Update</th>
+<th class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase p-3 border-b border-subtle font-semibold">Source</th>
+<th class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase p-3 border-b border-subtle font-semibold text-right">When</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-subtle font-helper text-helper text-on-surface">
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-3 max-w-[150px] truncate" title="Shipment #8891 dispatched">Shipment #8891 dispatched</td>
+<td class="p-3 text-on-surface-variant"><span class="bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant text-[10px]">SYS</span></td>
+<td class="p-3 text-right text-on-surface-variant whitespace-nowrap">2m ago</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-3 max-w-[150px] truncate" title="Invoice INV-2023-11 marked paid">Invoice INV-2023-11 marked paid</td>
+<td class="p-3 text-on-surface-variant">S. Ray</td>
+<td class="p-3 text-right text-on-surface-variant whitespace-nowrap">14m ago</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-3 max-w-[150px] truncate" title="New document uploaded: BOL-8890">New document uploaded: BOL-8890</td>
+<td class="p-3 text-on-surface-variant">API_User</td>
+<td class="p-3 text-right text-on-surface-variant whitespace-nowrap">1h ago</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-3 max-w-[150px] truncate" title="Leave request approved: M. Ali">Leave request approved: M. Ali</td>
+<td class="p-3 text-on-surface-variant">Admin</td>
+<td class="p-3 text-right text-on-surface-variant whitespace-nowrap">3h ago</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-3 max-w-[150px] truncate" title="Status change: Fleet TRK-044 offline">Status change: Fleet TRK-044 offline</td>
+<td class="p-3 text-on-surface-variant"><span class="bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant text-[10px]">SYS</span></td>
+<td class="p-3 text-right text-on-surface-variant whitespace-nowrap">5h ago</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-3 max-w-[150px] truncate" title="Weekly report generated">Weekly report generated</td>
+<td class="p-3 text-on-surface-variant">Cron</td>
+<td class="p-3 text-right text-on-surface-variant whitespace-nowrap">Yesterday</td>
+</tr>
+</tbody>
+</table>
+</div>
+<footer class="p-3 border-t border-subtle bg-surface-container-lowest flex justify-center mt-auto">
+<button class="font-control text-control text-primary hover:text-primary-fixed transition-colors flex items-center gap-1">
+                            See activity log <span class="material-symbols-outlined" style="font-size: 16px;">open_in_new</span>
+</button>
+</footer>
+</section>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 left-0 md:left-64 w-full md:w-[calc(100%-16rem)] flex justify-between items-center px-space-4 py-1 bg-surface-container-lowest dark:bg-surface-container-lowest text-on-surface-variant dark:text-on-surface-variant font-helper text-helper border-t border-subtle dark:border-subtle h-8 z-30 transition-opacity">
+<div class="font-label-eyebrow text-label-eyebrow tracking-wide uppercase opacity-70">
+            © 2024 Monolith Logistics Engine. All systems operational.
+        </div>
+<div class="flex items-center gap-4 hidden sm:flex">
+<a class="hover:text-on-surface transition-colors" href="#">Terms</a>
+<a class="hover:text-on-surface transition-colors" href="#">Privacy</a>
+<a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#">
+<span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+                Status
+            </a>
+</div>
+</footer>
+</body></html>

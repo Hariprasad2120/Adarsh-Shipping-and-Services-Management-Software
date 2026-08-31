@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Variant C (Command Center) - MONOLITH OPERATIONS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ffb4ab",
+                        "background": "#11131b",
+                        "on-tertiary-container": "#ffc9b7",
+                        "surface-container-high": "#282932",
+                        "primary": "#b7c4ff",
+                        "success": "#059669",
+                        "tertiary": "#ffb59c",
+                        "on-surface": "#e2e1ed",
+                        "primary-container": "#1d4ed8",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#11131b",
+                        "surface-variant": "#33343d",
+                        "secondary": "#6bd8cb",
+                        "surface-bright": "#373942",
+                        "surface-container-lowest": "#0c0e16",
+                        "on-tertiary": "#5c1900",
+                        "on-secondary-fixed-variant": "#005049",
+                        "info": "#0891B2",
+                        "tertiary-fixed-dim": "#ffb59c",
+                        "surface-tint": "#b7c4ff",
+                        "orange": "#EA580C",
+                        "on-tertiary-fixed": "#390c00",
+                        "on-primary-fixed-variant": "#0039b5",
+                        "danger": "#DC2626",
+                        "border-subtle": "#222C38",
+                        "outline": "#8e90a0",
+                        "border-default": "#2C3745",
+                        "on-error": "#690005",
+                        "primary-fixed": "#dce1ff",
+                        "surface-dim": "#11131b",
+                        "primary-fixed-dim": "#b7c4ff",
+                        "teal": "#0D9488",
+                        "on-secondary-container": "#00302b",
+                        "on-primary-fixed": "#001551",
+                        "on-surface-variant": "#c4c5d7",
+                        "on-primary": "#002682",
+                        "on-tertiary-fixed-variant": "#832700",
+                        "surface-container-highest": "#33343d",
+                        "inverse-primary": "#2151da",
+                        "tertiary-container": "#a73400",
+                        "secondary-container": "#29a195",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-secondary": "#003732",
+                        "inverse-on-surface": "#2e3039",
+                        "violet": "#7C3AED",
+                        "on-background": "#e2e1ed",
+                        "inverse-surface": "#e2e1ed",
+                        "on-secondary-fixed": "#00201d",
+                        "surface-dark": "#111820",
+                        "secondary-fixed-dim": "#6bd8cb",
+                        "on-primary-container": "#cad3ff",
+                        "outline-variant": "#434655",
+                        "error-container": "#93000a",
+                        "border-strong": "#3B485A",
+                        "surface-container": "#1e1f27",
+                        "warning": "#D97706",
+                        "surface-container-low": "#1a1b23",
+                        "secondary-fixed": "#89f5e7",
+                        "canvas-dark": "#0D1117"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "space-1": "4px",
+                        "workspace-gap": "32px",
+                        "space-8": "32px",
+                        "space-6": "24px",
+                        "base": "4px",
+                        "space-2": "8px",
+                        "panel-gap": "16px",
+                        "space-4": "16px",
+                        "space-3": "12px"
+                    },
+                    "fontFamily": {
+                        "label-eyebrow": ["Geist Sans", "sans-serif"],
+                        "panel-title": ["Geist Sans", "sans-serif"],
+                        "control": ["Geist Sans", "sans-serif"],
+                        "body": ["Geist Sans", "sans-serif"],
+                        "section-heading": ["Geist Sans", "sans-serif"],
+                        "numeric-stat": ["Geist Sans", "sans-serif"],
+                        "helper": ["Geist Sans", "sans-serif"],
+                        "headline-lg": ["Geist Sans", "sans-serif"],
+                        "display": ["Geist Sans", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "panel-title": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "control": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "section-heading": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "numeric-stat": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.04em", "fontWeight": "600" }],
+                        "helper": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display": ["44px", { "lineHeight": "1.2", "letterSpacing": "-0.035em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body overflow-x-hidden min-h-screen flex selection:bg-primary-container selection:text-on-primary-container">
+<!-- App Shell: Left Sidebar Area (Empty per instructions, assuming external layout wrapper) -->
+<!-- Assuming this page is the content area injected next to the sidebar -->
+<div class="flex-1 flex flex-col w-full max-w-[1440px] mx-auto">
+<!-- Sticky Top Command Bar (Shared Component TopNavBar adaptation) -->
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-space-6 h-14 bg-surface-container-highest border-b border-border-default backdrop-blur-md bg-opacity-90">
+<!-- Left -->
+<div class="flex items-center gap-space-4">
+<div class="flex flex-col">
+<span class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase tracking-tighter">OPERATIONS CONTROL</span>
+<div class="flex items-baseline gap-space-2">
+<h1 class="font-panel-title text-panel-title font-black text-primary">Today</h1>
+<span class="font-helper text-helper text-on-surface-variant" id="live-clock">Oct 24, 2024 · 09:42:17 AM</span>
+</div>
+</div>
+</div>
+<!-- Center -->
+<div class="hidden lg:flex items-center gap-space-4 bg-surface-variant px-space-4 py-space-1 rounded-full border border-border-subtle">
+<div class="flex items-center gap-space-2">
+<div class="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+<span class="font-control text-control text-on-surface">On the clock · <span class="text-primary-fixed-dim">03:42:17</span></span>
+</div>
+<div class="h-4 w-px bg-border-strong mx-space-1"></div>
+<div class="flex gap-space-2">
+<button class="font-control text-control text-on-surface-variant hover:text-on-surface transition-colors px-2 py-1 rounded hover:bg-surface-bright active:scale-95 duration-150">Check out</button>
+<button class="font-control text-control text-on-surface-variant hover:text-on-surface transition-colors px-2 py-1 rounded hover:bg-surface-bright active:scale-95 duration-150">Start break</button>
+</div>
+</div>
+<!-- Right -->
+<div class="flex items-center gap-space-4">
+<div class="relative hidden md:block w-64">
+<i class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" data-lucide="search"></i>
+<input class="w-full bg-surface-container-low border border-border-subtle text-on-surface font-control text-control rounded-DEFAULT pl-8 pr-3 py-1.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-on-surface-variant" placeholder="Search operations..." type="text"/>
+<div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+<kbd class="font-helper text-[10px] bg-surface-variant px-1 rounded text-on-surface-variant border border-border-subtle">⌘</kbd>
+<kbd class="font-helper text-[10px] bg-surface-variant px-1 rounded text-on-surface-variant border border-border-subtle">K</kbd>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary-container hover:bg-inverse-primary font-control text-control px-space-4 py-1.5 rounded-DEFAULT transition-colors active:scale-95 duration-150 flex items-center gap-space-2">
+<i class="w-4 h-4" data-lucide="log-in"></i>
+                    Check in
+                </button>
+<div class="flex items-center gap-space-2 border-l border-border-subtle pl-space-4 ml-space-2">
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 p-space-6 flex flex-col lg:flex-row gap-workspace-gap overflow-y-auto">
+<!-- Left Column (~65%) -->
+<div class="flex-1 flex flex-col gap-workspace-gap min-w-[60%]">
+<!-- ATTENTION QUEUE -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col overflow-hidden">
+<header class="flex justify-between items-center p-space-4 border-b border-border-subtle bg-surface-container-lowest">
+<div class="flex items-center gap-space-3">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest">ATTENTION QUEUE</h2>
+<span class="bg-surface-variant text-on-surface-variant font-helper text-helper px-2 py-0.5 rounded-full">7</span>
+</div>
+<div class="flex gap-space-2">
+<button class="font-helper text-helper text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20">All</button>
+<button class="font-helper text-helper text-on-surface-variant hover:text-on-surface px-2 py-1 rounded transition-colors">Approvals</button>
+<button class="font-helper text-helper text-on-surface-variant hover:text-on-surface px-2 py-1 rounded transition-colors">Mine</button>
+</div>
+</header>
+<div class="flex flex-col">
+<!-- Queue Item 1: Overdue Invoice -->
+<div class="flex items-center justify-between p-space-3 border-b border-border-subtle hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-danger"></div>
+<span class="font-helper text-helper text-danger bg-danger/10 px-2 py-0.5 rounded uppercase border border-danger/20 shrink-0 w-16 text-center">INV</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">INV-2024-8921 Overdue by 3 days</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Client: Vertex Corp · $14,500.00</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface-variant hover:text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">Open</button>
+<button class="font-control text-control text-danger hover:bg-danger/20 bg-danger/10 px-3 py-1 rounded border border-danger/30 transition-all">Escalate</button>
+</div>
+</div>
+<!-- Queue Item 2: Approval -->
+<div class="flex items-center justify-between p-space-3 border-b border-border-subtle hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-helper text-helper text-primary bg-primary/10 px-2 py-0.5 rounded uppercase border border-primary/20 shrink-0 w-16 text-center">APP</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">Purchase Order PO-9921 Requires Sign-off</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Req by: Sarah J. · Dept: Logistics</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">Review</button>
+<button class="font-control text-control text-success hover:bg-success/20 bg-success/10 px-3 py-1 rounded border border-success/30 transition-all">Approve</button>
+</div>
+</div>
+<!-- Queue Item 3: Approval -->
+<div class="flex items-center justify-between p-space-3 border-b border-border-subtle hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-helper text-helper text-primary bg-primary/10 px-2 py-0.5 rounded uppercase border border-primary/20 shrink-0 w-16 text-center">APP</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">New Vendor Onboarding: GlobalTech</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Req by: Mike T. · Compliance Check Complete</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">Review</button>
+<button class="font-control text-control text-success hover:bg-success/20 bg-success/10 px-3 py-1 rounded border border-success/30 transition-all">Approve</button>
+</div>
+</div>
+<!-- Queue Item 4: Leave Request -->
+<div class="flex items-center justify-between p-space-3 border-b border-border-subtle hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-violet"></div>
+<span class="font-helper text-helper text-violet bg-violet/10 px-2 py-0.5 rounded uppercase border border-violet/20 shrink-0 w-16 text-center">HR</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">Leave Request: Annual PTO</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Req by: Elena R. · Dates: Nov 12 - Nov 19</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">View</button>
+<button class="font-control text-control text-success hover:bg-success/20 bg-success/10 px-3 py-1 rounded border border-success/30 transition-all">Approve</button>
+<button class="font-control text-control text-danger hover:bg-danger/20 bg-danger/10 px-3 py-1 rounded border border-danger/30 transition-all">Reject</button>
+</div>
+</div>
+<!-- Queue Item 5: Task Due -->
+<div class="flex items-center justify-between p-space-3 border-b border-border-subtle hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-warning"></div>
+<span class="font-helper text-helper text-warning bg-warning/10 px-2 py-0.5 rounded uppercase border border-warning/20 shrink-0 w-16 text-center">TSK</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">Finalize Q3 Logistics Report</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Assigned to: You · Due: Today 17:00</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">Open</button>
+<button class="font-control text-control text-success hover:bg-success/20 bg-success/10 px-3 py-1 rounded border border-success/30 transition-all">Mark Done</button>
+</div>
+</div>
+<!-- Queue Item 6: Task Due -->
+<div class="flex items-center justify-between p-space-3 border-b border-border-subtle hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-warning"></div>
+<span class="font-helper text-helper text-warning bg-warning/10 px-2 py-0.5 rounded uppercase border border-warning/20 shrink-0 w-16 text-center">TSK</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">Update Fleet Maintenance Logs</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Assigned to: You · Due: Today 15:30</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">Open</button>
+</div>
+</div>
+<!-- Queue Item 7: Customs Exception -->
+<div class="flex items-center justify-between p-space-3 hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-space-3 flex-1">
+<div class="w-2 h-2 rounded-full bg-orange"></div>
+<span class="font-helper text-helper text-orange bg-orange/10 px-2 py-0.5 rounded uppercase border border-orange/20 shrink-0 w-16 text-center">CUS</span>
+<div class="flex flex-col min-w-0">
+<span class="font-control text-control text-on-surface truncate">Shipment SHP-4409 Held at Customs</span>
+<span class="font-helper text-helper text-on-surface-variant truncate">Location: Port of LA · Missing documentation</span>
+</div>
+</div>
+<div class="flex items-center gap-space-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="font-control text-control text-on-surface bg-surface-variant px-3 py-1 rounded border border-border-subtle hover:border-border-default transition-all">Details</button>
+<button class="font-control text-control text-primary hover:bg-primary/20 bg-primary/10 px-3 py-1 rounded border border-primary/30 transition-all">Contact Agent</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Due Today & Deadlines (2 Column Split within main column) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-workspace-gap">
+<!-- DUE TODAY -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col">
+<header class="p-space-3 border-b border-border-subtle bg-surface-container-lowest">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest">DUE TODAY</h2>
+</header>
+<div class="p-space-3 flex flex-col gap-2">
+<label class="flex items-center gap-space-3 p-2 hover:bg-surface-bright rounded transition-colors cursor-pointer group">
+<input class="rounded border-border-subtle bg-surface-container text-primary focus:ring-primary focus:ring-offset-surface" type="checkbox"/>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Submit Weekly Ops Report</span>
+</label>
+<label class="flex items-center gap-space-3 p-2 hover:bg-surface-bright rounded transition-colors cursor-pointer group">
+<input class="rounded border-border-subtle bg-surface-container text-primary focus:ring-primary focus:ring-offset-surface" type="checkbox"/>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Review Q4 Budget Draft</span>
+</label>
+<label class="flex items-center gap-space-3 p-2 hover:bg-surface-bright rounded transition-colors cursor-pointer group">
+<input checked="" class="rounded border-border-subtle bg-surface-container text-primary focus:ring-primary focus:ring-offset-surface" type="checkbox"/>
+<span class="font-control text-control text-on-surface-variant line-through">Brief Night Shift Lead</span>
+</label>
+</div>
+</section>
+<!-- DEADLINES THIS WEEK -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col">
+<header class="p-space-3 border-b border-border-subtle bg-surface-container-lowest">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest">DEADLINES THIS WEEK</h2>
+</header>
+<div class="flex flex-col">
+<div class="flex justify-between items-center p-space-2 border-b border-border-subtle border-l-2 border-l-danger bg-danger/5">
+<span class="font-control text-control text-on-surface pl-2">Contract Renewal: Apex Logistics</span>
+<span class="font-helper text-helper text-danger font-bold">Tomorrow</span>
+</div>
+<div class="flex justify-between items-center p-space-2 border-b border-border-subtle border-l-2 border-l-warning bg-warning/5">
+<span class="font-control text-control text-on-surface pl-2">Fleet Safety Inspection</span>
+<span class="font-helper text-helper text-warning font-bold">Wed, 26th</span>
+</div>
+<div class="flex justify-between items-center p-space-2 border-b border-border-subtle border-l-2 border-l-primary bg-primary/5">
+<span class="font-control text-control text-on-surface pl-2">Staff Training: Cyber Sec</span>
+<span class="font-helper text-helper text-primary font-bold">Thu, 27th</span>
+</div>
+<div class="flex justify-between items-center p-space-2 border-b border-border-subtle border-l-2 border-l-border-strong hover:bg-surface-bright">
+<span class="font-control text-control text-on-surface pl-2">End of Month Reconciliation</span>
+<span class="font-helper text-helper text-on-surface-variant">Fri, 28th</span>
+</div>
+<div class="flex justify-between items-center p-space-2 border-l-2 border-l-border-strong hover:bg-surface-bright">
+<span class="font-control text-control text-on-surface pl-2">System Maintenance Window</span>
+<span class="font-helper text-helper text-on-surface-variant">Sun, 30th</span>
+</div>
+</div>
+</section>
+</div>
+<!-- RECENT ACTIVITY -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col flex-1 min-h-[250px]">
+<header class="flex justify-between items-center p-space-3 border-b border-border-subtle bg-surface-container-lowest">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest flex items-center gap-2">
+                            RECENT ACTIVITY
+                            <span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+</span>
+</h2>
+</header>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-border-subtle">
+<th class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase p-space-2 pl-space-4 font-normal">Update</th>
+<th class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase p-space-2 font-normal">Source</th>
+<th class="font-label-eyebrow text-label-eyebrow text-on-surface-variant uppercase p-space-2 pr-space-4 font-normal text-right">When</th>
+</tr>
+</thead>
+<tbody class="font-control text-control divide-y divide-border-subtle">
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">Shipment SHP-1102 cleared customs</td>
+<td class="p-space-2 text-on-surface-variant">Auto-Broker API</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">Just now</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">Invoice INV-9011 paid in full</td>
+<td class="p-space-2 text-on-surface-variant">Stripe Webhook</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">2 min ago</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">Driver <span class="text-primary">M. Rossi</span> started route RT-04</td>
+<td class="p-space-2 text-on-surface-variant">Fleet App</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">14 min ago</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">New Quote QT-442 requested</td>
+<td class="p-space-2 text-on-surface-variant">Customer Portal</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">28 min ago</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">System backup completed successfully</td>
+<td class="p-space-2 text-on-surface-variant">Cron Job</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">1 hr ago</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">Leave approved for <span class="text-primary">S. Connor</span></td>
+<td class="p-space-2 text-on-surface-variant">HR Module</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">1 hr 15m ago</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">Alert: High temperature in Server Room B</td>
+<td class="p-space-2 text-danger">IoT Sensor</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">2 hrs ago</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="p-space-2 pl-space-4 text-on-surface">User <span class="text-primary">Admin_01</span> logged in</td>
+<td class="p-space-2 text-on-surface-variant">Auth Service</td>
+<td class="p-space-2 pr-space-4 text-on-surface-variant text-right font-mono text-xs">3 hrs ago</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Rail (~35%) -->
+<div class="flex flex-col gap-workspace-gap w-full lg:w-[35%] min-w-[320px]">
+<!-- MY STATUS -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col p-space-4 gap-space-4">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest">MY STATUS</h2>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-3">
+<div class="relative">
+<img alt="Avatar" class="w-10 h-10 rounded-full border-2 border-border-subtle" data-alt="A small circular avatar placeholder image for a user profile, showing initials on a blue background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAokXU8i0xXwBRTed4VHPjULf3fdI58ho7CWDr885944YmnuGiuSp01bhYbXCMpIR8KV2ZQZ9AbfCSHj9zbtiA5MswSsYQU23gHpJinIq1NkT4KAC71YvmCRX_Ofc_K3rr7ZJLCAEuE3BTVGESTLvZk-j7fDqU__9xeEn6kGcO01lRDxKL1E7WJqS53TfJyAbQwPfKXZ81E8d5HJwygWMS3ud5EqLbEja3ExTeT3-lMgNA6pUk4gnDeD5s1_iWkzjAHUDVHhq_FyNzU"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-surface"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-control text-control text-on-surface font-semibold">Active Session</span>
+<span class="font-helper text-helper text-on-surface-variant">Shift ends in 4h 18m</span>
+</div>
+</div>
+<div class="text-right flex flex-col">
+<span class="font-numeric-stat text-[24px] leading-none text-primary font-bold">3.8h</span>
+<span class="font-helper text-helper text-on-surface-variant">Hours Today</span>
+</div>
+</div>
+<!-- 5-chip strip -->
+<div class="flex flex-wrap gap-2 pt-2 border-t border-border-subtle">
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-border-subtle">
+<span class="font-helper text-helper text-on-surface-variant">Tasks</span>
+<span class="font-control text-control text-on-surface font-bold">3</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-border-subtle">
+<span class="font-helper text-helper text-on-surface-variant">Leave</span>
+<span class="font-control text-control text-on-surface font-bold">1</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-border-subtle opacity-50">
+<span class="font-helper text-helper text-on-surface-variant">Cases</span>
+<span class="font-control text-control text-on-surface font-bold">-</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-border-subtle">
+<span class="font-helper text-helper text-on-surface-variant">Approvals</span>
+<span class="font-control text-control text-primary font-bold">2</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-border-subtle">
+<span class="font-helper text-helper text-on-surface-variant">Mentions</span>
+<span class="font-control text-control text-warning font-bold">4</span>
+</div>
+</div>
+</section>
+<!-- QUICK ACTIONS -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col flex-1">
+<header class="p-space-3 border-b border-border-subtle bg-surface-container-lowest">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest">QUICK ACTIONS</h2>
+</header>
+<div class="flex flex-col p-2 gap-1">
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="briefcase"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">New Job</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="file-text"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">New Invoice</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="calculator"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">New Quote</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="user-plus"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Add Lead</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="clipboard-list"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Punch Report</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="calendar-off"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Team Leave</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="clock"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Timesheet</span>
+</button>
+<button class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors text-left group">
+<i class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" data-lucide="upload-cloud"></i>
+<span class="font-control text-control text-on-surface group-hover:text-primary transition-colors">Upload Document</span>
+</button>
+</div>
+</section>
+<!-- TEAM ON DUTY -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col">
+<header class="p-space-3 border-b border-border-subtle bg-surface-container-lowest flex justify-between items-center">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest">TEAM ON DUTY</h2>
+<span class="font-helper text-helper text-on-surface-variant">5 Active</span>
+</header>
+<div class="flex flex-col p-2">
+<div class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors cursor-pointer">
+<div class="w-2 h-2 rounded-full bg-success"></div>
+<div class="flex flex-col flex-1">
+<span class="font-control text-control text-on-surface">Alex Mercer</span>
+<span class="font-helper text-helper text-on-surface-variant">Logistics Coordinator</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">chat</span>
+</div>
+<div class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors cursor-pointer">
+<div class="w-2 h-2 rounded-full bg-success"></div>
+<div class="flex flex-col flex-1">
+<span class="font-control text-control text-on-surface">Jordan Lee</span>
+<span class="font-helper text-helper text-on-surface-variant">Dispatch</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">chat</span>
+</div>
+<div class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors cursor-pointer">
+<div class="w-2 h-2 rounded-full bg-warning"></div>
+<div class="flex flex-col flex-1">
+<span class="font-control text-control text-on-surface">Taylor Swift</span>
+<span class="font-helper text-helper text-on-surface-variant">Brokerage (In Call)</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">chat</span>
+</div>
+<div class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors cursor-pointer">
+<div class="w-2 h-2 rounded-full bg-success"></div>
+<div class="flex flex-col flex-1">
+<span class="font-control text-control text-on-surface">Sam Patel</span>
+<span class="font-helper text-helper text-on-surface-variant">Warehouse Lead</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">chat</span>
+</div>
+<div class="flex items-center gap-space-3 p-2 rounded hover:bg-surface-bright transition-colors cursor-pointer">
+<div class="w-2 h-2 rounded-full bg-danger"></div>
+<div class="flex flex-col flex-1">
+<span class="font-control text-control text-on-surface opacity-75">Casey Jones</span>
+<span class="font-helper text-helper text-on-surface-variant opacity-75">Fleet Manager (DND)</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-75">chat</span>
+</div>
+</div>
+</section>
+<!-- OPS PULSE -->
+<section class="bg-surface rounded-panel border border-border-default shadow-panel flex flex-col p-space-3 gap-space-2 mt-auto">
+<h2 class="font-label-eyebrow text-label-eyebrow text-on-surface uppercase tracking-widest mb-1">OPS PULSE</h2>
+<div class="flex items-center justify-between text-xs">
+<span class="font-control text-on-surface-variant w-20">Shipments</span>
+<div class="flex-1 flex gap-0.5 h-4 mx-2 items-end">
+<div class="w-full bg-primary/20 h-[30%]"></div>
+<div class="w-full bg-primary/40 h-[50%]"></div>
+<div class="w-full bg-primary/60 h-[40%]"></div>
+<div class="w-full bg-primary/80 h-[70%]"></div>
+<div class="w-full bg-primary h-[90%]"></div>
+<div class="w-full bg-primary/90 h-[100%]"></div>
+</div>
+<span class="font-control text-on-surface font-bold w-8 text-right">+12%</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="font-control text-on-surface-variant w-20">Clearances</span>
+<div class="flex-1 flex gap-0.5 h-4 mx-2 items-end">
+<div class="w-full bg-success/60 h-[80%]"></div>
+<div class="w-full bg-success/50 h-[70%]"></div>
+<div class="w-full bg-success/40 h-[60%]"></div>
+<div class="w-full bg-success/50 h-[65%]"></div>
+<div class="w-full bg-success/70 h-[85%]"></div>
+<div class="w-full bg-success h-[90%]"></div>
+</div>
+<span class="font-control text-on-surface font-bold w-8 text-right">+4%</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="font-control text-on-surface-variant w-20">Invoices</span>
+<div class="flex-1 flex gap-0.5 h-4 mx-2 items-end">
+<div class="w-full bg-warning/80 h-[90%]"></div>
+<div class="w-full bg-warning/70 h-[80%]"></div>
+<div class="w-full bg-warning/90 h-[100%]"></div>
+<div class="w-full bg-warning/50 h-[60%]"></div>
+<div class="w-full bg-warning/40 h-[40%]"></div>
+<div class="w-full bg-warning h-[30%]"></div>
+</div>
+<span class="font-control text-danger font-bold w-8 text-right">-8%</span>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Live Clock script
+        function updateClock() {
+            const now = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('live-clock').textContent = now.toLocaleDateString('en-US', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body></html>

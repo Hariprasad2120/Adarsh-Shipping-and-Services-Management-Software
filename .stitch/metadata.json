@@ -1,15 +1,75 @@
 {
   "$comment": "Stitch project/screen tracking. NEVER store API credentials here. STITCH_API_KEY is read only from the environment.",
   "stitchProject": {
-    "id": null,
+    "id": "14247991428455987859",
+    "resourceName": "projects/14247991428455987859",
     "name": "Monolith Engine — Enterprise UX System",
-    "status": "not-created",
-    "reason": "Stitch MCP server configured but failed to connect (CONNECTION_CLOSED). Awaiting working stitch MCP tools before project creation."
+    "status": "created",
+    "createdAt": "2026-08-31"
   },
-  "designSystemIds": [],
-  "screens": [],
-  "routeScreenMap": {},
-  "screenVersions": {},
+  "designSystemIds": ["34d797abba684e5099d8ad3c2d5d6345"],
+  "designSystemSource": ".stitch/DESIGN.md (uploaded, base64)",
+  "screens": [
+    {
+      "screenId": "13771488935309156092",
+      "name": "projects/14247991428455987859/screens/13771488935309156092",
+      "role": "design-system-source (DESIGN.md upload)",
+      "route": null
+    },
+    {
+      "screenId": "ddc2bd84a88c45ad956550d45164296a",
+      "name": "projects/14247991428455987859/screens/ddc2bd84a88c45ad956550d45164296a",
+      "title": "/dashboard — Variant A (Compact Enterprise)",
+      "route": "/dashboard",
+      "variant": "A",
+      "device": "DESKTOP",
+      "version": 1,
+      "local": {
+        "png": ".stitch/designs/dashboard-variant-a-compact.png",
+        "html": ".stitch/designs/dashboard-variant-a-compact.html"
+      }
+    },
+    {
+      "screenId": "b3b1058f3f384a55a787227bbc1a449e",
+      "name": "projects/14247991428455987859/screens/b3b1058f3f384a55a787227bbc1a449e",
+      "title": "/dashboard — Variant B (Balanced Enterprise)",
+      "route": "/dashboard",
+      "variant": "B",
+      "device": "DESKTOP",
+      "version": 1,
+      "local": {
+        "png": ".stitch/designs/dashboard-variant-b-balanced.png",
+        "html": ".stitch/designs/dashboard-variant-b-balanced.html"
+      }
+    },
+    {
+      "screenId": "f71d45ea52d640f88a864bc9f10f2a28",
+      "name": "projects/14247991428455987859/screens/f71d45ea52d640f88a864bc9f10f2a28",
+      "title": "/dashboard — Variant C (Command Center)",
+      "route": "/dashboard",
+      "variant": "C",
+      "device": "DESKTOP",
+      "version": 1,
+      "local": {
+        "png": ".stitch/designs/dashboard-variant-c-command.png",
+        "html": ".stitch/designs/dashboard-variant-c-command.html"
+      }
+    }
+  ],
+  "routeScreenMap": {
+    "/dashboard": [
+      "ddc2bd84a88c45ad956550d45164296a",
+      "b3b1058f3f384a55a787227bbc1a449e",
+      "f71d45ea52d640f88a864bc9f10f2a28"
+    ]
+  },
+  "screenVersions": {
+    "ddc2bd84a88c45ad956550d45164296a": 1,
+    "b3b1058f3f384a55a787227bbc1a449e": 1,
+    "f71d45ea52d640f88a864bc9f10f2a28": 1
+  },
+  "recommendedVariant": "B",
+  "approvalStatus": "AWAITING_USER",
   "generatedAt": "2026-08-31",
   "branch": "ui/stitch-system-redesign",
   "notes": [
