@@ -24,7 +24,7 @@ describe("production Monolith shell safeguards", () => {
   });
 
   it("keeps one bounded application scroller", () => {
-    const styles = read("src/styles/monolith-system.css");
+    const styles = read("src/app/globals.css");
 
     expect(styles).toContain(".mnx-dashboard-shell {");
     expect(styles).toContain("overflow: hidden;");
@@ -46,7 +46,7 @@ describe("production Monolith shell safeguards", () => {
 
   it("keeps every workspace submenu interactive and accessible", () => {
     const appShell = read("src/modules/core/components/monolith-app-shell.tsx");
-    const styles = read("src/styles/monolith-system.css");
+    const styles = read("src/app/globals.css");
 
     expect(appShell).toContain("expandedSections");
     expect(appShell).toContain("getActiveItemHref");

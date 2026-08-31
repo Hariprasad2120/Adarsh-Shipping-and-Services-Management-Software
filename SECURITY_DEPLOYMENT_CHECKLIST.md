@@ -112,7 +112,8 @@ environment. `[ ]` = must be done; `[i]` = verify / informational.
 
 - [ ] Full BOLA sweep of all 297 routes + `[id]` pages + 77 server actions.
 - [ ] `orgId` schema constraint migration.
-- [ ] `xlsx` → `exceljs`; `nodemailer` → 9.
+- [x] `xlsx` -> `exceljs`.
+- [ ] `nodemailer` -> 9.
 - [ ] Nonce-based CSP (drop `'unsafe-inline'` for scripts).
 - [ ] Security Center UI (`§26`) + Org Security Policy UI (`§27`).
 - [ ] **Independent external penetration test** against staging.

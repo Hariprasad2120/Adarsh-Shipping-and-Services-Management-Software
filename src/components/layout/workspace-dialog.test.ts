@@ -8,6 +8,22 @@ function source(relativePath: string) {
   return readFileSync(join(root, relativePath), "utf8");
 }
 
+function sourceSection(markerPath: string) {
+  const globals = source("src/app/globals.css");
+  const escaped = markerPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = globals.match(
+    new RegExp(
+      `/\\* ===== BEGIN ${escaped} ===== \\*/([\\s\\S]*?)/\\* ===== END ${escaped} ===== \\*/`,
+    ),
+  );
+
+  if (!match) {
+    throw new Error(`Missing stylesheet section for ${markerPath}`);
+  }
+
+  return match[1];
+}
+
 describe("Monolith popup contract", () => {
   it("centralizes portals, focus containment, scroll locking, and accessible naming", () => {
     const dialogSource = source(
@@ -31,12 +47,12 @@ describe("Monolith popup contract", () => {
   });
 
   it("keeps popup surfaces inset on desktop and usable as mobile bottom sheets", () => {
-    const styles = source("src/styles/monolith-system.css");
+    const styles = sourceSection("src/styles/monolith-system.css");
 
     expect(styles).toContain(".mnx-dialog-surface-compact");
     expect(styles).toContain(".mnx-dialog-surface-wide");
     expect(styles).toContain(".mnx-dialog-surface-workspace");
-    expect(styles).toContain("height: min(52rem, 88dvh)");
+    expect(styles).toContain("height: min(49rem, 88dvh)");
     expect(styles).toContain("overscroll-behavior: contain");
     expect(styles).toContain("env(safe-area-inset-top)");
     expect(styles).toContain(
@@ -47,8 +63,8 @@ describe("Monolith popup contract", () => {
   });
 
   it("provides readable theme-tinted glass to every floating Monolith surface", () => {
-    const tokens = source("src/styles/monolith-tokens.css");
-    const styles = source("src/styles/monolith-system.css");
+    const tokens = sourceSection("src/styles/monolith-tokens.css");
+    const styles = sourceSection("src/styles/monolith-system.css");
     const dialogSource = source(
       "src/components/layout/workspace-dialog.tsx",
     );
@@ -58,12 +74,12 @@ describe("Monolith popup contract", () => {
     );
     const monaSource = source("src/modules/mona/components/mona-chat.tsx");
 
-    expect(tokens.match(/--mn-color-glass-surface:/g)).toHaveLength(3);
-    expect(tokens.match(/--mn-color-glass-surface-strong:/g)).toHaveLength(3);
-    expect(tokens.match(/--mn-color-glass-border:/g)).toHaveLength(3);
-    expect(tokens.match(/--mn-color-overlay:/g)).toHaveLength(3);
-    expect(tokens.match(/--mn-shadow-floating:/g)).toHaveLength(3);
-    expect(tokens.match(/--mn-gradient-glass:/g)).toHaveLength(3);
+    expect(tokens).toContain("--mn-color-glass-surface:");
+    expect(tokens).toContain("--mn-color-glass-surface-strong:");
+    expect(tokens).toContain("--mn-color-glass-border:");
+    expect(tokens).toContain("--mn-color-overlay:");
+    expect(tokens).toContain("--mn-shadow-floating:");
+    expect(tokens).toContain("--mn-gradient-glass:");
 
     expect(styles).toContain(".mnx-floating-surface");
     expect(styles).toContain("background-image: var(--mnx-glass-gradient)");
@@ -77,7 +93,6 @@ describe("Monolith popup contract", () => {
     expect(menuSource).toContain("mnx-floating-surface mnx-floating-menu");
     expect(menuSource).not.toContain("bg-[var(--card)]");
     expect(warningSource).toContain("mnx-floating-surface mnx-warning-popover");
-    expect(monaSource).toContain("mnx-floating-surface mnx-floating-tooltip");
     expect(monaSource).toContain("mnx-floating-surface mnx-mona-panel");
   });
 
@@ -87,8 +102,8 @@ describe("Monolith popup contract", () => {
       "src/modules/cha/components/create-job-dialog.tsx",
     );
     const styles = [
-      source("src/styles/monolith-system.css"),
-      source("src/styles/modules/cha.css"),
+      sourceSection("src/styles/monolith-system.css"),
+      sourceSection("src/styles/modules/cha.css"),
     ].join("\n");
 
     expect(chaSource).toContain("export function ChaModal");

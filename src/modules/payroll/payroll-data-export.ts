@@ -1,6 +1,6 @@
-import * as XLSX from "xlsx";
+import { rowsToDelimitedText } from "@/lib/spreadsheet";
 
-// Phase: Payroll Settings — Data Backup / Export (Zoho reference
+// Phase: Payroll Settings - Data Backup / Export (Zoho reference
 // settings_data-backup). Follows the same row-building + CSV-encoding shape
 // as src/modules/hrms/employee-directory-export.ts: DB access stays in the
 // caller (the API route), this module only shapes rows and encodes CSV so
@@ -60,9 +60,7 @@ function spreadsheetSafe(value: string | number) {
 }
 
 function toCsvBuffer(rows: Record<string, string | number>[], columns: readonly string[]) {
-  const worksheet = XLSX.utils.json_to_sheet(rows, { header: [...columns] });
-  const text = XLSX.utils.sheet_to_csv(worksheet);
-  return Buffer.from(`﻿${text}`, "utf8");
+  return Buffer.from(`\uFEFF${rowsToDelimitedText(rows, columns)}`, "utf8");
 }
 
 const EMPLOYEE_COLUMNS = [

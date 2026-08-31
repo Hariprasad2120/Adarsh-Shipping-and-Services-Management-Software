@@ -1,7 +1,7 @@
 import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
-import XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { hash } from "bcryptjs";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -23,10 +23,17 @@ type EmployeeAggregate = {
   statutory: Row | null;
 };
 
-function readSheet(workbook: XLSX.WorkBook, sheetName: string): Row[] {
-  const sheet = workbook.Sheets[sheetName];
+function readSheet(workbook: ExcelJS.Workbook, sheetName: string): Row[] {
+  const sheet = workbook.getWorksheet(sheetName);
   if (!sheet) return [];
-  return XLSX.utils.sheet_to_json<Row>(sheet, { defval: null, raw: false });
+  const [headers = [], ...rows] = sheet.getSheetValues().slice(1) as unknown[][];
+  const headerNames = headers.slice(1).map((header) => String(header ?? "").trim());
+  return rows
+    .map((row) => {
+      const values = Array.isArray(row) ? row.slice(1) : [];
+      return Object.fromEntries(headerNames.map((header, index) => [header, values[index] ?? null])) as Row;
+    })
+    .filter((row) => Object.values(row).some((value) => String(value ?? "").trim() !== ""));
 }
 
 function asString(value: unknown) {
@@ -336,7 +343,8 @@ function getRoleForUser(email: string, departmentName: string, designation: stri
 async function main() {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const workbook = XLSX.readFile(path.join(process.cwd(), "docs/Employee_View_Sentence_Case.xlsx"));
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(path.join(process.cwd(), "docs/Employee_View_Sentence_Case.xlsx"));
   const employeeRows = readSheet(workbook, 'Employee Dasboard Info');
   const salaryRows = readSheet(workbook, 'Employee salary details');
   const revisionRows = readSheet(workbook, 'Salary Revision Details');

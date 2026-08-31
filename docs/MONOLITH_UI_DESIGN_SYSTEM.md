@@ -67,7 +67,11 @@ The page is a live catalogue of actual production components. It must render the
 
 The catalogue must never contain a disconnected demo-only reimplementation.
 
-`design-system-catalogue.css` may arrange catalogue specimens, labels, navigation, and preview containers. It must not restyle production components.
+Catalogue layout-only selectors now live in the dedicated
+`src/app/globals.css` section marked for
+`src/app/(dashboard)/admin/design-system/design-system-catalogue.css`. That
+section may arrange catalogue specimens, labels, navigation, and preview
+containers. It must not restyle production components.
 
 ### 2.3 Dashboard page
 
@@ -118,25 +122,21 @@ Use CHA patterns for operational modules when the same interaction model applies
 
 ### 2.5 Tokens and style ownership
 
-Foundations:
-
-- `src/styles/monolith-tokens.css`
-
-Shared production styling:
-
-- `src/styles/monolith-system.css`
-
-Module composition styling:
-
-- `src/styles/modules/*.css`
-
-Temporary compatibility:
-
-- `src/styles/legacy-compatibility.css`
-
-Global import ownership:
+Single stylesheet owner:
 
 - `src/app/globals.css`
+
+Sectioned ownership inside `globals.css`:
+
+- token/theme foundations in the marked `src/styles/monolith-tokens.css` section;
+- shared production styling in the marked `src/styles/monolith-system.css` section;
+- module composition styling in the marked `src/styles/modules/*.css` sections;
+- temporary compatibility in the marked `src/styles/legacy-compatibility.css` section;
+- catalogue layout-only styling in the marked
+  `src/app/(dashboard)/admin/design-system/design-system-catalogue.css`
+  section;
+- component-specific global styling such as the login experience and dev
+  console in their own marked sections when they are intentionally centralized.
 
 `legacy-compatibility.css` is migration debt. New selectors, tokens, or components must not be added there.
 

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { createNotification, getUsersWithPermission } from "@/modules/notifications/service";
-import * as XLSX from "xlsx";
+import { getFirstWorksheet, loadWorkbook, objectRowsFromWorksheet } from "@/lib/spreadsheet";
 import fs from "fs/promises";
 import path from "path";
 import { Prisma } from "@/generated/prisma/client";
@@ -5787,14 +5787,13 @@ export async function importChecklistExcel(
     throw new Error("Cannot import checklist. Complete the Additional Data process first.");
   }
 
-  const workbook = XLSX.read(fileBuffer, { type: "buffer" });
-  if (workbook.SheetNames.length === 0) {
+  const workbook = await loadWorkbook(fileBuffer);
+  const sheet = getFirstWorksheet(workbook);
+  if (!sheet) {
     throw new Error("Invalid Excel file: No sheets found.");
   }
 
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+  const rows: any[] = objectRowsFromWorksheet(sheet);
 
   if (rows.length === 0) {
     throw new Error("Excel sheet is empty.");

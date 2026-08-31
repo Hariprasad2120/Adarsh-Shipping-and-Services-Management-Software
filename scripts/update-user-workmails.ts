@@ -1,5 +1,5 @@
 import "dotenv/config";
-import XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -44,10 +44,19 @@ function normalizeAlias(value: string) {
   return normalize(value).replace(/\b([a-z])\./g, "$1");
 }
 
-function readExcelUsers(filePath: string): ExcelUser[] {
-  const workbook = XLSX.readFile(filePath, { cellDates: true });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null, raw: false });
+async function readExcelUsers(filePath: string): Promise<ExcelUser[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
+  const sheet = workbook.worksheets[0];
+  if (!sheet) return [];
+  const [headers = [], ...sheetRows] = sheet.getSheetValues().slice(1) as unknown[][];
+  const headerNames = headers.slice(1).map((header) => String(header ?? "").trim());
+  const rows = sheetRows
+    .map((row) => {
+      const values = Array.isArray(row) ? row.slice(1) : [];
+      return Object.fromEntries(headerNames.map((header, index) => [header, values[index] ?? null]));
+    })
+    .filter((row) => Object.values(row).some((value) => String(value ?? "").trim() !== ""));
 
   return rows
     .map((row) => {
@@ -67,7 +76,7 @@ function readExcelUsers(filePath: string): ExcelUser[] {
 }
 
 async function main() {
-  const excelUsers = readExcelUsers(SOURCE_FILE);
+  const excelUsers = await readExcelUsers(SOURCE_FILE);
   const users = await db.user.findMany({
     select: {
       id: true,

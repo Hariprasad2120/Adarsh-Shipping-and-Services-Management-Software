@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import { rowsToDelimitedText, workbookBufferFromRows } from "@/lib/spreadsheet";
 
 export type EmployeeDirectoryExportFormat = "xls" | "xlsx" | "csv" | "tsv";
 
@@ -150,55 +150,30 @@ export function buildEmployeeDirectoryExportRows(
   });
 }
 
-export function createEmployeeDirectoryExport(
+export async function createEmployeeDirectoryExport(
   users: EmployeeDirectoryExportUser[],
   format: EmployeeDirectoryExportFormat,
 ) {
   const rows = buildEmployeeDirectoryExportRows(users);
-  const worksheet = XLSX.utils.json_to_sheet(rows, {
-    header: [...EXPORT_COLUMNS],
-  });
-  worksheet["!cols"] = [
-    { wch: 14 },
-    { wch: 28 },
-    { wch: 34 },
-    { wch: 18 },
-    { wch: 22 },
-    { wch: 22 },
-    { wch: 26 },
-    { wch: 22 },
-    { wch: 18 },
-    { wch: 18 },
-    { wch: 18 },
-    { wch: 20 },
-    { wch: 16 },
-  ];
+  const widths = [14, 28, 34, 18, 22, 22, 26, 22, 18, 18, 18, 20, 16];
 
-  if (format === "csv" || format === "tsv") {
-    const text = XLSX.utils.sheet_to_csv(worksheet, {
-      FS: format === "tsv" ? "\t" : ",",
-    });
+  if (format === "csv" || format === "tsv" || format === "xls") {
+    const delimiter = format === "csv" ? "," : "\t";
+    const text = rowsToDelimitedText(rows, EXPORT_COLUMNS, delimiter);
 
     return {
       body: Buffer.from(`\uFEFF${text}`, "utf8"),
       contentType:
         format === "csv"
           ? "text/csv; charset=utf-8"
-          : "text/tab-separated-values; charset=utf-8",
+          : format === "tsv"
+            ? "text/tab-separated-values; charset=utf-8"
+            : "application/vnd.ms-excel; charset=utf-8",
     };
   }
 
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Employee Profiles");
-
   return {
-    body: XLSX.write(workbook, {
-      bookType: format,
-      type: "buffer",
-    }) as Buffer,
-    contentType:
-      format === "xlsx"
-        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        : "application/vnd.ms-excel",
+    body: await workbookBufferFromRows("Employee Profiles", EXPORT_COLUMNS, rows, widths),
+    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   };
 }

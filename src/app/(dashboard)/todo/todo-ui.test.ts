@@ -12,7 +12,7 @@ describe("To-Do Monolith presentation", () => {
   it("uses a right-side page header graphic instead of the legacy icon tile", () => {
     const todoClient = source("src/app/(dashboard)/todo/todo-client.tsx");
     const workspace = source("src/components/layout/workspace.tsx");
-    const styles = source("src/styles/monolith-system.css");
+    const styles = source("src/app/globals.css");
 
     expect(todoClient).toContain("graphic={<TodoHeaderGraphic />}");
     expect(todoClient).not.toContain("ClipboardCheck");

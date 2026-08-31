@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import * as XLSX from "xlsx";
 import { z } from "zod";
+import { loadWorkbook, matrixFromWorksheet, rowsToDelimitedText } from "@/lib/spreadsheet";
 import type { RateWorkflowSnapshot, StandardRateReference } from "../rate-workflow";
 import { suggestCanonicalCharge } from "../rate-workflow";
 import {
@@ -610,11 +610,10 @@ async function extractAttachmentText(attachment: AttachmentInput) {
 
   if (
     lowerName.endsWith(".xlsx") ||
-    lowerName.endsWith(".xls") ||
     mimeType.includes("spreadsheet") ||
     mimeType.includes("excel")
   ) {
-    return extractSpreadsheetText(attachment.content);
+    return await extractSpreadsheetText(attachment.content);
   }
 
   if (
@@ -631,14 +630,19 @@ async function extractAttachmentText(attachment: AttachmentInput) {
   return attachment.content.toString("utf8");
 }
 
-function extractSpreadsheetText(content: Buffer) {
-  const workbook = XLSX.read(content, { type: "buffer" });
-  return workbook.SheetNames.map((sheetName) => {
-    const sheet = workbook.Sheets[sheetName];
-    if (!sheet) return "";
-    const csv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
-    return `Sheet: ${sheetName}\n${csv}`;
-  })
+async function extractSpreadsheetText(content: Buffer) {
+  const workbook = await loadWorkbook(content);
+  return workbook.worksheets
+    .map((sheet) => {
+      const matrix = matrixFromWorksheet(sheet);
+      const width = Math.max(0, ...matrix.map((row) => row.length));
+      if (width === 0) return "";
+      const columns = Array.from({ length: width }, (_, index) => String(index));
+      const rows = matrix.map((row) =>
+        Object.fromEntries(columns.map((column, index) => [column, row[index] ?? ""])),
+      );
+      return `Sheet: ${sheet.name}\n${rowsToDelimitedText(rows, columns)}`;
+    })
     .filter(Boolean)
     .join("\n\n");
 }

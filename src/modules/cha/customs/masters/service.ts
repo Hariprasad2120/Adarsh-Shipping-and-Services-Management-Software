@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import * as XLSX from "xlsx";
+import { getFirstWorksheet, loadWorkbook, matrixFromWorksheet } from "@/lib/spreadsheet";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { logCustomsMasterAudit } from "./audit";
@@ -242,31 +242,26 @@ function assertSupportedFile(options: BulkImportOptions, bytes: Uint8Array) {
   }
 }
 
-function parseWorkbookRows(options: BulkImportOptions, bytes: Uint8Array) {
+async function parseWorkbookRows(options: BulkImportOptions, bytes: Uint8Array) {
   assertSupportedFile(options, bytes);
   if (options.fileName.toLowerCase().endsWith(".csv")) {
     return parseCsvRows(Buffer.from(bytes).toString("utf8"));
   }
-  const workbook = XLSX.read(bytes, {
-    type: "buffer",
-    raw: false,
-    cellDates: true,
-    cellFormula: true,
-  });
-  const firstSheetName = workbook.SheetNames[0];
-  if (!firstSheetName) {
+  const workbook = await loadWorkbook(bytes);
+  const sheet = getFirstWorksheet(workbook);
+  if (!sheet) {
     throw new ChaCustomsMasterError("EMPTY_WORKBOOK", "Import file has no worksheet.");
   }
-  const sheet = workbook.Sheets[firstSheetName];
-  for (const address of Object.keys(sheet)) {
-    if (address.startsWith("!")) continue;
-    const cell = sheet[address] as XLSX.CellObject & { f?: string };
-    if (cell.f || (typeof cell.v === "string" && /^[=+\-@]/.test(cell.v))) {
+
+  let matrix: ReturnType<typeof matrixFromWorksheet>;
+  try {
+    matrix = matrixFromWorksheet(sheet);
+  } catch (error) {
+    if (error instanceof Error && /formula/i.test(error.message)) {
       throw new ChaCustomsMasterError("FORMULA_CELL", "Formula cells are not allowed in customs master imports.");
     }
+    throw error;
   }
-
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "" });
   const [headerRow, ...dataRows] = matrix;
   if (!headerRow) {
     throw new ChaCustomsMasterError("MISSING_HEADER", "Import file is missing a header row.");
@@ -323,7 +318,7 @@ function splitCsvLine(line: string) {
   return values;
 }
 
-function validateHeaders(definition: CustomsMasterDefinition, rows: ReturnType<typeof parseWorkbookRows>) {
+function validateHeaders(definition: CustomsMasterDefinition, rows: Awaited<ReturnType<typeof parseWorkbookRows>>) {
   if (rows.length === 0) {
     throw new ChaCustomsMasterError("EMPTY_IMPORT", "Import file contains no data rows.");
   }
@@ -343,7 +338,7 @@ export async function previewCustomsMasterImport(params: {
   const options = bulkImportOptionsSchema.parse(params.options);
   const definition = getCustomsMasterDefinition(options.masterType);
   const checksum = createHash("sha256").update(Buffer.from(params.bytes)).digest("hex");
-  const parsedRows = parseWorkbookRows(options, params.bytes);
+  const parsedRows = await parseWorkbookRows(options, params.bytes);
   validateHeaders(definition, parsedRows);
   const delegate = getDelegate(db as unknown as DbLike, definition);
   const previewRows: ImportPreviewRow[] = [];

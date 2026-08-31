@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +21,7 @@ import {
   type PayrollImportResult,
   type PayrollImportRow,
 } from "@/modules/payroll/import-actions";
+import { getFirstWorksheet, loadWorkbook, matrixFromWorksheet, parseCsvMatrix } from "@/lib/spreadsheet";
 
 const COLUMN_MAP: Record<string, keyof PayrollImportRow> = {
   "employee number": "employeeNumber",
@@ -73,19 +73,17 @@ export function PayrollImportClient() {
   const handleFile = async (file: File) => {
     setFileName(file.name);
     try {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      if (!sheetName) throw new Error("The file has no worksheet.");
-      const sheet = workbook.Sheets[sheetName]!;
-      const table = XLSX.utils.sheet_to_json<(string | number | null)[]>(sheet, {
-        header: 1,
-        defval: "",
-        raw: false,
-      });
-      const headerRow = (table[0] ?? []).map((cell) => String(cell ?? "").trim());
+      const workbookRows = file.name.toLowerCase().endsWith(".csv")
+        ? parseCsvMatrix(await file.text())
+        : await (async () => {
+            const workbook = await loadWorkbook(await file.arrayBuffer());
+            const sheet = getFirstWorksheet(workbook);
+            if (!sheet) throw new Error("The file has no worksheet.");
+            return matrixFromWorksheet(sheet);
+          })();
+      const headerRow = (workbookRows[0] ?? []).map((cell) => String(cell ?? "").trim());
       if (headerRow.length === 0) throw new Error("Could not find a header row.");
-      const dataRows = table.slice(1).filter((r) => r.some((cell) => String(cell ?? "").trim() !== ""));
+      const dataRows = workbookRows.slice(1).filter((r) => r.some((cell) => String(cell ?? "").trim() !== ""));
       const objectRows = dataRows.map((r) => {
         const obj: Record<string, string> = {};
         headerRow.forEach((header, index) => {
@@ -137,7 +135,7 @@ export function PayrollImportClient() {
           {/* eslint-disable-next-line no-restricted-syntax -- visually-hidden file input behind a styled drop-zone label, not a standard text field */}
           <input
             type="file"
-            accept=".csv,.xls,.xlsx"
+            accept=".csv,.xlsx"
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];

@@ -114,7 +114,7 @@ describe("Monolith workspace states", () => {
     );
 
     expect(heading).toContain("mnx-section-heading");
-    expect(heading).not.toContain("mnx-section-heading-index");
+    expect(heading).toContain("mnx-section-heading-index");
     expect(heading).toContain("Typography");
     expect(heading).toContain("Large, light headlines carry confidence.");
   });
@@ -134,7 +134,7 @@ describe("Monolith workspace states", () => {
 
     expect(heading).toContain('id="custom-heading"');
     expect(heading).toContain("<h3>");
-    expect(heading).not.toContain("mnx-section-heading-index");
+    expect(heading).toContain("mnx-section-heading-index");
     expect(heading).toContain("mnx-section-heading-badge");
     expect(heading).toContain("mnx-section-heading-actions");
   });

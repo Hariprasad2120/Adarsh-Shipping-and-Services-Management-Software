@@ -10,14 +10,11 @@ import { execSync } from "node:child_process";
  * until it is re-triaged.
  */
 
-const XLSX = { reason: "No fixed xlsx release; parsing size/time limited, exceljs migration planned (DEPENDENCY_REMEDIATION.md).", reviewBy: "2026-12-31" };
 const NODEMAILER = { reason: "Fix needs nodemailer 9 (major). No caller-controlled name/envelope; default provider is Resend. Bump planned.", reviewBy: "2026-11-30" };
 const PRISMA_CLI = { reason: "Build-time Prisma CLI only (prisma generate/migrate); not in the Next.js runtime bundle. ACCEPTED RISK.", reviewBy: "2027-03-31" };
 const SHADCN_CLI = { reason: "shadcn CLI (js-yaml via cosmiconfig) — build-time tool, should be a devDependency. Not in runtime.", reviewBy: "2027-01-31" };
 
 const ALLOWLIST = [
-  { id: "GHSA-4r6h-8v6p-xvw6", ...XLSX },
-  { id: "GHSA-5pgg-2g8v-p4x9", ...XLSX },
   { id: "GHSA-vvjj-xcjg-gr5g", ...NODEMAILER },
   { id: "GHSA-c7w3-x93f-qmm8", ...NODEMAILER },
   { id: "GHSA-268h-hp4c-crq3", ...NODEMAILER },

@@ -19,8 +19,7 @@ const assert = (condition, message) => {
 const paths = {
   page: "src/app/(dashboard)/admin/design-system/page.tsx",
   client: "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
-  catalogueCss:
-    "src/app/(dashboard)/admin/design-system/design-system-catalogue.css",
+  globalsCss: "src/app/globals.css",
   sharedRegistry:
     "src/components/monolith/catalogue/shared-catalogue.tsx",
   moduleRegistry:
@@ -46,10 +45,10 @@ assert(
   "The administrator permission gate is missing.",
 );
 assert(
-  page.includes('import "./design-system-catalogue.css"') &&
+  !page.includes("design-system-catalogue.css") &&
     !page.includes("design-system-reference.css") &&
     !page.includes("design-system-production.css"),
-  "The route must import only its layout-only catalogue stylesheet.",
+  "The route must not import a route-local catalogue stylesheet now that the catalogue styles live in globals.css.",
 );
 assert(
   client.includes("sharedCatalogue") &&
@@ -103,6 +102,17 @@ const boundary = spawnSync(
   { cwd: repositoryRoot, encoding: "utf8" },
 );
 assert(boundary.status === 0, boundary.stderr || boundary.stdout);
+
+const globalsCss = read(paths.globalsCss);
+assert(
+  globalsCss.includes(
+    "/* ===== BEGIN src/app/(dashboard)/admin/design-system/design-system-catalogue.css ===== */",
+  ) &&
+    globalsCss.includes(
+      "/* ===== END src/app/(dashboard)/admin/design-system/design-system-catalogue.css ===== */",
+    ),
+  "globals.css is missing the dedicated catalogue stylesheet section markers.",
+);
 
 const archivePath = path.join(
   repositoryRoot,

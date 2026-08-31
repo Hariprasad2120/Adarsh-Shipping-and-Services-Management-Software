@@ -1,6 +1,63 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-28
+Last updated: 2026-08-31
+
+## 2026-08-31 Single global stylesheet consolidation handoff
+
+Centralized the repository-owned CSS stack into one `src/app/globals.css`
+entry point so the application no longer depends on separate tracked CSS files
+ under `src/styles`, the admin design-system route, the dev console, or the
+ login module stylesheet.
+
+Delivered:
+
+- inlined the contents of:
+  - `src/styles/monolith-tokens.css`
+  - `src/styles/monolith-system.css`
+  - `src/styles/modules/{communication-admin,cha,accounting,freight-forwarding,people,performance,crm}.css`
+  - `src/styles/legacy-compatibility.css`
+  - `src/components/dev-console/dev-console.css`
+  - `src/app/(dashboard)/admin/design-system/design-system-catalogue.css`
+  - `src/modules/auth/components/animated-login.module.css`
+  into clearly marked sections inside `src/app/globals.css`;
+- removed the route-local CSS imports from the admin design-system pages and
+  the dev console component;
+- converted `src/modules/auth/components/monolith-logistics-login.tsx` off the
+  deleted CSS module import while preserving its class contract;
+- deleted the superseded repo-local CSS files so `src/app/globals.css` is now
+  the only tracked application stylesheet in `src`;
+- updated stylesheet-aware tests and design-system verification scripts so they
+  inspect the relevant `globals.css` sections instead of deleted file paths;
+- added a catalogue exclusion for `src/components/ui/button.tsx#LinkButton`,
+  which is a compatibility alias of the already registered `ButtonLink`.
+
+Verification on Monday, August 31, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed `docs/ui-component-and-style-ownership-audit.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md` with 354 pages, 17 layouts, and
+  407 route-state rows;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed after adding the explicit `LinkButton` catalogue exclusion;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run test:ui`:
+  passed with 13 files and 40 tests.
+
+Known limits:
+
+- third-party package CSS such as `leaflet/dist/leaflet.css` remains imported
+  from the map components because it is external dependency CSS rather than a
+  repository-owned stylesheet;
+- the current implementation keeps logical section markers in `globals.css` so
+  future cleanup can still trace token, shared, module, catalogue, and
+  compatibility ownership even though the tracked files were consolidated;
+- runtime browser verification across representative routes and all three
+  themes is still pending in this Codex session.
 
 ## 2026-08-28 Shared Monolith iconography foundation handoff
 

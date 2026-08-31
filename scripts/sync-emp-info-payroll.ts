@@ -1,6 +1,6 @@
 import "dotenv/config";
 import path from "node:path";
-import XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { hash } from "bcryptjs";
 import { PrismaClient, Prisma } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -30,14 +30,22 @@ type NormalizedOrgAssignment = {
   divisionName: string | null;
 };
 
-function readRows(fileName: string, sheetName?: string) {
-  const workbook = XLSX.readFile(path.join(EMP_INFO_DIR, fileName));
-  const targetSheet = sheetName ?? workbook.SheetNames[0];
-  const sheet = workbook.Sheets[targetSheet];
+async function readRows(fileName: string, sheetName?: string) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(path.join(EMP_INFO_DIR, fileName));
+  const targetSheet = sheetName ?? workbook.worksheets[0]?.name;
+  const sheet = targetSheet ? workbook.getWorksheet(targetSheet) : undefined;
   if (!sheet) {
     throw new Error(`Sheet '${targetSheet}' not found in ${fileName}`);
   }
-  return XLSX.utils.sheet_to_json<Row>(sheet, { defval: null, raw: false });
+  const [headers = [], ...rows] = sheet.getSheetValues().slice(1) as unknown[][];
+  const headerNames = headers.slice(1).map((header) => String(header ?? "").trim());
+  return rows
+    .map((row) => {
+      const values = Array.isArray(row) ? row.slice(1) : [];
+      return Object.fromEntries(headerNames.map((header, index) => [header, values[index] ?? null])) as Row;
+    })
+    .filter((row) => Object.values(row).some((value) => String(value ?? "").trim() !== ""));
 }
 
 function asString(value: unknown) {
@@ -156,14 +164,14 @@ function monthlyFromAnnual(value: number | null) {
 }
 
 async function main() {
-  const basicRows = readRows("Employee_Basic_Details.xlsx", "Employee Basic and Personal Det");
-  const salaryRows = readRows("Employee_Salary_Details.xlsx", "Employee Salary Details");
-  const statutoryRows = readRows(
+  const basicRows = await readRows("Employee_Basic_Details.xlsx", "Employee Basic and Personal Det");
+  const salaryRows = await readRows("Employee_Salary_Details.xlsx", "Employee Salary Details");
+  const statutoryRows = await readRows(
     "Employee_Statutory_Information.xlsx",
     "Employee Statutory Details",
   );
-  const paymentRows = readRows("Salary_Payment_Information.xlsx", "Employee Payment Info");
-  const viewRows = readRows("Employee View.xlsx", "Sheet - 1");
+  const paymentRows = await readRows("Salary_Payment_Information.xlsx", "Employee Payment Info");
+  const viewRows = await readRows("Employee View.xlsx", "Sheet - 1");
 
   const byEmployeeNumber = new Map<string, EmployeeAggregate>();
   function touch(employeeNumber: string) {

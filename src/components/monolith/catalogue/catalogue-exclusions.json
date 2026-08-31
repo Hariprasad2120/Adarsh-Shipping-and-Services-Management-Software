@@ -1,5 +1,11 @@
 [
   {
+    "component": "LinkButton",
+    "source": "src/components/ui/button.tsx",
+    "reason": "Legacy-compatible alias of the registered ButtonLink export; it does not represent a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
     "component": "OperationalDataTableActions",
     "source": "src/components/data-display/operational-data-table.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import {
   buildEmployeeDirectoryExportRows,
   createEmployeeDirectoryExport,
@@ -93,26 +93,33 @@ describe("employee directory export", () => {
   });
 
   it.each(["xlsx", "xls"] as const)(
-    "creates a readable %s workbook",
-    (format) => {
-      const file = createEmployeeDirectoryExport([employee], format);
-      const workbook = XLSX.read(file.body, { type: "buffer" });
-      const worksheet = workbook.Sheets["Employee Profiles"];
-      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+    "creates a readable %s export",
+    async (format) => {
+      const file = await createEmployeeDirectoryExport([employee], format);
+
+      if (format === "xls") {
+        const content = file.body.toString("utf8");
+        expect(content).toContain("Employee ID\tName");
+        expect(content).toContain("193\tSham Christo C");
+        return;
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(file.body);
+      const worksheet = workbook.getWorksheet("Employee Profiles");
+      const rows = worksheet?.getSheetValues().slice(2) ?? [];
 
       expect(rows).toHaveLength(1);
-      expect(rows[0]).toMatchObject({
-        "Employee ID": "193",
-        Name: "Sham Christo C",
-      });
+      expect((rows[0] as unknown[])[1]).toBe("193");
+      expect((rows[0] as unknown[])[2]).toBe("Sham Christo C");
     },
   );
 
   it.each([
     ["csv", ","],
     ["tsv", "\t"],
-  ] as const)("creates a UTF-8 %s file", (format, separator) => {
-    const file = createEmployeeDirectoryExport([employee], format);
+  ] as const)("creates a UTF-8 %s file", async (format, separator) => {
+    const file = await createEmployeeDirectoryExport([employee], format);
     const content = file.body.toString("utf8");
 
     expect(content.startsWith("\uFEFF")).toBe(true);

@@ -2,12 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import * as XLSX from "xlsx";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  excelSerialDateToDate,
+  getWorksheetByName,
+  loadWorkbook,
+  objectRowsFromWorksheet,
+  type SpreadsheetObjectRow,
+} from "@/lib/spreadsheet";
 
 type ImportResult = { ok: true; message: string } | { ok: false; error: string };
-type Row = Record<string, unknown>;
+type Row = SpreadsheetObjectRow;
 
 const ROLES = new Set(["ADMIN", "HR", "EMPLOYEE", "REVIEWER", "MANAGER", "MANAGEMENT", "PARTNER"]);
 const ACCOUNT_STATUSES = new Set(["Pending", "Active", "Disabled"]);
@@ -32,10 +38,10 @@ async function requireAdmin() {
   return session;
 }
 
-function sheet(wb: XLSX.WorkBook, name: string): Row[] {
-  const ws = wb.Sheets[name];
+function sheet(wb: Awaited<ReturnType<typeof loadWorkbook>>, name: string): Row[] {
+  const ws = getWorksheetByName(wb, name);
   if (!ws) throw new Error(`Missing sheet: ${name}`);
-  return XLSX.utils.sheet_to_json<Row>(ws, { defval: "" });
+  return objectRowsFromWorksheet(ws);
 }
 
 function value(row: Row, key: string) {
@@ -62,8 +68,7 @@ function dateValue(row: Row, key: string) {
   const raw = row[key];
   if (raw instanceof Date) return raw;
   if (typeof raw === "number") {
-    const parsed = XLSX.SSF.parse_date_code(raw);
-    return new Date(parsed.y, parsed.m - 1, parsed.d);
+    return excelSerialDateToDate(raw);
   }
   const d = new Date(required(row, key));
   if (Number.isNaN(d.getTime())) throw new Error(`Invalid date in ${key}`);
@@ -87,7 +92,7 @@ export async function importWorkbookAction(formData: FormData): Promise<ImportRe
     if (!orgId) return { ok: false, error: "Organisation missing" };
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
+    const wb = await loadWorkbook(buffer);
     const users = sheet(wb, "Users");
     const accessRows = sheet(wb, "Login Access");
 

@@ -5,7 +5,6 @@ import { can } from "@/lib/rbac";
 import { WorkspaceState } from "@/components/monolith";
 import { DesignSystemClient } from "../design-system-client";
 import { getDesignSystemGovernanceSnapshot } from "@/modules/admin/components/design-system-governance";
-import "../design-system-catalogue.css";
 
 export default async function AdminUnverifiedDesignsPage() {
   const session = await getSession();

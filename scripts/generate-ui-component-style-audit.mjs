@@ -41,10 +41,6 @@ function table(headers, rows) {
 
 function classifyFile(file) {
   if (file === "src/app/globals.css") return "FOUNDATION";
-  if (file === "src/styles/monolith-tokens.css") return "TOKEN";
-  if (file === "src/styles/monolith-system.css") return "SHARED_COMPONENT";
-  if (file === "src/styles/legacy-compatibility.css") return "LEGACY";
-  if (file.startsWith("src/styles/modules/")) return "MODULE_COMPONENT";
   if (file.includes("/admin/design-system/")) return "CATALOGUE_LAYOUT_ONLY";
   if (file.endsWith(".module.css")) return file.includes("/auth/") ? "MODULE_COMPONENT" : "SHARED_COMPONENT";
   if (file.startsWith("src/components/")) return "SHARED_COMPONENT";
@@ -286,10 +282,9 @@ ${table(
   ]),
 )}
 
-Effective order begins at \`src/app/layout.tsx\`: \`globals.css\` imports tokens
-first and the production system second. Route CSS is appended when the
-administrator catalogue route is loaded. The authentication CSS module is
-locally scoped to the animated login component.
+Effective order begins at \`src/app/layout.tsx\`: \`globals.css\` is now the
+single repo-local stylesheet entry point, while third-party CSS remains imported
+through that same file.
 
 ## Stylesheet inventory
 
@@ -396,12 +391,12 @@ ${table(
 
 | Ownership | Target responsibility |
 | --- | --- |
-| FOUNDATION | \`globals.css\`: imports, reset, document behavior only. |
-| TOKEN | \`monolith-tokens.css\`: semantic tokens and themes only. |
-| SHARED_COMPONENT | Canonical shared React owners and \`monolith-system.css\` shared styles. |
-| MODULE_COMPONENT | Typed module compositions plus one module stylesheet owner where needed. |
-| CATALOGUE_LAYOUT_ONLY | \`.mnx-catalogue-*\` arrangement only; no production component selectors. |
-| LEGACY | Explicit compatibility file while active usages remain. |
+| FOUNDATION | \`globals.css\`: the single repo-local stylesheet entry point for tokens, shared styles, module styles, legacy compatibility, and document behavior. |
+| TOKEN | Tokenized sections should stay centralized inside \`globals.css\` and remain semantic/theme-only. |
+| SHARED_COMPONENT | Canonical shared React owners; shared selectors now live in their marked \`globals.css\` sections. |
+| MODULE_COMPONENT | Typed module compositions; module selectors now live in their marked \`globals.css\` sections when global styling is required. |
+| CATALOGUE_LAYOUT_ONLY | \`.mnx-catalogue-*\` arrangement-only selectors now live in the dedicated marked section inside \`globals.css\`. |
+| LEGACY | Legacy compatibility rules, when still required, must stay isolated in their marked \`globals.css\` section. |
 | UNUSED | Remove only after import/usage verification. |
 | DUPLICATE | Consolidate into the canonical owner before deletion. |
 | BUSINESS_LAYOUT_ONLY | Route-specific data arrangement that does not recreate a visual primitive. |

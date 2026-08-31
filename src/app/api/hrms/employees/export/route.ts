@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       search: query.search || undefined,
       take: 10_000,
     });
-    const file = createEmployeeDirectoryExport(
+    const file = await createEmployeeDirectoryExport(
       users as EmployeeDirectoryExportUser[],
       query.format,
     );

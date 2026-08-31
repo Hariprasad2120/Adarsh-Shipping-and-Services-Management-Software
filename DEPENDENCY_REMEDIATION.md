@@ -6,6 +6,10 @@ approach — this file holds the "separately".
 
 Audited with `npm audit --omit=dev` (production dependency tree).
 
+Update: `xlsx` / SheetJS has been removed and replaced with `exceljs` for
+spreadsheet import/export paths. GHSA-4r6h-8v6p-xvw6 and GHSA-5pgg-2g8v-p4x9
+should no longer appear in the dependency audit unless `xlsx` is reintroduced.
+
 ---
 
 ## Done in Stage 1 cluster 1 (checkpoint: request-integrity)
@@ -108,7 +112,6 @@ to **5 (0 critical, 5 high)**. `next build` passes (497/497 static pages).
 
 | Advisory / package | Reason | Review by |
 |---|---|---|
-| `xlsx` GHSA-4r6h-8v6p-xvw6 / GHSA-5pgg-2g8v-p4x9 | No fixed release; parsing size/time-limited; `exceljs` migration planned | 2026-12-31 |
 | `nodemailer` (6 GHSAs incl. GHSA-vvjj-xcjg-gr5g) | Fix needs `nodemailer@9` (major); no caller-controlled `name`/`envelope`; default provider is Resend | 2026-11-30 |
 | `@prisma/config` / `prisma` / `deepmerge-ts` GHSA-ggr8-5vv4-36mx | Build-time Prisma CLI only; not in the Next.js runtime bundle | 2027-03-31 |
 | `shadcn` → `cosmiconfig` → `js-yaml` (3 GHSAs) | `shadcn` CLI is a build-time tool; **should be moved from `dependencies` to `devDependencies`** (concurrent UI work added it) | 2027-01-31 |

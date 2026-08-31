@@ -24,7 +24,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import { getFirstWorksheet, loadWorkbook, matrixFromWorksheet } from "@/lib/spreadsheet";
 import {
   Card,
   CardContent,
@@ -555,25 +555,17 @@ export function OtClient({
 
   const parseExcelAttendanceRows = async (file: File) => {
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array" });
+    const workbook = await loadWorkbook(buffer);
     const preferredSheet =
-      workbook.SheetNames.find((name) =>
-        /early_late report\(hours\)/i.test(name),
-      ) || workbook.SheetNames[0];
+      workbook.worksheets.find((sheet) =>
+        /early_late report\(hours\)/i.test(sheet.name),
+      ) || getFirstWorksheet(workbook);
 
     if (!preferredSheet) {
       throw new Error("No worksheet found in the uploaded Excel file.");
     }
 
-    const worksheet = workbook.Sheets[preferredSheet];
-    const rawRows = XLSX.utils.sheet_to_json<(string | number | null)[]>(
-      worksheet,
-      {
-        header: 1,
-        defval: "",
-        raw: false,
-      },
-    );
+    const rawRows = matrixFromWorksheet(preferredSheet);
 
     const headerRowIndex = rawRows.findIndex((row) => {
       const cols = row.slice(0, 7).map((cell) =>
@@ -605,7 +597,7 @@ export function OtClient({
         return obj;
       });
 
-    loadImportedRows(headers, parsedRows, `${file.name} (${preferredSheet})`);
+    loadImportedRows(headers, parsedRows, `${file.name} (${preferredSheet.name})`);
   };
 
   const overviewCards = [
@@ -678,7 +670,7 @@ export function OtClient({
     setImportSummary(null);
 
     const lowerName = file.name.toLowerCase();
-    if (lowerName.endsWith(".xls") || lowerName.endsWith(".xlsx")) {
+    if (lowerName.endsWith(".xlsx")) {
       void parseExcelAttendanceRows(file).catch((error: unknown) => {
         toast.error(
           error instanceof Error ? error.message : "Failed to read Excel file",
@@ -3252,7 +3244,7 @@ export function OtClient({
                   Upload Attendance Punch Log
                 </CardTitle>
                 <p className="text-xs text-mono-muted/60 font-semibold mt-1">
-                  Upload a raw punch card log in CSV, XLS, or XLSX format. For
+                  Upload a raw punch card log in CSV or XLSX format. For
                   your Early/Late workbook, columns A-G are imported and the
                   remaining columns are ignored.
                 </p>
@@ -3262,7 +3254,7 @@ export function OtClient({
                 <div className="border-2 border-dashed border-mono-border/60 hover:border-[var(--mnx-accent)]/50 rounded-2xl p-8 text-center transition bg-mono-soft/20 bg-[var(--mnx-soft)]/10 cursor-pointer relative">
                   <MnxInput
                     type="file"
-                    accept=".csv,.xls,.xlsx"
+                    accept=".csv,.xlsx"
                     onChange={handleCsvFileUpload}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
@@ -3276,7 +3268,7 @@ export function OtClient({
                         : "Drag & Drop CSV/Excel file or click to select"}
                     </div>
                     <p className="text-xs text-mono-muted/60">
-                      Supports `.csv`, `.xls`, and `.xlsx`. Early/Late Excel
+                      Supports `.csv` and `.xlsx`. Early/Late Excel
                       imports use only columns A-G.
                     </p>
                   </div>

@@ -4,15 +4,26 @@ import path from "node:path";
 const root = process.cwd();
 const stylesheet = path.join(
   root,
-  "src/app/(dashboard)/admin/design-system/design-system-catalogue.css",
+  "src/app/globals.css",
 );
 
 if (!fs.existsSync(stylesheet)) {
-  console.error("Catalogue boundary failed: design-system-catalogue.css is missing.");
+  console.error("Catalogue boundary failed: globals.css is missing.");
   process.exit(1);
 }
 
-const source = fs.readFileSync(stylesheet, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+const sectionMatch = fs
+  .readFileSync(stylesheet, "utf8")
+  .match(
+    /\/\* ===== BEGIN src\/app\/\(dashboard\)\/admin\/design-system\/design-system-catalogue\.css ===== \*\/([\s\S]*?)\/\* ===== END src\/app\/\(dashboard\)\/admin\/design-system\/design-system-catalogue\.css ===== \*\//,
+  );
+
+if (!sectionMatch) {
+  console.error("Catalogue boundary failed: globals.css is missing the dedicated catalogue section.");
+  process.exit(1);
+}
+
+const source = sectionMatch[1].replace(/\/\*[\s\S]*?\*\//g, "");
 const failures = [];
 const productionClass =
   /\.(?:mnx-(?:button|panel|badge|section-heading|field|workspace|cha|accounting|crm|people|performance|communication|admin)\b|mnx-(?!catalogue-)[\w-]+)/;
@@ -42,4 +53,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("Catalogue style boundary passed: layout CSS owns only .mnx-catalogue-* selectors.");
+console.log("Catalogue style boundary passed: the dedicated globals.css catalogue section owns only .mnx-catalogue-* selectors.");

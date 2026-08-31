@@ -38,7 +38,7 @@ describe("module-aware main dashboard", () => {
   });
 
   it("uses graphical alternating module cards without uneven grid spans", () => {
-    const styles = readSource("src/styles/monolith-system.css");
+    const styles = readSource("src/app/globals.css");
     const moduleCards = readSource(
       "src/app/(dashboard)/dashboard/_components/module-command-center.tsx",
     );
@@ -102,7 +102,7 @@ describe("module-aware main dashboard", () => {
     const organizationSource = readSource(
       "src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx",
     );
-    const styles = readSource("src/styles/monolith-system.css");
+    const styles = readSource("src/app/globals.css");
 
     expect(portalSource).toContain("<MonolithPage>");
     expect(portalSource).not.toContain('<div className="mnx-dashboard-page">');
@@ -128,11 +128,11 @@ describe("module-aware main dashboard", () => {
   });
 
   it("maps dashboard aliases to centralized semantic theme tokens", () => {
-    const tokens = readSource("src/styles/monolith-tokens.css").replace(
+    const tokens = readSource("src/app/globals.css").replace(
       /\r\n/g,
       "\n",
     );
-    const styles = readSource("src/styles/monolith-system.css").replace(
+    const styles = readSource("src/app/globals.css").replace(
       /\r\n/g,
       "\n",
     );

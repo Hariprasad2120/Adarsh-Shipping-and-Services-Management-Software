@@ -3,7 +3,7 @@ import { Prisma, PrismaClient, type Division } from "../src/generated/prisma/cli
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 import * as path from "path";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { buildSeedCriteriaForPhase } from "../src/modules/ams/form-template";
 import { buildDefaultSelfFormTemplate } from "../src/modules/ams/criteria-config";
 import { seedChartOfAccounts } from "../src/modules/accounting/service";
@@ -566,10 +566,17 @@ function makeCode(input: string, fallbackPrefix: string, usedCodes: Set<string>)
   return code;
 }
 
-function readSheet(workbook: XLSX.WorkBook, sheetName: string): Row[] {
-  const sheet = workbook.Sheets[sheetName];
+function readSheet(workbook: ExcelJS.Workbook, sheetName: string): Row[] {
+  const sheet = workbook.getWorksheet(sheetName);
   if (!sheet) return [];
-  return XLSX.utils.sheet_to_json<Row>(sheet, { defval: null, raw: false });
+  const [headers = [], ...rows] = sheet.getSheetValues().slice(1) as unknown[][];
+  const headerNames = headers.slice(1).map((header) => String(header ?? "").trim());
+  return rows
+    .map((row) => {
+      const values = Array.isArray(row) ? row.slice(1) : [];
+      return Object.fromEntries(headerNames.map((header, index) => [header, values[index] ?? null])) as Row;
+    })
+    .filter((row) => Object.values(row).some((value) => String(value ?? "").trim() !== ""));
 }
 
 const MANUAL_MATCHES: Record<string, string> = {
@@ -859,7 +866,7 @@ async function seedRoles(orgId: string) {
   }
 }
 
-async function seedDepartments(orgId: string, workbook: XLSX.WorkBook) {
+async function seedDepartments(orgId: string, workbook: ExcelJS.Workbook) {
   console.log("Seeding departments...");
   const dashboardRows = readSheet(workbook, 'Employee Dasboard Info');
   const departmentMap = new Map<string, string>();
@@ -899,7 +906,7 @@ async function seedDepartments(orgId: string, workbook: XLSX.WorkBook) {
   return departmentMap;
 }
 
-async function seedBranches(orgId: string, workbook: XLSX.WorkBook) {
+async function seedBranches(orgId: string, workbook: ExcelJS.Workbook) {
   console.log("Seeding branches...");
   const dashboardRows = readSheet(workbook, 'Employee Dasboard Info');
   const branchMap = new Map<string, string>();
@@ -948,7 +955,7 @@ async function seedUsers(
   orgId: string,
   departmentMap: Map<string, string>,
   branchMap: Map<string, string>,
-  workbook: XLSX.WorkBook
+  workbook: ExcelJS.Workbook
 ) {
   console.log("Seeding users...");
   const pw = await hash(DEFAULT_PASSWORD, 12);
@@ -1508,7 +1515,8 @@ async function main() {
 
   // Load Excel workbook
   const filePath = path.join(process.cwd(), "docs/Employee_View_Sentence_Case.xlsx");
-  const workbook = XLSX.readFile(filePath);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
 
   // 5. Departments (depends on org)
   const departmentMap = await seedDepartments(org.id, workbook);

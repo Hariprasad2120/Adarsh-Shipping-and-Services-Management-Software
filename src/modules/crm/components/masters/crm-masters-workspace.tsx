@@ -13,8 +13,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
 import { getAllItems } from "@/lib/items/item-store";
+import {
+  downloadWorkbookFromRows,
+  getFirstWorksheet,
+  loadWorkbook,
+  matrixFromWorksheet,
+  parseCsvMatrix,
+} from "@/lib/spreadsheet";
 import { cn } from "@/lib/utils";
 import {
   CrmButton,
@@ -438,19 +444,18 @@ function buildInitialMapping(headings: readonly string[], sourceHeaders: string[
 }
 
 async function parseSpreadsheet(file: File) {
-  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-  const firstSheetName = workbook.SheetNames[0];
+  const grid = file.name.toLowerCase().endsWith(".csv")
+    ? parseCsvMatrix(await file.text())
+    : await (async () => {
+        const workbook = await loadWorkbook(await file.arrayBuffer());
+        const sheet = getFirstWorksheet(workbook);
 
-  if (!firstSheetName) {
-    throw new Error("The uploaded workbook does not contain any sheets.");
-  }
+        if (!sheet) {
+          throw new Error("The uploaded workbook does not contain any sheets.");
+        }
 
-  const sheet = workbook.Sheets[firstSheetName];
-  const grid = XLSX.utils.sheet_to_json<(string | number | boolean | null)[]>(sheet, {
-    header: 1,
-    blankrows: false,
-    defval: "",
-  });
+        return matrixFromWorksheet(sheet);
+      })();
 
   if (grid.length === 0) {
     throw new Error("The uploaded workbook is empty.");
@@ -478,20 +483,13 @@ async function parseSpreadsheet(file: File) {
   return { fileName: file.name, rows, sourceHeaders };
 }
 
-function downloadWorkbook(
+async function downloadWorkbook(
   fileName: string,
   headings: readonly string[],
   rows: MasterRecord[],
   sheetName: string,
 ) {
-  const sheetData = [
-    [...headings],
-    ...rows.map((row) => headings.map((heading) => row[heading] ?? "")),
-  ];
-  const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.slice(0, 31));
-  XLSX.writeFile(workbook, fileName);
+  await downloadWorkbookFromRows(fileName, sheetName, headings, rows);
 }
 
 export function CrmMastersWorkspace() {
@@ -819,24 +817,26 @@ export function CrmMastersWorkspace() {
 
   const downloadTemplate = React.useCallback(() => {
     if (!activeStructuredTab) return;
-    downloadWorkbook(
+    void downloadWorkbook(
       `${activeStructuredTab.fileStem}-template.xlsx`,
       activeStructuredTab.headings,
       [],
       activeStructuredTab.label,
-    );
-    toast.success(`${activeStructuredTab.label} template downloaded.`);
+    )
+      .then(() => toast.success(`${activeStructuredTab.label} template downloaded.`))
+      .catch(() => toast.error("Failed to create workbook."));
   }, [activeStructuredTab]);
 
   const exportRecords = React.useCallback(() => {
     if (!activeStructuredTab) return;
-    downloadWorkbook(
+    void downloadWorkbook(
       `${activeStructuredTab.fileStem}-export.xlsx`,
       activeStructuredTab.headings,
       masterRecords[activeStructuredTab.id] ?? [],
       activeStructuredTab.label,
-    );
-    toast.success(`${activeStructuredTab.label} export downloaded.`);
+    )
+      .then(() => toast.success(`${activeStructuredTab.label} export downloaded.`))
+      .catch(() => toast.error("Failed to create workbook."));
   }, [activeStructuredTab, masterRecords]);
 
   const currentRecords =
@@ -1035,7 +1035,7 @@ export function CrmMastersWorkspace() {
                 <CrmInput
                   ref={uploadInputRef}
                   type="file"
-                  accept=".xlsx,.xls,.csv"
+                  accept=".xlsx,.csv"
                   hidden
                   onChange={handleUploadFileChange}
                 />
