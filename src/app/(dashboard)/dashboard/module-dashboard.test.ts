@@ -37,94 +37,58 @@ describe("module-aware main dashboard", () => {
     expect(portalSource).toContain('module.id === "attendance"');
   });
 
-  it("uses graphical alternating module cards without uneven grid spans", () => {
-    const styles = readSource("src/app/globals.css");
+  it("renders a compact module launcher without illustrated graphics", () => {
     const moduleCards = readSource(
       "src/app/(dashboard)/dashboard/_components/module-command-center.tsx",
     );
 
-    expect(styles).toContain("repeat(12, minmax(0, 1fr))");
-    expect(styles).toContain("grid-column: span 6");
-    expect(styles).toContain(
-      "grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)",
-    );
-    expect(styles).not.toContain(
-      ".mnx-module-command {\n  min-width: 0;\n  padding:",
-    );
-    expect(styles).toContain(".mnx-module-card-art::after");
-    expect(styles).toContain("circle at -16% -16%");
-    expect(styles).toContain("circle at 116% 116%");
-    expect(styles).toContain("border-radius: var(--mn-radius-feature)");
-    expect(styles).toContain("box-shadow: var(--mn-shadow-panel)");
-    expect(styles).not.toContain(".mnx-module-card:nth-child(5n + 1)");
-    expect(styles).not.toContain("module-backgrounds");
-    expect(styles).toContain(".mnx-module-graphic");
-    expect(styles).toContain(".mnx-module-graphic-accent");
-    expect(styles).toContain(
-      '.mnx-module-card[data-visual="attendance"] .mnx-module-graphic',
-    );
-    expect(styles).toContain("@keyframes mnx-module-graphic-float");
-    expect(styles).toContain("@keyframes mnx-module-clock-hand");
-    expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
-    expect(styles).toContain(".mnx-module-card:hover");
-    expect(styles).toContain("box-shadow: var(--mnx-theme-shadow)");
-    expect(styles).toContain(
-      "transform var(--mn-motion-panel) var(--mnx-hover-ease)",
-    );
-    expect(styles).toContain(".mnx-module-card:focus-visible");
-    expect(moduleCards).toContain("MODULE_LAYOUT_SEQUENCE");
-    expect(moduleCards).toContain("function ModuleGraphic");
-    expect(moduleCards).toContain("getModuleLayout(module.id, index)");
-    expect(moduleCards).toContain("const visual = getModuleVisual(module.id)");
+    // The redesigned launcher is a compact list — no per-module SVG art,
+    // no alternating image-left/image-right layout sequence.
+    expect(moduleCards).not.toContain("ModuleGraphic");
+    expect(moduleCards).not.toContain("MODULE_LAYOUT_SEQUENCE");
+    expect(moduleCards).not.toContain("dashboard/graphics/");
+    expect(moduleCards).not.toContain('.padStart(2, "0")');
+    expect(moduleCards).toContain("mnx-module-card-compact");
     expect(moduleCards).toContain("href={module.href}");
-    expect(moduleCards).toContain("<ModuleGraphic visual={visual} />");
-    expect(moduleCards).not.toContain("<span />");
-    expect(moduleCards).not.toContain('<Link className="mnx-module-open-link"');
-    expect(moduleCards).not.toContain("mnx-module-health");
-    expect(styles).not.toContain(".mnx-module-health");
-    expect(moduleCards).toContain("data-layout={layout}");
-    expect(moduleCards).toContain("data-visual={visual}");
   });
 
-  it("renders the protected dashboard through shared production components", () => {
+  it("opens the dashboard with an operations bar, not a greeting hero", () => {
     const portalSource = readSource(
       "src/app/(dashboard)/dashboard/portal-client.tsx",
     );
-    const attendanceSource = readSource(
-      "src/app/(dashboard)/dashboard/_components/attendance-command.tsx",
+    const opsBarSource = readSource(
+      "src/app/(dashboard)/dashboard/_components/operations-bar.tsx",
     );
     const overviewSource = readSource(
       "src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx",
     );
-    const teamSource = readSource(
-      "src/app/(dashboard)/dashboard/_components/dashboard-team.tsx",
-    );
-    const organizationSource = readSource(
-      "src/app/(dashboard)/dashboard/_components/dashboard-organization.tsx",
-    );
     const styles = readSource("src/app/globals.css");
 
-    expect(portalSource).toContain("<MonolithPage>");
-    expect(portalSource).not.toContain('<div className="mnx-dashboard-page">');
-    expect(attendanceSource).toContain("<Button");
-    expect(attendanceSource).toContain("<Badge");
-    expect(overviewSource).toContain("<DashboardInsightGrid>");
+    // Ops bar replaced the attendance panel: no clock face, celebration,
+    // "today's guide", avatar, or "Welcome back".
+    expect(portalSource).toContain("<OperationsBar");
+    expect(portalSource).not.toContain("AttendanceCommand");
+    expect(portalSource).toContain("<Tabs");
+    expect(opsBarSource).not.toContain("Welcome back");
+    expect(opsBarSource).not.toContain("celebrat");
+    expect(opsBarSource).not.toContain("mnx-celebration");
+    expect(opsBarSource).toContain("mnx-dash2-att");
+
+    // Overview leads with the attention queue and its severity rail; the
+    // analytics grid is no longer the first actionable surface.
     expect(overviewSource).toContain("commandCenterSnapshot");
+    expect(overviewSource).toContain("mnx-dash2-queue-row");
+    expect(overviewSource).toContain("data-severity={item.severity}");
+    expect(overviewSource).not.toContain("DashboardInsightGrid");
     expect(overviewSource).not.toContain("buildWeeklySchedule");
-    expect(teamSource).toContain("<WorkspaceSectionHeading");
-    expect(teamSource).toContain(
-      'className="mnx-dashboard-metrics mnx-team-metrics"',
-    );
-    expect(teamSource).not.toContain("mnx-summary-stat");
-    expect(teamSource).toContain("<Button");
-    expect(organizationSource).toContain("<WorkspaceSectionHeading");
-    expect(organizationSource).toContain(
-      'className="mnx-dashboard-metrics mnx-org-metrics"',
-    );
-    expect(organizationSource).not.toContain("mnx-org-stat-grid");
-    expect(styles).toContain(
-      "grid-template-columns: repeat(8, minmax(0, 1fr))",
-    );
+    expect(overviewSource).not.toContain('.padStart(2, "0")');
+
+    // Severity rail + tabular counts are defined against --mn-* tokens.
+    expect(styles).toContain(".mnx-dash2-queue-row");
+    expect(styles).toContain('.mnx-dash2-queue-row[data-severity="critical"]');
+    expect(styles).toContain("--rail: var(--mn-sem-danger)");
+    expect(styles).toContain("--rail-wash: var(--mn-tint-danger)");
+    expect(styles).toContain("font-variant-numeric: tabular-nums");
   });
 
   it("maps dashboard aliases to centralized semantic theme tokens", () => {

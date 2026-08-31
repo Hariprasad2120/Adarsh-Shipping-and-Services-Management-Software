@@ -1,22 +1,9 @@
-import {
-  ArrowUpRight,
-  BellRing,
-  CalendarDays,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowUpRight, Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import {
-  MonolithEmptyState,
-  MonolithSpecLabel,
-} from "@/components/ui/foundation";
-import { Badge } from "@/components/ui/badge";
-import {
-  DashboardInsightCard,
-  DashboardInsightGrid,
-  DashboardMiniBarChart,
-  DashboardSegmentList,
-} from "@/components/data-display/dashboard-insights";
-import { WorkspaceSectionHeading } from "@/components/layout/workspace";
+  WorkspaceEmptyTableRow,
+  WorkspaceTable,
+} from "@/components/layout/workspace";
 import type {
   DashboardCommandCenterSnapshot,
   DashboardModuleSnapshot,
@@ -33,12 +20,24 @@ interface DashboardOverviewProps {
   commandCenterSnapshot: DashboardCommandCenterSnapshot;
 }
 
+const SEVERITY_ORDER = { critical: 0, warning: 1, info: 2 } as const;
+
 function formatDate(value: Date | string, options?: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("en-IN", options ?? {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    options ?? { day: "2-digit", month: "short" },
+  ).format(new Date(value));
+}
+
+function relativeTime(value: Date | string) {
+  const diffMs = Date.now() - new Date(value).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  return `${days}d ago`;
 }
 
 export function DashboardOverview({
@@ -46,403 +45,186 @@ export function DashboardOverview({
   moduleSnapshot,
   commandCenterSnapshot,
 }: DashboardOverviewProps) {
-  const nextAnnouncement = data.announcements[0];
-  const nextTask = data.recentTasks[0];
+  const attention = [...commandCenterSnapshot.attentionItems].sort(
+    (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity],
+  );
+  const visibleAttention = attention.slice(0, 6);
+  const recentActivity = commandCenterSnapshot.recentActivity.slice(0, 6);
   const nextHoliday = data.upcomingHolidays[0];
-  const commandLinks = moduleSnapshot.modules
+  const nextAnnouncement = data.announcements[0];
+
+  const quickLinks = moduleSnapshot.modules
     .flatMap((module) =>
       module.actions.slice(0, 1).map((action) => ({
         href: action.href,
         label: action.label,
-        moduleTitle: module.title,
       })),
     )
-    .slice(0, 6);
-  const attentionItems = commandCenterSnapshot.attentionItems;
-  const recentActivity = commandCenterSnapshot.recentActivity;
+    .slice(0, 4);
 
-  const metrics = [
-    {
-      label: "Announcements",
-      value: data.announcements.length,
-      note: nextAnnouncement?.title || "No new broadcast",
-      hue: "primary",
-    },
-    {
-      label: "Pending tasks",
-      value: data.recentTasks.length,
-      note: nextTask?.title || "Your queue is clear",
-      hue: data.recentTasks.length > 0 ? "warning" : "success",
-    },
+  const todayRows = [
+    { label: "Deadlines this week", value: data.recentTasks.length },
     {
       label: "Upcoming holidays",
       value: data.upcomingHolidays.length,
-      note: nextHoliday?.name || "Nothing scheduled",
-      hue: "violet",
     },
-  ] as const;
+    {
+      label: "Announcements",
+      value: data.announcements.length,
+    },
+  ].filter((row) => row.value > 0);
 
   return (
-    <div className="mnx-dashboard-overview">
-      <section
-        className="mnx-dashboard-metrics mnx-dashboard-metrics-inline"
-        aria-label="Workspace summary metrics"
-        data-workpet-target="dashboard-summary-metrics"
-      >
-        {metrics.map((metric) => (
-          <article className="mnx-metric-card" key={metric.label} data-hue={metric.hue}>
-            <header>
-              <span>{metric.label}</span>
-            </header>
-            <strong>{String(metric.value).padStart(2, "0")}</strong>
-            <p>{metric.note}</p>
-          </article>
-        ))}
-      </section>
+    <div className="mnx-dash2">
+      {/* P0 — attention queue: the one question this page answers */}
+      <section aria-label="Items that need your attention">
+        <p className="mnx-dash2-label">
+          Needs you
+          {visibleAttention.length > 0 ? <b>{attention.length}</b> : null}
+        </p>
 
-      <WorkspaceSectionHeading
-        index={(
-          <span className="mnx-section-heading-marker" aria-hidden="true">
-            &rsaquo;
-          </span>
-        )}
-        title="Operations hub"
-        description="Company signals, assigned work, weekly rhythm, and your quick launcher into active modules."
-      />
-
-      <div className="mnx-dashboard-main-hub" data-workpet-target="dashboard-operations-hub">
-        <div className="mnx-hub-primary">
-          <section className="mnx-feed-panel" data-hue="primary">
-            <header className="mnx-panel-heading">
-              <div>
-                <MonolithSpecLabel>MY COMMAND FEED</MonolithSpecLabel>
-                <h2>A clear start to the day</h2>
-              </div>
-            </header>
-
-            <div className="mnx-feed-cards">
-              <div className="mnx-dashboard-card-section">
-                <WorkspaceSectionHeading
-                  className="mnx-dashboard-card-heading"
-                  index={(
-                    <span className="mnx-section-heading-marker" aria-hidden="true">
-                      &rsaquo;
-                    </span>
-                  )}
-                  title="Latest announcement"
-                />
-                <div className="mnx-dashboard-announcement-shadow">
-                  {nextAnnouncement ? (
-                    <>
-                      <h3>{nextAnnouncement.title}</h3>
-                      <p>{nextAnnouncement.body}</p>
-                      <small>Published {formatDate(nextAnnouncement.createdAt)}</small>
-                    </>
-                  ) : (
-                    <div className="mnx-empty-compact">
-                      <CheckCircle2 size={20} />
-                      <p>No new company announcements are waiting.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mnx-dashboard-card-section">
-                <WorkspaceSectionHeading
-                  className="mnx-dashboard-card-heading"
-                  index={(
-                    <span className="mnx-section-heading-marker" aria-hidden="true">
-                      &rsaquo;
-                    </span>
-                  )}
-                  title="Priority focus"
-                />
-                <div className="mnx-dashboard-announcement-shadow">
-                  {nextTask ? (
-                    <>
-                      <h3>{nextTask.title}</h3>
-                      <p>Due {formatDate(nextTask.dueDate)}</p>
-                      <Badge className={`mnx-priority-${nextTask.priority.toLowerCase()}`}>
-                        <i />
-                        {nextTask.priority} priority
-                      </Badge>
-                    </>
-                  ) : (
-                    <div className="mnx-empty-compact">
-                      <CheckCircle2 size={20} />
-                      <p>You are fully caught up for now.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <div className="mnx-dashboard-card-section">
-            <WorkspaceSectionHeading
-              className="mnx-dashboard-card-heading"
-              index={(
-                <span className="mnx-section-heading-marker" aria-hidden="true">
-                  &rsaquo;
-                </span>
-              )}
-              title="Task pipeline"
-              actions={<span className="mnx-count-pill">{data.recentTasks.length} active</span>}
-            />
-
-            <section>
-              {data.recentTasks.length > 0 ? (
-                <div className="mnx-task-list">
-                  {data.recentTasks.slice(0, 5).map((task) => (
-                    <article key={task.id}>
-                      <span className="mnx-task-check" aria-hidden="true" />
-                      <div>
-                        <h3>{task.title}</h3>
-                        <p>Due {formatDate(task.dueDate)}</p>
-                      </div>
-                      <Badge className={`mnx-priority-${task.priority.toLowerCase()}`}>
-                        {task.priority}
-                      </Badge>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="mnx-dashboard-announcement-shadow">
-                  <MonolithEmptyState>
-                    <CheckCircle2 size={24} />
-                    <h3>The board is clear</h3>
-                    <p>No pending tasks require your attention.</p>
-                  </MonolithEmptyState>
-                </div>
-              )}
-
-              <Link className="mnx-text-link" href="/todo">
-                Open task workspace <ArrowUpRight size={14} />
-              </Link>
-            </section>
-          </div>
-
-          <section className="mnx-table-card">
-            <header className="mnx-panel-heading">
-              <div>
-                <MonolithSpecLabel>RECENT ACTIVITY</MonolithSpecLabel>
-                <h2>Latest operational movement</h2>
-              </div>
-            </header>
-
-            {recentActivity.length > 0 ? (
-              <div className="mnx-table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Update</th>
-                      <th>Source</th>
-                      <th>When</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentActivity.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <b className="mnx-table-primary">
-                            {item.href ? <Link href={item.href}>{item.title}</Link> : item.title}
-                          </b>
-                          <small>{item.detail}</small>
-                        </td>
-                        <td>{item.source}</td>
-                        <td>{formatDate(item.occurredAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <MonolithEmptyState className="mnx-table-empty">
-                <BellRing size={24} />
-                <h3>No recent activity</h3>
-                <p>Announcements, notifications, and workflow changes will appear here.</p>
-              </MonolithEmptyState>
-            )}
-          </section>
-        </div>
-
-        <aside className="mnx-hub-secondary">
-          <section
-            className="mnx-dashboard-brief-panel"
-            data-hue={
-              attentionItems.some((item) => item.severity === "critical")
-                ? "danger"
-                : "warning"
-            }
-            data-workpet-target="dashboard-exceptions"
-          >
-            <header className="mnx-panel-heading">
-              <div>
-                <MonolithSpecLabel>EXCEPTIONS</MonolithSpecLabel>
-                <h2>Needs attention</h2>
-              </div>
-            </header>
-            {attentionItems.length > 0 ? (
-              <div className="mnx-card-list">
-                {attentionItems.slice(0, 4).map((item) => (
-                  <Link className="mnx-inset-card" href={item.href} key={item.id}>
-                    <header>
-                      <span>{item.source}</span>
-                      <Badge
-                        className={
-                          item.severity === "critical"
-                            ? "mnx-badge-danger"
-                            : item.severity === "warning"
-                              ? "mnx-badge-warning"
-                              : "mnx-badge-neutral"
-                        }
-                      >
-                        <i />
-                        {item.severity}
-                      </Badge>
-                    </header>
+        {visibleAttention.length > 0 ? (
+          <>
+            <div className="mnx-dash2-queue">
+              {visibleAttention.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="mnx-dash2-queue-row"
+                  data-severity={item.severity}
+                >
+                  <span className="mnx-dash2-queue-src">{item.source}</span>
+                  <span className="mnx-dash2-queue-body">
                     <h3>{item.title}</h3>
                     <p>{item.detail}</p>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <MonolithEmptyState>
-                <CheckCircle2 size={24} />
-                <h3>Everything under control</h3>
-                <p>No urgent exceptions waiting.</p>
-              </MonolithEmptyState>
-            )}
-          </section>
-
-          <section className="mnx-dashboard-brief-panel" data-hue="info" data-workpet-target="dashboard-quick-launch">
-            <header className="mnx-panel-heading">
-              <div>
-                <MonolithSpecLabel>QUICK LAUNCH</MonolithSpecLabel>
-                <h2>Shortcut routes</h2>
-              </div>
-            </header>
-            <div className="mnx-dashboard-launch-list">
-              {commandLinks.map((link) => (
-                <Link className="mnx-dashboard-launch-link" href={link.href} key={`hub-launch-${link.moduleTitle}-${link.href}`}>
-                  <span>
-                    <b>{link.label}</b>
-                    <small>{link.moduleTitle}</small>
                   </span>
-                  <ArrowUpRight size={14} />
+                  <span className="mnx-dash2-queue-actions">
+                    <ChevronRight
+                      size={16}
+                      className="mnx-dash2-queue-chev"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </Link>
               ))}
             </div>
-          </section>
-
-          <section className="mnx-holiday-panel" data-hue="violet">
-            <header className="mnx-panel-heading">
-              <div>
-                <MonolithSpecLabel>COMPANY CALENDAR</MonolithSpecLabel>
-                <h2>Up next</h2>
+            {attention.length > visibleAttention.length ? (
+              <div className="mnx-dash2-queue-foot">
+                <Link className="mnx-text-link" href="/notifications">
+                  View all {attention.length} <ArrowUpRight size={14} />
+                </Link>
               </div>
-            </header>
+            ) : null}
+          </>
+        ) : (
+          <div className="mnx-dash2-healthy">
+            <Check size={16} aria-hidden="true" />
+            Nothing needs you right now.
+          </div>
+        )}
+      </section>
 
-            {nextHoliday ? (
-              <div className="mnx-holiday-feature">
-                <time dateTime={new Date(nextHoliday.date).toISOString()}>
-                  <strong>{formatDate(nextHoliday.date, { day: "2-digit" })}</strong>
-                  <span>{formatDate(nextHoliday.date, { month: "short" })}</span>
-                </time>
-                <div>
-                  <span>{nextHoliday.holidayType}</span>
-                  <h3>{nextHoliday.name}</h3>
-                  <p>{formatDate(nextHoliday.date, { weekday: "long", day: "2-digit", month: "long" })}</p>
+      {/* P1/P2 — today at a glance + recent movement */}
+      <div className="mnx-dash2-split">
+        <div className="mnx-dash2-panel">
+          <p className="mnx-dash2-label">Recent activity</p>
+          <WorkspaceTable scrollLabel="Recent operational activity">
+            <thead>
+              <tr>
+                <th>Update</th>
+                <th>Source</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentActivity.length > 0 ? (
+                recentActivity.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <b className="mnx-table-primary">
+                        {item.href ? (
+                          <Link href={item.href}>{item.title}</Link>
+                        ) : (
+                          item.title
+                        )}
+                      </b>
+                      <small>{item.detail}</small>
+                    </td>
+                    <td>{item.source}</td>
+                    <td>{relativeTime(item.occurredAt)}</td>
+                  </tr>
+                ))
+              ) : (
+                <WorkspaceEmptyTableRow colSpan={3}>
+                  No activity recorded yet.
+                </WorkspaceEmptyTableRow>
+              )}
+            </tbody>
+          </WorkspaceTable>
+        </div>
+
+        <aside className="mnx-dash2-aside">
+          {todayRows.length > 0 ? (
+            <div className="mnx-dash2-panel">
+              <p className="mnx-dash2-label">Today</p>
+              <div className="mnx-dash2-today-list">
+                {todayRows.map((row) => (
+                  <div className="mnx-dash2-today-item" key={row.label}>
+                    <span>{row.label}</span>
+                    <b>{row.value}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {quickLinks.length > 0 ? (
+            <div className="mnx-dash2-panel">
+              <p className="mnx-dash2-label">Quick actions</p>
+              <div className="mnx-dash2-quick">
+                {quickLinks.map((link) => (
+                  <Link href={link.href} key={link.href}>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {nextAnnouncement || nextHoliday ? (
+            <div className="mnx-dash2-panel">
+              <p className="mnx-dash2-label">Announcements &amp; calendar</p>
+              {nextAnnouncement ? (
+                <div className="mnx-dash2-note">
+                  <h3>{nextAnnouncement.title}</h3>
+                  <p>Published {formatDate(nextAnnouncement.createdAt)}</p>
                 </div>
-              </div>
-            ) : (
-              <MonolithEmptyState>
-                <CalendarDays size={24} />
-                <h3>No holiday scheduled</h3>
-                <p>The company calendar has no upcoming entry.</p>
-              </MonolithEmptyState>
-            )}
-          </section>
+              ) : null}
+              {nextHoliday ? (
+                <div className="mnx-dash2-note mnx-dash2-cal">
+                  <time dateTime={new Date(nextHoliday.date).toISOString()}>
+                    <strong>{formatDate(nextHoliday.date, { day: "2-digit" })}</strong>
+                    <span>{formatDate(nextHoliday.date, { month: "short" })}</span>
+                  </time>
+                  <div>
+                    <h3>{nextHoliday.name}</h3>
+                    <p>
+                      {formatDate(nextHoliday.date, {
+                        weekday: "long",
+                        day: "2-digit",
+                        month: "long",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </aside>
       </div>
 
-      <WorkspaceSectionHeading
-        index={(
-          <span className="mnx-section-heading-marker" aria-hidden="true">
-            &rsaquo;
-          </span>
-        )}
-        title="Analytics & Workflows"
-        description="Live module metrics, AMS appraisal pipeline distribution, and attendance signal analysis."
-      />
-
-      <div data-workpet-target="dashboard-analytics-workflows">
-      <DashboardInsightGrid>
-        <DashboardInsightCard
-          eyebrow="Organization pulse"
-          title="Role-visible live module metrics"
-          detail="This strip reuses the permission-aware module snapshot so the dashboard only summarizes workspaces your role can actually open."
-          chart={(
-            <DashboardMiniBarChart
-              items={commandCenterSnapshot.pulseMetrics.map((metric) => ({
-                label: metric.label,
-                value: metric.value,
-                tone: "info",
-              }))}
-            />
-          )}
-          footer={(
-            <div className="mnx-dashboard-segments-list">
-              {commandCenterSnapshot.pulseMetrics.slice(0, 4).map((metric) => (
-                <div key={metric.id}>
-                  <b>{metric.label}</b>
-                  <strong>{metric.value}</strong>
-                </div>
-              ))}
-            </div>
-          )}
-        />
-        <DashboardInsightCard
-          eyebrow="Appraisal pipeline"
-          title="Current AMS stage distribution"
-          detail="These counts come from the live appraisal workflow stages, making it easier to spot where review work is accumulating."
-          chart={(
-            <DashboardSegmentList
-              items={commandCenterSnapshot.appraisalStages.map((stage) => ({
-                label: stage.label,
-                value: stage.value,
-                tone: stage.value > 0 ? "accent" : "neutral",
-              }))}
-            />
-          )}
-          footer={(
-            <Link className="mnx-text-link" href="/ams/appraisals">
-              View appraisal workspace <ArrowUpRight size={14} />
-            </Link>
-          )}
-        />
-        <DashboardInsightCard
-          eyebrow="Attendance pulse"
-          title="Today's attendance and queue signals"
-          detail="This summarizes active attendance movement, leave queue pressure, and the next calendar marker."
-          chart={(
-            <DashboardMiniBarChart
-              items={commandCenterSnapshot.attendanceSignals.map((signal) => ({
-                label: signal.label,
-                value: signal.value,
-                tone: signal.id === "leave-pending" ? "warning" : "success",
-              }))}
-            />
-          )}
-          footer={(
-            <Link className="mnx-text-link" href="/attendance">
-              Open attendance workspace <ArrowUpRight size={14} />
-            </Link>
-          )}
-        />
-      </DashboardInsightGrid>
-      </div>
-
+      {/* P3 — module launcher, compact, no illustrated graphics */}
       <ModuleCommandCenter snapshot={moduleSnapshot} />
     </div>
   );

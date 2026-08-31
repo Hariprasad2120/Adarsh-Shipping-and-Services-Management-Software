@@ -2,7 +2,6 @@
 @import "../../frappe_docker/design/frappe-ui-design-system.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "../styles/dashboard-redesign.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -21815,6 +21814,452 @@ hr,
   width: 1.375rem;
   height: 1.375rem;
 }
+
+/* =========================================================================
+ * Dashboard "My space" — 2026 redesign (namespace: mnx-dash2-*)
+ *
+ * Answers one question above the fold: "What needs me now, and what next?"
+ * Ops bar (date + attendance chip + primary action) -> attention queue with a
+ * severity rail -> compact today/activity split -> quick actions + calendar.
+ * All colour/space/type from --mn-* tokens; no raw hex, no route-local fonts.
+ * Old .mnx-dashboard-* / .mnx-attendance-* rules stay for the Team /
+ * Organization tabs and /hrms until those surfaces migrate.
+ * ===================================================================== */
+
+.mnx-dash2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mn-layout-workspace-stack-gap);
+}
+
+/* --- Ops bar ----------------------------------------------------------- */
+.mnx-dash2-opsbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+  flex-wrap: wrap;
+  padding-bottom: var(--mn-space-3);
+  border-bottom: 1px solid var(--mn-color-border-subtle, var(--mn-color-border));
+}
+
+.mnx-dash2-opsbar h1 {
+  margin: 0;
+  font-size: var(--mn-type-heading-size);
+  line-height: var(--mn-type-heading-line);
+  letter-spacing: var(--mn-type-heading-tracking);
+  font-weight: var(--mn-type-heading-weight);
+  color: var(--mn-color-text-strong);
+}
+
+.mnx-dash2-opsbar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+  flex-wrap: wrap;
+}
+
+/* Attendance: a compact chip, never a panel. */
+.mnx-dash2-att {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-2) var(--mn-space-3);
+  border: 1px solid var(--mn-color-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mn-color-surface);
+  font-size: var(--mn-type-control-size);
+  color: var(--mn-color-text);
+}
+
+.mnx-dash2-att-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-att[data-state="checked_in"] .mnx-dash2-att-dot { background: var(--mn-sem-success); }
+.mnx-dash2-att[data-state="on_break"] .mnx-dash2-att-dot { background: var(--mn-sem-warning); }
+.mnx-dash2-att[data-state="checked_out"] .mnx-dash2-att-dot { background: var(--mn-sem-primary); }
+
+.mnx-dash2-att-status {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mnx-dash2-att-timer {
+  font-family: var(--mn-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--mn-color-text-strong);
+}
+
+/* --- Section label (shared by queue / today / activity) -------------- */
+.mnx-dash2-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mn-space-2);
+  margin: 0 0 var(--mn-space-3);
+  font-size: var(--mn-type-label-size);
+  line-height: var(--mn-type-label-line);
+  letter-spacing: var(--mn-type-label-tracking);
+  font-weight: var(--mn-type-label-weight);
+  text-transform: uppercase;
+  color: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-label b {
+  font-variant-numeric: tabular-nums;
+  color: var(--mn-color-text);
+}
+
+/* --- Attention queue (the hero) ------------------------------------- */
+.mnx-dash2-queue {
+  display: flex;
+  flex-direction: column;
+}
+
+.mnx-dash2-queue-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--mn-space-3) var(--mn-space-4);
+  padding: var(--mn-space-3) var(--mn-space-4);
+  /* The signature: a severity rail. Red-heavy at the top of the list. */
+  border-left: 4px solid var(--rail, var(--mn-color-border));
+  border-bottom: 1px solid var(--mn-color-border-subtle, var(--mn-color-border));
+  background: var(--rail-wash, var(--mn-color-surface));
+  color: var(--mn-color-text);
+  text-decoration: none;
+  transition: background var(--mn-motion-fast) var(--mn-ease-standard);
+}
+
+.mnx-dash2-queue-row:first-child {
+  border-top-right-radius: var(--mn-radius-panel);
+}
+.mnx-dash2-queue-row:last-child {
+  border-bottom-right-radius: var(--mn-radius-panel);
+}
+
+a.mnx-dash2-queue-row:hover {
+  background: var(--mn-color-surface-hover, var(--mn-color-surface-soft));
+}
+
+a.mnx-dash2-queue-row:focus-visible {
+  outline: 2px solid var(--mn-sem-primary);
+  outline-offset: -2px;
+}
+
+.mnx-dash2-queue-row[data-severity="critical"] {
+  --rail: var(--mn-sem-danger);
+  --rail-wash: var(--mn-tint-danger);
+}
+.mnx-dash2-queue-row[data-severity="warning"] {
+  --rail: var(--mn-sem-warning);
+  --rail-wash: var(--mn-tint-warning);
+}
+.mnx-dash2-queue-row[data-severity="info"] { --rail: var(--mn-sem-primary); }
+
+.mnx-dash2-queue-src {
+  font-size: var(--mn-type-helper-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mn-color-text-muted);
+  white-space: nowrap;
+}
+
+.mnx-dash2-queue-body { min-width: 0; }
+
+.mnx-dash2-queue-body h3 {
+  margin: 0;
+  font-size: var(--mn-type-body-size);
+  line-height: 1.3;
+  font-weight: 500;
+  color: var(--mn-color-text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-dash2-queue-body p {
+  margin: 2px 0 0;
+  font-size: var(--mn-type-helper-size);
+  color: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-queue-body em {
+  font-style: normal;
+  color: var(--mn-sem-danger);
+}
+
+.mnx-dash2-queue-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-dash2-queue-chev {
+  color: var(--mn-color-text-muted);
+  display: inline-flex;
+}
+
+.mnx-dash2-queue-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--mn-space-2) 0 0;
+}
+
+/* Healthy state: one quiet line, no reserved real estate. */
+.mnx-dash2-healthy {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-3) var(--mn-space-4);
+  border-left: 3px solid var(--mn-sem-success);
+  border-radius: 0 var(--mn-radius-panel) var(--mn-radius-panel) 0;
+  background: var(--mn-color-surface);
+  font-size: var(--mn-type-control-size);
+  color: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-healthy svg { color: var(--mn-sem-success); flex: 0 0 auto; }
+
+/* --- Today / Activity split (asymmetric 3fr / 2fr) ----------------- */
+.mnx-dash2-split {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--mn-layout-workspace-stack-gap);
+  align-items: start;
+}
+
+.mnx-dash2-panel {
+  border: 1px solid var(--mn-color-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mn-color-surface);
+  padding: var(--mn-space-4);
+}
+
+/* Today: compact metric rows, one number each, no card-per-metric. */
+.mnx-dash2-today-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mnx-dash2-today-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-3) 0;
+  border-bottom: 1px solid var(--mn-color-border-subtle, var(--mn-color-border));
+}
+.mnx-dash2-today-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.mnx-dash2-today-item:first-child { padding-top: 0; }
+
+.mnx-dash2-today-item span {
+  font-size: var(--mn-type-control-size);
+  color: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-today-item b {
+  font-family: var(--mn-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--mn-font-size-xl);
+  font-weight: var(--mn-type-numeric-weight);
+  letter-spacing: var(--mn-type-numeric-tracking);
+  color: var(--mn-color-text-strong);
+}
+
+/* --- Quick actions: compact icon row ----------------------------- */
+.mnx-dash2-quick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--mn-space-3);
+}
+
+.mnx-dash2-quick a {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-3);
+  border: 1px solid var(--mn-color-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mn-color-surface);
+  font-size: var(--mn-type-control-size);
+  font-weight: 500;
+  color: var(--mn-color-text);
+  text-decoration: none;
+  transition: background var(--mn-motion-fast) var(--mn-ease-standard),
+    border-color var(--mn-motion-fast) var(--mn-ease-standard);
+}
+
+.mnx-dash2-quick a:hover {
+  background: var(--mn-color-surface-hover, var(--mn-color-surface-soft));
+  border-color: var(--mn-color-border-strong, var(--mn-color-border));
+}
+
+.mnx-dash2-quick a:focus-visible {
+  outline: 2px solid var(--mn-sem-primary);
+  outline-offset: 1px;
+}
+
+.mnx-dash2-quick svg { color: var(--mn-color-text-muted); flex: 0 0 auto; }
+
+/* --- Announcements + calendar (quiet, P3) ----------------------- */
+.mnx-dash2-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mn-space-4);
+}
+
+.mnx-dash2-note h3 {
+  margin: 0 0 2px;
+  font-size: var(--mn-type-body-size);
+  font-weight: 500;
+  color: var(--mn-color-text-strong);
+}
+
+.mnx-dash2-note p {
+  margin: 0;
+  font-size: var(--mn-type-helper-size);
+  color: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-note + .mnx-dash2-note {
+  margin-top: var(--mn-space-3);
+  padding-top: var(--mn-space-3);
+  border-top: 1px solid var(--mn-color-border-subtle, var(--mn-color-border));
+}
+
+.mnx-dash2-cal {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+}
+
+.mnx-dash2-cal time {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 3rem;
+  padding: var(--mn-space-2) 0;
+  border: 1px solid var(--mn-color-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mn-tint-orange);
+  line-height: 1.1;
+}
+.mnx-dash2-cal time strong {
+  font-size: var(--mn-font-size-lg);
+  font-weight: var(--mn-type-numeric-weight);
+  color: var(--mn-sem-orange);
+}
+.mnx-dash2-cal time span {
+  font-size: var(--mn-type-helper-size);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mn-sem-orange);
+}
+
+.mnx-dash2-cal h3 {
+  margin: 0;
+  font-size: var(--mn-type-body-size);
+  font-weight: 500;
+  color: var(--mn-color-text-strong);
+}
+.mnx-dash2-cal p {
+  margin: 2px 0 0;
+  font-size: var(--mn-type-helper-size);
+  color: var(--mn-color-text-muted);
+}
+
+/* --- Responsive ------------------------------------------------- */
+@media (max-width: 1024px) {
+  .mnx-dash2-split { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .mnx-dash2-opsbar { align-items: flex-start; }
+  .mnx-dash2-queue-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "src actions"
+      "body body";
+  }
+  .mnx-dash2-queue-src { grid-area: src; }
+  .mnx-dash2-queue-actions { grid-area: actions; }
+  .mnx-dash2-queue-body { grid-area: body; }
+  .mnx-dash2-queue-body h3 { white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-dash2-queue-row,
+  .mnx-dash2-quick a { transition: none; }
+}
+
+/* --- Compact tab strip (override the app-wide big-card .mnx-tabs) --- */
+.mnx-tabs.mnx-dash2-tabs {
+  display: inline-flex;
+  width: auto;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-1);
+  background: var(--mn-color-surface-soft);
+  box-shadow: none;
+}
+
+.mnx-tabs.mnx-dash2-tabs :where(button, [role="tab"]) {
+  width: auto;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-2) var(--mn-space-3);
+  border-radius: var(--mn-radius-control);
+  font-size: var(--mn-type-control-size);
+  font-weight: 500;
+  background: transparent;
+}
+
+.mnx-tabs.mnx-dash2-tabs :where(.is-active, [aria-selected="true"]) {
+  background: var(--mn-color-surface);
+  border-color: var(--mn-color-border);
+  color: var(--mn-color-text-strong);
+}
+
+.mnx-tabs.mnx-dash2-tabs svg { flex: 0 0 auto; }
+
+/* --- Recent-activity table inside a dash2 panel -------------------- */
+.mnx-dash2-panel .mnx-workspace-table td small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--mn-type-helper-size);
+  color: var(--mn-color-text-muted);
+}
+
+.mnx-dash2-panel .mnx-workspace-table {
+  table-layout: fixed !important;
+}
+
+.mnx-dash2-panel .mnx-workspace-table :where(th, td):nth-child(2) {
+  width: 5.5rem !important;
+  color: var(--mn-color-text-muted);
+  font-size: var(--mn-type-helper-size);
+}
+
+.mnx-dash2-panel .mnx-workspace-table :where(th, td):last-child {
+  width: 4.5rem !important;
+  text-align: right;
+  color: var(--mn-color-text-muted);
+  font-size: var(--mn-type-helper-size);
+}
+
+.mnx-dash2-panel .mnx-table-primary {
+  display: block;
+  white-space: normal;
+}
+
 /* ===== END src/styles/monolith-system.css ===== */
 
 /* ===== BEGIN src/styles/modules/communication-admin.css ===== */

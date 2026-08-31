@@ -3,6 +3,7 @@
 import { Building2, Sparkles, Users2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { MonolithPage } from "@/components/ui/foundation";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 import {
   WorkspaceErrorState,
   WorkspaceLoadingState,
@@ -12,7 +13,7 @@ import type {
   DashboardModuleSnapshot,
 } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
-import { AttendanceCommand } from "./_components/attendance-command";
+import { OperationsBar } from "./_components/operations-bar";
 import { DashboardOrganization } from "./_components/dashboard-organization";
 import { DashboardOverview } from "./_components/dashboard-overview";
 import { DashboardTeam } from "./_components/dashboard-team";
@@ -55,30 +56,10 @@ type ApiEnvelope<T> = {
   } | string;
 };
 
-const tabs: {
-  id: DashboardTab;
-  label: string;
-  detail: string;
-  icon: typeof Sparkles;
-}[] = [
-  {
-    id: "myspace",
-    label: "My space",
-    detail: "Your day, tasks, and next signals",
-    icon: Sparkles,
-  },
-  {
-    id: "team",
-    label: "Team",
-    detail: "Reportees and live attendance",
-    icon: Users2,
-  },
-  {
-    id: "organization",
-    label: "Organization",
-    detail: "People, policies, and company news",
-    icon: Building2,
-  },
+const tabs: TabItem[] = [
+  { value: "myspace", label: "My space", icon: <Sparkles size={15} /> },
+  { value: "team", label: "Team", icon: <Users2 size={15} /> },
+  { value: "organization", label: "Organization", icon: <Building2 size={15} /> },
 ];
 
 function toUserProfile(raw: ProfilePayload): UserProfile {
@@ -259,32 +240,18 @@ export function HrmsPortalClient({
 
   return (
     <MonolithPage className="mnx-dashboard-page-shell">
-      <AttendanceCommand
+      <OperationsBar
         profile={profile}
-        moduleSnapshot={moduleSnapshot}
         loading={attendanceLoading}
         onPunchAction={handlePunchAction}
       />
 
-      <nav className="mnx-dashboard-tabs" aria-label="Dashboard workspaces">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            // eslint-disable-next-line no-restricted-syntax -- Dashboard workspace tabs require native button semantics with route-local active-state styling.
-            <button
-              type="button"
-              key={tab.id}
-              className={isActive ? "is-active" : ""}
-              onClick={() => setActiveTab(tab.id)}
-              aria-current={isActive ? "page" : undefined}
-            >
-              <span><Icon size={18} /></span>
-              <span><b>{tab.label}</b><small>{tab.detail}</small></span>
-            </button>
-          );
-        })}
-      </nav>
+      <Tabs
+        className="mnx-dash2-tabs"
+        items={tabs}
+        value={activeTab}
+        onChange={(value) => setActiveTab(value as DashboardTab)}
+      />
 
       <div className="mnx-dashboard-tab-content">
         {activeTab === "myspace" ? (
