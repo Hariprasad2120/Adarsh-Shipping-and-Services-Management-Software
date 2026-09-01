@@ -16,10 +16,16 @@ import {
   rankSearchCommandEntries,
 } from "@/lib/navigation";
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
-import { MonolithAppSidebar } from "@/components/navigation/monolith-app-sidebar";
+import {
+  MonolithAppSidebar,
+  MonolithSidebarFrame,
+  MonolithSidebarMobileTrigger,
+  MonolithSidebarProvider,
+} from "@/components/navigation/monolith-app-sidebar";
+import { MonolithBreadcrumb } from "@/components/navigation/monolith-breadcrumb";
 import { MonolithSearchCommand } from "@/components/navigation/monolith-search-command";
 import { Button } from "@/components/ui/button";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Switch } from "@/components/ui/switch-button";
 import {
   MonaDesktopPet,
   MonaGuidanceOverlay,
@@ -65,16 +71,6 @@ export const monolithThemes: {
 }[] = [
   { id: "light", label: "Light", icon: Sun },
   { id: "dark", label: "Dark", icon: Moon },
-];
-
-export const monolithAccentThemes: {
-  id: MonolithAccent;
-  label: string;
-}[] = [
-  { id: "blue", label: "Blue" },
-  { id: "green", label: "Green" },
-  { id: "amber", label: "Amber" },
-  { id: "violet", label: "Violet" },
 ];
 
 /*
@@ -162,55 +158,25 @@ export function MonolithThemePicker({
   const visibleThemes = allowedThemes
     ? monolithThemes.filter((item) => allowedThemes.includes(item.id))
     : monolithThemes;
+  const canToggle = visibleThemes.some((item) => item.id === "light") &&
+    visibleThemes.some((item) => item.id === "dark");
+  const nextTheme: MonolithTheme = themeContext.theme === "dark" ? "light" : "dark";
+
+  if (!canToggle) return null;
 
   return (
-    <div className="mnx-theme-picker" role="group" aria-label={ariaLabel}>
-      {visibleThemes.map((item) => {
-        const Icon = item.icon;
-        return (
-          // eslint-disable-next-line no-restricted-syntax -- custom segmented theme toggle group remains a shell-specific control.
-          <button
-            type="button"
-            key={item.id}
-            className={themeContext.theme === item.id ? "is-active" : ""}
-            onClick={() => themeContext.selectTheme(item.id)}
-            aria-pressed={themeContext.theme === item.id}
-            title={`${item.label} theme`}
-          >
-            <Icon size={13} />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function MonolithAccentPicker({
-  ariaLabel = "Dashboard accent theme",
-}: {
-  ariaLabel?: string;
-}) {
-  const themeContext = useContext(MonolithThemeContext);
-  if (!themeContext) return null;
-
-  return (
-    <div className="mnx-accent-picker" role="group" aria-label={ariaLabel}>
-      {monolithAccentThemes.map((item) => (
-        // eslint-disable-next-line no-restricted-syntax -- custom segmented accent toggle group remains a shell-specific control.
-        <button
-          type="button"
-          key={item.id}
-          className={themeContext.accent === item.id ? "is-active" : ""}
-          onClick={() => themeContext.selectAccent(item.id)}
-          aria-pressed={themeContext.accent === item.id}
-          title={`${item.label} accent`}
-        >
-          <span className={`mnx-accent-swatch is-${item.id}`} aria-hidden="true" />
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </div>
+    <span className="mnx-theme-toggle-wrap">
+      <Switch
+        className="mnx-theme-toggle"
+        value={themeContext.theme === "dark"}
+        onToggle={() => themeContext.selectTheme(nextTheme)}
+        iconOn={<Moon size={13} />}
+        iconOff={<Sun size={13} />}
+        data-theme-state={themeContext.theme}
+        aria-label={ariaLabel}
+        title={`Switch to ${nextTheme} theme`}
+      />
+    </span>
   );
 }
 
@@ -286,12 +252,7 @@ export function MonolithThemeProvider({
       dashboardShell: root.dataset.dashboardShell,
       dashboardTheme: root.dataset.dashboardTheme,
       themeClasses: [
-        "theme-light",
-        "theme-night",
-        "theme-violet",
         "light",
-        "night",
-        "violet",
         "dark",
       ].filter((className) => root.classList.contains(className)),
     };
@@ -312,12 +273,7 @@ export function MonolithThemeProvider({
       }
 
       root.classList.remove(
-        "theme-light",
-        "theme-night",
-        "theme-violet",
         "light",
-        "night",
-        "violet",
         "dark",
       );
       if (previousState.themeClasses.length > 0) {
@@ -340,22 +296,10 @@ export function MonolithThemeProvider({
     root.dataset.accent = accent;
     applyAccentInlineStyles(root, accent);
     root.classList.remove(
-      "theme-light",
-      "theme-night",
-      "theme-violet",
       "light",
-      "night",
-      "violet",
       "dark",
     );
-    root.classList.add(
-      theme,
-      theme === "light"
-        ? "theme-light"
-        : accent === "violet"
-          ? "theme-violet"
-          : "theme-night",
-    );
+    root.classList.add(theme);
     root.style.colorScheme = theme === "light" ? "light" : "dark";
   }, [accent, dashboardShell, theme]);
 
@@ -414,6 +358,8 @@ function MonolithAppShellBody({
   const { theme } = themeContext;
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const searchEntries = useMemo(
     () => getSearchCommandEntries(caps, enabledModuleIds, enabledFeatureIds),
     [caps, enabledFeatureIds, enabledModuleIds],
@@ -429,6 +375,10 @@ function MonolithAppShellBody({
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearchOpen(true);
+        window.requestAnimationFrame(() => {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        });
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "m") {
         event.preventDefault();
@@ -453,6 +403,19 @@ function MonolithAppShellBody({
   }, []);
 
   useEffect(() => {
+    if (!searchOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!searchRef.current?.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [searchOpen]);
+
+  useEffect(() => {
     markRouteChangeStart();
     if (caps["system.dev_console.access"]) recordRouteLoadPing(pathname);
     dispatchMonaPetRoute({ contextLabel, pathname });
@@ -460,7 +423,7 @@ function MonolithAppShellBody({
   }, [pathname]);
 
   return (
-    <SidebarProvider
+    <MonolithSidebarProvider
       className="mnx-dashboard-shell"
       data-theme={theme}
     >
@@ -474,20 +437,46 @@ function MonolithAppShellBody({
         userName={userName}
       />
 
-      <SidebarInset className="mnx-dashboard-frame">
+      <MonolithSidebarFrame className="mnx-dashboard-frame">
         <header className="mnx-topbar">
           <div className="mnx-topbar-context">
-            <SidebarTrigger className="mnx-mobile-menu" />
-            <div>
-              <span>Monolith</span>
-              <i>/</i>
-              <b>{contextLabel}</b>
-            </div>
+            <MonolithSidebarMobileTrigger className="mnx-mobile-menu" />
+            <MonolithBreadcrumb pathname={pathname} />
+          </div>
+
+          <div className="mnx-global-search-wrap" ref={searchRef}>
+            <label className="mnx-global-search" data-workpet-target="topbar-global-search">
+              <Search size={15} />
+              {/* eslint-disable-next-line no-restricted-syntax -- global command trigger is a compact shell-owned search input, not a form field. */}
+              <input
+                ref={searchInputRef}
+                value={query}
+                onFocus={() => setSearchOpen(true)}
+                onChange={(event) => {
+                  setSearchOpen(true);
+                  setQuery(event.target.value);
+                }}
+                placeholder="Search workspaces..."
+              />
+              <kbd>Ctrl K</kbd>
+            </label>
+
+            {searchOpen ? (
+              <MonolithSearchCommand
+                embedded
+                entries={filteredSearchEntries}
+                open={searchOpen}
+                query={query}
+                onClose={() => setSearchOpen(false)}
+                onOpenChange={setSearchOpen}
+                onQueryChange={setQuery}
+              />
+            ) : null}
           </div>
 
           <div className="mnx-topbar-actions">
             <Button
-              className="mnx-global-search"
+              className="mnx-global-search mnx-global-search--legacy"
               data-workpet-target="topbar-global-search"
               onClick={() => setSearchOpen(true)}
               variant="ghost"
@@ -507,7 +496,6 @@ function MonolithAppShellBody({
             </Link>
 
             <MonolithThemePicker />
-            <MonolithAccentPicker />
 
           </div>
         </header>
@@ -521,18 +509,8 @@ function MonolithAppShellBody({
             children
           )}
         </main>
-      </SidebarInset>
+      </MonolithSidebarFrame>
 
-      {searchOpen ? (
-        <MonolithSearchCommand
-          entries={filteredSearchEntries}
-          open={searchOpen}
-          query={query}
-          onClose={() => setSearchOpen(false)}
-          onOpenChange={setSearchOpen}
-          onQueryChange={setQuery}
-        />
-      ) : null}
-    </SidebarProvider>
+    </MonolithSidebarProvider>
   );
 }

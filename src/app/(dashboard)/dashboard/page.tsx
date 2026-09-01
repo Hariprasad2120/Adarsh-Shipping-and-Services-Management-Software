@@ -54,14 +54,8 @@ async function getPermittedCommandCenterSnapshot(
   userId: string,
   orgId: string,
   caps: Caps,
-  enabledModuleIds: ToggleableModuleSectionId[],
   moduleSnapshot: Awaited<ReturnType<typeof getPermittedModuleSnapshot>>,
 ): Promise<DashboardCommandCenterSnapshot> {
-  const visibleModuleSections = getVisibleSections(caps, enabledModuleIds).filter(
-    (section): section is typeof section & { id: ToggleableModuleSectionId } =>
-      TOGGLEABLE_MODULE_SET.has(section.id),
-  );
-
   return getDashboardCommandCenterSnapshot({
     userId,
     orgId,
@@ -93,7 +87,6 @@ export default async function DashboardPage() {
     session.user.id,
     orgId,
     caps,
-    enabledModuleIds,
     permittedModuleSnapshot,
   );
 
@@ -114,7 +107,6 @@ export default async function DashboardPage() {
       }}
       initialProfile={initialProfile}
       initialWidgetsData={dashboardData as DashboardWidgetsData}
-      initialModuleSnapshot={permittedModuleSnapshot}
       initialCommandCenterSnapshot={commandCenterSnapshot}
     />
   );

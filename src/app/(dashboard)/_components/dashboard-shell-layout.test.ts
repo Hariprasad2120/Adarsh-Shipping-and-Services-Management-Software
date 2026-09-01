@@ -36,30 +36,29 @@ describe("production Monolith shell safeguards", () => {
 
   it("keeps mobile navigation and focus-managed overlays in the shared shell", () => {
     const appShell = read("src/modules/core/components/monolith-app-shell.tsx");
+    const sidebar = read("src/components/navigation/monolith-app-sidebar.tsx");
 
-    expect(appShell).toContain('aria-label="Open navigation"');
-    expect(appShell).toContain('aria-modal="true"');
-    expect(appShell).toContain("Close navigation");
+    expect(sidebar).toContain('aria-label="Open navigation"');
+    expect(sidebar).toContain('aria-modal="true"');
+    expect(sidebar).toContain("Close navigation");
     expect(appShell).toContain("MonolithThemeProvider");
     expect(appShell).toContain("MonolithThemePicker");
   });
 
   it("keeps every workspace submenu interactive and accessible", () => {
-    const appShell = read("src/modules/core/components/monolith-app-shell.tsx");
+    const sidebar = read("src/components/navigation/monolith-app-sidebar.tsx");
     const styles = read("src/app/globals.css");
 
-    expect(appShell).toContain("expandedSections");
-    expect(appShell).toContain("getActiveItemHref");
-    expect(appShell).toContain("aria-expanded={isExpanded}");
-    expect(appShell).toContain(
-      "aria-controls={`mnx-sidebar-items-${section.id}`}",
-    );
-    expect(appShell).toContain("section.items.map((item, index)");
-    expect(appShell).toContain('className="mnx-sidebar-subnav-item"');
-    expect(appShell).toContain("hidden={!isExpanded}");
-    expect(appShell).toContain('role="group"');
-    expect(styles).toContain(".mnx-sidebar-subnav[hidden]");
-    expect(styles).toContain(".mnx-sidebar-subnav-item > a");
-    expect(styles).toContain(".mnx-sidebar-section.is-expanded");
+    expect(sidebar).toContain("getVisibleSections");
+    expect(sidebar).toContain("getActiveItemHref");
+    expect(sidebar).toContain("matchesPath");
+    expect(sidebar).toContain("aria-expanded={isOpen}");
+    expect(sidebar).toContain("section.items.map((item, index)");
+    expect(sidebar).toContain('className="mono-sidebar-subnav"');
+    expect(sidebar).toContain("MonolithSidebarTooltip");
+    expect(sidebar).not.toContain("@/components/ui/sidebar");
+    expect(styles).toContain(".mono-sidebar-subnav-wrap");
+    expect(styles).toContain(".mono-sidebar-subitem");
+    expect(styles).toContain(".mono-sidebar-section.is-open");
   });
 });

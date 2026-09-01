@@ -1,11 +1,7 @@
 "use client";
 
-import { AlertTriangle, RotateCcw } from "lucide-react";
-import {
-  MonolithPage,
-  MonolithSpecLabel,
-} from "@/components/ui/foundation";
-import { Button } from "@/components/ui/button";
+import { MonolithPage } from "@/components/ui/foundation";
+import { DsButton, ErrorState } from "@/components/ds";
 
 export default function DashboardError({
   reset,
@@ -15,15 +11,15 @@ export default function DashboardError({
 }) {
   return (
     <MonolithPage>
-      <section className="mnx-dashboard-error" role="alert">
-        <span><AlertTriangle size={24} /></span>
-        <MonolithSpecLabel as="p">DASHBOARD UNAVAILABLE</MonolithSpecLabel>
-        <h1>We couldn&apos;t load your workspace.</h1>
-        <p>Your data is safe. Retry the dashboard request to continue.</p>
-        <Button onClick={reset}>
-          Try again <RotateCcw size={16} />
-        </Button>
-      </section>
+      <ErrorState
+        title="We couldn’t load your workspace"
+        description="Your data is safe. Retry the dashboard request to continue."
+      />
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <DsButton variant="outlined" size="sm" onClick={reset}>
+          Try again
+        </DsButton>
+      </div>
     </MonolithPage>
   );
 }

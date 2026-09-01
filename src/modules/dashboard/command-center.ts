@@ -11,7 +11,43 @@ import type {
   DashboardPulseMetric,
   DashboardRecentActivityItem,
   DashboardStageCount,
+  DashboardTrendPoint,
 } from "./types";
+
+const ACTIVITY_TREND_DAYS = 14;
+
+/**
+ * Bucket the user's notifications by calendar day over the trailing window so
+ * the dashboard has a real operational time-series (no fabricated numbers).
+ * Days with no notifications are still emitted as zero so the line is dense.
+ */
+function buildActivityTrend(
+  createdAtList: Date[],
+  now: Date,
+): DashboardTrendPoint[] {
+  const dayFmt = new Intl.DateTimeFormat("en-CA"); // yyyy-mm-dd
+  const labelFmt = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short",
+    day: "2-digit",
+  });
+  const counts = new Map<string, number>();
+  for (const created of createdAtList) {
+    const key = dayFmt.format(created);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const points: DashboardTrendPoint[] = [];
+  for (let offset = ACTIVITY_TREND_DAYS - 1; offset >= 0; offset -= 1) {
+    const day = new Date(now);
+    day.setDate(day.getDate() - offset);
+    const key = dayFmt.format(day);
+    points.push({
+      date: key,
+      label: labelFmt.format(day),
+      value: counts.get(key) ?? 0,
+    });
+  }
+  return points;
+}
 
 const APPRAISAL_STAGE_ORDER = [
   { id: "DUE_NOTIFIED", label: "Due" },
@@ -102,6 +138,7 @@ export async function getDashboardCommandCenterSnapshot({
     announcements,
     recentNotifications,
     appraisalAuditLog,
+    activityTrendRows,
   ] = await Promise.all([
     db.todoTask.findMany({
       where: {
@@ -240,6 +277,16 @@ export async function getDashboardCommandCenterSnapshot({
           },
         })
       : Promise.resolve([]),
+    db.notification.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: new Date(now.getTime() - ACTIVITY_TREND_DAYS * 86_400_000),
+        },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true },
+    }),
   ]);
   const activeAttendancePunchIds = activeAttendancePunches.map((punch) => punch.id);
   const onBreakCount =
@@ -361,5 +408,9 @@ export async function getDashboardCommandCenterSnapshot({
     appraisalStages: appraisalCounts,
     attendanceSignals,
     recentActivity,
+    activityTrend: buildActivityTrend(
+      activityTrendRows.map((row) => row.createdAt),
+      now,
+    ),
   };
 }

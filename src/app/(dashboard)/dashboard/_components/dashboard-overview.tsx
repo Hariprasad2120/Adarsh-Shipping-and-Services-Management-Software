@@ -1,231 +1,154 @@
-import { ArrowUpRight, Check, ChevronRight } from "lucide-react";
-import Link from "next/link";
+"use client";
+
+import * as React from "react";
+import { CalendarClock } from "lucide-react";
 import {
-  WorkspaceEmptyTableRow,
-  WorkspaceTable,
-} from "@/components/layout/workspace";
-import type {
-  DashboardCommandCenterSnapshot,
-  DashboardModuleSnapshot,
-} from "@/modules/dashboard/types";
+  Card,
+  ChartCard,
+  DefinitionList,
+  FilterBar,
+  DateRangeSelect,
+  type DateRangePreset,
+  FunnelBars,
+  MetricCard,
+  SectionHeader,
+  StatGrid,
+  TrendArea,
+  TrendBadge,
+} from "@/components/ds";
+import type { DashboardCommandCenterSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import type { DashboardSessionUser } from "./dashboard-types";
-import { ModuleCommandCenter } from "./module-command-center";
 
 interface DashboardOverviewProps {
   profile: UserProfile;
   sessionUser: DashboardSessionUser;
   data: DashboardWidgetsData;
-  moduleSnapshot: DashboardModuleSnapshot;
   commandCenterSnapshot: DashboardCommandCenterSnapshot;
 }
 
-const SEVERITY_ORDER = { critical: 0, warning: 1, info: 2 } as const;
+const numberFormat = new Intl.NumberFormat("en-IN");
 
-function formatDate(value: Date | string, options?: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat(
-    "en-IN",
-    options ?? { day: "2-digit", month: "short" },
-  ).format(new Date(value));
-}
-
-function relativeTime(value: Date | string) {
-  const diffMs = Date.now() - new Date(value).getTime();
-  const mins = Math.round(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.round(hrs / 24);
-  return `${days}d ago`;
+function windowDays(preset: DateRangePreset) {
+  return preset === "24h" ? 1 : preset === "7d" ? 7 : preset === "30d" ? 30 : 90;
 }
 
 export function DashboardOverview({
-  data,
-  moduleSnapshot,
   commandCenterSnapshot,
 }: DashboardOverviewProps) {
-  const attention = [...commandCenterSnapshot.attentionItems].sort(
-    (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity],
-  );
-  const visibleAttention = attention.slice(0, 6);
-  const recentActivity = commandCenterSnapshot.recentActivity.slice(0, 6);
-  const nextHoliday = data.upcomingHolidays[0];
-  const nextAnnouncement = data.announcements[0];
+  const [range, setRange] = React.useState<DateRangePreset>("7d");
 
-  const quickLinks = moduleSnapshot.modules
-    .flatMap((module) =>
-      module.actions.slice(0, 1).map((action) => ({
-        href: action.href,
-        label: action.label,
-      })),
-    )
-    .slice(0, 4);
+  const {
+    pulseMetrics,
+    appraisalStages,
+    attendanceSignals,
+    activityTrend,
+  } = commandCenterSnapshot;
 
-  const todayRows = [
-    { label: "Deadlines this week", value: data.recentTasks.length },
-    {
-      label: "Upcoming holidays",
-      value: data.upcomingHolidays.length,
-    },
-    {
-      label: "Announcements",
-      value: data.announcements.length,
-    },
-  ].filter((row) => row.value > 0);
+  const kpis = pulseMetrics.slice(0, 4);
+
+  const days = windowDays(range);
+  const trendData = activityTrend
+    .slice(-days)
+    .map((p) => ({ label: p.label, value: p.value }));
+  const trendTotal = trendData.reduce((sum, p) => sum + p.value, 0);
+  const trendPrev = activityTrend
+    .slice(-days * 2, -days)
+    .reduce((sum, p) => sum + p.value, 0);
+  const trendDelta =
+    trendPrev > 0
+      ? Math.round(((trendTotal - trendPrev) / trendPrev) * 100)
+      : null;
+
+  const pipelineStages = appraisalStages.filter((s) => s.value >= 0);
+  const pipelineEntry = pipelineStages[0]?.value ?? 0;
+  const pipelineExit = pipelineStages[pipelineStages.length - 1]?.value ?? 0;
+  const conversionRate =
+    pipelineEntry > 0 ? Math.round((pipelineExit / pipelineEntry) * 100) : 0;
+  const hasPipeline = pipelineStages.some((s) => s.value > 0);
 
   return (
-    <div className="mnx-dash2">
-      {/* P0 — attention queue: the one question this page answers */}
-      <section aria-label="Items that need your attention">
-        <p className="mnx-dash2-label">
-          Needs you
-          {visibleAttention.length > 0 ? <b>{attention.length}</b> : null}
-        </p>
+    <div className="ds-dash">
+      <FilterBar>
+        <DateRangeSelect
+          value={range}
+          onChange={setRange}
+          icon={<CalendarClock size={14} aria-hidden="true" />}
+        />
+      </FilterBar>
 
-        {visibleAttention.length > 0 ? (
-          <>
-            <div className="mnx-dash2-queue">
-              {visibleAttention.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className="mnx-dash2-queue-row"
-                  data-severity={item.severity}
-                >
-                  <span className="mnx-dash2-queue-src">{item.source}</span>
-                  <span className="mnx-dash2-queue-body">
-                    <h3>{item.title}</h3>
-                    <p>{item.detail}</p>
-                  </span>
-                  <span className="mnx-dash2-queue-actions">
-                    <ChevronRight
-                      size={16}
-                      className="mnx-dash2-queue-chev"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </Link>
-              ))}
-            </div>
-            {attention.length > visibleAttention.length ? (
-              <div className="mnx-dash2-queue-foot">
-                <Link className="mnx-text-link" href="/notifications">
-                  View all {attention.length} <ArrowUpRight size={14} />
-                </Link>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <div className="mnx-dash2-healthy">
-            <Check size={16} aria-hidden="true" />
-            Nothing needs you right now.
-          </div>
-        )}
-      </section>
+      {kpis.length > 0 ? (
+        <StatGrid cols={4} aria-label="Key metrics">
+          {kpis.map((metric) => (
+            <MetricCard
+              key={metric.id}
+              label={metric.label}
+              value={numberFormat.format(metric.value)}
+              caption={metric.detail}
+            />
+          ))}
+        </StatGrid>
+      ) : null}
 
-      {/* P1/P2 — today at a glance + recent movement */}
-      <div className="mnx-dash2-split">
-        <div className="mnx-dash2-panel">
-          <p className="mnx-dash2-label">Recent activity</p>
-          <WorkspaceTable scrollLabel="Recent operational activity">
-            <thead>
-              <tr>
-                <th>Update</th>
-                <th>Source</th>
-                <th>When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivity.length > 0 ? (
-                recentActivity.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <b className="mnx-table-primary">
-                        {item.href ? (
-                          <Link href={item.href}>{item.title}</Link>
-                        ) : (
-                          item.title
-                        )}
-                      </b>
-                      <small>{item.detail}</small>
-                    </td>
-                    <td>{item.source}</td>
-                    <td>{relativeTime(item.occurredAt)}</td>
-                  </tr>
-                ))
-              ) : (
-                <WorkspaceEmptyTableRow colSpan={3}>
-                  No activity recorded yet.
-                </WorkspaceEmptyTableRow>
-              )}
-            </tbody>
-          </WorkspaceTable>
-        </div>
+      <div className="ds-dash-analytics">
+        <ChartCard
+          title="Activity volume"
+          description={`Operational activity routed to you - last ${days} days`}
+          height={260}
+          isEmpty={trendTotal === 0}
+          emptyLabel="No activity in this window."
+          actions={
+            trendDelta !== null ? (
+              <TrendBadge
+                direction={
+                  trendDelta > 0 ? "up" : trendDelta < 0 ? "down" : "flat"
+                }
+                value={`${trendDelta > 0 ? "+" : ""}${trendDelta}%`}
+                srLabel={`${
+                  trendDelta > 0 ? "up" : trendDelta < 0 ? "down" : "unchanged"
+                } ${Math.abs(trendDelta)} percent versus the previous ${days} days`}
+              />
+            ) : undefined
+          }
+        >
+          <TrendArea data={trendData} height={260} />
+        </ChartCard>
 
-        <aside className="mnx-dash2-aside">
-          {todayRows.length > 0 ? (
-            <div className="mnx-dash2-panel">
-              <p className="mnx-dash2-label">Today</p>
-              <div className="mnx-dash2-today-list">
-                {todayRows.map((row) => (
-                  <div className="mnx-dash2-today-item" key={row.label}>
-                    <span>{row.label}</span>
-                    <b>{row.value}</b>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <Card className="ds-dash-panel-stack">
+          <SectionHeader
+            title="Appraisal pipeline"
+            description="Live count of appraisals at each lifecycle stage"
+            actions={
+              <span className="ds-badge" data-tone="neutral">
+                {conversionRate}% reach decision
+              </span>
+            }
+          />
+          {hasPipeline ? (
+            <FunnelBars
+              stages={pipelineStages.map((s) => ({
+                id: s.id,
+                label: s.label,
+                value: s.value,
+              }))}
+            />
+          ) : (
+            <FunnelBars stages={[]} emptyLabel="No active appraisal cycle." />
+          )}
+
+          {attendanceSignals.length > 0 ? (
+            <>
+              <SectionHeader title="Attendance signals" headingLevel={4} />
+              <DefinitionList
+                items={attendanceSignals.map((signal) => ({
+                  term: signal.label,
+                  description: numberFormat.format(signal.value),
+                }))}
+              />
+            </>
           ) : null}
-
-          {quickLinks.length > 0 ? (
-            <div className="mnx-dash2-panel">
-              <p className="mnx-dash2-label">Quick actions</p>
-              <div className="mnx-dash2-quick">
-                {quickLinks.map((link) => (
-                  <Link href={link.href} key={link.href}>
-                    <ArrowUpRight size={15} aria-hidden="true" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {nextAnnouncement || nextHoliday ? (
-            <div className="mnx-dash2-panel">
-              <p className="mnx-dash2-label">Announcements &amp; calendar</p>
-              {nextAnnouncement ? (
-                <div className="mnx-dash2-note">
-                  <h3>{nextAnnouncement.title}</h3>
-                  <p>Published {formatDate(nextAnnouncement.createdAt)}</p>
-                </div>
-              ) : null}
-              {nextHoliday ? (
-                <div className="mnx-dash2-note mnx-dash2-cal">
-                  <time dateTime={new Date(nextHoliday.date).toISOString()}>
-                    <strong>{formatDate(nextHoliday.date, { day: "2-digit" })}</strong>
-                    <span>{formatDate(nextHoliday.date, { month: "short" })}</span>
-                  </time>
-                  <div>
-                    <h3>{nextHoliday.name}</h3>
-                    <p>
-                      {formatDate(nextHoliday.date, {
-                        weekday: "long",
-                        day: "2-digit",
-                        month: "long",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </aside>
+        </Card>
       </div>
-
-      {/* P3 — module launcher, compact, no illustrated graphics */}
-      <ModuleCommandCenter snapshot={moduleSnapshot} />
     </div>
   );
 }

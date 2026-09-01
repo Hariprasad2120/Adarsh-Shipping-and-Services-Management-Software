@@ -86,6 +86,14 @@ export type DashboardRecentActivityItem = {
   href?: string | null;
 };
 
+export type DashboardTrendPoint = {
+  /** ISO date (yyyy-mm-dd) of the bucket */
+  date: string;
+  /** short display label, e.g. "Mon 04" */
+  label: string;
+  value: number;
+};
+
 export type DashboardCommandCenterSnapshot = {
   generatedAt: string;
   attentionItems: DashboardAttentionItem[];
@@ -93,4 +101,6 @@ export type DashboardCommandCenterSnapshot = {
   appraisalStages: DashboardStageCount[];
   attendanceSignals: DashboardStageCount[];
   recentActivity: DashboardRecentActivityItem[];
+  /** per-day notification volume for the current user over the trailing window */
+  activityTrend: DashboardTrendPoint[];
 };

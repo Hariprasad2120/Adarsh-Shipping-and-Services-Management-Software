@@ -56,16 +56,10 @@ export default function RootLayout({
                     : savedTheme === 'violet'
                       ? 'violet'
                       : 'blue';
-                var legacyThemeClass =
-                  resolvedTheme === 'light'
-                    ? 'theme-light'
-                    : resolvedAccent === 'violet'
-                      ? 'theme-violet'
-                      : 'theme-night';
                 root.dataset.theme = resolvedTheme;
                 root.dataset.accent = resolvedAccent;
                 root.classList.remove('dark', 'light', 'night', 'violet', 'theme-light', 'theme-night', 'theme-violet');
-                root.classList.add(resolvedTheme, legacyThemeClass);
+                root.classList.add(resolvedTheme);
                 root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
               } catch (_) {}
             `,

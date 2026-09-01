@@ -10,7 +10,6 @@ import {
 } from "@/components/feedback/workspace-states";
 import type {
   DashboardCommandCenterSnapshot,
-  DashboardModuleSnapshot,
 } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { WelcomeNote, PunchCard } from "@/components/ds";
@@ -27,7 +26,6 @@ interface HrmsPortalClientProps {
   sessionUser: { id: string; name: string; email: string };
   initialProfile: UserProfile;
   initialWidgetsData: DashboardWidgetsData;
-  initialModuleSnapshot: DashboardModuleSnapshot;
   initialCommandCenterSnapshot: DashboardCommandCenterSnapshot;
 }
 
@@ -61,6 +59,14 @@ const tabs: TabItem[] = [
   { value: "team", label: "Team", icon: <Users2 size={15} /> },
   { value: "organization", label: "Organization", icon: <Building2 size={15} /> },
 ];
+
+function getTimeBasedGreeting(date = new Date()) {
+  const hour = date.getHours();
+
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+}
 
 function toUserProfile(raw: ProfilePayload): UserProfile {
   return {
@@ -122,21 +128,31 @@ export function HrmsPortalClient({
   sessionUser,
   initialProfile,
   initialWidgetsData,
-  initialModuleSnapshot,
   initialCommandCenterSnapshot,
 }: HrmsPortalClientProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("myspace");
   const [profile, setProfile] = useState(initialProfile);
+  const [greeting, setGreeting] = useState(() => getTimeBasedGreeting());
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [reportees, setReportees] = useState<ReporteeSummary[] | null>(null);
   const [teamError, setTeamError] = useState<string | null>(null);
   const [widgets, setWidgets] = useState(initialWidgetsData);
-  const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
   const [commandCenterSnapshot] = useState(initialCommandCenterSnapshot);
   const [organization, setOrganization] = useState<OrganizationPayload | null>(null);
   const [organizationError, setOrganizationError] = useState<string | null>(null);
   const organizationRequestRef = useRef(false);
   const teamRequestRef = useRef(false);
+  const displayName = (profile.name || sessionUser.name || profile.designation || "there")
+    .split(" ")
+    .filter(Boolean)[0] || "there";
+
+  useEffect(() => {
+    const updateGreeting = () => setGreeting(getTimeBasedGreeting());
+    updateGreeting();
+
+    const intervalId = window.setInterval(updateGreeting, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (activeTab !== "team" || reportees || teamRequestRef.current) return;
@@ -204,20 +220,6 @@ export function HrmsPortalClient({
     const nextProfile = toUserProfile(profilePayload);
     setProfile(nextProfile);
     setWidgets(widgetsPayload);
-    setModuleSnapshot((current) => ({
-      ...current,
-      modules: current.modules.map((module) =>
-        module.id === "attendance"
-          ? {
-              ...module,
-              primaryMetric: {
-                ...module.primaryMetric,
-                value: nextProfile.attendanceStatus === "YET_TO_CHECK_IN" ? 0 : 1,
-              },
-            }
-          : module,
-      ),
-    }));
   }
 
   async function handlePunchAction(action: PunchAction) {
@@ -241,9 +243,9 @@ export function HrmsPortalClient({
   return (
     <MonolithPage className="mnx-dashboard-page-shell">
       <WelcomeNote
-        title={`Hello, ${(profile.name ?? "there").split(" ")[0]}`}
+        title={`${greeting}, ${displayName}`}
         eyebrow="My space"
-        message="Track team progress here. You're almost at a goal."
+        message="Your operational overview — what needs you now, and where work stands."
         trailing={
           <PunchCard
             status={profile.attendanceStatus}
@@ -267,7 +269,6 @@ export function HrmsPortalClient({
             profile={profile}
             sessionUser={sessionUser}
             data={widgets}
-            moduleSnapshot={moduleSnapshot}
             commandCenterSnapshot={commandCenterSnapshot}
           />
         ) : null}

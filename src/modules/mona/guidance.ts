@@ -28,26 +28,10 @@ const GUIDANCE_REGISTRY: MonaGuidanceRegistryEntry[] = [
       {
         id: "dashboard-operations-hub",
         label: "Operations hub",
-        description: "This is the main dashboard work zone for command feed, task pipeline, and recent activity.",
-        hint: "Use this section for the fastest operational brief and next-step scan.",
+        description: "This is the main dashboard work zone for live metrics, workflow trends, and recent activity.",
+        hint: "Use this section for the fastest operational brief.",
         helpPrompt:
           "Guide me through the operations hub on this dashboard and tell me how to use it as my daily starting point.",
-      },
-      {
-        id: "dashboard-exceptions",
-        label: "Needs attention",
-        description: "This panel surfaces live exceptions and critical items that need attention first.",
-        hint: "Open this when you want to understand blockers or urgent queue pressure.",
-        helpPrompt:
-          "Explain the exceptions panel on this dashboard and how I should use it to prioritize urgent work.",
-      },
-      {
-        id: "dashboard-quick-launch",
-        label: "Shortcut routes",
-        description: "These links jump directly into the most relevant active module entry points.",
-        hint: "Use this when you know the next workspace you need and want to move quickly.",
-        helpPrompt:
-          "Guide me through the quick launch section on this dashboard and explain how it relates to my enabled modules.",
       },
       {
         id: "dashboard-analytics-workflows",
@@ -56,14 +40,6 @@ const GUIDANCE_REGISTRY: MonaGuidanceRegistryEntry[] = [
         hint: "Use this for pattern-level review rather than immediate action.",
         helpPrompt:
           "Walk me through the analytics and workflows section on this dashboard and explain what trends I should watch.",
-      },
-      {
-        id: "dashboard-module-command-center",
-        label: "Module command center",
-        description: "This card grid is the controlled route launcher into your enabled workspaces.",
-        hint: "Use this when you want a guided view of which modules are live for your role.",
-        helpPrompt:
-          "Guide me through the module command center and explain how these modules map to my current access.",
       },
       {
         id: "topbar-global-search",
