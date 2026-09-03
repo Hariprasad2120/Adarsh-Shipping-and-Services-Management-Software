@@ -119,6 +119,17 @@ Stage 1 was delivered in checkpoints — see `SECURITY_AUDIT_BEFORE_STAGE1.md`
 
 ---
 
+## 3a. Stage 2 verification snapshot
+
+`tsc --noEmit`: **0 errors in application code** (3 remain in
+`src/components/ui/sidebar.tsx`, an unfinished concurrent shadcn migration —
+not part of any security commit). `src/lib` + `src/lib/mfa` test suite:
+**158 / 158 green against the live Postgres** (`.env.staging.local`), including
+40 DB-backed cross-tenant / MFA / session integration cases.
+`npm run security:check`: coverage scans 0 missing / 0 flagged, 111 unit tests,
+dependency audit gate PASS. Two Prisma migrations applied to the live app DB
+(`20260830090000`, `20260831090000`).
+
 ## 4. Production-readiness statement
 
 Stage 1 establishes a measurable, testable security baseline: no CRITICAL and no

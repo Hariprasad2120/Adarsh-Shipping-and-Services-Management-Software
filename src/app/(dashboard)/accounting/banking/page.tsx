@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
@@ -23,7 +23,7 @@ type BankingPageProps = {
 export default async function BankingPage({ searchParams }: BankingPageProps) {
   const [{ caps, orgId }, session, params] = await Promise.all([
     requireAccountingRouteAccess("/accounting/banking"),
-    auth(),
+    getSession(),
     searchParams,
   ]);
   const scopedUser = session?.user

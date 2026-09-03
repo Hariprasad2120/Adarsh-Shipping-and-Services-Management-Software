@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   AccountingActionLink,
@@ -31,7 +31,7 @@ export default async function BankAccountPage({
 }: BankAccountPageProps) {
   const [{ caps, orgId }, session, routeParams, query] = await Promise.all([
     requireAccountingRouteAccess("/accounting/banking"),
-    auth(),
+    getSession(),
     params,
     searchParams,
   ]);
