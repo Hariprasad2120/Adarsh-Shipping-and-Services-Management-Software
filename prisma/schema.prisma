@@ -32,6 +32,8 @@ model Organisation {
   businessUnits BusinessUnit[]
   costCentres   CostCentre[]
 
+  numberingSequences NumberingSequence[]
+
   branches    Branch[]
   departments Department[]
   divisions   Division[]
@@ -295,10 +297,11 @@ model LegalEntity {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org           Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branches      Branch[]
-  businessUnits BusinessUnit[]
-  costCentres   CostCentre[]
+  org                Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branches           Branch[]
+  businessUnits      BusinessUnit[]
+  costCentres        CostCentre[]
+  numberingSequences NumberingSequence[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -1819,6 +1822,53 @@ model OrganisationSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Stage 2 — enterprise platform: reusable, concurrency-safe document numbering.
+///
+/// One row per (organisation, [legal entity], module, document type, [extra
+/// scope]). `allocateNumber()` bumps `nextValue` under a row lock so two
+/// simultaneous requests can never receive the same number. Gaps are possible
+/// if an allocating transaction rolls back — acceptable for most numbering; a
+/// gapless jurisdiction requires allocation only at commit time (documented).
+///
+/// Replaces the ad-hoc, module-local `AccountingNumberSeries` /
+/// `ChaBranchNumberingRule` schemes over time (see TASK.md Cluster 5).
+model NumberingSequence {
+  id            String  @id @default(cuid())
+  orgId         String
+  /// Optional legal-entity scope. NULL = organisation-wide. Uniqueness across
+  /// the NULL case is enforced by a COALESCE unique index in the migration.
+  legalEntityId String?
+  /// Module registry id that owns this sequence (e.g. "accounting", "cha").
+  moduleId      String
+  /// Document type within the module (e.g. "invoice", "job", "payment").
+  docType       String
+  /// Free-form additional scope (branch id, warehouse, series letter…). Empty
+  /// string = no extra scope.
+  scopeKey      String  @default("")
+
+  prefix      String @default("")
+  suffix      String @default("")
+  padding     Int    @default(1)
+  nextValue   BigInt @default(1)
+  /// "NEVER" | "ANNUALLY" | "MONTHLY" — when the counter resets to `startValue`.
+  resetPolicy String @default("NEVER")
+  startValue  BigInt @default(1)
+  /// Period label the counter is currently on ("2026-27", "2026-09"), used to
+  /// detect a period rollover on the next allocation. Empty until first use.
+  periodLabel String @default("")
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org         Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity LegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([orgId, moduleId, docType, active])
+  @@index([legalEntityId])
 }
 
 model OrganisationThemeSettings {

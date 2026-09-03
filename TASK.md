@@ -72,11 +72,17 @@ per cluster (schema changes gated on concurrent-agent coordination).
 |---|---|---|---|---|---|
 | `OrganisationMembership(userId, orgId, status, ...)`; role assignment scoped to membership | TODO | schema, `src/lib/rbac.ts`, `src/lib/tenant.ts` | expand; keep `User.orgId` during transition | authz + tenant-isolation | audit A3 |
 
-### Cluster 5 — Numbering service
+### Cluster 5 — Numbering service  — DONE (platform service)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| `NumberingSequence` model + `allocateNumber()` (row lock / `UPDATE…RETURNING`) | TODO | `src/modules/core/numbering/` (new), schema | additive | concurrency test (parallel allocate, no dup) | audit D4 |
-| Migrate existing per-module doc numbering onto service | TODO | accounting, crm invoices, cha | — | — | inventory first |
+| `NumberingSequence` model — scope (orgId, legalEntityId?, moduleId, docType, scopeKey), prefix/suffix/padding, `resetPolicy` NEVER/ANNUALLY/MONTHLY, `periodLabel` rollover marker | VERIFIED | `prisma/schema.prisma` | `20260903140000_stage2_numbering_sequence` — new empty table; COALESCE unique index for NULL-legalEntity scope. Applied. | — | audit D4 |
+| `allocateNumber()` — atomic `UPDATE … RETURNING` with in-SQL reset CASE; own implicit txn (no pool-holding interactive txn) or caller's `tx` | VERIFIED | `src/modules/core/numbering/service.ts` | — | **100 parallel allocations → 100 distinct, contiguous 1..100** | + `previewNextNumber`, `upsertNumberingSequence`, `getNumberingSequence` |
+| Pure format layer — `fiscalYearLabel`, `periodLabelFor`, `resolveTemplateTokens` ({FY}/{YYYY}/{YY}/{MM}/{MMM}/{DD}), `formatSequenceNumber` | VERIFIED | `src/modules/core/numbering/format.ts` | — | `__tests__/format.test.ts` 13/13 | FY start month from `OrganisationSettings` (Cluster 1), read uncached so jobs/scripts work |
+| Verified: annual reset (stale period → startValue, `INV-2026-27-0001`), tx-rollback un-spends | VERIFIED | — | — | manual script | — |
+| tsc `--noEmit` 0 errors + eslint clean | VERIFIED | — | — | — | — |
+| Migrate `AccountingNumberSeries` consumers onto service | TODO | `src/modules/accounting/posting-engine.ts` etc. | — | — | accounting already uses the same `UPDATE…RETURNING` pattern — low-risk swap, but behaviour-sensitive (voucher numbers); do with care |
+| Migrate `ChaBranchNumberingRule` (`currentSequence` Int) onto service | TODO | `src/modules/cha/service.ts` | data migration | — | — |
+| Settings UI for sequences | TODO | — | — | — | Cluster 8 |
 
 ### Cluster 6 — Approval engine
 | Task | Status | Files | Migration | Tests | Notes |
