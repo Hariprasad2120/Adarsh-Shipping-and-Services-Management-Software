@@ -161,12 +161,19 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Wire `runWithCorrelationFromHeaders` into API routes / server actions / jobs | TODO | route wrappers | — | — | needs a shared handler wrapper — pairs with Cluster 11 |
 | Instrument auth errors / API latency / DB / mail / webhook / rate-limit / security events via `incr`/`observe` | TODO | those call sites | — | — | prep for external APM/SIEM |
 
-### Cluster 11 — Jobs & idempotency
+### Cluster 11 — Jobs & idempotency  — DONE (platform primitives)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| Inventory long/blocking operations (bulk email, imports, exports, PDF, webhooks, large reports/sync) | TODO | — | — | — | audit G2 |
-| Job abstraction (ID, status, retries, backoff, DLQ, org context, idempotency, audit) | TODO | `src/modules/core/jobs/` (new), schema | additive | integration | — |
-| `IdempotencyKey` table + wrapper for money-ish / import / provisioning endpoints | TODO | schema, `src/lib/` | additive | dup-request test | audit G3 |
+| `BackgroundJob` model — type/payload, status PENDING/RUNNING/SUCCEEDED/FAILED/DEAD, attempts/maxAttempts, `runAfter`, lock fields, `idempotencyKey` unique, `correlationId`, result | VERIFIED | `prisma/schema.prisma` | `20260903190000_stage2_jobs_idempotency` — 2 empty tables. Applied. | — | audit G2 / spec §16 |
+| `IdempotencyKey` model — (orgId, scope, key) unique, status PENDING/COMPLETED/FAILED, result, expiresAt | VERIFIED | `prisma/schema.prisma` | same migration | — | audit G3 / spec §17 |
+| `jobs/backoff.ts` (pure) — exponential + cap + jitter | VERIFIED | `src/modules/core/jobs/backoff.ts` | — | `__tests__/backoff.test.ts` 5/5 | — |
+| `jobs/service.ts` — `enqueueJob` (idempotent), `claimJobs` (`FOR UPDATE SKIP LOCKED`), `processJobBatch` (handler registry, retry w/ backoff, DEAD at maxAttempts, metrics + logs), `retryDeadJob` | VERIFIED | `src/modules/core/jobs/service.ts` | — | E2E: enqueue dedupe; handler success → SUCCEEDED+result; handler throw → retry → DEAD at attempts=3; retryDeadJob → PENDING | — |
+| `idempotency/service.ts` — `withIdempotency` (run-once per key, replay stored result, PENDING → conflict, FAILED → allow retry), `purgeExpiredIdempotencyKeys` | VERIFIED | `src/modules/core/idempotency/service.ts` | — | E2E: fn runs exactly once across replays; concurrent callers → one execution, others get conflict or replayed result | — |
+| `/api/cron/jobs` worker tick — cron-secret guarded, correlation scope, empty handler registry (unknown type dead-letters safely) | VERIFIED | `src/app/api/cron/jobs/route.ts` | — | — | modules register handlers here as work moves onto the queue |
+| tsc 0 + eslint clean | VERIFIED | — | — | — | — |
+| Move `EmailQueue` / `*Run` / `*Outbox` bespoke queues onto `BackgroundJob` | TODO | those features | data migration | — | one at a time |
+| Wrap money-ish / import / provisioning endpoints with `withIdempotency` | TODO | those routes | — | — | audit G3 |
+| Register the cron in `vercel.json` / `vercel.ts` crons | TODO | deploy config | — | — | — |
 
 ### Cluster 12 — i18n scaffold
 | Task | Status | Files | Migration | Tests | Notes |

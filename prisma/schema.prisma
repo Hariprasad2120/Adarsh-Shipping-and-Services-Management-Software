@@ -39,6 +39,8 @@ model Organisation {
   customFieldValues      CustomFieldValue[]
   configAuditEntries     ConfigAuditEntry[]
   memberships            OrganisationMembership[]
+  backgroundJobs         BackgroundJob[]
+  idempotencyKeys        IdempotencyKey[]
 
   branches    Branch[]
   departments Department[]
@@ -2119,6 +2121,67 @@ model OrganisationMembership {
   @@unique([orgId, userId])
   @@index([userId, status])
   @@index([orgId, status])
+}
+
+/// Stage 2 — enterprise platform: generic background job (spec §16).
+///
+/// Work that should not block an HTTP request — bulk email, imports, exports,
+/// PDF/report generation, webhook delivery, large syncs. A worker / cron route
+/// claims due jobs under a row lock, dispatches to a handler registered for the
+/// `type`, and on failure applies exponential backoff up to `maxAttempts`,
+/// after which the job is DEAD (dead-letter) for manual inspection.
+model BackgroundJob {
+  id             String    @id @default(cuid())
+  orgId          String? // null for platform-level jobs
+  type           String
+  payload        Json      @default("{}")
+  /// PENDING | RUNNING | SUCCEEDED | FAILED | DEAD
+  status         String    @default("PENDING")
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(5)
+  runAfter       DateTime  @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  lastError      String?
+  result         Json?
+  /// Optional dedupe key — a second enqueue with the same key returns the first job.
+  idempotencyKey String?   @unique
+  correlationId  String?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  org Organisation? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAfter])
+  @@index([orgId, type, status])
+}
+
+/// Stage 2 — enterprise platform: request-level idempotency (spec §17).
+///
+/// Protects money-like actions, imports, webhook processing, document
+/// generation and provisioning from duplicate execution. `withIdempotency`
+/// records a PENDING row keyed by (org, scope, key), runs the operation once,
+/// and replays the stored result on any later call with the same key.
+model IdempotencyKey {
+  id        String    @id @default(cuid())
+  orgId     String
+  scope     String
+  key       String
+  /// PENDING | COMPLETED | FAILED
+  status    String    @default("PENDING")
+  result    Json?
+  error     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, scope, key])
+  @@index([orgId, scope, status])
+  @@index([expiresAt])
 }
 
 model OrganisationThemeSettings {
