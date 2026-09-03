@@ -128,18 +128,72 @@ export async function confirmEnrollment(
 }
 
 export type MfaVerifyOutcome =
-  | { ok: true; method: "totp" | "recovery" }
+  | { ok: true; method: "totp" | "recovery" | "passkey" }
   | { ok: false };
 
+/** Any active factor (TOTP or passkey) means MFA is on for this user. */
+export async function hasAnyActiveFactor(userId: string): Promise<boolean> {
+  return (
+    (await db.authenticationFactor.count({
+      where: { userId, status: "ACTIVE", type: { in: ["totp", "webauthn"] } },
+    })) > 0
+  );
+}
+
 /**
- * Verify a login-time second factor: a TOTP code, or a one-time recovery code.
- * A used recovery code is consumed here.
+ * Verify a login-time second factor. `code` is either a TOTP / recovery code
+ * string, or a JSON-serialised WebAuthn assertion `{ passkey, challenge }`.
  */
 export async function verifyMfa(
   userId: string,
   code: string,
-  meta: { ip?: string | null; userAgent?: string | null } = {},
+  meta: {
+    ip?: string | null;
+    userAgent?: string | null;
+    /** Server-issued WebAuthn challenge (from the httpOnly cookie). */
+    passkeyChallenge?: string | null;
+  } = {},
 ): Promise<MfaVerifyOutcome> {
+  // ── Passkey assertion ──
+  if (code.trim().startsWith("{")) {
+    try {
+      const parsed = JSON.parse(code) as { passkey?: unknown };
+      // The challenge MUST come from the server-set cookie, never the client.
+      if (parsed.passkey && meta.passkeyChallenge) {
+        const pk = await db.authenticationFactor.findFirst({
+          where: { userId, type: "webauthn", status: "ACTIVE" },
+        });
+        if (!pk?.credentialId || !pk.credentialPublic) return { ok: false };
+        const { verifyAuthentication } = await import("@/lib/mfa/webauthn");
+        const res = await verifyAuthentication({
+          response: parsed.passkey as never,
+          expectedChallenge: meta.passkeyChallenge,
+          credentialId: pk.credentialId,
+          credentialPublic: pk.credentialPublic,
+          counter: pk.counter ?? 0,
+        });
+        if (!res.verified) {
+          await logSecurityEvent({
+            event: "MFA_FAILED",
+            outcome: "FAILURE",
+            userId,
+            ip: meta.ip,
+            userAgent: meta.userAgent,
+            reason: "Passkey assertion failed",
+          });
+          return { ok: false };
+        }
+        await db.authenticationFactor.update({
+          where: { id: pk.id },
+          data: { counter: res.newCounter, lastUsedAt: new Date() },
+        });
+        return { ok: true, method: "passkey" };
+      }
+    } catch {
+      return { ok: false };
+    }
+  }
+
   const factor = await getActiveFactor(userId);
   if (!factor?.secretEnc) return { ok: false };
 
@@ -264,7 +318,7 @@ export async function isMfaRequiredForUser(user: {
   isPlatformAdmin?: boolean;
 }): Promise<boolean> {
   if (user.isPlatformAdmin) return true;
-  if (await hasActiveMfa(user.id)) return true;
+  if (await hasAnyActiveFactor(user.id)) return true;
   if (user.orgId) {
     const org = await db.organisation.findUnique({
       where: { id: user.orgId },

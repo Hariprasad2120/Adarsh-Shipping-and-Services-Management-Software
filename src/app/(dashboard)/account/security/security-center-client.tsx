@@ -13,11 +13,17 @@ import {
   startMfaEnrollment,
   type SecurityOverview,
 } from "./mfa-actions";
+import {
+  beginPasskeyRegistration,
+  finishPasskeyRegistration,
+  removePasskey,
+} from "./passkey-actions";
 
 type Props = {
   overview: SecurityOverview;
   hasGoogleIdentity: boolean;
   passwordIsLocal: boolean;
+  hasPasskey: boolean;
 };
 
 type Enroll =
@@ -49,7 +55,10 @@ export function SecurityCenterClient({
   overview,
   hasGoogleIdentity,
   passwordIsLocal,
+  hasPasskey: hasPasskeyInitial,
 }: Props) {
+  const [passkeyOn, setPasskeyOn] = useState(hasPasskeyInitial);
+  const [passkeyPw, setPasskeyPw] = useState("");
   const [mfaOn, setMfaOn] = useState(
     overview.factors.some((f) => f.type === "totp" && f.status === "ACTIVE"),
   );
@@ -107,6 +116,23 @@ export function SecurityCenterClient({
       setPassword("");
       setCodesLeft(recoveryCodes.length);
       setEnroll({ step: "codes", codes: recoveryCodes });
+    });
+
+  const addPasskey = () =>
+    run(async () => {
+      const { startRegistration } = await import("@simplewebauthn/browser");
+      const options = await beginPasskeyRegistration(passkeyPw);
+      const response = await startRegistration(options);
+      await finishPasskeyRegistration(response);
+      setPasskeyPw("");
+      setPasskeyOn(true);
+    });
+
+  const dropPasskey = () =>
+    run(async () => {
+      await removePasskey(passkeyPw);
+      setPasskeyPw("");
+      setPasskeyOn(false);
     });
 
   return (
@@ -256,7 +282,35 @@ export function SecurityCenterClient({
           </div>
           <div className="mnx-row mnx-row-between">
             <span>Passkey / security key</span>
-            <span className="mnx-text-muted">Coming soon</span>
+            <span className="mnx-text-muted">
+              {passkeyOn ? "Registered" : "Not registered"}
+            </span>
+          </div>
+          <div className="mnx-stack">
+            <label>
+              Confirm your password to add or remove a passkey
+              <Input
+                type="password"
+                autoComplete="current-password"
+                value={passkeyPw}
+                onChange={(e) => setPasskeyPw(e.target.value)}
+              />
+            </label>
+            <div className="mnx-row">
+              {passkeyOn ? (
+                <Button
+                  variant="destructive"
+                  onClick={dropPasskey}
+                  disabled={pending || !passkeyPw}
+                >
+                  Remove passkey
+                </Button>
+              ) : (
+                <Button onClick={addPasskey} disabled={pending || !passkeyPw}>
+                  Add a passkey
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

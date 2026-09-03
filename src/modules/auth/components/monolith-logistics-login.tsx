@@ -168,6 +168,8 @@ export function MonolithLogisticsLogin() {
   const [petMessage, setPetMessage] = useState("Tap me!");
   const [message, setMessage] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const [needsMfa, setNeedsMfa] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
   const hydrated = useSyncExternalStore(
     subscribeToHydration,
     () => true,
@@ -316,18 +318,44 @@ export function MonolithLogisticsLogin() {
     setPetMessage("Verifying your cargo route…");
 
     const callbackUrl = getSafeCallbackUrl();
-    let result: Awaited<ReturnType<typeof signIn>> | undefined;
+    await runCredentialSignIn(normalizedEmail, needsMfa ? mfaCode : undefined, callbackUrl);
+  }
 
+  async function runCredentialSignIn(
+    normalizedEmail: string,
+    totp: string | undefined,
+    callbackUrl: string,
+  ) {
+    let result: Awaited<ReturnType<typeof signIn>> | undefined;
     try {
       result = await signIn("credentials", {
         email: normalizedEmail,
         password,
         rememberMe: remember ? "true" : "false",
+        ...(totp ? { totp } : {}),
         redirect: false,
         callbackUrl,
       });
     } catch {
       result = undefined;
+    }
+
+    const code = (result as { code?: string } | undefined)?.code ?? result?.error ?? "";
+
+    if (code === "mfa_required") {
+      setSubmitState("idle");
+      setNeedsMfa(true);
+      setMood("idle");
+      setPetMessage("One more step — your verification code.");
+      setMessage("Enter the 6-digit code from your authenticator app, or use a passkey.");
+      return;
+    }
+    if (code === "mfa_invalid") {
+      setSubmitState("idle");
+      setNeedsMfa(true);
+      setMood("error");
+      setMessage("That verification code was not correct. Try again.");
+      return;
     }
 
     if (!result || result.error) {
@@ -344,7 +372,38 @@ export function MonolithLogisticsLogin() {
     setMood("happy");
     setPetMessage("You’re in! Let’s get moving.");
     await wait(SUCCESS_TRANSITION_MS);
-    window.location.replace(getSameOriginRedirectUrl(result.url, callbackUrl));
+    const url = (result as { url?: string | null }).url ?? null;
+    window.location.replace(getSameOriginRedirectUrl(url, callbackUrl));
+  }
+
+  async function usePasskey() {
+    const normalizedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || !password) {
+      setMessage("Enter your email and password first, then use your passkey.");
+      return;
+    }
+    setSubmitState("loading");
+    setMessage("");
+    try {
+      const { startAuthentication } = await import("@simplewebauthn/browser");
+      const res = await fetch("/api/auth/passkey/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      if (!res.ok) throw new Error("challenge failed");
+      const options = await res.json();
+      const assertion = await startAuthentication(options);
+      await runCredentialSignIn(
+        normalizedEmail,
+        JSON.stringify({ passkey: assertion }),
+        getSafeCallbackUrl(),
+      );
+    } catch {
+      setSubmitState("idle");
+      setMood("error");
+      setMessage("Passkey sign-in did not complete. Try your authenticator code.");
+    }
   }
 
   return (
@@ -514,6 +573,30 @@ export function MonolithLogisticsLogin() {
                   </button>
                 </span>
               </label>
+
+              {needsMfa ? (
+                <label className={styles.field}>
+                  <span>Verification code</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={8}
+                    value={mfaCode}
+                    disabled={busy}
+                    onChange={(event) => setMfaCode(event.target.value.trim())}
+                    aria-label="Two-factor verification code"
+                  />
+                  <button
+                    type="button"
+                    className={styles.textButton}
+                    disabled={busy}
+                    onClick={usePasskey}
+                  >
+                    Use a passkey instead
+                  </button>
+                </label>
+              ) : null}
 
               <div className={styles.options}>
                 <label className={styles.remember}>

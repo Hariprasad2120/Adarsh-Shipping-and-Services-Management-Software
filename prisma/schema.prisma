@@ -11448,7 +11448,7 @@ model Unit {
 model AuthenticationFactor {
   id          String    @id @default(cuid())
   userId      String
-  type        String // "totp" | "webauthn" (future)
+  type        String // "totp" | "webauthn"
   label       String?
   /// AES-256-GCM encrypted material (Base32 TOTP secret). Never plaintext.
   secretEnc   String?
@@ -11458,6 +11458,14 @@ model AuthenticationFactor {
   disabledAt  DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  // WebAuthn / passkey fields (null for TOTP factors).
+  credentialId     String? @unique // base64url
+  credentialPublic String? // base64url COSE public key
+  counter          Int?    @default(0)
+  transports       String? // comma-separated hints
+  deviceType       String? // "singleDevice" | "multiDevice"
+  backedUp         Boolean @default(false)
 
   user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   recoveryCodes MfaRecoveryCode[]

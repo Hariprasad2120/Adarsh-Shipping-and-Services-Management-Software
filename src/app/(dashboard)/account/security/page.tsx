@@ -11,6 +11,7 @@ import {
 import { SecuritySessionsClient } from "./sessions-client";
 import { SecurityCenterClient } from "./security-center-client";
 import { getSecurityOverview } from "./mfa-actions";
+import { hasPasskey } from "./passkey-actions";
 
 export const metadata = {
   title: "Security & Sessions | Adarsh Shipping",
@@ -22,7 +23,7 @@ export default async function AccountSecurityPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [sessions, overview, user, googleLink] = await Promise.all([
+  const [sessions, overview, user, googleLink, passkey] = await Promise.all([
     listActiveSessions(session.user.id),
     getSecurityOverview(),
     db.user.findUnique({
@@ -33,6 +34,7 @@ export default async function AccountSecurityPage() {
       where: { userId: session.user.id, provider: "google" },
       select: { id: true },
     }),
+    hasPasskey(),
   ]);
 
   const rows = sessions.map((s) => ({
@@ -64,6 +66,7 @@ export default async function AccountSecurityPage() {
         overview={overview}
         hasGoogleIdentity={Boolean(googleLink)}
         passwordIsLocal={Boolean(user?.passwordHash?.startsWith("$2"))}
+        hasPasskey={passkey}
       />
       <SecuritySessionsClient sessions={rows} />
     </WorkspacePage>

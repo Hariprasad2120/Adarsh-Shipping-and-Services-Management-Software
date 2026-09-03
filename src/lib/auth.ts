@@ -181,8 +181,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Password is correct. If this account has an active factor (or its
         // org / platform-admin status mandates MFA), a valid TOTP or recovery
         // code must be supplied before a session is created.
-        const { hasActiveMfa, verifyMfa } = await import("@/lib/mfa/service");
-        const mfaActive = await hasActiveMfa(user.id);
+        const { hasAnyActiveFactor, verifyMfa } = await import("@/lib/mfa/service");
+        const mfaActive = await hasAnyActiveFactor(user.id);
         let mfaVerified = false;
         if (mfaActive) {
           if (!totp) {
@@ -196,7 +196,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             });
             throw new MfaRequiredError();
           }
-          const result = await verifyMfa(user.id, totp, { ip, userAgent });
+          const passkeyChallenge =
+            request?.headers
+              ?.get("cookie")
+              ?.match(/(?:^|;\s*)pk_auth_challenge=([^;]+)/)?.[1] ?? null;
+          const result = await verifyMfa(user.id, totp, {
+            ip,
+            userAgent,
+            passkeyChallenge: passkeyChallenge
+              ? decodeURIComponent(passkeyChallenge)
+              : null,
+          });
           if (!result.ok) {
             await recordLoginFailure(normalizedEmail, ip);
             throw new MfaInvalidError();
