@@ -1,0 +1,159 @@
+# TASK.md — Monolith Stage 2: Enterprise Platform
+
+> Living tracker. Statuses: `TODO` · `IN PROGRESS` · `BLOCKED` · `DONE` · `VERIFIED`.
+> Nothing is `DONE` until tested; `VERIFIED` = tested + reviewed.
+> Audit: [`ENTERPRISE_ARCHITECTURE_AUDIT.md`](./ENTERPRISE_ARCHITECTURE_AUDIT.md).
+
+## Environment note
+Concurrent agent doing UI-migration work on `ams-completion` (167 uncommitted files at
+Phase 0). Before any schema/migration change: `git status`, check `prisma/migrations/`,
+prefer additive migrations, commit small.
+
+---
+
+## Phase 0 — Enterprise Architecture Audit
+
+| Task | Status | Files | Notes |
+|---|---|---|---|
+| Repo sweep: currency / country / tz / fiscal / company-name hardcoding | VERIFIED | — | Counts in audit §0 |
+| Tenancy model review (`Organisation`, `orgId`, `User`) | VERIFIED | `prisma/schema.prisma` | god-object; no LegalEntity/BU; single-org user — audit §2.A |
+| Module-gating review | VERIFIED | `src/lib/app-edition.ts` | global `APP_EDITION` + hardcoded blocklists — audit §2.C1 |
+| Setup / provisioning review | VERIFIED | `src/app/api/setup/route.ts`, `src/app/(auth)/setup/page.tsx`, `prisma/seed.ts` | bootstrap-once ok; no wizard; seed = one company — audit §2.D2, §2.E |
+| Custom-fields review | VERIFIED | schema:778 / 2881 / 5346 | 3 duplicate implementations — audit §2.F1 |
+| Approval / maker-checker review | VERIFIED | `src/modules/accounting/authorization-planning/` | accounting-only — audit §2.D3 |
+| Numbering review | VERIFIED | — | no `NumberingSequence` model — audit §2.D4 |
+| Write `ENTERPRISE_ARCHITECTURE_AUDIT.md` + `TASK.md` | VERIFIED | this file | — |
+
+**Phase 0 result:** audit complete. Remediation split into 15 clusters below. Awaiting go-ahead
+per cluster (schema changes gated on concurrent-agent coordination).
+
+---
+
+## Phase 1+ — Remediation clusters
+
+### Cluster 1 — Regional settings foundation
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `OrganisationSettings` model (currency, timezone, locale, dateFormat, numberFormat, firstDayOfWeek, fiscalYearStartMonth, country, legalName, taxIds) | TODO | `prisma/schema.prisma` | additive; backfill row with INR/Asia-Kolkata/en-IN/April | — | audit A4 |
+| `formatMoney` / `formatDate` / `getOrgTimezone` / `zonedNow` services | TODO | `src/modules/core/regional/` (new) | — | unit | replace `lib/items/formatters.ts` |
+| Retire hardcoded `Rs`/`en-IN` in `lib/items/formatters.ts` | TODO | `src/lib/items/formatters.ts` | — | — | audit B1 |
+
+### Cluster 2 — Module registry
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| Registry types + per-module manifests (`id,name,version,dependsOn,permissions,nav,settingsSchema,setupSteps`) | TODO | `src/modules/core/module-registry/` (new) | — | unit (dependency resolution) | audit C1 |
+| `OrgModule` persistence + enable/disable service w/ dependency resolution | TODO | `prisma/schema.prisma`, registry | additive | integration | — |
+| Nav + middleware read registry; delete `CHA_BLOCKED_*` arrays | TODO | `src/lib/app-edition.ts`, `src/lib/navigation.ts`, middleware | — | e2e nav | `APP_EDITION` → provisioning template only |
+| Move CHA-aware helpers out of `src/lib/` | TODO | `src/lib/cha-badges.ts`, `job-workspace-profile.ts`, `catalogue-data.ts` | — | — | audit C2 |
+
+### Cluster 3 — Legal entities & org structure
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `LegalEntity` model (≥1 per org, one default); optional `BusinessUnit`, `CostCentre` | TODO | `prisma/schema.prisma` | expand; auto-create default entity per org | integration | audit A2 |
+| Re-parent `Branch`/`Department`/`Division` under `LegalEntity` (nullable FK) | TODO | schema | expand→backfill→contract | — | — |
+
+### Cluster 4 — Membership model
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `OrganisationMembership(userId, orgId, status, ...)`; role assignment scoped to membership | TODO | schema, `src/lib/rbac.ts`, `src/lib/tenant.ts` | expand; keep `User.orgId` during transition | authz + tenant-isolation | audit A3 |
+
+### Cluster 5 — Numbering service
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `NumberingSequence` model + `allocateNumber()` (row lock / `UPDATE…RETURNING`) | TODO | `src/modules/core/numbering/` (new), schema | additive | concurrency test (parallel allocate, no dup) | audit D4 |
+| Migrate existing per-module doc numbering onto service | TODO | accounting, crm invoices, cha | — | — | inventory first |
+
+### Cluster 6 — Approval engine
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `modules/core/approvals/` — `ApprovalRequest`, N-level chains, "no self-approval" policy, pluggable subject types | TODO | new, schema | additive | unit + integration | audit D3 |
+| Accounting `authorization-planning` migrates onto engine | TODO | `src/modules/accounting/authorization-planning/` | — | regression | keep behaviour |
+
+### Cluster 7 — Custom fields convergence
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| One `CustomFieldDefinition` + `CustomFieldValue` (types, required, default, options, validation, help, visibility, permission) | TODO | schema, `src/modules/core/custom-fields/` (new) | expand; keep old 3 tables as views during contract | unit (validation, authz not bypassable) | audit F1 |
+| Migrate `EmployeeProfileField`, `CustomField`, `AccountingCustomFieldDefinition` consumers | TODO | hrms, accounting, … | backfill | regression | — |
+
+### Cluster 8 — Organisation Setup Wizard
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `SetupProgress` + `Organisation.activatedAt`; resumable, idempotent multi-step wizard (profile, regional, structure, domain, identity/security, roles, modules, master data, workflows, branding, users, integrations, retention, import, readiness) | TODO | `src/app/(dashboard)/setup/**` (new), schema | additive | e2e per step + resume | audit E4/E5 |
+| Readiness check (BLOCKING / WARNING / OPTIONAL) + audited Activate action | TODO | wizard | — | integration | spec §15 |
+| Gate business routes until required steps pass | TODO | middleware | — | e2e | — |
+
+### Cluster 9 — Provisioning templates + seed split
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| Provisioning service builds org from template (modules, roles, workflows, terminology, masters, security baseline) — no hardcoded company | TODO | `src/modules/core/provisioning/` (new) | — | integration | audit D2 |
+| Templates `Generic SME` / `Enterprise` / `Professional Services` / `Logistics` as versioned data | TODO | `src/modules/core/provisioning/templates/` | — | — | spec §12 |
+| Split `prisma/seed.ts` → `seed.dev.ts` (Adarsh demo) + template-driven prod path; remove `password@123` from any prod-reachable path | TODO | `prisma/seed*.ts` | — | — | audit D2 |
+| Move hardcoded `systemRoles` out of `/api/setup` into templates | TODO | `src/app/api/setup/route.ts` | — | — | audit D1 |
+| Add unique guard / advisory lock on bootstrap admin creation | TODO | `src/app/api/setup/route.ts`, schema | partial unique index | concurrency test | audit E2 |
+
+### Cluster 10 — Observability
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| Correlation/request ID middleware; structured logger; IDs in logs/jobs/errors/audit | TODO | `src/lib/`, middleware | — | — | audit G1 |
+| `/health` + `/ready` routes (no infra detail leak) | TODO | `src/app/health/`, `src/app/ready/` | — | smoke | spec §15 |
+| Instrument auth errors, API latency, DB/queue/mail/webhook failures, rate limits, security events | TODO | — | — | — | prep for external APM/SIEM, no vendor coupling |
+
+### Cluster 11 — Jobs & idempotency
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| Inventory long/blocking operations (bulk email, imports, exports, PDF, webhooks, large reports/sync) | TODO | — | — | — | audit G2 |
+| Job abstraction (ID, status, retries, backoff, DLQ, org context, idempotency, audit) | TODO | `src/modules/core/jobs/` (new), schema | additive | integration | — |
+| `IdempotencyKey` table + wrapper for money-ish / import / provisioning endpoints | TODO | schema, `src/lib/` | additive | dup-request test | audit G3 |
+
+### Cluster 12 — i18n scaffold
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| Message catalogue framework; base `en` locale | TODO | `src/i18n/` (new) | — | — | audit H1 |
+| Lint rule banning `toLocaleDateString("en-IN")` / literal currency symbols in shared code | TODO | eslint config | — | — | audit B4 |
+
+### Cluster 13 — Currency / date sweep (module-by-module)
+| Module | Status | Notes |
+|---|---|---|
+| accounting | TODO | heaviest (~216 raw-control + currency sites) |
+| ams | TODO | — |
+| attendance / leave / ot | TODO | also timezone (audit B3) |
+| crm | TODO | invoices |
+| cha / freight-forwarding | TODO | — |
+| items / catalogue | TODO | `formatters.ts` origin |
+| payroll / incentives | TODO | — |
+| hrms / people / performance / recruit | TODO | — |
+
+### Cluster 14 — Concurrency & DB enterprise review
+| Task | Status | Notes |
+|---|---|---|
+| Race audit: numbering, leave balances, accounting posting, approvals, invitations, workflow transitions, provisioning | TODO | audit G4 / spec §18 |
+| Prisma review: PKs, FKs, tenant keys, indexes, unique constraints, cascades, nullable, soft-delete, N+1, unbounded reads, pagination | TODO | spec §19; index changes need `EXPLAIN` evidence |
+
+### Cluster 15 — Docs, QA audit, scorecard
+| Doc / task | Status | Notes |
+|---|---|---|
+| `ENTERPRISE_ARCHITECTURE.md` | TODO | before/after |
+| `TENANCY_ARCHITECTURE.md` | TODO | Cluster 3/4 output |
+| `IDENTITY_ARCHITECTURE.md` | TODO | + SSO/SCIM backlog (spec §28/§29) |
+| `MODULE_ARCHITECTURE.md` | TODO | Cluster 2 output |
+| `ORGANISATION_SETUP.md` | TODO | Cluster 8 output |
+| `DEPLOYMENT.md` | TODO | expand `VERCEL_DEPLOYMENT.md`; app vs infra control split |
+| `OPERATIONS_RUNBOOK.md` | TODO | spec §38 |
+| `BACKUP_AND_DISASTER_RECOVERY.md` | TODO | spec §22; RPO/RTO as config decisions; restore drill |
+| `INCIDENT_RESPONSE.md` | TODO | spec §39 |
+| `DATA_RETENTION.md` / `DATA_CLASSIFICATION.md` | TODO | spec §13/§31/§33 |
+| `INTEGRATION_ARCHITECTURE.md` / `API_SECURITY.md` | TODO | spec §12/§9/§10/§11 |
+| `ENTERPRISE_QA.md` | TODO | per-module CRUD/permissions/isolation matrix (spec §35) |
+| `SECURITY_CONTROL_MATRIX.md` | TODO | ASVS / API-Sec / NIST mapping w/ evidence (spec §41) |
+| `PRODUCTION_READINESS.md` + MNC scorecard | TODO | spec §42; evidence-backed scores |
+| Update `PENTEST_SCOPE.md` | TODO | already exists; extend for Stage 2 surface (spec §43) |
+
+---
+
+## Problems found (running log)
+- 2026-09-03: 167 uncommitted files from concurrent agent — schema clusters must coordinate.
+- 2026-09-03: `prisma/seed.ts` ships `DEFAULT_PASSWORD = "password@123"` — confirm not prod-reachable (Cluster 9).
+
+## Decisions
+- No Prisma table renames (schema names already domain-neutral) — terminology handled at presentation layer.
+- Expand→backfill→migrate→contract for every schema change; no destructive drops in one deploy.
