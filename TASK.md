@@ -40,13 +40,20 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Deprecate `formatINR` / `formatINRCompact` | VERIFIED | `src/lib/items/formatters.ts` | — | — | `@deprecated` → `formatMoney`; 2 consumers migrate in Cluster 13 |
 | tsc `--noEmit` 0 errors + eslint clean on new files | VERIFIED | — | — | — | — |
 
-### Cluster 2 — Module registry
+### Cluster 2 — Module registry  — PARTIAL (core registry landed)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| Registry types + per-module manifests (`id,name,version,dependsOn,permissions,nav,settingsSchema,setupSteps`) | TODO | `src/modules/core/module-registry/` (new) | — | unit (dependency resolution) | audit C1 |
-| `OrgModule` persistence + enable/disable service w/ dependency resolution | TODO | `prisma/schema.prisma`, registry | additive | integration | — |
-| Nav + middleware read registry; delete `CHA_BLOCKED_*` arrays | TODO | `src/lib/app-edition.ts`, `src/lib/navigation.ts`, middleware | — | e2e nav | `APP_EDITION` → provisioning template only |
+| Registry types + per-module manifests (`id, label, version, kind, dependsOn, routePrefixes, permissionGroups, features, capabilities`) | VERIFIED | `src/modules/core/module-registry/{types,registry,resolve,index}.ts` | — | `__tests__/registry.test.ts` 14/14 | 17 manifests (4 core + 13 business) |
+| `validateRegistry()` — unknown-dep / core→business / cycle detection; runs at import | VERIFIED | `resolve.ts` | — | ✓ | fails fast in dev/CI |
+| `resolveEnabledModules()` — core always on + transitive dependency closure + `autoAdded` report | VERIFIED | `resolve.ts` | — | ✓ | — |
+| Parity test: registry ids/labels/descriptions/features === legacy `module-config.ts` | VERIFIED | `__tests__/registry.test.ts` | — | ✓ | build fails if they diverge — registry is the place to add a module |
+| `setEnabledModuleIds` runs dependency resolution before persist (Payroll → +HRMS) | VERIFIED | `src/modules/core/organisation/module-settings.ts` | — | — | only verified dep declared (`payroll→hrms`, 32 code imports) |
+| `dependsOn` for attendance / ams / lms / recruit (runtime need for HRMS employees, no direct imports) | TODO | `registry.ts` | — | — | verify each at runtime before declaring — wrong entry silently enables modules |
+| `getModuleForPath()` longest-prefix router | VERIFIED | `resolve.ts` | — | ✓ | ready for proxy/nav to consume |
+| Fold `module-config.ts` id tuples + `MANAGED_ROUTE_PREFIXES` to derive from registry | TODO | `module-config.ts` | — | — | needs `as const` type surgery — deferred to avoid build risk while concurrent agent active; parity test guards drift meanwhile |
+| Retire `app-edition.ts` `CHA_BLOCKED_*` arrays → derive from registry | TODO | `src/lib/app-edition.ts`, `src/proxy.ts` | — | e2e nav | behaviour-sensitive (current list missing `/payroll`); do with Cluster 9 provisioning templates + explicit behaviour diff |
 | Move CHA-aware helpers out of `src/lib/` | TODO | `src/lib/cha-badges.ts`, `job-workspace-profile.ts`, `catalogue-data.ts` | — | — | audit C2 |
+| `OrgModule` table (replace `SystemSetting` JSON persistence) | TODO | `prisma/schema.prisma` | additive | integration | optional — current persistence works; do if config-audit (§13) needs per-row history |
 
 ### Cluster 3 — Legal entities & org structure
 | Task | Status | Files | Migration | Tests | Notes |

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { revalidateTag, unstable_cache } from "next/cache";
+import { resolveEnabledModules } from "@/modules/core/module-registry";
 import {
   MANAGED_FEATURE_IDS,
   TOGGLEABLE_MODULE_SECTION_IDS,
@@ -184,7 +185,13 @@ export async function setEnabledModuleIds(
   orgId: string,
   enabledModuleIds: readonly ToggleableModuleSectionId[],
 ) {
-  const normalized = TOGGLEABLE_MODULE_SECTION_IDS.filter((id) => enabledModuleIds.includes(id));
+  const requested = TOGGLEABLE_MODULE_SECTION_IDS.filter((id) => enabledModuleIds.includes(id));
+
+  // Stage 2 — module registry: enabling a module also enables its dependency
+  // closure (e.g. Payroll pulls in HRMS). Core modules resolved by the registry
+  // are not stored here (this key only holds toggleable ids).
+  const { enabled } = resolveEnabledModules(requested);
+  const normalized = TOGGLEABLE_MODULE_SECTION_IDS.filter((id) => enabled.includes(id));
 
   const row = await db.systemSetting.upsert({
     where: { key: getEnabledModulesSettingKey(orgId) },
