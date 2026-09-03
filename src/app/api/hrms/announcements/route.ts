@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac";
 
 export async function GET() {
   try {
@@ -47,6 +48,12 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized access" } },
         { status: 401 },
+      );
+    }
+    if (!(await can(session.user.id, "hrms.settings.manage"))) {
+      return NextResponse.json(
+        { ok: false, error: { code: "FORBIDDEN", message: "Not permitted to publish announcements" } },
+        { status: 403 },
       );
     }
 

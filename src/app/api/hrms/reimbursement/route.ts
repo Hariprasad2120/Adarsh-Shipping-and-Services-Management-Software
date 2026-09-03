@@ -6,6 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import {
   listReimbursementClaims,
@@ -55,8 +56,14 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!(await can(session.user.id, "hrms.settings.manage"))) {
+      return NextResponse.json(
+        { error: "Not permitted to manage reimbursement claims or rates" },
+        { status: 403 },
+      );
+    }
 
-    const orgId = (session.user as any).orgId;
+    const orgId = (session.user as { orgId?: string }).orgId;
     if (!orgId) return NextResponse.json({ error: "No organization" }, { status: 400 });
 
     const body = await request.json();

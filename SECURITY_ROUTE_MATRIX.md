@@ -66,8 +66,8 @@ Regression tests: `src/lib/__tests__/cross-tenant-org-structure.integration.test
 | Flag | Files (count) | Assessment | Plan |
 |---|---|---|---|
 | `WRITE_NO_INPUT_SCHEMA` | ~35 payroll / HR `*-actions.ts` | Server actions that take **typed function params**, not a raw `await request.json()` spread — mass-assignment risk is low, but a Zod DTO at each boundary is still owed | add `z.object` DTOs module-by-module |
-| `MUTATION_NO_PERMISSION_CHECK` | ~60 (after removing false positives) | Most are authenticated + self-scoped or portal-scoped. A handful (`hrms/announcements`, `hrms/reimbursement`, `leave/delegations`, `leave/restricted-holidays`) should gain a granular permission | add `requirePermission` per feature |
-| `BYID_NO_TENANT_SCOPE` on dashboard pages | `crm/customers/[id]/edit`, `crm/items/[id]`, `accounting/items/[id]`, `hrms/letters/view/[id]`, `[legacyRecordType]`, `[...slug]` | RSC pages load data server-side; each loader must be confirmed to scope by `session.user.orgId` | per-page loader audit |
+| `MUTATION_NO_PERMISSION_CHECK` | ~58 | Most are authenticated + self-scoped or portal-scoped. **Reviewed:** `leave/delegations` (delegator is `session.user.id`) and `leave/restricted-holidays` (`userId` is `session.user.id`) are correct self-service — not gaps. **Fixed:** `hrms/announcements` POST and `hrms/reimbursement` POST now require `hrms.settings.manage` (were authenticated + org-scoped but had no permission gate on an org-wide / money-config action). | done |
+| `BYID_NO_TENANT_SCOPE` on dashboard pages | `crm/customers/[id]/edit`, `crm/items/[id]`, `accounting/items/[id]`, `hrms/letters/view/[id]`, `[legacyRecordType]`, `[...slug]` | **Reviewed — false positives.** These are client components (`useParams` / `use(params)`) or pure `redirect()` shims; none load tenant data server-side. The actual data fetch happens in child components via already-guarded API routes (which carry the org scope). | no change needed |
 
 ## 5. CI
 
