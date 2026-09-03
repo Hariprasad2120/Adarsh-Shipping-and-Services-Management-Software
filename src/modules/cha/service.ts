@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { createNotification, getUsersWithPermission } from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
+import { readWorkbook } from "@/lib/safe-xlsx";
 import fs from "fs/promises";
 import path from "path";
 import { Prisma } from "@/generated/prisma/client";
@@ -5787,7 +5788,7 @@ export async function importChecklistExcel(
     throw new Error("Cannot import checklist. Complete the Additional Data process first.");
   }
 
-  const workbook = XLSX.read(fileBuffer, { type: "buffer" });
+  const workbook = readWorkbook(fileBuffer, { source: "cha import" });
   if (workbook.SheetNames.length === 0) {
     throw new Error("Invalid Excel file: No sheets found.");
   }

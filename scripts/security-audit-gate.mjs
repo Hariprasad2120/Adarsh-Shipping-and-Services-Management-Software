@@ -11,19 +11,12 @@ import { execSync } from "node:child_process";
  */
 
 const XLSX = { reason: "No fixed xlsx release; parsing size/time limited, exceljs migration planned (DEPENDENCY_REMEDIATION.md).", reviewBy: "2026-12-31" };
-const NODEMAILER = { reason: "Fix needs nodemailer 9 (major). No caller-controlled name/envelope; default provider is Resend. Bump planned.", reviewBy: "2026-11-30" };
 const PRISMA_CLI = { reason: "Build-time Prisma CLI only (prisma generate/migrate); not in the Next.js runtime bundle. ACCEPTED RISK.", reviewBy: "2027-03-31" };
 const SHADCN_CLI = { reason: "shadcn CLI (js-yaml via cosmiconfig) — build-time tool, should be a devDependency. Not in runtime.", reviewBy: "2027-01-31" };
 
 const ALLOWLIST = [
   { id: "GHSA-4r6h-8v6p-xvw6", ...XLSX },
   { id: "GHSA-5pgg-2g8v-p4x9", ...XLSX },
-  { id: "GHSA-vvjj-xcjg-gr5g", ...NODEMAILER },
-  { id: "GHSA-c7w3-x93f-qmm8", ...NODEMAILER },
-  { id: "GHSA-268h-hp4c-crq3", ...NODEMAILER },
-  { id: "GHSA-wqvq-jvpq-h66f", ...NODEMAILER },
-  { id: "GHSA-r7g4-qg5f-qqm2", ...NODEMAILER },
-  { id: "GHSA-p6gq-j5cr-w38f", ...NODEMAILER },
   { id: "GHSA-ggr8-5vv4-36mx", ...PRISMA_CLI }, // deepmerge-ts via @prisma/config
   { id: "GHSA-h67p-54hq-rp68", ...SHADCN_CLI }, // js-yaml
   { id: "GHSA-52cp-r559-cp3m", ...SHADCN_CLI },
@@ -41,8 +34,6 @@ const ALLOWLIST = [
 const ALLOWLIST_PACKAGES = new Set([
   "@prisma/config", // deepmerge-ts, build-time
   "prisma", // bundles drivers for every DB; runtime uses @prisma/adapter-pg
-  "@auth/core", // high advisories come via nodemailer (already triaged)
-  "next-auth", // via @auth/core -> nodemailer
   "mysql2", // via the prisma CLI
 ]);
 

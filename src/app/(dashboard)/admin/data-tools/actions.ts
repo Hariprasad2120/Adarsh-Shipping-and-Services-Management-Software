@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import * as XLSX from "xlsx";
+import { readWorkbook } from "@/lib/safe-xlsx";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -87,7 +88,7 @@ export async function importWorkbookAction(formData: FormData): Promise<ImportRe
     if (!orgId) return { ok: false, error: "Organisation missing" };
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
+    const wb = readWorkbook(buffer, { source: "admin/data-tools import", xlsxOptions: { cellDates: true, raw: false } });
     const users = sheet(wb, "Users");
     const accessRows = sheet(wb, "Login Access");
 

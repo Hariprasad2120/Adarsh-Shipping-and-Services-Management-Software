@@ -5,6 +5,7 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import * as XLSX from "xlsx";
+import { readWorkbook } from "@/lib/safe-xlsx";
 import { z } from "zod";
 import type { RateWorkflowSnapshot, StandardRateReference } from "../rate-workflow";
 import { suggestCanonicalCharge } from "../rate-workflow";
@@ -632,7 +633,7 @@ async function extractAttachmentText(attachment: AttachmentInput) {
 }
 
 function extractSpreadsheetText(content: Buffer) {
-  const workbook = XLSX.read(content, { type: "buffer" });
+  const workbook = readWorkbook(content, { source: "crm rate-response" });
   return workbook.SheetNames.map((sheetName) => {
     const sheet = workbook.Sheets[sheetName];
     if (!sheet) return "";

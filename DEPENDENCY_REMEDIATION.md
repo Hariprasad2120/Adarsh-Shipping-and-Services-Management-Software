@@ -46,13 +46,15 @@ to **5 (0 critical, 5 high)**. `next build` passes (497/497 static pages).
   employee-directory export, payroll import/export, and three `scripts/*`.
   Parsing **attacker-influenced** files (payroll import, CRM rate responses,
   CHA masters) is the real risk surface; pure export paths are not.
-- **Interim mitigation (cluster: request-integrity follow-up — NOT yet done):**
-  1. Route every `XLSX.read`/`XLSX.readFile` through one wrapper that runs with a
-     hardened prototype (`Object.freeze(Object.prototype)` in the worker) and
-     enforces a max byte size + parse timeout.
-  2. Move parsing of user-uploaded workbooks to an isolated worker / subprocess.
-  3. Add `validateUpload(kind:"spreadsheet")` (magic-byte + size) at every
-     upload entry point before the bytes reach `xlsx`.
+- **Interim mitigation — DONE (Stage 2 cluster 8):** `src/lib/safe-xlsx.ts`
+  `readWorkbook()` — byte-size ceiling, `Object.freeze(Object.prototype)` +
+  `Array.prototype` for the parse, minimal parser options
+  (`cellFormula`/`cellHTML` off, `raw` on), wall-clock over-budget warning.
+  Wired into the 4 server-side attacker-influenced parse sites
+  (`admin/data-tools`, `cha/service`, `cha/customs/masters/service`,
+  `crm rate-response-parser`). Export paths are unaffected (we generate those
+  workbooks). Still owed: an isolated worker/subprocess for parsing, and
+  `validateUpload(kind:"spreadsheet")` at every upload entry point.
 - **Planned fix (post Stage-1 core):** migrate reads to `exceljs` (maintained,
   no known criticals) and writes to `exceljs` or `write-excel-file`. Estimated
   1–2 days across ~10 call sites; needs golden-file tests for each importer.
@@ -60,7 +62,14 @@ to **5 (0 critical, 5 high)**. `next build` passes (497/497 static pages).
   build (which carries the fixes) is licensable for this deployment as a faster
   path than the `exceljs` migration.
 
-### 2. `nodemailer` — HIGH, fix only in a **major** bump (7.x → 9.x)
+### 2. `nodemailer` — **DONE** (bumped 7.x → 9.1.1 in Stage 2 cluster 8)
+
+`src/lib/email.ts` verified against v9 (`createTransport` + `sendMail` API
+unchanged for our usage). Audit-gate allow-list entries for the nodemailer
+advisory chain (and the `@auth/core` / `next-auth` parent-level highs it
+propagated to) have been removed — the tree is clean of them.
+
+_Historical note (pre-bump):_
 - **Advisories:** SMTP command injection via unsanitized `envelope.size`
   (GHSA-2mzp-…); CRLF in transport `name` option → EHLO/HELO injection
   (GHSA-vvjj-xcjg-gr5g).

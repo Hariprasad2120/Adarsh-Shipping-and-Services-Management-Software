@@ -266,6 +266,37 @@ Verification for checkpoint 7: migration applied to both DBs; `prisma generate`
 + `tsc` 0 errors in Stage-1 code; DB integration suite 40/40 + security unit
 111/111 green.
 
+### Cluster 8 — dependency finish + xlsx hardening + pen-test prep (checkpoint 8)
+
+| Item | State |
+|---|---|
+| `nodemailer` 7 → **9.1.1** | Done. `email.ts` verified against v9. The nodemailer advisory chain (and the `@auth/core` / `next-auth` parent-level highs) removed from the audit-gate allow-list — tree is clean of them. |
+| `xlsx` hardening | `src/lib/safe-xlsx.ts` `readWorkbook()` — size ceiling + frozen `Object`/`Array` prototypes for the parse + minimal parser options + over-budget warning. Wired into the 4 server-side attacker-influenced parse sites. Interim until `exceljs` (still tracked). |
+| Pen-test prep | `PENTEST_SCOPE.md` — target/env, test-account matrix, in-scope areas (auth, BOLA/multi-tenancy, request/input, headers, secrets), known gaps to validate, rules of engagement, deliverables. |
+
+Deferred, with reasons (see `SECURITY_AUDIT_AFTER_STAGE1.md` §3):
+- **Nonce-based CSP** — needs per-request nonce injection in `proxy.ts` + every
+  inline `<script>`/`<style>` in the layouts. The layouts are being actively
+  rewritten by the concurrent shadcn migration and `next build` is currently
+  broken, so an unverifiable CSP change risks white-screening the app. Deferred
+  until the build is green; plan documented.
+- **Retrofit 281 `auth()` → `requireApiActor`** — mechanical churn across 281
+  files with high merge-conflict risk against the concurrent UI work, and low
+  marginal security value (route auth coverage is already proven at 0 gaps by
+  `route-auth-coverage.test.ts`). Deferred as a follow-up refactor.
+- **Security Center UI / Org Security Policy UI** — server actions
+  (`account/security/mfa-actions.ts`) + the `Organisation.requireMfa` column
+  exist; the pages need the shadcn component set the concurrent migration is
+  introducing. Deferred until that lands.
+- **Passkeys/WebAuthn** — `AuthenticationFactor` is WebAuthn-ready
+  (`type` + null `secretEnc`); implementing needs `@simplewebauthn/server`, a
+  migration for credential columns, and enrolment/assertion UI. Scoped as its
+  own stage.
+
+Verification for checkpoint 8: `tsc --noEmit` 0 errors in Stage-1 code; ESLint
+clean on changed files; `security:check` (111 unit tests, 0 route/scope gaps,
+audit gate PASS).
+
 ---
 
 ## 1. Architecture discovered

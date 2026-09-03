@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import * as XLSX from "xlsx";
+import { readWorkbook } from "@/lib/safe-xlsx";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { logCustomsMasterAudit } from "./audit";
@@ -247,11 +248,9 @@ function parseWorkbookRows(options: BulkImportOptions, bytes: Uint8Array) {
   if (options.fileName.toLowerCase().endsWith(".csv")) {
     return parseCsvRows(Buffer.from(bytes).toString("utf8"));
   }
-  const workbook = XLSX.read(bytes, {
-    type: "buffer",
-    raw: false,
-    cellDates: true,
-    cellFormula: true,
+  const workbook = readWorkbook(bytes, {
+    source: "cha customs masters import",
+    xlsxOptions: { raw: false, cellDates: true, cellFormula: true },
   });
   const firstSheetName = workbook.SheetNames[0];
   if (!firstSheetName) {
