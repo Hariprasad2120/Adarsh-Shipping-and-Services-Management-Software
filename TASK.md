@@ -196,11 +196,19 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | payroll / incentives | TODO | — |
 | hrms / people / performance / recruit | TODO | — |
 
-### Cluster 14 — Concurrency & DB enterprise review
+### Cluster 14 — Concurrency & DB enterprise review  — DONE (scoped) → `CONCURRENCY_AND_DB_REVIEW.md`
 | Task | Status | Notes |
 |---|---|---|
-| Race audit: numbering, leave balances, accounting posting, approvals, invitations, workflow transitions, provisioning | TODO | audit G4 / spec §18 |
-| Prisma review: PKs, FKs, tenant keys, indexes, unique constraints, cascades, nullable, soft-delete, N+1, unbounded reads, pagination | TODO | spec §19; index changes need `EXPLAIN` evidence |
+| Race verdicts for all 12 Stage 2 primitives | DONE | numbering / jobs / idempotency / membership = SAFE (verified); approvals / provisioning = SAFE-reasoned; rest = config semantics |
+| Spot-check existing hotspots | DONE | leave balance = GOOD (optimistic lock + retry); accounting posting = GOOD (idempotency + atomic numbering); **CHA job numbering = read-then-write race (Medium, unique-guarded)**; **leave-request overlap = app-only check (Medium)**; invitations = multiple pending rows (Low) |
+| Prisma review — FK indexes, Stage 2 cascades, pagination, soft-delete | DONE (scoped) | Stage 2 models index their FKs + no cascade destroys audit/historical data; full 468-model FK-index + seq-scan audit needs a populated DB + `EXPLAIN` — **still open** |
+| Fix: CHA numbering → `core/numbering` | TODO | removes the race; Cluster 5 follow-up |
+| Fix: leave-request overlap — DB `EXCLUDE` constraint or lock-on-balance | TODO | confirm current guard first |
+| Fix: standardise `updateMany({where:{id,status:expected}})` for status transitions | TODO | — |
+| Fix: partial unique index on active `EmployeeInvitation(orgId,email)` | TODO | Low |
+| Fix: stuck-job reaper (reset stale `RUNNING` jobs) | TODO | — |
+| Full FK-index + seq-scan + `EXPLAIN` audit on populated DB | TODO | spec §19 — dedicated task, not static |
+| Representative-volume load test | TODO | spec §20 — blocker |
 
 ### Cluster 15 — Docs, QA audit, scorecard  — DONE (doc set) / QA + scorecard honest
 | Doc / task | Status | Notes |
