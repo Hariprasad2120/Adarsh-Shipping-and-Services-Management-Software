@@ -175,11 +175,14 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Wrap money-ish / import / provisioning endpoints with `withIdempotency` | TODO | those routes | — | — | audit G3 |
 | Register the cron in `vercel.json` / `vercel.ts` crons | TODO | deploy config | — | — | — |
 
-### Cluster 12 — i18n scaffold
+### Cluster 12 — i18n scaffold  — DONE
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| Message catalogue framework; base `en` locale | TODO | `src/i18n/` (new) | — | — | audit H1 |
-| Lint rule banning `toLocaleDateString("en-IN")` / literal currency symbols in shared code | TODO | eslint config | — | — | audit B4 |
+| `translate.ts` (pure, no dependency) — catalogue registry, `translate` w/ `{param}` interpolation + locale→language→base→key fallback, `translator(locale)`, `plural` | VERIFIED | `src/modules/core/i18n/translate.ts` | — | `__tests__/translate.test.ts` 9/9 | audit H1. Full lib (next-intl/Lingui) can layer behind `t()` later. |
+| Base `en` catalogue (common verbs / states / form) registered on import | VERIFIED | `src/modules/core/i18n/catalogue.en.ts` | — | ✓ | modules add namespaced keys via `registerCatalogue` |
+| ESLint rule — warn on `en-IN` / `Asia/Kolkata` / `₹` literals in `src/lib/**` | VERIFIED | `eslint.config.mjs` | — | — | advisory; `no-restricted-syntax` scoped to `src/lib/**` only so the `src/modules/**` block is not clobbered. Full `npx eslint` still 0 errors / exit 0 |
+| Extend the lint rule to `src/modules/core/**` (needs merging with the existing block's selectors) | TODO | `eslint.config.mjs` | — | — | — |
+| Migrate the 578 `toLocale*` call sites onto `t()` / regional formatters | TODO | app-wide | — | — | opportunistic, in module sweeps (Cluster 13) |
 
 ### Cluster 13 — Currency / date sweep (module-by-module)
 | Module | Status | Notes |

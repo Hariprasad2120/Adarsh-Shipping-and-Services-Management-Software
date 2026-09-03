@@ -146,6 +146,35 @@ const eslintConfig = defineConfig([
       "react-hooks/purity": "warn",
     },
   },
+  {
+    // Stage 2 i18n scaffold — surface hardcoded locale / timezone / currency
+    // literals leaking into shared library code. Advisory (warn): the platform
+    // should read these from OrganisationSettings (@/modules/core/regional).
+    // Scoped to src/lib/** only so it does not replace the src/modules/**
+    // no-restricted-syntax block above.
+    files: ["src/lib/**/*.{ts,tsx}"],
+    ignores: ["src/lib/**/__tests__/**", "src/lib/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "Literal[value=/^en-IN$/]",
+          message:
+            "Hardcoded 'en-IN' locale in shared code — take the locale from OrganisationSettings (@/modules/core/regional).",
+        },
+        {
+          selector: "Literal[value='Asia/Kolkata']",
+          message:
+            "Hardcoded 'Asia/Kolkata' timezone in shared code — take the timezone from OrganisationSettings.",
+        },
+        {
+          selector: "Literal[value=/\\u20B9/]",
+          message:
+            "Hardcoded ₹ in shared code — render money via formatMoney(amount, { currency, locale }) from @/modules/core/regional.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     "Extra files/**",
