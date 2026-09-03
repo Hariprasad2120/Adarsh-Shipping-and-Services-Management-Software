@@ -31,12 +31,14 @@ per cluster (schema changes gated on concurrent-agent coordination).
 
 ## Phase 1+ — Remediation clusters
 
-### Cluster 1 — Regional settings foundation
+### Cluster 1 — Regional settings foundation  — DONE
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| `OrganisationSettings` model (currency, timezone, locale, dateFormat, numberFormat, firstDayOfWeek, fiscalYearStartMonth, country, legalName, taxIds) | TODO | `prisma/schema.prisma` | additive; backfill row with INR/Asia-Kolkata/en-IN/April | — | audit A4 |
-| `formatMoney` / `formatDate` / `getOrgTimezone` / `zonedNow` services | TODO | `src/modules/core/regional/` (new) | — | unit | replace `lib/items/formatters.ts` |
-| Retire hardcoded `Rs`/`en-IN` in `lib/items/formatters.ts` | TODO | `src/lib/items/formatters.ts` | — | — | audit B1 |
+| `OrganisationSettings` model (country, timezone, locale, dateFormat, timeFormat, numberFormat, firstDayOfWeek, baseCurrency, supportedCurrencies, fiscalYearStart month/day) | VERIFIED | `prisma/schema.prisma` | `20260903120000_stage2_organisation_settings` — additive table; platform-neutral column defaults (UTC/en-US/USD/ISO-8601/Jan); backfill existing 2 orgs → India values. Applied + verified (2 orgs → 2 rows). | — | audit A4. `legalName`/`taxIds` deferred to Cluster 3 (legal-entity scoped). |
+| `formatMoney` / `formatNumber` / `formatDate` / `formatDateTime` / `zonedNow` (pure, client-safe) | VERIFIED | `src/modules/core/regional/format.ts` | — | `__tests__/format.test.ts` 8/8 | no hardcoded currency/locale/tz |
+| `getOrganisationRegionalSettings` / `updateOrganisationRegionalSettings` + `toFormatContext` (cached, lazy-create) | VERIFIED | `src/modules/core/regional/settings.ts` | — | — | `unstable_cache` + `revalidateTag(tag,"max")` |
+| Deprecate `formatINR` / `formatINRCompact` | VERIFIED | `src/lib/items/formatters.ts` | — | — | `@deprecated` → `formatMoney`; 2 consumers migrate in Cluster 13 |
+| tsc `--noEmit` 0 errors + eslint clean on new files | VERIFIED | — | — | — | — |
 
 ### Cluster 2 — Module registry
 | Task | Status | Files | Migration | Tests | Notes |

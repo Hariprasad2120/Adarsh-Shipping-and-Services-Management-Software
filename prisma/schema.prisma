@@ -22,6 +22,9 @@ model Organisation {
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 
+  // Stage 2 — enterprise platform: per-organisation regional / fiscal configuration.
+  settings    OrganisationSettings?
+
   branches    Branch[]
   departments Department[]
   divisions   Division[]
@@ -1688,6 +1691,36 @@ model LeavePartialPayRecord {
 model SystemSetting {
   key       String   @id
   value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Stage 2 — enterprise platform. Per-organisation regional, locale and fiscal
+/// configuration. One row per Organisation (created lazily on first read, or by
+/// the Organisation Setup Wizard). Column defaults are the platform-neutral
+/// baseline; India-specific values are NOT the platform assumption — they are
+/// applied explicitly by provisioning / backfill for organisations that need them.
+model OrganisationSettings {
+  orgId String       @id
+  org   Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Regional
+  country        String? // ISO 3166-1 alpha-2; null until chosen (no default country)
+  timezone       String  @default("UTC") // IANA tz database name
+  locale         String  @default("en-US") // BCP-47 language tag
+  dateFormat     String  @default("yyyy-MM-dd") // date-fns / Unicode pattern
+  timeFormat     String  @default("HH:mm")
+  numberFormat   String  @default("en-US") // BCP-47 tag for Intl.NumberFormat
+  firstDayOfWeek Int     @default(1) // 0=Sun … 6=Sat; ISO-8601 default = Monday
+
+  // Currency
+  baseCurrency        String   @default("USD") // ISO 4217
+  supportedCurrencies String[] @default([])
+
+  // Fiscal
+  fiscalYearStartMonth Int @default(1) // 1..12
+  fiscalYearStartDay   Int @default(1) // 1..31
+
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
