@@ -73,6 +73,31 @@ export async function checkRateLimit(
   }
 }
 
+/**
+ * Read-only look at a counter without incrementing it. Returns null when there
+ * is no live window. Used by login-lockout's "am I locked?" check.
+ */
+export async function peekRateLimit(
+  key: string,
+): Promise<{ count: number; windowEndsAt: Date } | null> {
+  try {
+    const row = await db.rateLimitCounter.findUnique({ where: { key } });
+    if (!row || row.windowEndsAt.getTime() <= Date.now()) {
+      const hit = fallback.get(key);
+      if (hit && hit.resetAt > Date.now()) {
+        return { count: hit.count, windowEndsAt: new Date(hit.resetAt) };
+      }
+      return null;
+    }
+    return { count: row.count, windowEndsAt: row.windowEndsAt };
+  } catch {
+    const hit = fallback.get(key);
+    return hit && hit.resetAt > Date.now()
+      ? { count: hit.count, windowEndsAt: new Date(hit.resetAt) }
+      : null;
+  }
+}
+
 /** Best-effort reset (e.g. after a successful login clears the failure count). */
 export async function resetRateLimit(key: string): Promise<void> {
   fallback.delete(key);

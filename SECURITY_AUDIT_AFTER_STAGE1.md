@@ -106,8 +106,10 @@ Stage 1 was delivered in checkpoints — see `SECURITY_AUDIT_BEFORE_STAGE1.md`
    ~4 mutating routes still missing one.
 5. **Composite DB constraints / RLS** — the new `orgId` columns enable a
    PostgreSQL CHECK/trigger or Row-Level Security layer for defence in depth.
-6. **Migrate legacy in-process rate limiters** (`security.ts` / `login-rate-limit.ts`)
-   onto `rate-limit-store.ts`.
+6. ✅ **DONE** (Stage 2 cluster 9) — `login-rate-limit.ts` and the credential /
+   pre-auth flows now use the shared `RateLimitCounter`. The legacy sync
+   `rateLimit()` remains only for non-credential callers (mona chat, portal
+   upload / query-reply, google-chat-debug) — migrate those too as hygiene.
 7. **Security Center UI** (`§26`) + **Org security-policy UI** (`§27`) — server
    actions + `Organisation.requireMfa` exist; the pages need the shadcn
    component set the concurrent migration is introducing.

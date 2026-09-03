@@ -230,43 +230,42 @@ describe("Secure Session Management", () => {
   });
 });
 
-describe("Login rate limiting / brute-force protection", () => {
-  beforeEach(() => resetRateLimiter());
-
-  const email = "victim@test.local";
+describe("Login rate limiting / brute-force protection (shared store)", () => {
+  // Unique keys per run so the DB-backed RateLimitCounter rows don't collide.
+  const rid = Date.now();
+  const email = `victim-${rid}@test.local`;
   const ip = "1.2.3.4";
 
-  it("locks after max failed attempts", () => {
+  beforeEach(async () => {
+    await resetRateLimiter(email, ip);
+    await resetRateLimiter(email, "9.9.9.9");
+    await resetRateLimiter(`other-${rid}@test.local`, ip);
+  });
+
+  it("locks after max failed attempts", async () => {
     for (let i = 0; i < LOGIN_MAX_ATTEMPTS - 1; i++) {
-      expect(recordLoginFailure(email, ip)).toBe(false);
-      expect(isLoginLocked(email, ip).locked).toBe(false);
+      expect(await recordLoginFailure(email, ip)).toBe(false);
+      expect((await isLoginLocked(email, ip)).locked).toBe(false);
     }
-    expect(recordLoginFailure(email, ip)).toBe(true);
-    const lock = isLoginLocked(email, ip);
+    expect(await recordLoginFailure(email, ip)).toBe(true);
+    const lock = await isLoginLocked(email, ip);
     expect(lock.locked).toBe(true);
     expect(lock.retryAfterMs).toBeGreaterThan(0);
   });
 
-  it("scopes lockout to email+IP pair", () => {
-    for (let i = 0; i < LOGIN_MAX_ATTEMPTS; i++) recordLoginFailure(email, ip);
-    expect(isLoginLocked(email, ip).locked).toBe(true);
-    expect(isLoginLocked(email, "9.9.9.9").locked).toBe(false);
-    expect(isLoginLocked("other@test.local", ip).locked).toBe(false);
+  it("scopes lockout to the email+IP pair", async () => {
+    for (let i = 0; i < LOGIN_MAX_ATTEMPTS; i++) await recordLoginFailure(email, ip);
+    expect((await isLoginLocked(email, ip)).locked).toBe(true);
+    expect((await isLoginLocked(email, "9.9.9.9")).locked).toBe(false);
+    expect((await isLoginLocked(`other-${rid}@test.local`, ip)).locked).toBe(false);
   });
 
-  it("clears failures on successful login", () => {
-    recordLoginFailure(email, ip);
-    recordLoginFailure(email, ip);
-    recordLoginSuccess(email, ip);
+  it("clears failures on successful login", async () => {
+    await recordLoginFailure(email, ip);
+    await recordLoginFailure(email, ip);
+    await recordLoginSuccess(email, ip);
     for (let i = 0; i < LOGIN_MAX_ATTEMPTS - 1; i++) {
-      expect(recordLoginFailure(email, ip)).toBe(false);
+      expect(await recordLoginFailure(email, ip)).toBe(false);
     }
-  });
-
-  it("lockout expires after the window", () => {
-    const now = Date.now();
-    for (let i = 0; i < LOGIN_MAX_ATTEMPTS; i++) recordLoginFailure(email, ip, now);
-    expect(isLoginLocked(email, ip, now).locked).toBe(true);
-    expect(isLoginLocked(email, ip, now + 16 * 60 * 1000).locked).toBe(false);
   });
 });

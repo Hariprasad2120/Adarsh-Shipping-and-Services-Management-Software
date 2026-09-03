@@ -11,7 +11,7 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
 } from "@/lib/login-rate-limit";
-import { rateLimit, sanitizeText } from "@/lib/security";
+import { rateLimitShared, sanitizeText } from "@/lib/security";
 
 export async function OPTIONS() {
   return mobileOptions();
@@ -20,7 +20,7 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
   try {
     const meta = extractRequestMeta(request);
-    const limited = rateLimit(`mobile-crm-login:${meta.ip ?? "unknown"}`, {
+    const limited = await rateLimitShared(`mobile-crm-login:${meta.ip ?? "unknown"}`, {
       limit: 30,
       windowMs: 60_000,
     });
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       return mobileJson({ error: "Email and password are required" }, 400);
     }
 
-    const lock = isLoginLocked(email, meta.ip);
+    const lock = await isLoginLocked(email, meta.ip);
     if (lock.locked) {
       const response = mobileJson({ error: "Too many failed login attempts" }, 429);
       response.headers.set("Retry-After", String(Math.ceil((lock.retryAfterMs ?? 0) / 1000)));
@@ -53,13 +53,13 @@ export async function POST(request: Request) {
     });
 
     if (!user || !user.active) {
-      recordLoginFailure(email, meta.ip);
+      await recordLoginFailure(email, meta.ip);
       return mobileJson({ error: "Invalid credentials or inactive account" }, 401);
     }
 
     const valid = await compare(password, user.passwordHash);
     if (!valid) {
-      const locked = recordLoginFailure(email, meta.ip);
+      const locked = await recordLoginFailure(email, meta.ip);
       await logSecurityEvent({
         event: locked ? "LOGIN_LOCKED" : "LOGIN_FAILURE",
         outcome: locked ? "BLOCKED" : "FAILURE",
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       userAgent: meta.userAgent,
       rememberMe: true,
     });
-    recordLoginSuccess(email, meta.ip);
+    await recordLoginSuccess(email, meta.ip);
     await logSecurityEvent({
       event: "LOGIN_SUCCESS",
       outcome: "SUCCESS",

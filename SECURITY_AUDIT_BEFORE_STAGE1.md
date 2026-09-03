@@ -297,6 +297,28 @@ Verification for checkpoint 8: `tsc --noEmit` 0 errors in Stage-1 code; ESLint
 clean on changed files; `security:check` (111 unit tests, 0 route/scope gaps,
 audit gate PASS).
 
+### Cluster 9 — rate-limiter migration onto the shared store (checkpoint 9)
+
+Completes **MON-S1-011**. The two in-process `Map`-based limiters are moved onto
+`RateLimitCounter` (correct across serverless instances):
+
+- `src/lib/login-rate-limit.ts` — now async, DB-backed via `checkRateLimit` /
+  `peekRateLimit` / `resetRateLimit`. `isLoginLocked` is a read-only peek;
+  `recordLoginFailure` locks on the `LOGIN_MAX_ATTEMPTS`-th failure;
+  `recordLoginSuccess` clears the counter. Callers (`auth.ts` credential
+  `authorize`, `mobile/auth/login`, `mobile/crm/auth/login`) updated to `await`.
+- `src/lib/security.ts` — new async `rateLimitShared()` (same
+  `{ ok } | { ok:false, response }` shape). The **credential / pre-auth flows**
+  migrated to it: `customer-portal/auth/{activate,forgot-password,login}`,
+  `mobile/auth/login`, `mobile/crm/auth/login`, `hrms/invitations/accept`. The
+  legacy sync `rateLimit()` is retained (`@deprecated`) for the remaining
+  non-credential callers (mona chat, portal upload/query-reply,
+  google-chat-debug) — tracked.
+
+Verification for checkpoint 9: `tsc` 0 errors in Stage-1 code; ESLint clean;
+`session-security.test.ts` 16/16 (rate-limit tests rewritten for the shared
+store) + `mfa-flow` 9/9 green vs Postgres; `security:check` 111/111, gate PASS.
+
 ---
 
 ## 1. Architecture discovered

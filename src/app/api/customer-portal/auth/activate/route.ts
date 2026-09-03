@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getClientIp, rateLimit } from "@/lib/security";
+import { getClientIp, rateLimitShared } from "@/lib/security";
 import { activateCustomerPortalAccount } from "@/modules/customer-portal/service";
 
 const schema = z.object({
@@ -10,7 +10,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const limited = rateLimit(`portal-activate:${getClientIp(request)}`, {
+    const limited = await rateLimitShared(`portal-activate:${getClientIp(request)}`, {
       limit: 10,
       windowMs: 60_000,
     });

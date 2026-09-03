@@ -139,7 +139,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { ip, userAgent } = extractRequestMeta(request);
 
         // Brute-force protection
-        const lock = isLoginLocked(normalizedEmail, ip);
+        const lock = await isLoginLocked(normalizedEmail, ip);
         if (lock.locked) {
           await logSecurityEvent({
             event: "LOGIN_LOCKED",
@@ -163,7 +163,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             : false;
 
         if (!user || !user.active || !valid) {
-          const lockedNow = recordLoginFailure(normalizedEmail, ip);
+          const lockedNow = await recordLoginFailure(normalizedEmail, ip);
           await logSecurityEvent({
             event: lockedNow ? "LOGIN_LOCKED" : "LOGIN_FAILURE",
             outcome: lockedNow ? "BLOCKED" : "FAILURE",
@@ -198,13 +198,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
           const result = await verifyMfa(user.id, totp, { ip, userAgent });
           if (!result.ok) {
-            recordLoginFailure(normalizedEmail, ip);
+            await recordLoginFailure(normalizedEmail, ip);
             throw new MfaInvalidError();
           }
           mfaVerified = true;
         }
 
-        recordLoginSuccess(normalizedEmail, ip);
+        await recordLoginSuccess(normalizedEmail, ip);
 
         // Opaque server-side session — the DB record is the source of truth
         // for expiry and revocation. The JWT only carries this nonce.

@@ -1,81 +1,66 @@
 import { LOGIN_LOCKOUT_MS, LOGIN_MAX_ATTEMPTS } from "@/lib/session-config";
+import {
+  checkRateLimit,
+  peekRateLimit,
+  resetRateLimit,
+} from "@/lib/rate-limit-store";
 
 /**
- * In-memory login rate limiter / brute-force protection.
+ * Login brute-force / lockout, backed by the shared `RateLimitCounter` table
+ * (MON-S1-011) so the count is correct across serverless instances — the old
+ * per-process `Map` was ineffective on Vercel.
  *
- * Keyed by normalized email + IP so an attacker can't lock a victim out from
- * a different network, and a single IP can't spray many accounts unnoticed.
- *
- * In-memory is acceptable for a single-instance deployment; swap the Map for
- * Redis/Upstash if the app is ever scaled horizontally (documented in
- * docs/session-security.md).
+ * Keyed by normalized email + IP so an attacker can't lock a victim out from a
+ * different network, and a single IP can't spray many accounts unnoticed.
+ * The window (`LOGIN_LOCKOUT_MS`) is both the "N failures" window and the
+ * lockout duration: once `count >= LOGIN_MAX_ATTEMPTS`, further attempts are
+ * refused until `windowEndsAt`. A successful login clears the counter.
  */
 
-type Bucket = {
-  failures: number;
-  firstFailureAt: number;
-  lockedUntil: number | null;
-};
-
-const buckets = new Map<string, Bucket>();
-
 function key(email: string, ip: string | null | undefined): string {
-  return `${email.trim().toLowerCase()}|${ip ?? "unknown"}`;
+  return `login:${email.trim().toLowerCase()}|${ip ?? "unknown"}`;
 }
 
-function prune(now: number) {
-  if (buckets.size < 1000) return;
-  for (const [k, b] of buckets) {
-    const stale =
-      (b.lockedUntil === null || b.lockedUntil < now) &&
-      now - b.firstFailureAt > LOGIN_LOCKOUT_MS;
-    if (stale) buckets.delete(k);
-  }
-}
-
-/** Returns lockout state BEFORE attempting credential verification. */
-export function isLoginLocked(
+/** Lockout state BEFORE attempting credential verification (read-only). */
+export async function isLoginLocked(
   email: string,
   ip: string | null | undefined,
-  now: number = Date.now()
-): { locked: boolean; retryAfterMs?: number } {
-  const bucket = buckets.get(key(email, ip));
-  if (!bucket?.lockedUntil) return { locked: false };
-  if (now >= bucket.lockedUntil) {
-    buckets.delete(key(email, ip));
-    return { locked: false };
-  }
-  return { locked: true, retryAfterMs: bucket.lockedUntil - now };
+): Promise<{ locked: boolean; retryAfterMs?: number }> {
+  const state = await peekRateLimit(key(email, ip));
+  if (!state || state.count < LOGIN_MAX_ATTEMPTS) return { locked: false };
+  return {
+    locked: true,
+    retryAfterMs: Math.max(0, state.windowEndsAt.getTime() - Date.now()),
+  };
 }
 
-/** Record a failed attempt. Returns true if this failure triggered a lockout. */
-export function recordLoginFailure(
+/** Record a failed attempt. Returns true if this failure means "now locked". */
+export async function recordLoginFailure(
   email: string,
   ip: string | null | undefined,
-  now: number = Date.now()
-): boolean {
-  prune(now);
-  const k = key(email, ip);
-  const bucket = buckets.get(k);
-
-  if (!bucket || now - bucket.firstFailureAt > LOGIN_LOCKOUT_MS) {
-    buckets.set(k, { failures: 1, firstFailureAt: now, lockedUntil: null });
-    return false;
-  }
-
-  bucket.failures += 1;
-  if (bucket.failures >= LOGIN_MAX_ATTEMPTS) {
-    bucket.lockedUntil = now + LOGIN_LOCKOUT_MS;
-    return true;
-  }
-  return false;
+): Promise<boolean> {
+  // `checkRateLimit` allows exactly `limit` hits; the (limit+1)-th is blocked.
+  // We want the LOGIN_MAX_ATTEMPTS-th *failure* to trigger the lock, so the
+  // allowance is LOGIN_MAX_ATTEMPTS - 1.
+  const result = await checkRateLimit(key(email, ip), {
+    limit: LOGIN_MAX_ATTEMPTS - 1,
+    windowMs: LOGIN_LOCKOUT_MS,
+  });
+  return !result.ok;
 }
 
-export function recordLoginSuccess(email: string, ip: string | null | undefined) {
-  buckets.delete(key(email, ip));
+/** Clear the failure counter after a successful authentication. */
+export async function recordLoginSuccess(
+  email: string,
+  ip: string | null | undefined,
+): Promise<void> {
+  await resetRateLimit(key(email, ip));
 }
 
-/** Test hook. */
-export function resetRateLimiter() {
-  buckets.clear();
+/** Test hook — clears a specific key (or is a no-op for the DB backend). */
+export async function resetRateLimiter(
+  email?: string,
+  ip?: string | null,
+): Promise<void> {
+  if (email) await resetRateLimit(key(email, ip));
 }

@@ -52,6 +52,41 @@ export function requireCronSecret(request: Request) {
     : forbiddenJson("Unauthorized", 401);
 }
 
+export type RateLimitResult =
+  | { ok: true }
+  | { ok: false; retryAfterSeconds: number; response: NextResponse };
+
+function tooManyRequests(retryAfterSeconds: number): NextResponse {
+  return NextResponse.json(
+    { ok: false, error: "Too many requests. Please try again later." },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfterSeconds),
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    },
+  );
+}
+
+/**
+ * Shared, cross-instance rate limit backed by the `RateLimitCounter` table
+ * (MON-S1-011). Prefer this over `rateLimit()` for anything security-relevant
+ * (login, reset, invitation, credential flows) — the in-process `rateLimit()`
+ * below does not hold across serverless instances.
+ */
+export async function rateLimitShared(
+  key: string,
+  options: { limit: number; windowMs: number },
+): Promise<RateLimitResult> {
+  const { checkRateLimit } = await import("@/lib/rate-limit-store");
+  const r = await checkRateLimit(key, options);
+  if (r.ok) return { ok: true };
+  return { ok: false, retryAfterSeconds: r.retryAfterSeconds, response: tooManyRequests(r.retryAfterSeconds) };
+}
+
+/** @deprecated in-process only — use `rateLimitShared` for security flows. */
 export function rateLimit(
   key: string,
   options: { limit: number; windowMs: number },

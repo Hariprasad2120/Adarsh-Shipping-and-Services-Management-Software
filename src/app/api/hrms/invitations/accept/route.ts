@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getClientIp, rateLimit } from "@/lib/security";
+import { getClientIp, rateLimitShared } from "@/lib/security";
 import {
   acceptEmployeeInvitation,
   getEmployeeInvitation,
@@ -23,7 +23,7 @@ function noStoreJson(data: unknown, status = 200) {
 }
 
 export async function GET(request: NextRequest) {
-  const limited = rateLimit(
+  const limited = await rateLimitShared(
     `employee-invitation-read:${getClientIp(request)}`,
     { limit: 30, windowMs: 60_000 },
   );
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const limited = rateLimit(
+  const limited = await rateLimitShared(
     `employee-invitation-accept:${getClientIp(request)}`,
     { limit: 10, windowMs: 60_000 },
   );
