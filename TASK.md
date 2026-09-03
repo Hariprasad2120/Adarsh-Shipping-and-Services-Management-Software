@@ -84,11 +84,19 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Migrate `ChaBranchNumberingRule` (`currentSequence` Int) onto service | TODO | `src/modules/cha/service.ts` | data migration | — | — |
 | Settings UI for sequences | TODO | — | — | — | Cluster 8 |
 
-### Cluster 6 — Approval engine
+### Cluster 6 — Approval engine  — DONE (platform engine)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| `modules/core/approvals/` — `ApprovalRequest`, N-level chains, "no self-approval" policy, pluggable subject types | TODO | new, schema | additive | unit + integration | audit D3 |
-| Accounting `authorization-planning` migrates onto engine | TODO | `src/modules/accounting/authorization-planning/` | — | regression | keep behaviour |
+| Schema: `ApprovalPolicy` + `ApprovalPolicyStep` + `ApprovalRequest` + `ApprovalDecision` | VERIFIED | `prisma/schema.prisma` | `20260903150000_stage2_approval_engine` — 4 empty tables. Applied. | — | audit D3. Policy keyed (orgId, subjectType, scopeKey); step `approverMode` PERMISSION\|USER + quorum. |
+| Pure chain state machine — `levelStatus`, `foldChain`, `assertMayDecide` (no self-approval, no double-vote) | VERIFIED | `src/modules/core/approvals/decision.ts` | — | `__tests__/decision.test.ts` 13/13 | — |
+| `policy.ts` — `upsertApprovalPolicy` (validates 1..N contiguous levels), `listApprovalPolicies`, `deleteApprovalPolicy`, `getEffectiveApprovalPolicy` (exact scope → org-wide) | VERIFIED | `src/modules/core/approvals/policy.ts` | — | — | — |
+| `engine.ts` — `openApprovalRequest` (idempotent; auto-approves when no policy), `submitApprovalDecision` (eligibility via `can()` or userId, SoD, quorum, level advance), `cancelApprovalRequest`, queries | VERIFIED | `src/modules/core/approvals/engine.ts` | — | E2E script: no-policy→APPROVED, 2-level chain, self-approve→SELF_APPROVAL, wrong approver→NOT_ELIGIBLE, L1→L2→APPROVED, reject→REJECTED | — |
+| tsc `--noEmit` 0 + eslint clean | VERIFIED | — | — | — | — |
+| ROLE `approverMode` (role-membership gate) | TODO | `engine.ts`, schema | — | — | deferred — permission-key gates are cleaner; add if a module needs role-name matching |
+| Accounting `authorization-planning` migrates onto engine | TODO | `src/modules/accounting/authorization-planning/` | — | regression | behaviour-sensitive; keep exact behaviour |
+| Migrate Leave / CRM / WorkReport / CHA-checklist / Recruit-offer approval schemes | TODO | respective modules | data migration | regression | one at a time |
+| Reference wiring: route `core.vendor.create` or a config change through the engine | TODO | — | — | — | first real consumer — pick low-risk |
+| Settings UI for approval policies | TODO | — | — | — | Cluster 8 |
 
 ### Cluster 7 — Custom fields convergence
 | Task | Status | Files | Migration | Tests | Notes |

@@ -33,6 +33,8 @@ model Organisation {
   costCentres   CostCentre[]
 
   numberingSequences NumberingSequence[]
+  approvalPolicies   ApprovalPolicy[]
+  approvalRequests   ApprovalRequest[]
 
   branches    Branch[]
   departments Department[]
@@ -494,6 +496,10 @@ model User {
   employeeInvitationsSent EmployeeInvitation[]   @relation("EmployeeInvitationSender")
   documents               Document[]
   todoTasks               TodoTask[]
+
+  // Stage 2 — reusable approval engine
+  approvalRequestsRaised      ApprovalRequest[]            @relation("ApprovalRequestRequester")
+  approvalDecisions           ApprovalDecision[]           @relation("ApprovalDecisionActor")
 
   // Attendance & OT
   punches                     AttendancePunch[]
@@ -1869,6 +1875,102 @@ model NumberingSequence {
   @@index([orgId])
   @@index([orgId, moduleId, docType, active])
   @@index([legalEntityId])
+}
+
+/// Stage 2 — enterprise platform: reusable maker-checker / segregation-of-duties.
+///
+/// A module opens an `ApprovalRequest` for a business action; the engine walks
+/// the org's `ApprovalPolicy` for that `subjectType` level by level until every
+/// level is satisfied (APPROVED) or one approver rejects. If no active policy
+/// exists the request auto-approves, so opting in is safe before policies are
+/// configured. Not wired into any module yet — the six existing per-module
+/// approval schemes migrate onto this over time (TASK.md Cluster 6).
+model ApprovalPolicy {
+  id          String  @id @default(cuid())
+  orgId       String
+  /// Namespaced action type, e.g. "accounting.payment", "hrms.employee.change",
+  /// "core.vendor.create". Free-form; owned by the requesting module.
+  subjectType String
+  /// Optional extra scoping (legal entity id, branch, amount band key…).
+  scopeKey    String  @default("")
+  name        String
+  active      Boolean @default(true)
+  /// When true, a user cannot approve a request they raised, and cannot fill
+  /// more than one approval slot on the same request.
+  requireDistinctApprover Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org   Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  steps ApprovalPolicyStep[]
+
+  @@unique([orgId, subjectType, scopeKey])
+  @@index([orgId, subjectType, active])
+}
+
+model ApprovalPolicyStep {
+  id       String @id @default(cuid())
+  policyId String
+  /// 1-based sequential level. Levels are cleared in ascending order.
+  level    Int
+  /// "PERMISSION" — approver must hold `permissionKey`.
+  /// "USER"       — approver must be `approverUserId`.
+  approverMode     String  @default("PERMISSION")
+  permissionKey    String?
+  approverUserId   String?
+  /// Distinct approvals required to clear this level (quorum).
+  requiredApprovals Int    @default(1)
+
+  policy ApprovalPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@unique([policyId, level])
+  @@index([policyId])
+}
+
+model ApprovalRequest {
+  id          String @id @default(cuid())
+  orgId       String
+  subjectType String
+  subjectId   String
+  scopeKey    String @default("")
+  policyId    String?
+  /// "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
+  status      String @default("PENDING")
+  /// Level currently awaiting decisions (1-based). Meaningless once decided.
+  currentLevel Int   @default(1)
+  requestedByUserId String
+  /// Summary / before-after / amounts — module-defined, redacted for audit.
+  context     Json?
+
+  createdAt DateTime  @default(now())
+  decidedAt DateTime?
+
+  org       Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  requester User               @relation("ApprovalRequestRequester", fields: [requestedByUserId], references: [id], onDelete: Cascade)
+  decisions ApprovalDecision[]
+
+  @@unique([orgId, subjectType, subjectId, scopeKey])
+  @@index([orgId, status, subjectType])
+  @@index([requestedByUserId])
+}
+
+model ApprovalDecision {
+  id          String   @id @default(cuid())
+  requestId   String
+  level       Int
+  actorUserId String
+  /// "APPROVE" | "REJECT"
+  action      String
+  note        String?
+  createdAt   DateTime @default(now())
+
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor   User            @relation("ApprovalDecisionActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, level, actorUserId])
+  @@index([requestId])
+  @@index([actorUserId])
 }
 
 model OrganisationThemeSettings {
