@@ -202,24 +202,29 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Race audit: numbering, leave balances, accounting posting, approvals, invitations, workflow transitions, provisioning | TODO | audit G4 / spec §18 |
 | Prisma review: PKs, FKs, tenant keys, indexes, unique constraints, cascades, nullable, soft-delete, N+1, unbounded reads, pagination | TODO | spec §19; index changes need `EXPLAIN` evidence |
 
-### Cluster 15 — Docs, QA audit, scorecard
+### Cluster 15 — Docs, QA audit, scorecard  — DONE (doc set) / QA + scorecard honest
 | Doc / task | Status | Notes |
 |---|---|---|
-| `ENTERPRISE_ARCHITECTURE.md` | TODO | before/after |
-| `TENANCY_ARCHITECTURE.md` | TODO | Cluster 3/4 output |
-| `IDENTITY_ARCHITECTURE.md` | TODO | + SSO/SCIM backlog (spec §28/§29) |
-| `MODULE_ARCHITECTURE.md` | TODO | Cluster 2 output |
-| `ORGANISATION_SETUP.md` | TODO | Cluster 8 output |
-| `DEPLOYMENT.md` | TODO | expand `VERCEL_DEPLOYMENT.md`; app vs infra control split |
-| `OPERATIONS_RUNBOOK.md` | TODO | spec §38 |
-| `BACKUP_AND_DISASTER_RECOVERY.md` | TODO | spec §22; RPO/RTO as config decisions; restore drill |
-| `INCIDENT_RESPONSE.md` | TODO | spec §39 |
-| `DATA_RETENTION.md` / `DATA_CLASSIFICATION.md` | TODO | spec §13/§31/§33 |
-| `INTEGRATION_ARCHITECTURE.md` / `API_SECURITY.md` | TODO | spec §12/§9/§10/§11 |
-| `ENTERPRISE_QA.md` | TODO | per-module CRUD/permissions/isolation matrix (spec §35) |
-| `SECURITY_CONTROL_MATRIX.md` | TODO | ASVS / API-Sec / NIST mapping w/ evidence (spec §41) |
-| `PRODUCTION_READINESS.md` + MNC scorecard | TODO | spec §42; evidence-backed scores |
-| Update `PENTEST_SCOPE.md` | TODO | already exists; extend for Stage 2 surface (spec §43) |
+| `ENTERPRISE_ARCHITECTURE.md` | DONE | two-layer model, before/after, 12-primitive table w/ commits |
+| `TENANCY_ARCHITECTURE.md` | DONE | hierarchy, isolation model, membership, migration discipline, cache safety |
+| `IDENTITY_ARCHITECTURE.md` | DONE | Stage 1 IAM + membership lifecycle + SSO/SCIM extension paths (backlog) |
+| `MODULE_ARCHITECTURE.md` | DONE | registry, resolution, entitlement, templates, pending list |
+| `ORGANISATION_SETUP.md` | DONE | bootstrap + provisioning + 15-step wizard design (not built) |
+| `DEPLOYMENT.md` | DONE | app-vs-infra split, env vars, release steps, zero-downtime notes |
+| `OPERATIONS_RUNBOOK.md` | DONE | deploy/rollback/migrate/backup/lockout/OAuth/mail/DB/secret rotation |
+| `BACKUP_AND_DISASTER_RECOVERY.md` | DONE | scope, RPO/RTO templates, restore procedure, drill cadence — **no drill run (blocker)** |
+| `INCIDENT_RESPONSE.md` | DONE | detect→contain→eradicate→recover→review + 8 playbooks |
+| `DATA_CLASSIFICATION.md` / `DATA_RETENTION.md` | DONE | 4-class model; retention mechanisms + explicit gaps (no policy engine / holds / erasure) |
+| `INTEGRATION_ARCHITECTURE.md` / `API_SECURITY.md` | DONE | current state + target framework (registry/webhooks/service-accounts/API-keys = not built) |
+| `ENTERPRISE_QA.md` | DONE | ~112 unit + 11 E2E evidence table; per-module QC / browser / a11y / failure = NOT PERFORMED |
+| `SECURITY_CONTROL_MATRIX.md` | DONE | 30 controls, ✅/🟡/⛔ with file + test evidence |
+| `PRODUCTION_READINESS.md` + MNC scorecard | DONE | 21 areas scored 0–5 w/ evidence; avg ≈ 2.9; 8 blockers listed |
+| `MONOLITH_ENTERPRISE_READINESS_REPORT.md` | DONE | 24-point final report → **READY FOR CONTROLLED ENTERPRISE PILOT** |
+| Update `PENTEST_SCOPE.md` for Stage 2 surface | TODO | file exists; extend for approval-abuse / provisioning / idempotency / job-queue surface |
+| Per-module QC matrix (spec §35) | TODO | not performed — blocker |
+| Accessibility audit (spec §27) | TODO | not performed — blocker |
+| Representative-volume performance test (spec §20) | TODO | not performed — blocker |
+| CI release gate (spec §34) | TODO | lint/type/test green locally, not enforced by a pipeline — blocker |
 
 ---
 
