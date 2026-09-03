@@ -136,14 +136,17 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Readiness check (BLOCKING / WARNING / OPTIONAL) + audited Activate action | TODO | wizard | — | integration | spec §15 |
 | Gate business routes until required steps pass | TODO | middleware | — | e2e | — |
 
-### Cluster 9 — Provisioning templates + seed split
+### Cluster 9 — Provisioning templates + seed split  — DONE (service + templates)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| Provisioning service builds org from template (modules, roles, workflows, terminology, masters, security baseline) — no hardcoded company | TODO | `src/modules/core/provisioning/` (new) | — | integration | audit D2 |
-| Templates `Generic SME` / `Enterprise` / `Professional Services` / `Logistics` as versioned data | TODO | `src/modules/core/provisioning/templates/` | — | — | spec §12 |
-| Split `prisma/seed.ts` → `seed.dev.ts` (Adarsh demo) + template-driven prod path; remove `password@123` from any prod-reachable path | TODO | `prisma/seed*.ts` | — | — | audit D2 |
-| Move hardcoded `systemRoles` out of `/api/setup` into templates | TODO | `src/app/api/setup/route.ts` | — | — | audit D1 |
+| `provisionOrganisation()` — composes org + default legal entity + regional settings + modules (dep closure) + roles (+ permission grants) + approval policies + numbering sequences + config-audit entry. Idempotent. No hardcoded company. | VERIFIED | `src/modules/core/provisioning/service.ts` | — | `__tests__/templates.test.ts` 6/6 + E2E (provision Enterprise → 8 modules, 7 roles, 2 policies, 3 sequences, audit; re-run → 0 dupes; cascade cleanup) | audit D2 |
+| Built-in templates `Generic SME`, `Enterprise` as versioned data; `getTemplate`/`listTemplates` | VERIFIED | `src/modules/core/provisioning/templates.ts` | — | ✓ platform-neutral regional (not INR/Kolkata) | spec §12 |
+| Cache-free write paths for provisioning: `writeOrganisationRegionalSettingsRaw`, `setEnabledModuleIdsRaw` | VERIFIED | `regional/settings.ts`, `organisation/module-settings.ts` | — | — | fixes the "revalidateTag outside request context" limitation from Cluster 7b |
+| `Professional Services` / `Logistics` templates | TODO | `templates.ts` | — | — | same shape — add when needed |
+| Split `prisma/seed.ts` → `seed.dev.ts` (Adarsh demo) + template-driven prod path; remove `password@123` from any prod-reachable path | TODO | `prisma/seed*.ts` | — | — | separate PR — `seed.ts` is 700+ lines, interdependent, concurrent-agent territory. Provisioning service is now the documented prod path. |
+| Move hardcoded `systemRoles` out of `/api/setup` into a template | TODO | `src/app/api/setup/route.ts` | — | — | security-sensitive bootstrap route — do carefully |
 | Add unique guard / advisory lock on bootstrap admin creation | TODO | `src/app/api/setup/route.ts`, schema | partial unique index | concurrency test | audit E2 |
+| Wire provisioning into the Setup Wizard "Activate" step | TODO | — | — | — | Cluster 8 |
 
 ### Cluster 10 — Observability
 | Task | Status | Files | Migration | Tests | Notes |

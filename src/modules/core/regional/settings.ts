@@ -95,6 +95,29 @@ export type OrganisationRegionalSettingsPatch = Partial<
 >;
 
 /**
+ * Write regional settings WITHOUT cache revalidation. For provisioning / seed /
+ * background callers that run outside a Next.js request context (where
+ * `revalidateTag` throws). Prefer `updateOrganisationRegionalSettings` from
+ * request handlers and server actions.
+ */
+export async function writeOrganisationRegionalSettingsRaw(
+  orgId: string,
+  patch: OrganisationRegionalSettingsPatch,
+): Promise<OrganisationRegionalSettings> {
+  if (!orgId) throw new Error("writeOrganisationRegionalSettingsRaw: no organisation id");
+  const data: Record<string, unknown> = {};
+  for (const field of MUTABLE_FIELDS) {
+    if (patch[field] !== undefined) data[field] = patch[field];
+  }
+  await db.organisationSettings.upsert({
+    where: { orgId },
+    update: data,
+    create: { orgId, ...data },
+  });
+  return loadOrCreate(orgId);
+}
+
+/**
  * Update an organisation's regional settings. Caller is responsible for
  * authorisation (`admin.org.manage`). Pass `audit` to record a configuration
  * audit entry (before/after diff); omit it for internal / provisioning callers
@@ -106,18 +129,10 @@ export async function updateOrganisationRegionalSettings(
   audit?: { actorUserId?: string; actorLabel?: string; reason?: string; request?: Request | null },
 ): Promise<OrganisationRegionalSettings> {
   if (!orgId) throw new Error("updateOrganisationRegionalSettings: no organisation id");
-  const data: Record<string, unknown> = {};
-  for (const field of MUTABLE_FIELDS) {
-    if (patch[field] !== undefined) data[field] = patch[field];
-  }
 
   const before = audit ? await loadOrCreate(orgId) : null;
 
-  await db.organisationSettings.upsert({
-    where: { orgId },
-    update: data,
-    create: { orgId, ...data },
-  });
+  await writeOrganisationRegionalSettingsRaw(orgId, patch);
   revalidateTag(cacheTag(orgId), "max");
   const after = await loadOrCreate(orgId);
 

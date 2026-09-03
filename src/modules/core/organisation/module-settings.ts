@@ -181,28 +181,45 @@ export async function getFreshEnabledFeatureIds(orgId: string): Promise<ManagedF
   return parseStoredEnabledFeatures(row?.value);
 }
 
-export async function setEnabledModuleIds(
-  orgId: string,
+function resolveNormalisedModuleIds(
   enabledModuleIds: readonly ToggleableModuleSectionId[],
-) {
+): ToggleableModuleSectionId[] {
   const requested = TOGGLEABLE_MODULE_SECTION_IDS.filter((id) => enabledModuleIds.includes(id));
-
   // Stage 2 — module registry: enabling a module also enables its dependency
   // closure (e.g. Payroll pulls in HRMS). Core modules resolved by the registry
   // are not stored here (this key only holds toggleable ids).
   const { enabled } = resolveEnabledModules(requested);
-  const normalized = TOGGLEABLE_MODULE_SECTION_IDS.filter((id) => enabled.includes(id));
+  return TOGGLEABLE_MODULE_SECTION_IDS.filter((id) => enabled.includes(id));
+}
 
-  const row = await db.systemSetting.upsert({
+async function persistEnabledModuleIds(orgId: string, normalized: ToggleableModuleSectionId[]) {
+  return db.systemSetting.upsert({
     where: { key: getEnabledModulesSettingKey(orgId) },
     update: { value: JSON.stringify(normalized) },
-    create: {
-      key: getEnabledModulesSettingKey(orgId),
-      value: JSON.stringify(normalized),
-    },
+    create: { key: getEnabledModulesSettingKey(orgId), value: JSON.stringify(normalized) },
   });
+}
 
+export async function setEnabledModuleIds(
+  orgId: string,
+  enabledModuleIds: readonly ToggleableModuleSectionId[],
+) {
+  const normalized = resolveNormalisedModuleIds(enabledModuleIds);
+  const row = await persistEnabledModuleIds(orgId, normalized);
   revalidateTag(ENABLED_MODULES_CACHE_TAG, "max");
+  return parseStoredEnabledModules(row.value);
+}
+
+/**
+ * Write the enabled-module set WITHOUT cache revalidation, for provisioning /
+ * seed callers running outside a Next.js request context.
+ */
+export async function setEnabledModuleIdsRaw(
+  orgId: string,
+  enabledModuleIds: readonly ToggleableModuleSectionId[],
+) {
+  const normalized = resolveNormalisedModuleIds(enabledModuleIds);
+  const row = await persistEnabledModuleIds(orgId, normalized);
   return parseStoredEnabledModules(row.value);
 }
 
