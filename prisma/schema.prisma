@@ -38,6 +38,7 @@ model Organisation {
   customFieldDefinitions CustomFieldDefinition[]
   customFieldValues      CustomFieldValue[]
   configAuditEntries     ConfigAuditEntry[]
+  memberships            OrganisationMembership[]
 
   branches    Branch[]
   departments Department[]
@@ -504,6 +505,8 @@ model User {
   approvalRequestsRaised      ApprovalRequest[]            @relation("ApprovalRequestRequester")
   approvalDecisions           ApprovalDecision[]           @relation("ApprovalDecisionActor")
   configAuditEntries          ConfigAuditEntry[]           @relation("ConfigAuditActor")
+  organisationMemberships     OrganisationMembership[]     @relation("MembershipUser")
+  membershipsInvited          OrganisationMembership[]     @relation("MembershipInvitedBy")
 
   // Attendance & OT
   punches                     AttendancePunch[]
@@ -2084,6 +2087,38 @@ model ConfigAuditEntry {
   @@index([orgId, targetType, targetId])
   @@index([orgId, action, createdAt])
   @@index([actorUserId])
+}
+
+/// Stage 2 — enterprise platform: a user's membership of an organisation.
+///
+/// Introduced alongside the legacy single `User.orgId` FK (expand phase). One
+/// row per (org, user); `isPrimary` marks the user's home org and mirrors
+/// `User.orgId` today. `status` is the per-org user lifecycle (spec §30) —
+/// deactivating a membership should stop that user acting in that org while
+/// preserving historical business/audit references.
+model OrganisationMembership {
+  id     String @id @default(cuid())
+  orgId  String
+  userId String
+
+  /// INVITED | ACTIVE | SUSPENDED | DEACTIVATED | ARCHIVED
+  status    String  @default("ACTIVE")
+  isPrimary Boolean @default(false)
+
+  invitedByUserId String?
+  joinedAt        DateTime?
+  deactivatedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation("MembershipUser", fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy User?        @relation("MembershipInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([orgId, userId])
+  @@index([userId, status])
+  @@index([orgId, status])
 }
 
 model OrganisationThemeSettings {

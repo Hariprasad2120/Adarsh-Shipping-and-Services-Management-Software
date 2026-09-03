@@ -67,10 +67,17 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Setup-wizard structure step + Settings UI for entities/BU/CC | TODO | — | — | — | Cluster 8 |
 | Contract: `Branch.legalEntityId` NOT NULL | TODO | schema | contract | — | after all writers set it |
 
-### Cluster 4 — Membership model
+### Cluster 4 — Membership model  — DONE (expand phase)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| `OrganisationMembership(userId, orgId, status, ...)`; role assignment scoped to membership | TODO | schema, `src/lib/rbac.ts`, `src/lib/tenant.ts` | expand; keep `User.orgId` during transition | authz + tenant-isolation | audit A3 |
+| `OrganisationMembership` — (orgId, userId) unique, `status` (INVITED/ACTIVE/SUSPENDED/DEACTIVATED/ARCHIVED — spec §30), `isPrimary`, invitedBy, joined/deactivated timestamps | VERIFIED | `prisma/schema.prisma` | `20260903180000_stage2_org_membership` — additive; backfill 1 primary membership per user-with-org, status from `User.active`. Applied + verified (102 users → 102 memberships, 102 primaries, 0 missing, 0 dup primary). | — | audit A3 |
+| `membership-lifecycle.ts` (pure) — status set + allowed-transition table + `isActiveMembership` | VERIFIED | `src/modules/core/organisation/membership-lifecycle.ts` | — | `__tests__/membership-lifecycle.test.ts` 6/6 | ARCHIVED terminal |
+| `membership.ts` service — list (by user / by org), get, `getPrimaryMembership`, `ensurePrimaryMembership` (idempotent), `addMembership`, `setMembershipStatus` (transition-guarded), `setPrimaryMembership` (transactional single primary) | VERIFIED | `src/modules/core/organisation/membership.ts` | — | — | — |
+| tsc 0 + eslint clean | VERIFIED | — | — | — | — |
+| Route session/RBAC through membership (resolve active membership, block non-ACTIVE) | TODO | `src/lib/session-service.ts`, `src/lib/rbac.ts`, `src/lib/tenant.ts` | — | authz + tenant-isolation | behaviour-sensitive — keep `User.orgId` as the source of truth until this lands |
+| Multi-org switch UI + `X-Org` / session org selection | TODO | — | — | — | Cluster 8 |
+| Contract: drop `User.orgId`, derive from primary membership | TODO | schema | contract | — | after session/RBAC migrated |
+| Call `ensurePrimaryMembership` on login | TODO | auth flow | — | — | keeps rows in sync for users created before this |
 
 ### Cluster 5 — Numbering service  — DONE (platform service)
 | Task | Status | Files | Migration | Tests | Notes |
