@@ -36,6 +36,7 @@ export interface EnrollmentChallenge {
   factorId: string;
   secret: string; // shown once, for manual entry
   otpauthUri: string; // encode as QR
+  qrDataUrl: string; // data: URI PNG of the otpauth URI, safe to render inline
 }
 
 /**
@@ -67,11 +68,10 @@ export async function beginEnrollment(
     },
     select: { id: true },
   });
-  return {
-    factorId: factor.id,
-    secret,
-    otpauthUri: buildOtpAuthUri({ secret, accountName: accountEmail, issuer: ISSUER }),
-  };
+  const otpauthUri = buildOtpAuthUri({ secret, accountName: accountEmail, issuer: ISSUER });
+  const QRCode = (await import("qrcode")).default;
+  const qrDataUrl = await QRCode.toDataURL(otpauthUri, { margin: 1, width: 220 });
+  return { factorId: factor.id, secret, otpauthUri, qrDataUrl };
 }
 
 export interface ConfirmationResult {

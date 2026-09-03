@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { ScrollNavigator } from "@/components/navigation/scroll-navigator";
@@ -22,11 +23,12 @@ export const metadata: Metadata = {
   description: "Operations platform for Adarsh Shipping & Services.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -35,6 +37,7 @@ export default function RootLayout({
     >
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               try {

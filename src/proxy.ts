@@ -99,13 +99,46 @@ function hasCookie(req: NextRequest, name: string): boolean {
   return Boolean(req.cookies.get(name)?.value);
 }
 
+/** Per-request CSP nonce for inline scripts (base64, 128 bits). Runtime-agnostic. */
+function makeNonce(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isHrLetterPreviewFile = pathname === "/api/hrms/letters/preview-file";
   const isMobileApi = pathname.startsWith("/api/mobile");
+  const isApi = pathname.startsWith("/api/");
   const isPortalRequest = isPortalProtectedPath(pathname);
+  const nonce = makeNonce();
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-current-pathname", pathname);
+  requestHeaders.set("x-nonce", nonce);
+
+  const applySecurity = (response: NextResponse, authed: boolean) => {
+    if (!isApi) {
+      const headers = securityHeaders({
+        secure: USE_SECURE_COOKIES,
+        frameAncestorsSelf: isHrLetterPreviewFile,
+        nonce,
+      });
+      for (const [key, value] of Object.entries(headers)) {
+        response.headers.set(key, value);
+      }
+    }
+    if (authed) {
+      response.headers.set(
+        "Cache-Control",
+        "no-store, no-cache, must-revalidate, proxy-revalidate",
+      );
+      response.headers.set("Pragma", "no-cache");
+      response.headers.set("Expires", "0");
+    }
+    return response;
+  };
 
   if (isMobileApi && req.method === "OPTIONS") {
     return new NextResponse(null, { status: 204, headers: mobileCorsHeaders(req) });
@@ -119,13 +152,12 @@ export function proxy(req: NextRequest) {
     return NextResponse.rewrite(new URL("/404", req.url), { status: 404 });
   }
 
-  // Public paths — pass through
+  // Public paths — pass through (still get CSP + nonce + security headers)
   if (isPublicPath(pathname)) {
-    const response = NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
+    const response = applySecurity(
+      NextResponse.next({ request: { headers: requestHeaders } }),
+      false,
+    );
 
     if (isMobileApi) {
       Object.entries(mobileCorsHeaders(req)).forEach(([key, value]) => {
@@ -150,31 +182,11 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authenticated request — add security and cache headers
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-
-  // Prevent browser from caching authenticated pages (Back button protection)
-  response.headers.set(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  // Authenticated request — CSP + nonce + HSTS + no-store cache headers
+  return applySecurity(
+    NextResponse.next({ request: { headers: requestHeaders } }),
+    true,
   );
-  response.headers.set("Pragma", "no-cache");
-  response.headers.set("Expires", "0");
-
-  // Security headers (HSTS in prod, CSP incl. frame-ancestors, nosniff, etc.)
-  const headers = securityHeaders({
-    secure: USE_SECURE_COOKIES,
-    frameAncestorsSelf: isHrLetterPreviewFile,
-  });
-  for (const [key, value] of Object.entries(headers)) {
-    response.headers.set(key, value);
-  }
-
-  return response;
 }
 
 export const config = {

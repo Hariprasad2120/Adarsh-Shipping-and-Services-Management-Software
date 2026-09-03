@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  buildContentSecurityPolicy,
   CONTENT_SECURITY_POLICY,
   STRICT_TRANSPORT_SECURITY,
   securityHeaders,
@@ -44,19 +45,31 @@ describe("security headers", () => {
     expect(h["Content-Security-Policy"]).not.toContain("frame-ancestors 'none'");
   });
 
-  it("next.config.ts CSP directive list matches the shared module", () => {
+  it("binds inline scripts to a per-request nonce when one is given", () => {
+    const withNonce = buildContentSecurityPolicy("abc123");
+    expect(withNonce).toMatch(/script-src[^;]*'nonce-abc123'/);
+    // The nonce-free form (next.config.ts fallback) has no nonce token.
+    expect(CONTENT_SECURITY_POLICY).not.toContain("nonce-");
+    // securityHeaders threads the nonce through.
+    expect(
+      securityHeaders({ nonce: "xyz" })["Content-Security-Policy"],
+    ).toMatch(/'nonce-xyz'/);
+  });
+
+  it("proxy.ts generates a nonce and sets the CSP on responses", () => {
+    const proxy = readFileSync(join(process.cwd(), "src/proxy.ts"), "utf8");
+    expect(proxy).toContain('requestHeaders.set("x-nonce"');
+    expect(proxy).toMatch(/securityHeaders\(\{[\s\S]*nonce/);
+  });
+
+  it("root layout reads the nonce and applies it to its inline script", () => {
+    const layout = readFileSync(join(process.cwd(), "src/app/layout.tsx"), "utf8");
+    expect(layout).toContain('headers()).get("x-nonce")');
+    expect(layout).toMatch(/<script\s+nonce=\{nonce\}/);
+  });
+
+  it("next.config.ts no longer sets a static CSP (proxy owns it)", () => {
     const cfg = readFileSync(join(process.cwd(), "next.config.ts"), "utf8");
-    for (const directive of [
-      "default-src 'self'",
-      "frame-ancestors 'none'",
-      "object-src 'none'",
-      "connect-src 'self' https: wss:",
-      "worker-src 'self' blob:",
-    ]) {
-      expect(cfg, `next.config.ts missing "${directive}"`).toContain(directive);
-    }
-    // The dangerous token must not appear unguarded (only inside the dev branch).
-    expect(cfg).toContain("'wasm-unsafe-eval'");
-    expect(cfg).toContain("Strict-Transport-Security");
+    expect(cfg).not.toMatch(/key:\s*["']Content-Security-Policy["']/);
   });
 });
