@@ -32,3 +32,13 @@ describe("backoffDelayMs", () => {
     expect(next.toISOString()).toBe("2026-01-01T00:01:00.000Z");
   });
 });
+
+describe("service surface", () => {
+  it("exports the reaper and manual-recovery entry points", async () => {
+    const mod = await import("../service");
+    expect(typeof mod.reapStalledJobs).toBe("function");
+    expect(typeof mod.retryDeadJob).toBe("function");
+    expect(typeof mod.enqueueJob).toBe("function");
+    expect(typeof mod.processJobBatch).toBe("function");
+  });
+});

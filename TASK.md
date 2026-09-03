@@ -206,7 +206,7 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Fix: leave-request overlap — DB `EXCLUDE` constraint or lock-on-balance | TODO | confirm current guard first |
 | Fix: standardise `updateMany({where:{id,status:expected}})` for status transitions | TODO | — |
 | Fix: partial unique index on active `EmployeeInvitation(orgId,email)` | TODO | Low |
-| Fix: stuck-job reaper (reset stale `RUNNING` jobs) | TODO | — |
+| Fix: stuck-job reaper (reset stale `RUNNING` jobs) | DONE | `reapStalledJobs(staleAfterMs=15m)` in `core/jobs/service.ts`; `/api/cron/jobs` calls it + `purgeExpiredIdempotencyKeys` each tick. E2E: stalled→PENDING, at maxAttempts→DEAD, fresh RUNNING untouched. |
 | Full FK-index + seq-scan + `EXPLAIN` audit on populated DB | TODO | spec §19 — dedicated task, not static |
 | Representative-volume load test | TODO | spec §20 — blocker |
 

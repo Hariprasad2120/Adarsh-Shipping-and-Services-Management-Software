@@ -6,7 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/security";
-import { processJobBatch, type JobHandlerRegistry } from "@/modules/core/jobs";
+import { processJobBatch, reapStalledJobs, type JobHandlerRegistry } from "@/modules/core/jobs";
+import { purgeExpiredIdempotencyKeys } from "@/modules/core/idempotency";
 import { runWithCorrelationFromHeaders, logger } from "@/modules/core/observability";
 
 export const dynamic = "force-dynamic";
@@ -24,8 +25,11 @@ export async function GET(req: NextRequest) {
   const limit = Number(url.searchParams.get("limit") ?? "25");
 
   return runWithCorrelationFromHeaders(req.headers, { route: "/api/cron/jobs", source: "cron" }, async () => {
+    const reclaimed = await reapStalledJobs();
+    const purgedIdempotencyKeys = await purgeExpiredIdempotencyKeys();
     const result = await processJobBatch(JOB_HANDLERS, { limit });
-    logger.info("job batch processed", { ...result });
-    return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
+    const summary = { ...result, reclaimed, purgedIdempotencyKeys };
+    logger.info("job batch processed", summary);
+    return NextResponse.json(summary, { headers: { "Cache-Control": "no-store" } });
   });
 }

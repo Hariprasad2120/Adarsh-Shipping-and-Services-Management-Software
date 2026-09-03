@@ -192,3 +192,29 @@ export async function retryDeadJob(jobId: string) {
     data: { status: "PENDING", runAfter: new Date(), lastError: null, finishedAt: null },
   });
 }
+
+/**
+ * Reclaim jobs stuck in RUNNING by a worker that crashed mid-execution. Any job
+ * locked longer than `staleAfterMs` (default 15 min) is returned to PENDING to
+ * be retried; if it has already exhausted `maxAttempts` it is dead-lettered.
+ * Call this from the same cron tick as `processJobBatch`.
+ */
+export async function reapStalledJobs(staleAfterMs = 15 * 60_000): Promise<number> {
+  const cutoff = new Date(Date.now() - staleAfterMs);
+  const rows = await db.$queryRaw<Array<{ id: string }>>`
+    UPDATE "BackgroundJob" SET
+      "status" = CASE WHEN "attempts" >= "maxAttempts" THEN 'DEAD' ELSE 'PENDING' END,
+      "lockedAt" = NULL,
+      "lockedBy" = NULL,
+      "lastError" = COALESCE("lastError", 'reclaimed after worker stall'),
+      "finishedAt" = CASE WHEN "attempts" >= "maxAttempts" THEN CURRENT_TIMESTAMP ELSE NULL END,
+      "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "status" = 'RUNNING' AND "lockedAt" < ${cutoff}
+    RETURNING "id"
+  `;
+  if (rows.length > 0) {
+    incr("jobs.reclaimed", {}, rows.length);
+    logger.warn("reclaimed stalled background jobs", { count: rows.length });
+  }
+  return rows.length;
+}
