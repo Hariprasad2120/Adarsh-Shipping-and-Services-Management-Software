@@ -148,12 +148,18 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Add unique guard / advisory lock on bootstrap admin creation | TODO | `src/app/api/setup/route.ts`, schema | partial unique index | concurrency test | audit E2 |
 | Wire provisioning into the Setup Wizard "Activate" step | TODO | — | — | — | Cluster 8 |
 
-### Cluster 10 — Observability
+### Cluster 10 — Observability  — DONE (primitives + probes)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| Correlation/request ID middleware; structured logger; IDs in logs/jobs/errors/audit | TODO | `src/lib/`, middleware | — | — | audit G1 |
-| `/health` + `/ready` routes (no infra detail leak) | TODO | `src/app/health/`, `src/app/ready/` | — | smoke | spec §15 |
-| Instrument auth errors, API latency, DB/queue/mail/webhook failures, rate limits, security events | TODO | — | — | — | prep for external APM/SIEM, no vendor coupling |
+| `correlation.ts` — `AsyncLocalStorage` request/correlation id; `runWithCorrelation`, `runWithCorrelationFromHeaders`, `getCorrelationId`, `enrichCorrelation` | VERIFIED | `src/modules/core/observability/correlation.ts` | — | `__tests__/observability.test.ts` 10/10 | audit G1 |
+| `logger.ts` — structured one-line JSON, correlation-aware, sensitive-key redaction, `LOG_LEVEL` gate, swappable sink (tests) | VERIFIED | `src/modules/core/observability/logger.ts` | — | ✓ | no vendor coupling |
+| `metrics.ts` — in-process counters + value summaries + `timed()` + `snapshot()` | VERIFIED | `src/modules/core/observability/metrics.ts` | — | ✓ | per-process; infra aggregates |
+| Proxy propagates `x-request-id` / `x-correlation-id` (generate if absent, echo on response) | VERIFIED | `src/proxy.ts` | — | — | inline `crypto.randomUUID`, no bundle bloat |
+| `/api/health` (liveness — uptime/version, no deps) + `/api/ready` (readiness — DB `SELECT 1`, 200/503, no infra leak) | VERIFIED | `src/app/api/health/route.ts`, `src/app/api/ready/route.ts` | — | smoke (SELECT 1 + log line + metric) | spec §15 |
+| tsc 0 + eslint clean | VERIFIED | — | — | — | — |
+| Replace ~249 raw `console.*` with `logger` | TODO | across `src/` | — | — | mechanical, do in module sweeps |
+| Wire `runWithCorrelationFromHeaders` into API routes / server actions / jobs | TODO | route wrappers | — | — | needs a shared handler wrapper — pairs with Cluster 11 |
+| Instrument auth errors / API latency / DB / mail / webhook / rate-limit / security events via `incr`/`observe` | TODO | those call sites | — | — | prep for external APM/SIEM |
 
 ### Cluster 11 — Jobs & idempotency
 | Task | Status | Files | Migration | Tests | Notes |

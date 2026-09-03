@@ -118,7 +118,16 @@ export function proxy(req: NextRequest) {
   requestHeaders.set("x-current-pathname", pathname);
   requestHeaders.set("x-nonce", nonce);
 
+  // Correlation — one id per request, propagated to handlers and echoed back so
+  // logs, audit events and client reports can be tied together.
+  const requestId = req.headers.get("x-request-id") || crypto.randomUUID();
+  const correlationId = req.headers.get("x-correlation-id") || requestId;
+  requestHeaders.set("x-request-id", requestId);
+  requestHeaders.set("x-correlation-id", correlationId);
+
   const applySecurity = (response: NextResponse, authed: boolean) => {
+    response.headers.set("x-request-id", requestId);
+    response.headers.set("x-correlation-id", correlationId);
     if (!isApi) {
       const headers = securityHeaders({
         secure: USE_SECURE_COOKIES,
