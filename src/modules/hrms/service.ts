@@ -486,14 +486,23 @@ export async function createHRCase(
 
 export async function addCaseComment(
   caseId: string,
+  orgId: string,
   userId: string,
   message: string,
 ) {
+  // Tenant guard: the HR case must belong to the commenter's org.
+  const hrCase = await db.hRCase.findFirst({
+    where: { id: caseId, orgId },
+    select: { id: true },
+  });
+  if (!hrCase) throw new Error("Not found");
+  const text = message.trim().slice(0, 5000);
+  if (!text) throw new Error("Message is required");
   return db.hRCaseComment.create({
     data: {
       caseId,
       userId,
-      message,
+      message: text,
     },
   });
 }

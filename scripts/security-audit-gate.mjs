@@ -28,10 +28,23 @@ const ALLOWLIST = [
   { id: "GHSA-h67p-54hq-rp68", ...SHADCN_CLI }, // js-yaml
   { id: "GHSA-52cp-r559-cp3m", ...SHADCN_CLI },
   { id: "GHSA-5p4m-2wfm-xmqj", ...SHADCN_CLI },
+  { id: "GHSA-3f6p-5ww8-9rcr", ...PRISMA_CLI }, // mysql2 (bundled by the prisma CLI)
+  { id: "GHSA-rgwj-5xj2-c3m3", ...PRISMA_CLI }, // mysql2
+  { id: "GHSA-c83g-rgw3-j3cx", reason: "browserslist — build-time (next/tailwind toolchain), not in the runtime bundle.", reviewBy: "2027-01-31" },
+  { id: "GHSA-73wf-gq98-2v4g", reason: "browserslist — build-time.", reviewBy: "2027-01-31" },
 ];
 
-// Packages with no GHSA id in the audit output that are known build-time-only.
-const ALLOWLIST_PACKAGES = new Set(["@prisma/config", "prisma"]);
+// Packages whose only high/critical advisories propagate from an already
+// allow-listed dependency (or are build-time CLI internals). Keeping them here
+// avoids the gate flagging the same nodemailer / prisma-CLI issue at every
+// parent in the chain.
+const ALLOWLIST_PACKAGES = new Set([
+  "@prisma/config", // deepmerge-ts, build-time
+  "prisma", // bundles drivers for every DB; runtime uses @prisma/adapter-pg
+  "@auth/core", // high advisories come via nodemailer (already triaged)
+  "next-auth", // via @auth/core -> nodemailer
+  "mysql2", // via the prisma CLI
+]);
 
 const allow = new Map(ALLOWLIST.map((e) => [e.id, e]));
 const today = new Date().toISOString().slice(0, 10);

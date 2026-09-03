@@ -13,6 +13,6 @@ export async function GET(req: NextRequest) {
   const versionB = searchParams.get("versionB");
   if (!versionA || !versionB) return err("versionA and versionB query params are required");
 
-  const diffs = await comparePolicyVersions(versionA, versionB);
+  const diffs = await comparePolicyVersions(versionA, versionB, session!.user.orgId!);
   return ok(diffs);
 }

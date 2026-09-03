@@ -8,11 +8,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { session, error } = await getSessionOrUnauth();
   if (error) return error;
   await requirePermission(session!.user.id, "admin.users.manage");
+  const orgId = session!.user.orgId;
+  if (!orgId) return err("No active organisation", 403);
 
   const { id } = await params;
   const parsed = z.object({ roleIds: z.array(z.string()) }).safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 
-  await updateUserRoles(id, parsed.data.roleIds);
+  await updateUserRoles(id, orgId, parsed.data.roleIds);
   return ok({ updated: true });
 }

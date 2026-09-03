@@ -95,11 +95,16 @@ export async function createPolicyVersion(input: CreatePolicyVersionInput, actor
   return created;
 }
 
-export async function publishPolicyVersion(policyVersionId: string, actorId: string) {
+export async function publishPolicyVersion(
+  policyVersionId: string,
+  orgId: string,
+  actorId: string,
+) {
   const version = await db.leavePolicyVersion.findUniqueOrThrow({
     where: { id: policyVersionId },
     include: { leaveType: true },
   });
+  if (version.leaveType.orgId !== orgId) throw new Error("Not found");
   if (version.status !== "DRAFT") {
     throw new Error(`Cannot publish version in status ${version.status}`);
   }
@@ -140,11 +145,16 @@ export async function publishPolicyVersion(policyVersionId: string, actorId: str
   return { ...updated, warnings };
 }
 
-export async function archivePolicyVersion(policyVersionId: string, actorId: string) {
+export async function archivePolicyVersion(
+  policyVersionId: string,
+  orgId: string,
+  actorId: string,
+) {
   const version = await db.leavePolicyVersion.findUniqueOrThrow({
     where: { id: policyVersionId },
     include: { leaveType: true },
   });
+  if (version.leaveType.orgId !== orgId) throw new Error("Not found");
 
   const updated = await db.leavePolicyVersion.update({
     where: { id: policyVersionId },
@@ -201,11 +211,16 @@ export async function listPolicyVersions(leaveTypeId: string) {
  * doc comment). Applicability rules are copied too, since "start from what
  * already works" is the whole point of cloning.
  */
-export async function clonePolicyVersion(sourceVersionId: string, actorId: string) {
+export async function clonePolicyVersion(
+  sourceVersionId: string,
+  orgId: string,
+  actorId: string,
+) {
   const source = await db.leavePolicyVersion.findUniqueOrThrow({
     where: { id: sourceVersionId },
     include: { applicabilityRules: true, leaveType: true },
   });
+  if (source.leaveType.orgId !== orgId) throw new Error("Not found");
 
   return createPolicyVersion(
     {
@@ -239,10 +254,14 @@ export interface PolicyVersionDiffEntry {
  * exactly what changed between e.g. v2 and v3 of a policy before deciding
  * which is "correct" for a historical dispute.
  */
-export async function comparePolicyVersions(versionIdA: string, versionIdB: string): Promise<PolicyVersionDiffEntry[]> {
+export async function comparePolicyVersions(
+  versionIdA: string,
+  versionIdB: string,
+  orgId: string,
+): Promise<PolicyVersionDiffEntry[]> {
   const [a, b] = await Promise.all([
-    db.leavePolicyVersion.findUniqueOrThrow({ where: { id: versionIdA } }),
-    db.leavePolicyVersion.findUniqueOrThrow({ where: { id: versionIdB } }),
+    db.leavePolicyVersion.findFirstOrThrow({ where: { id: versionIdA, leaveType: { orgId } } }),
+    db.leavePolicyVersion.findFirstOrThrow({ where: { id: versionIdB, leaveType: { orgId } } }),
   ]);
 
   const diffs: PolicyVersionDiffEntry[] = [];

@@ -102,14 +102,40 @@ export async function getOrg(orgId: string) {
   });
 }
 
+/**
+ * Tenant guard: throws if the row is not in the caller's org. Every by-id
+ * mutation below is scoped through this so an admin in one organisation cannot
+ * rename / delete another organisation's org-structure or roles (MON-S1 §10).
+ */
+class NotInOrgError extends Error {
+  constructor() {
+    super("Not found");
+    this.name = "NotInOrgError";
+  }
+}
+async function assertBranchInOrg(id: string, orgId: string) {
+  if (!(await db.branch.findFirst({ where: { id, orgId }, select: { id: true } }))) throw new NotInOrgError();
+}
+async function assertDepartmentInOrg(id: string, orgId: string) {
+  if (!(await db.department.findFirst({ where: { id, orgId }, select: { id: true } }))) throw new NotInOrgError();
+}
+async function assertDivisionInOrg(id: string, orgId: string) {
+  if (!(await db.division.findFirst({ where: { id, orgId }, select: { id: true } }))) throw new NotInOrgError();
+}
+async function assertRoleInOrg(id: string, orgId: string) {
+  if (!(await db.role.findFirst({ where: { id, orgId }, select: { id: true } }))) throw new NotInOrgError();
+}
+
 // Branches
 export async function createBranch(orgId: string, name: string, code: string) {
   return db.branch.create({ data: { orgId, name, code: code.toUpperCase() } });
 }
-export async function updateBranch(id: string, name: string, code: string) {
+export async function updateBranch(id: string, orgId: string, name: string, code: string) {
+  await assertBranchInOrg(id, orgId);
   return db.branch.update({ where: { id }, data: { name, code: code.toUpperCase() } });
 }
-export async function deleteBranch(id: string) {
+export async function deleteBranch(id: string, orgId: string) {
+  await assertBranchInOrg(id, orgId);
   return db.branch.delete({ where: { id } });
 }
 
@@ -117,10 +143,12 @@ export async function deleteBranch(id: string) {
 export async function createDepartment(orgId: string, name: string, code: string) {
   return db.department.create({ data: { orgId, name, code: code.toUpperCase() } });
 }
-export async function updateDepartment(id: string, name: string, code: string) {
+export async function updateDepartment(id: string, orgId: string, name: string, code: string) {
+  await assertDepartmentInOrg(id, orgId);
   return db.department.update({ where: { id }, data: { name, code: code.toUpperCase() } });
 }
-export async function deleteDepartment(id: string) {
+export async function deleteDepartment(id: string, orgId: string) {
+  await assertDepartmentInOrg(id, orgId);
   return db.department.delete({ where: { id } });
 }
 
@@ -128,10 +156,12 @@ export async function deleteDepartment(id: string) {
 export async function createDivision(orgId: string, departmentId: string, name: string) {
   return db.division.create({ data: { orgId, departmentId, name } });
 }
-export async function updateDivision(id: string, name: string) {
+export async function updateDivision(id: string, orgId: string, name: string) {
+  await assertDivisionInOrg(id, orgId);
   return db.division.update({ where: { id }, data: { name } });
 }
-export async function deleteDivision(id: string) {
+export async function deleteDivision(id: string, orgId: string) {
+  await assertDivisionInOrg(id, orgId);
   return db.division.delete({ where: { id } });
 }
 
@@ -150,16 +180,26 @@ export async function createRole(orgId: string, name: string) {
   invalidateRbacCache();
   return role;
 }
-export async function updateRolePermissions(roleId: string, permissionIds: string[]) {
+export async function updateRolePermissions(roleId: string, orgId: string, permissionIds: string[]) {
+  await assertRoleInOrg(roleId, orgId);
+  // Permissions are a global catalogue — validate the ids exist so a caller
+  // cannot smuggle in an arbitrary string.
+  const valid = await db.permission.findMany({
+    where: { id: { in: permissionIds } },
+    select: { id: true },
+  });
+  const validIds = new Set(valid.map((p) => p.id));
   await db.rolePermission.deleteMany({ where: { roleId } });
-  if (permissionIds.length > 0) {
+  const toCreate = permissionIds.filter((id) => validIds.has(id));
+  if (toCreate.length > 0) {
     await db.rolePermission.createMany({
-      data: permissionIds.map((permissionId) => ({ roleId, permissionId })),
+      data: toCreate.map((permissionId) => ({ roleId, permissionId })),
     });
   }
   invalidateRbacCache();
 }
-export async function deleteRole(id: string) {
+export async function deleteRole(id: string, orgId: string) {
+  await assertRoleInOrg(id, orgId);
   const role = await db.role.delete({ where: { id } });
   invalidateRbacCache();
   return role;

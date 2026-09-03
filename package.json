@@ -78,7 +78,7 @@
     "design-system:verify": "node scripts/verify-design-system-coverage.mjs && node scripts/verify-catalogue-style-boundary.mjs",
     "audit:unused": "npx tsc --noEmit --noUnusedLocals --noUnusedParameters",
     "security:audit-gate": "node scripts/security-audit-gate.mjs",
-    "security:coverage": "node scripts/scan-route-auth-coverage.mjs && node scripts/scan-tenant-scope-coverage.mjs",
+    "security:coverage": "node scripts/scan-route-auth-coverage.mjs && node scripts/scan-tenant-scope-coverage.mjs && node scripts/scan-authz-matrix.mjs > /dev/null",
     "security:test": "vitest run --config vitest.unit.config.ts src/lib/__tests__/safe-fetch.test.ts src/lib/__tests__/safe-redirect.test.ts src/lib/__tests__/request-integrity.test.ts src/lib/__tests__/upload-validation.test.ts src/lib/__tests__/security-headers.test.ts src/lib/__tests__/security.test.ts src/lib/__tests__/api-auth.test.ts src/lib/__tests__/session-fail-closed.test.ts src/lib/__tests__/tenant.test.ts src/lib/__tests__/tenant-scope-coverage.test.ts src/lib/__tests__/route-auth-coverage.test.ts src/lib/__tests__/rbac.test.ts src/lib/__tests__/oauth-linking.test.ts src/lib/__tests__/step-up.test.ts src/lib/__tests__/password-reset-token.test.ts src/lib/__tests__/workspace-token-encryption.test.ts src/lib/mfa/__tests__",
     "security:check": "npm run security:coverage && npm run security:test && npm run security:audit-gate",
     "quality": "npm run audit:structure && npm run design-system:verify && npm run lint && npm test && npm run build"

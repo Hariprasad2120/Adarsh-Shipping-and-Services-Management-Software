@@ -344,12 +344,19 @@ export function expandPermissionKeys(keys: Iterable<string>): Set<string> {
   return expanded;
 }
 
+// Messages Next throws when revalidateTag is called outside a request/render
+// context (background jobs, scripts, tests). The in-memory cache clear above is
+// still effective; the cross-request tag just can't be revalidated here.
+const NO_REQUEST_CONTEXT = ["incrementalCache missing", "static generation store missing"];
+
 export function invalidateRbacCache() {
   permMemCache.clear();
   try {
     revalidateTag(RBAC_PERMISSIONS_TAG, "max");
   } catch (error) {
-    if (!(error instanceof Error && error.message.includes("incrementalCache missing"))) {
+    if (
+      !(error instanceof Error && NO_REQUEST_CONTEXT.some((m) => error.message.includes(m)))
+    ) {
       throw error;
     }
   }

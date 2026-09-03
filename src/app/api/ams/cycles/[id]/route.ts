@@ -8,14 +8,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { session, error } = await getSessionOrUnauth();
   if (error) return error;
   await requirePermission(session!.user.id, "ams.cycle.manage");
+  const orgId = session!.user.orgId;
+  if (!orgId) return err("No active organisation", 403);
 
   const { id } = await params;
   const parsed = z.object({ action: z.enum(["activate", "close"]) }).safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 
   const result = parsed.data.action === "activate"
-    ? await activateCycle(id)
-    : await closeCycle(id);
+    ? await activateCycle(id, orgId)
+    : await closeCycle(id, orgId);
 
   return ok(result);
 }

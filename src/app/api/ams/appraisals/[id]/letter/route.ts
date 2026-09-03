@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { generateAppraisalLetterBuffer } from "@/modules/ams/pdf/generate-letter";
+import { assertAppraisalInOrg } from "@/modules/ams/service";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,6 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
     const orgId = session.user.orgId;
     const { id } = await params;
+  await assertAppraisalInOrg(id, session?.user?.orgId);
 
     const type = new URL(request.url).searchParams.get("type") === "increment" ? "INCREMENT" : "OUTCOME";
 

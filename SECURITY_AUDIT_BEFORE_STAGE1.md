@@ -204,6 +204,48 @@ Verification for checkpoint 5: `npm run security:check` green (19 files /
 111 tests, 0 unguarded routes, 0 flagged scopes, audit gate PASS);
 `tsc --noEmit` 0 errors in Stage-1 code; ESLint clean on changed files.
 
+### Cluster 6 — full BOLA sweep (checkpoint 6)
+
+New scanner `scripts/scan-authz-matrix.mjs` classifies **every** API route,
+`"use server"` file and dynamic page for auth / permission / tenant-scope /
+input-schema, and raises `NO_AUTH_GATE` / `BYID_NO_TENANT_SCOPE` /
+`MUTATION_NO_PERMISSION_CHECK` / `WRITE_NO_INPUT_SCHEMA`. Every flag was
+hand-reviewed → `SECURITY_ROUTE_MATRIX.md`.
+
+**Confirmed cross-tenant IDOR found and fixed (10 route groups, ~30 handlers):**
+
+| Area | Was | Now |
+|---|---|---|
+| `org/{branches,departments,divisions}/[id]` PATCH/DELETE | `db.<x>.update/delete({where:{id}})` — cross-org rename/delete | `orgId` param + `assert<X>InOrg` guard |
+| `roles/[id]/permissions` PUT, `deleteRole` | cross-org role edit/delete; unvalidated permission ids | `assertRoleInOrg` + permission-id catalogue validation |
+| `users/[id]/roles` PUT | cross-org role assignment + foreign-org role ids | target scoped to org; every roleId re-checked against the org |
+| `users/[id]/password` POST | **any org admin could reset any user's password across orgs** | target scoped to caller's org; min length 12 |
+| `ams/appraisals/[id]/*` (16 routes) | `getAppraisal(id)` / `finaliseHike(id,…)` — cross-org read **and** write (hike %, ratings, reviews) | `assertAppraisalInOrg(id, orgId)` at the top of every route (scoped via `cycle.orgId` OR `employee.orgId`) |
+| `ams/cycles/[id]` PATCH | cross-org appraisal-cycle activate/close | `orgId` param + `assertCycleInOrg` |
+| `leave/policies/[id]/{publish,archive,clone}` | cross-org publish/archive/clone (writes) | `orgId` param + `leaveType.orgId` guard |
+| `leave/policies/compare`, `leave/policies/[id]/compliance-check` | cross-org policy-config disclosure | `orgId` + `findFirstOrThrow({where:{id, leaveType:{orgId}}})` |
+| `attendance/ot/[id]` POST + `attendance/ot/actions.ts` | `decideOT(entryId,…)` — cross-org OT approval | `orgId` param + `oTEntry.findFirst({where:{id, user:{orgId}}})` |
+| `hrms/hr-cases/[id]/comments` POST | comment on any org's HR case; unbounded message; raw error echoed | `orgId` param + `hRCase.findFirst({where:{id, orgId}})`; message capped; generic error |
+
+Also: `invalidateRbacCache()` now tolerates the "static generation store
+missing" no-request-context error (background jobs / scripts).
+
+Reviewed **not** a gap (self-scoped / portal-scoped / already-guarded /
+intentionally public): notifications, todos, mona/recruit conversations, all
+`customer-portal/**`, `attendance/leaves/[id]` (`CrossOrgAccessError`), the 4
+`NO_AUTH_GATE` service modules, chat/mail routes, `verify/[id]`,
+`quote-share/[token]`. Detail in `SECURITY_ROUTE_MATRIX.md` §3–4.
+
+Regression test: `cross-tenant-org-structure.integration.test.ts` (9 DB-backed
+cases). CI: `scan-authz-matrix.mjs` added to `security:check` + the workflow.
+Audit-gate allow-list extended (nodemailer→`@auth/core`/`next-auth` chain,
+`mysql2`/`browserslist` build-time).
+
+Verification for checkpoint 6: `tsc --noEmit` 0 errors in Stage-1 code; ESLint
+clean; `cross-tenant-org-structure` 9/9 + `session-security` 17/17 +
+`mfa-flow` 9/9 green vs Postgres; `security:check` unit set 111/111; audit gate
+PASS.
+
 ---
 
 ## 1. Architecture discovered

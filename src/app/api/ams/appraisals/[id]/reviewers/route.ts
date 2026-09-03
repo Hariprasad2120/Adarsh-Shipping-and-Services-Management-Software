@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
-import { assignReviewers } from "@/modules/ams/service";
+import { assignReviewers, assertAppraisalInOrg } from "@/modules/ams/service";
 import { z } from "zod";
 
 const schema = z.object({
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await requirePermission(session!.user.id, "ams.appraisal.assign_reviewers");
 
   const { id } = await params;
+  await assertAppraisalInOrg(id, session!.user.orgId);
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 

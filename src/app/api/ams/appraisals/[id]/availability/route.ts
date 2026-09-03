@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { can } from "@/lib/rbac";
-import { setReviewerAvailability } from "@/modules/ams/service";
+import { setReviewerAvailability, assertAppraisalInOrg } from "@/modules/ams/service";
 import { z } from "zod";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -9,6 +9,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (error) return error;
 
   const { id } = await params;
+  await assertAppraisalInOrg(id, session!.user.orgId);
   const parsed = z.object({
     available: z.boolean(),
     force: z.boolean().default(false),

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
-import { confirmMeeting, startMeeting, closeMeeting } from "@/modules/ams/service";
+import { confirmMeeting, startMeeting, closeMeeting, assertAppraisalInOrg } from "@/modules/ams/service";
 import { z } from "zod";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -9,6 +9,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (error) return error;
 
   const { id } = await params;
+  await assertAppraisalInOrg(id, session!.user.orgId);
   const parsed = z.object({
     action: z.enum(["confirm", "start", "close"]),
     scheduledAt: z.string().optional(),

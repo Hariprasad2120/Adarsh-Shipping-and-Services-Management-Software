@@ -112,6 +112,9 @@ to **5 (0 critical, 5 high)**. `next build` passes (497/497 static pages).
 | `nodemailer` (6 GHSAs incl. GHSA-vvjj-xcjg-gr5g) | Fix needs `nodemailer@9` (major); no caller-controlled `name`/`envelope`; default provider is Resend | 2026-11-30 |
 | `@prisma/config` / `prisma` / `deepmerge-ts` GHSA-ggr8-5vv4-36mx | Build-time Prisma CLI only; not in the Next.js runtime bundle | 2027-03-31 |
 | `shadcn` → `cosmiconfig` → `js-yaml` (3 GHSAs) | `shadcn` CLI is a build-time tool; **should be moved from `dependencies` to `devDependencies`** (concurrent UI work added it) | 2027-01-31 |
+| `@auth/core` / `next-auth` (parent-level high) | Propagates from `nodemailer` (row above) — not a distinct Auth.js vulnerability; `@auth/core` stays pinned at 0.41.3 | 2026-11-30 |
+| `mysql2` GHSA-3f6p-5ww8-9rcr / GHSA-rgwj-5xj2-c3m3 | Bundled by the `prisma` **CLI** for the MySQL driver; runtime uses `@prisma/adapter-pg`. `npm audit` "fix" is a prisma major downgrade | 2027-03-31 |
+| `browserslist` GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g | Build-time (next / tailwind toolchain); not in the runtime bundle. `npm audit fix` (non-breaking) can clear it at the next lockfile refresh | 2027-01-31 |
 
 > Note: a concurrent shadcn/UI migration added `shadcn`, `react-aria-components`,
 > `tailwind-merge`, `clsx`, `tw-animate-css` to `dependencies` and pulled in

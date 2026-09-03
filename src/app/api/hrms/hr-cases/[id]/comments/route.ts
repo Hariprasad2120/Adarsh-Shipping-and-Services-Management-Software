@@ -18,7 +18,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: { code: "VALIDATION_ERROR", message: "Message is required" } }, { status: 400 });
     }
 
-    const data = await addCaseComment(id, session.user.id, body.message);
+    const data = await addCaseComment(id, session.user.orgId!, session.user.id, body.message);
     return NextResponse.json({ ok: true, data });
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: { code: "BAD_REQUEST", message: error.message } }, { status: 400 });

@@ -292,11 +292,26 @@ export async function updateUser(id: string, data: {
   return updated;
 }
 
-export async function updateUserRoles(userId: string, roleIds: string[]) {
+export async function updateUserRoles(userId: string, orgId: string, roleIds: string[]) {
+  // Tenant guard: the target user must belong to the caller's org, and every
+  // assigned role must belong to that same org (no foreign-role escalation).
+  const targetUser = await db.user.findFirst({
+    where: { id: userId, orgId },
+    select: { id: true },
+  });
+  if (!targetUser) throw new Error("Not found");
+
+  const orgRoleIds = new Set(
+    (await db.role.findMany({ where: { id: { in: roleIds }, orgId }, select: { id: true } })).map(
+      (r) => r.id,
+    ),
+  );
+  const safeRoleIds = roleIds.filter((id) => orgRoleIds.has(id));
+
   await db.userRole.deleteMany({ where: { userId } });
-  if (roleIds.length > 0) {
+  if (safeRoleIds.length > 0) {
     await db.userRole.createMany({
-      data: roleIds.map((roleId) => ({ userId, roleId })),
+      data: safeRoleIds.map((roleId) => ({ userId, roleId })),
     });
   }
   invalidateRbacCache();
@@ -340,7 +355,14 @@ export async function updateEmploymentRecord(userId: string, data: {
   return record;
 }
 
-export async function resetPassword(userId: string, newPassword: string) {
+export async function resetPassword(userId: string, orgId: string, newPassword: string) {
+  // Tenant guard: an admin may only reset a password for a user in their org.
+  const target = await db.user.findFirst({
+    where: { id: userId, orgId },
+    select: { id: true },
+  });
+  if (!target) throw new Error("Not found");
+
   const passwordHash = await hash(newPassword, 12);
   const user = await db.user.update({
     where: { id: userId },

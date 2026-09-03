@@ -188,7 +188,7 @@ describe("Secure Session Management", () => {
   it("password reset revokes every session", async () => {
     const t1 = await createSession({ userId });
     const t2 = await createSession({ userId });
-    await resetPassword(userId, "new-password-123!");
+    await resetPassword(userId, orgId, "new-password-123!");
     expect((await validateSession(t1)).valid).toBe(false);
     expect((await validateSession(t2)).valid).toBe(false);
     const event = await db.securityEvent.findFirst({

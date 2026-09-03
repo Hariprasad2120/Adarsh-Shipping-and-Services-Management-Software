@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionOrUnauth, ok, err } from "@/lib/api-helpers";
 import { requirePermission } from "@/lib/rbac";
-import { finaliseHike } from "@/modules/ams/service";
+import { finaliseHike, assertAppraisalInOrg } from "@/modules/ams/service";
 import { z } from "zod";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -10,6 +10,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await requirePermission(session!.user.id, "ams.hike.finalise");
 
   const { id } = await params;
+  await assertAppraisalInOrg(id, session!.user.orgId);
   const parsed = z.object({
     percent: z.number().min(0),
     effectiveFrom: z.string(),

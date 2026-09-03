@@ -13,5 +13,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const parsed = z.object({ decision: z.enum(["approved", "rejected"]) }).safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
 
-  return ok(await decideOT(id, session!.user.id, parsed.data.decision));
+  return ok(await decideOT(id, session!.user.orgId!, session!.user.id, parsed.data.decision));
 }

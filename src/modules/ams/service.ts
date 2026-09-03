@@ -307,11 +307,22 @@ export async function createCycle(orgId: string, name: string, year: number) {
   return db.appraisalCycle.create({ data: { orgId, name, year, status: "DRAFT" } });
 }
 
-export async function activateCycle(cycleId: string) {
+async function assertCycleInOrg(cycleId: string, orgId: string | null | undefined) {
+  if (!orgId) throw new Error("Not found");
+  const found = await db.appraisalCycle.findFirst({
+    where: { id: cycleId, orgId },
+    select: { id: true },
+  });
+  if (!found) throw new Error("Not found");
+}
+
+export async function activateCycle(cycleId: string, orgId: string) {
+  await assertCycleInOrg(cycleId, orgId);
   return db.appraisalCycle.update({ where: { id: cycleId }, data: { status: "ACTIVE" } });
 }
 
-export async function closeCycle(cycleId: string) {
+export async function closeCycle(cycleId: string, orgId: string) {
+  await assertCycleInOrg(cycleId, orgId);
   return db.appraisalCycle.update({ where: { id: cycleId }, data: { status: "CLOSED" } });
 }
 
@@ -817,6 +828,23 @@ export async function listAppraisals(orgId: string, filters?: {
       reviewers: { include: { user: { select: { id: true, name: true } } } },
     },
   });
+}
+
+/**
+ * Tenant guard for every /api/ams/appraisals/[id]/* route (MON-S1 §10).
+ * `Appraisal` has no orgId column — ownership is via its cycle or its
+ * employee. Throws (→ 404 at the route) if the id is not in the caller's org.
+ */
+export async function assertAppraisalInOrg(appraisalId: string, orgId: string | null | undefined) {
+  if (!orgId) throw new Error("Not found");
+  const found = await db.appraisal.findFirst({
+    where: {
+      id: appraisalId,
+      OR: [{ cycle: { orgId } }, { employee: { orgId } }],
+    },
+    select: { id: true },
+  });
+  if (!found) throw new Error("Not found");
 }
 
 export async function getAppraisal(id: string) {

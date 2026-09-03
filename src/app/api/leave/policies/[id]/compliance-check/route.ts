@@ -33,6 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const results = await checkPolicyCompliance(
       id,
+      session!.user.orgId!,
       parsed.data.country,
       parsed.data.state ?? null,
       parsed.data.leaveCategory,

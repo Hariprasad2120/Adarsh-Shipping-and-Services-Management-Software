@@ -1043,7 +1043,7 @@ export async function decideOtAction(formData: FormData): Promise<Result> {
     }
 
     const { decideOT } = await import("@/modules/attendance/service");
-    await decideOT(entryId, session.user.id, decision);
+    await decideOT(entryId, session.user.orgId!, session.user.id, decision);
 
     revalidatePath("/attendance/ot");
     return { ok: true };

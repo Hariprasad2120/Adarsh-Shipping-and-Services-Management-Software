@@ -194,7 +194,18 @@ export async function createOTEntry(userId: string, data: {
   return db.oTEntry.create({ data: { userId, ...data, status: "pending" } });
 }
 
-export async function decideOT(entryId: string, approverId: string, decision: "approved" | "rejected") {
+export async function decideOT(
+  entryId: string,
+  orgId: string,
+  approverId: string,
+  decision: "approved" | "rejected",
+) {
+  // Tenant guard: the OT entry's employee must be in the approver's org.
+  const entry = await db.oTEntry.findFirst({
+    where: { id: entryId, user: { orgId } },
+    select: { id: true },
+  });
+  if (!entry) throw new Error("Not found");
   return db.oTEntry.update({
     where: { id: entryId },
     data: { status: decision, approverId },

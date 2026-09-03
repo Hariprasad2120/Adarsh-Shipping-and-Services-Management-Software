@@ -9,7 +9,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     await requirePermission(session!.user.id, "attendance.leave.manage");
 
     const { id } = await params;
-    const archived = await archivePolicyVersion(id, session!.user.id);
+    const archived = await archivePolicyVersion(id, session!.user.orgId!, session!.user.id);
     return ok(archived);
   } catch (error) {
     return apiError(error);

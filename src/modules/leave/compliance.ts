@@ -59,12 +59,13 @@ export interface ComplianceCheckResult {
  */
 export async function checkPolicyCompliance(
   policyVersionId: string,
+  orgId: string,
   jurisdictionCountry: string,
   jurisdictionState: string | null,
   leaveCategory: string,
 ): Promise<ComplianceCheckResult[]> {
-  const version = await db.leavePolicyVersion.findUniqueOrThrow({
-    where: { id: policyVersionId },
+  const version = await db.leavePolicyVersion.findFirstOrThrow({
+    where: { id: policyVersionId, leaveType: { orgId } },
   });
   const config = parsePolicyConfig(version.configuration);
 

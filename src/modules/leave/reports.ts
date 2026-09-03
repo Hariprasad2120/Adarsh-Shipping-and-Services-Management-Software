@@ -389,7 +389,7 @@ export async function getComplianceExceptionsReport(filters: ReportFilters, juri
 
   const exceptions = [];
   for (const version of publishedVersions) {
-    const results = await checkPolicyCompliance(version.id, jurisdictionCountry, jurisdictionState ?? null, version.classification);
+    const results = await checkPolicyCompliance(version.id, filters.orgId, jurisdictionCountry, jurisdictionState ?? null, version.classification);
     const flagged = results.filter((r) => r.belowMinimum);
     if (flagged.length > 0) {
       exceptions.push({ leaveTypeId: version.leaveTypeId, leaveTypeName: version.leaveType.name, version: version.version, issues: flagged });

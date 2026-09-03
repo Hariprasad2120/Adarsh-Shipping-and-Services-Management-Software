@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     );
 
     const published = parsed.data.publishImmediately
-      ? await publishPolicyVersion(version.id, session!.user.id)
+      ? await publishPolicyVersion(version.id, session!.user.orgId!, session!.user.id)
       : version;
 
     return ok({ leaveType, version: published }, 201);
