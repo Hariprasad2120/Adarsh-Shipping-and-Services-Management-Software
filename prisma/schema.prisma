@@ -35,6 +35,8 @@ model Organisation {
   numberingSequences NumberingSequence[]
   approvalPolicies   ApprovalPolicy[]
   approvalRequests   ApprovalRequest[]
+  customFieldDefinitions CustomFieldDefinition[]
+  customFieldValues      CustomFieldValue[]
 
   branches    Branch[]
   departments Department[]
@@ -1971,6 +1973,73 @@ model ApprovalDecision {
   @@unique([requestId, level, actorUserId])
   @@index([requestId])
   @@index([actorUserId])
+}
+
+/// Stage 2 — enterprise platform: unified custom-field platform.
+///
+/// One model for "let an org admin add extra fields to a business object type",
+/// converging `EmployeeProfileField` and `AccountingCustomFieldDefinition` (the
+/// `CustomField` form-builder model is a different concept and stays separate).
+/// Values are validated against the definition — never executed — and read/write
+/// can be gated by a permission key so a custom field cannot bypass authz.
+model CustomFieldDefinition {
+  id         String  @id @default(cuid())
+  orgId      String
+  /// Business object being extended, e.g. "employee", "accounting.invoice",
+  /// "crm.customer". Owned by the consuming module.
+  objectType String
+  /// Machine name, unique per (org, objectType).
+  key        String
+  label      String
+  /// TEXT TEXTAREA NUMBER CURRENCY DATE DATETIME BOOLEAN SELECT MULTI_SELECT
+  /// REFERENCE EMAIL URL
+  fieldType  String
+  section    String  @default("")
+  helpText   String?
+  required   Boolean @default(false)
+  /// Normalised default value (JSON scalar / array).
+  defaultValue Json?
+  /// SELECT/MULTI_SELECT → [{ value, label }]; REFERENCE → { objectType }.
+  options    Json?
+  /// { min, max, minLength, maxLength, pattern } — declarative only, no code.
+  validation Json?
+  /// VISIBLE | HIDDEN | READONLY
+  visibility String  @default("VISIBLE")
+  /// Optional permission keys gating value read / write.
+  readPermission  String?
+  writePermission String?
+  position   Int     @default(0)
+  active     Boolean @default(true)
+  rowVersion Int     @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org    Organisation        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  values CustomFieldValue[]
+
+  @@unique([orgId, objectType, key])
+  @@index([orgId, objectType, active, position])
+}
+
+model CustomFieldValue {
+  id           String @id @default(cuid())
+  orgId        String
+  definitionId String
+  /// Denormalised for querying values by object without a join.
+  objectType   String
+  objectId     String
+  /// Normalised value (JSON scalar / array), validated against the definition.
+  value        Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org        Organisation          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  definition CustomFieldDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, objectId])
+  @@index([orgId, objectType, objectId])
 }
 
 model OrganisationThemeSettings {

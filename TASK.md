@@ -98,11 +98,18 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Reference wiring: route `core.vendor.create` or a config change through the engine | TODO | — | — | — | first real consumer — pick low-risk |
 | Settings UI for approval policies | TODO | — | — | — | Cluster 8 |
 
-### Cluster 7 — Custom fields convergence
+### Cluster 7 — Custom fields convergence  — DONE (platform model)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| One `CustomFieldDefinition` + `CustomFieldValue` (types, required, default, options, validation, help, visibility, permission) | TODO | schema, `src/modules/core/custom-fields/` (new) | expand; keep old 3 tables as views during contract | unit (validation, authz not bypassable) | audit F1 |
-| Migrate `EmployeeProfileField`, `CustomField`, `AccountingCustomFieldDefinition` consumers | TODO | hrms, accounting, … | backfill | regression | — |
+| `CustomFieldDefinition` + `CustomFieldValue` — objectType/key scope, 12 field types, required/default/options/validation/section/help, `visibility`, `readPermission`/`writePermission` | VERIFIED | `prisma/schema.prisma` | `20260903160000_stage2_custom_fields` — 2 empty tables. Applied. | — | audit F1 |
+| `validate.ts` (pure) — coerce + check per type; declarative rules only (pattern = anchored regex string, **no code execution**); `validateFieldValue`, `validateFieldPatch` (rejects unknown keys) | VERIFIED | `src/modules/core/custom-fields/validate.ts` | — | `__tests__/validate.test.ts` 14/14 | — |
+| `definitions.ts` — create/update/deactivate/delete/reorder; key `lower_snake_case`, rename blocked once values exist | VERIFIED | `src/modules/core/custom-fields/definitions.ts` | — | — | tenant-scoped by-id |
+| `values.ts` — `getFieldValues` / `getFieldValuesForMany` (batch, no N+1) / `setFieldValues` (validate + `writePermission` + READONLY guard + all-or-nothing); `readPermission` filters reads | VERIFIED | `src/modules/core/custom-fields/values.ts` | — | E2E: bad option/range rejected, write/read permission enforced, null clears, cascade delete | `can` predicate passed by caller |
+| tsc 0 + eslint clean | VERIFIED | — | — | — | — |
+| Migrate `EmployeeProfileField` consumers (hrms) onto platform model | TODO | hrms | data migration | regression | — |
+| Migrate `AccountingCustomFieldDefinition` consumers onto platform model | TODO | accounting | data migration | regression | `dataType`→`fieldType`, `scope`→`objectType` |
+| `CustomField` (ServiceForm form-builder) | N/A | — | — | — | different concept — stays separate, not part of convergence |
+| Settings UI for custom fields | TODO | — | — | — | Cluster 8 |
 
 ### Cluster 8 — Organisation Setup Wizard
 | Task | Status | Files | Migration | Tests | Notes |
