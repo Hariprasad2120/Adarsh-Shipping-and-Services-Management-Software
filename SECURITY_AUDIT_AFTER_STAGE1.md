@@ -74,24 +74,46 @@ Stage 1 was delivered in checkpoints — see `SECURITY_AUDIT_BEFORE_STAGE1.md`
 
 ## 3. Residual risk / still recommended
 
-1. **Full BOLA sweep of all 297 routes + `[id]` RSC pages + 77 server actions.**
-   Stage 1 fixed the by-id `findUnique` risk class and the confirmed defects; a
-   line-by-line pass of the remaining handlers is prudent before onboarding a
-   large multi-org customer.
-2. **Retrofit the 281 ad-hoc `auth()` routes onto `requireApiActor()`** and wire
-   `assertRequestIntegrity` into every mutating handler.
-3. **`orgId` columns + composite `@@unique`** on `EmploymentRecord`,
-   `LeavePolicyVersion` (and an audit of every tenant-owned model) — needs a
-   coordinated Prisma migration + backfill.
-4. **`xlsx` → `exceljs`** (or licensed SheetJS) and **`nodemailer` 9**.
-5. **Migrate legacy in-process rate limiters** onto `rate-limit-store.ts`.
-6. **Nonce-based CSP** to remove `'unsafe-inline'` for scripts.
-7. **Security Center UI** (`§26`) — server actions exist; the page is unbuilt.
-8. **Org security-policy UI** (`§27`) — `Organisation.requireMfa` exists; no admin
-   screen yet.
-9. **Passkeys / WebAuthn** — `AuthenticationFactor` is WebAuthn-ready; not
-   implemented.
-10. **External penetration test** — see `SECURITY_TESTING.md` §"External testing".
+**Stage 2 (clusters 6–8) closed the following** from the original list:
+
+- ✅ **BOLA sweep** — `scripts/scan-authz-matrix.mjs` classifies every route /
+  action / dynamic page; every flag hand-reviewed in `SECURITY_ROUTE_MATRIX.md`.
+  **~30 additional cross-tenant IDOR handlers fixed** (org structure, roles,
+  user roles + password, all 16 `ams/appraisals/[id]/*`, appraisal cycles,
+  leave-policy publish/archive/clone/compare/compliance, OT decisions, HR-case
+  comments). CI gate added.
+- ✅ **`orgId` columns** — migration `20260831090000` adds + backfills `orgId`
+  on `EmploymentRecord` and `LeavePolicyVersion` (applied to the live DB).
+- ✅ **`nodemailer` → 9.1.1**.
+- ✅ **`xlsx` hardened** — `src/lib/safe-xlsx.ts` (frozen prototypes + size +
+  parser-surface limits) on the 4 attacker-influenced parse sites.
+- ✅ **External pen-test prepared** — `PENTEST_SCOPE.md`.
+
+**Still open:**
+
+1. **`xlsx` → `exceljs`** (or licensed SheetJS) — the interim guard reduces but
+   does not eliminate the prototype-pollution / ReDoS risk; parsing should also
+   move to an isolated worker.
+2. **Nonce-based CSP** to remove `'unsafe-inline'` for scripts — deferred: the
+   layouts are mid-rewrite by concurrent UI work and `next build` is currently
+   broken by it, so an unverifiable CSP change is unsafe to ship. Do it once the
+   build is green.
+3. **Retrofit the 281 ad-hoc `auth()` routes onto `requireApiActor()`** + wire
+   `assertRequestIntegrity` into every mutating handler — mechanical; route
+   auth-coverage is already proven at 0 gaps, so this is hygiene, not a hole.
+4. **Per-page loader audit** of the ~6 dynamic dashboard pages in
+   `SECURITY_ROUTE_MATRIX.md` §4; granular RBAC permission + Zod DTO on the
+   ~4 mutating routes still missing one.
+5. **Composite DB constraints / RLS** — the new `orgId` columns enable a
+   PostgreSQL CHECK/trigger or Row-Level Security layer for defence in depth.
+6. **Migrate legacy in-process rate limiters** (`security.ts` / `login-rate-limit.ts`)
+   onto `rate-limit-store.ts`.
+7. **Security Center UI** (`§26`) + **Org security-policy UI** (`§27`) — server
+   actions + `Organisation.requireMfa` exist; the pages need the shadcn
+   component set the concurrent migration is introducing.
+8. **Passkeys / WebAuthn** — `AuthenticationFactor` is WebAuthn-ready; needs
+   `@simplewebauthn/server`, credential columns, enrolment/assertion UI.
+9. **External penetration test** — commission per `PENTEST_SCOPE.md`.
 
 ---
 
