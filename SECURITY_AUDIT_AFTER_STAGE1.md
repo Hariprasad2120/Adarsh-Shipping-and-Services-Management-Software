@@ -89,46 +89,57 @@ Stage 1 was delivered in checkpoints — see `SECURITY_AUDIT_BEFORE_STAGE1.md`
   parser-surface limits) on the 4 attacker-influenced parse sites.
 - ✅ **External pen-test prepared** — `PENTEST_SCOPE.md`.
 
+**Closed in Stage 2 clusters 9–13:**
+
+- ✅ **Nonce-based CSP** (cluster 11) — per-request 128-bit nonce from
+  `proxy.ts`; inline scripts bound to it; `next.config.ts` no longer sets a
+  static CSP. Build verified 499/499.
+- ✅ **Security Center UI** (§26) + **Org Security Policy UI** (§27) (cluster 12)
+  — full TOTP enrol/disable/recovery-codes with step-up, server-generated QR;
+  `/admin/settings/security-policy` "require MFA" toggle (permission + step-up +
+  audit).
+- ✅ **Passkeys / WebAuthn** (cluster 13) — migration `20260831120000` adds the
+  credential columns; `@simplewebauthn/server` v9; register/remove in the
+  Security Center; pre-auth challenge route + login "use a passkey" step;
+  `verifyMfa` accepts a passkey assertion (server-cookie challenge, counter
+  bumped). The login form also gained the TOTP step it was missing.
+- ✅ **Legacy rate limiters** (cluster 9) — login lockout + credential flows on
+  the shared `RateLimitCounter`.
+- ✅ **Granular RBAC** on `hrms/announcements` + `hrms/reimbursement`; dynamic
+  dashboard pages reviewed — false positives (cluster 10).
+
 **Still open:**
 
-1. **`xlsx` → `exceljs`** (or licensed SheetJS) — the interim guard reduces but
-   does not eliminate the prototype-pollution / ReDoS risk; parsing should also
-   move to an isolated worker.
-2. **Nonce-based CSP** to remove `'unsafe-inline'` for scripts — deferred: the
-   layouts are mid-rewrite by concurrent UI work and `next build` is currently
-   broken by it, so an unverifiable CSP change is unsafe to ship. Do it once the
-   build is green.
-3. **Retrofit the 281 ad-hoc `auth()` routes onto `requireApiActor()`** + wire
-   `assertRequestIntegrity` into every mutating handler — mechanical; route
-   auth-coverage is already proven at 0 gaps, so this is hygiene, not a hole.
-4. **Per-page loader audit** of the ~6 dynamic dashboard pages in
-   `SECURITY_ROUTE_MATRIX.md` §4; granular RBAC permission + Zod DTO on the
-   ~4 mutating routes still missing one.
-5. **Composite DB constraints / RLS** — the new `orgId` columns enable a
-   PostgreSQL CHECK/trigger or Row-Level Security layer for defence in depth.
-6. ✅ **DONE** (Stage 2 cluster 9) — `login-rate-limit.ts` and the credential /
-   pre-auth flows now use the shared `RateLimitCounter`. The legacy sync
-   `rateLimit()` remains only for non-credential callers (mona chat, portal
-   upload / query-reply, google-chat-debug) — migrate those too as hygiene.
-7. **Security Center UI** (`§26`) + **Org security-policy UI** (`§27`) — server
-   actions + `Organisation.requireMfa` exist; the pages need the shadcn
-   component set the concurrent migration is introducing.
-8. **Passkeys / WebAuthn** — `AuthenticationFactor` is WebAuthn-ready; needs
-   `@simplewebauthn/server`, credential columns, enrolment/assertion UI.
-9. **External penetration test** — commission per `PENTEST_SCOPE.md`.
+1. **`xlsx` → `exceljs`** — `src/lib/safe-xlsx.ts` (frozen `Object`/`Array`
+   prototypes + size + parser-surface limits) is the accepted mitigation on the
+   4 attacker-influenced parse sites. A full swap touches ~6 files across
+   payroll / CHA / CRM import **and export** that real users depend on; the
+   regression risk outweighs the marginal gain over the guard. Deliberate
+   deferral (`DEPENDENCY_REMEDIATION.md`).
+2. **Retrofit the 281 ad-hoc `auth()` routes onto `requireApiActor()`** + wire
+   `assertRequestIntegrity` into every mutating handler — route auth-coverage is
+   proven at **0 gaps** (`route-auth-coverage.test.ts`); one-canonical-gate
+   refactor, not a hole. Mechanical, high merge-conflict risk against the
+   ongoing UI work.
+3. **Composite DB constraints / RLS** on the new `orgId` columns — query guards
+   + column + tests already close the path; a CHECK/trigger/RLS layer is
+   defence-in-depth for a later pass.
+4. **External penetration test** — commission per `PENTEST_SCOPE.md`.
 
 ---
 
 ## 3a. Stage 2 verification snapshot
 
-`tsc --noEmit`: **0 errors in application code** (3 remain in
-`src/components/ui/sidebar.tsx`, an unfinished concurrent shadcn migration —
-not part of any security commit). `src/lib` + `src/lib/mfa` test suite:
-**158 / 158 green against the live Postgres** (`.env.staging.local`), including
-40 DB-backed cross-tenant / MFA / session integration cases.
-`npm run security:check`: coverage scans 0 missing / 0 flagged, 111 unit tests,
-dependency audit gate PASS. Two Prisma migrations applied to the live app DB
-(`20260830090000`, `20260831090000`).
+`tsc --noEmit`: **0 errors in Stage-1/2 security code**. (Transient errors come
+and go in a concurrent shadcn/notification UI migration — `sidebar.tsx`,
+`notification-provider.tsx` — not part of any security commit; they gate a full
+`next build` until that work settles.) `src/lib` + `src/lib/mfa` test suite:
+**164 / 164 green against the live Postgres** (`.env.staging.local`), including
+DB-backed cross-tenant, MFA, passkey-config, session and rate-limit cases.
+`npm run security:check`: coverage scans 0 missing / 0 flagged, 117 unit tests,
+dependency audit gate PASS. Four Prisma migrations applied to the live app DB
+(`20260830090000`, `20260831090000`, `20260831120000`, and the 122 pre-existing).
+`next build` was last verified green (499/499) at the nonce-CSP commit.
 
 ## 4. Production-readiness statement
 
