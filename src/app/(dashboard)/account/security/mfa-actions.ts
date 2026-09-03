@@ -78,7 +78,21 @@ export async function regenerateRecoveryCodesAction(password: string) {
   return { recoveryCodes: codes };
 }
 
-export async function getSecurityOverview() {
+export interface SecurityOverview {
+  factors: Array<{
+    id: string;
+    type: string;
+    label: string | null;
+    status: string;
+    confirmedAt: Date | null;
+    lastUsedAt: Date | null;
+  }>;
+  recoveryCodesRemaining: number;
+  orgRequiresMfa: boolean;
+  platformAdminMfaMandatory: boolean;
+}
+
+export async function getSecurityOverview(): Promise<SecurityOverview> {
   const user = await currentActor();
   const [factors, org] = await Promise.all([
     listFactors(user.id),
