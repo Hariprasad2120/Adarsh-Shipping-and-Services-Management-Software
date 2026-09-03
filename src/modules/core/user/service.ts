@@ -227,6 +227,7 @@ export async function createUser(input: CreateUserInput) {
     await tx.employmentRecord.create({
       data: {
         userId: user.id,
+        orgId: user.orgId,
         joinDate: input.joinDate,
         grade: input.grade,
         ctc: input.ctc,
@@ -339,8 +340,8 @@ export async function updateEmploymentRecord(userId: string, data: {
 
   const record = await db.employmentRecord.upsert({
     where: { userId },
-    update: data,
-    create: { userId, joinDate: await getNow(), ...data },
+    update: { ...data, orgId: user.orgId ?? undefined },
+    create: { userId, orgId: user.orgId, joinDate: await getNow(), ...data },
   });
 
   if (user.orgId && !record.exitDate) {

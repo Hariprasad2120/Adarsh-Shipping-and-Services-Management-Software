@@ -58,6 +58,7 @@ export async function POST(
     },
     create: {
       userId,
+      orgId,
       joinDate: new Date(),
       ctc: annualCTC,
       payrollMeta: nextMeta,

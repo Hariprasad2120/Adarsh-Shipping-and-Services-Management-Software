@@ -246,6 +246,26 @@ clean; `cross-tenant-org-structure` 9/9 + `session-security` 17/17 +
 `mfa-flow` 9/9 green vs Postgres; `security:check` unit set 111/111; audit gate
 PASS.
 
+### Cluster 7 — tenant denormalisation (checkpoint 7)
+
+Migration `20260831090000_stage1_tenant_denorm_orgid` — **additive + backfill**,
+applied and verified against the live app DB and the test DB. Adds a nullable
+`orgId` column + index to `EmploymentRecord` (mirrors `User.orgId`) and
+`LeavePolicyVersion` (mirrors `LeaveType.orgId`) — the two tenant-owned models
+that had ownership only via a relation. Backfilled from the owning row
+(EmploymentRecord 90/91 — one row's user has no org; LeavePolicyVersion 6/6).
+Rollback SQL in the migration header.
+
+Write paths kept in sync: `createUser` / `updateEmploymentRecord` /
+`salary-structure` route now set `EmploymentRecord.orgId`; `createPolicyVersion`
+sets `LeavePolicyVersion.orgId`. The cluster 3/6 query guards (relation-based)
+still stand; the column enables org-scoped queries without a join and future
+DB-level constraints.
+
+Verification for checkpoint 7: migration applied to both DBs; `prisma generate`
++ `tsc` 0 errors in Stage-1 code; DB integration suite 40/40 + security unit
+111/111 green.
+
 ---
 
 ## 1. Architecture discovered

@@ -55,6 +55,11 @@ export interface CreatePolicyVersionInput {
 export async function createPolicyVersion(input: CreatePolicyVersionInput, actorId: string) {
   const parsedConfig = LeavePolicyConfigSchema.parse(input.configuration);
 
+  const leaveType = await db.leaveType.findUniqueOrThrow({
+    where: { id: input.leaveTypeId },
+    select: { orgId: true },
+  });
+
   const latest = await db.leavePolicyVersion.findFirst({
     where: { leaveTypeId: input.leaveTypeId },
     orderBy: { version: "desc" },
@@ -64,6 +69,7 @@ export async function createPolicyVersion(input: CreatePolicyVersionInput, actor
   const created = await db.leavePolicyVersion.create({
     data: {
       leaveTypeId: input.leaveTypeId,
+      orgId: leaveType.orgId,
       version: nextVersion,
       status: "DRAFT",
       classification: input.classification,

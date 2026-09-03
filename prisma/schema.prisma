@@ -733,6 +733,10 @@ model TodoSubtask {
 model EmploymentRecord {
   id                   String    @id @default(cuid())
   userId               String    @unique
+  // Denormalised tenant key (MON-S1 §10) — mirrors User.orgId. Lets salary /
+  // employment queries scope by org without a join. Backfilled by migration
+  // 20260831090000; kept in sync by the write paths.
+  orgId                String?
   joinDate             DateTime
   exitDate             DateTime?
   grade                String?
@@ -752,6 +756,8 @@ model EmploymentRecord {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
 }
 
 model EmployeeHrmsProfile {
@@ -968,6 +974,9 @@ model LeaveRequest {
 model LeavePolicyVersion {
   id                String    @id @default(cuid())
   leaveTypeId       String
+  // Denormalised tenant key (MON-S1 §10) — mirrors LeaveType.orgId. Backfilled
+  // by migration 20260831090000.
+  orgId             String?
   version           Int
   status            String    @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
   classification    String    @default("PAID") // PAID | UNPAID | ON_DUTY | RESTRICTED_HOLIDAY | PARTIALLY_PAID
@@ -989,6 +998,7 @@ model LeavePolicyVersion {
 
   @@unique([leaveTypeId, version])
   @@index([leaveTypeId, status])
+  @@index([orgId, status])
 }
 
 model LeaveApplicabilityRule {
