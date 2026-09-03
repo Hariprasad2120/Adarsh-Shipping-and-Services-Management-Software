@@ -55,11 +55,17 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | Move CHA-aware helpers out of `src/lib/` | TODO | `src/lib/cha-badges.ts`, `job-workspace-profile.ts`, `catalogue-data.ts` | — | — | audit C2 |
 | `OrgModule` table (replace `SystemSetting` JSON persistence) | TODO | `prisma/schema.prisma` | additive | integration | optional — current persistence works; do if config-audit (§13) needs per-row history |
 
-### Cluster 3 — Legal entities & org structure
+### Cluster 3 — Legal entities & org structure  — DONE (expand phase)
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
-| `LegalEntity` model (≥1 per org, one default); optional `BusinessUnit`, `CostCentre` | TODO | `prisma/schema.prisma` | expand; auto-create default entity per org | integration | audit A2 |
-| Re-parent `Branch`/`Department`/`Division` under `LegalEntity` (nullable FK) | TODO | schema | expand→backfill→contract | — | — |
+| `LegalEntity` model (≥1 per org, one `isDefault`); `taxIdentifiers` Json, per-entity `country` override | VERIFIED | `prisma/schema.prisma` | `20260903130000_stage2_legal_entities` — additive; 1 default entity per org (name = org name). Applied + verified (2 orgs → 2 defaults). | — | audit A2 / A4 (`legalName`/`taxIds` land here) |
+| `BusinessUnit` (self-hierarchy) + `CostCentre` optional layers | VERIFIED | `prisma/schema.prisma` | same migration | — | thin models; wiring beyond CRUD deferred until a module needs them |
+| `Branch.legalEntityId` nullable FK + backfill to default entity | VERIFIED | `prisma/schema.prisma` | same migration — 5/5 branches re-parented, 0 orphan | — | expand phase; NOT NULL + drop-nullable is a later contract migration |
+| `legal-entity.ts` service — `ensureDefaultLegalEntity` (idempotent), list/get/create/update/`setDefaultLegalEntity`/`deleteLegalEntity`, tenant-guarded | VERIFIED | `src/modules/core/organisation/legal-entity.ts` | — | `__tests__/legal-entity.test.ts` 4/4 (pure delete-guard) | mirrors `service.ts` guard style |
+| Re-parent `Department` / `Division` under `LegalEntity` | TODO | schema | expand→backfill | — | not done — Dept/Div are org-wide today; only re-parent if HR needs entity-scoped structure |
+| Link `AccountingLegalEntity` → `LegalEntity` (FK) | TODO | schema, accounting | expand | — | accounting keeps its richer entity; add `legalEntityId` pointer so they reconcile |
+| Setup-wizard structure step + Settings UI for entities/BU/CC | TODO | — | — | — | Cluster 8 |
+| Contract: `Branch.legalEntityId` NOT NULL | TODO | schema | contract | — | after all writers set it |
 
 ### Cluster 4 — Membership model
 | Task | Status | Files | Migration | Tests | Notes |

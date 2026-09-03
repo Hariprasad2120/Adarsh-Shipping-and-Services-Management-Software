@@ -25,6 +25,13 @@ model Organisation {
   // Stage 2 — enterprise platform: per-organisation regional / fiscal configuration.
   settings    OrganisationSettings?
 
+  // Stage 2 — enterprise platform: organisation structure. A tenant contains one
+  // or more legal entities; business units and cost centres are optional layers
+  // a small organisation can ignore entirely.
+  legalEntities LegalEntity[]
+  businessUnits BusinessUnit[]
+  costCentres   CostCentre[]
+
   branches    Branch[]
   departments Department[]
   divisions   Division[]
@@ -226,14 +233,16 @@ model Organisation {
 model Branch {
   id                  String  @id @default(cuid())
   orgId               String
+  legalEntityId       String? // Stage 2 — the legal entity this branch operates under. Nullable during the expand phase; backfilled to the org's default entity.
   name                String
   code                String
   jurisdictionCountry String? // NEW — for deterministic statutory-compliance lookup (spec §35): the country this branch's employees are legally covered under
   jurisdictionState   String? // NEW — state/province within jurisdictionCountry, when the country has state-level leave law (e.g. India)
 
-  org      Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  users    User[]
-  holidays Holiday[]
+  org         Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity LegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  users       User[]
+  holidays    Holiday[]
 
   // Accounting Module Relations
   accounts                          Account[]
@@ -259,6 +268,94 @@ model Branch {
 
   @@unique([orgId, code])
   @@index([orgId])
+  @@index([legalEntityId])
+}
+
+/// Stage 2 — enterprise platform. A legal business entity operating inside a
+/// tenant (organisation account). Every organisation has at least one, with
+/// exactly one marked `isDefault`. Small organisations use only the default;
+/// corporate groups / MNCs add subsidiaries and other entities here.
+///
+/// This is the org-structure spine (branches, business units, cost centres hang
+/// off it). The accounting module keeps its own richer `AccountingLegalEntity`
+/// for ledger scoping; the two are linked in a later step.
+model LegalEntity {
+  id                 String  @id @default(cuid())
+  orgId              String
+  name               String // display name
+  legalName          String? // registered legal name, if different
+  entityType         String? // e.g. "private_limited", "llc", "branch_office" — free-form, country-dependent
+  registrationNumber String? // company / incorporation number
+  taxIdentifiers     Json? // { "<scheme>": "<value>" }, e.g. { "GSTIN": "…", "PAN": "…", "VAT": "…" }
+  country            String? // ISO 3166-1 alpha-2; overrides OrganisationSettings.country for this entity
+  isDefault          Boolean @default(false)
+  active             Boolean @default(true)
+  sortOrder          Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org           Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branches      Branch[]
+  businessUnits BusinessUnit[]
+  costCentres   CostCentre[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@index([orgId, isDefault])
+}
+
+/// Stage 2 — enterprise platform. Optional organisational grouping below a legal
+/// entity (a company can slice itself into divisions / lines of business without
+/// them being separate legal entities). Self-referencing for a shallow hierarchy.
+model BusinessUnit {
+  id            String  @id @default(cuid())
+  orgId         String
+  legalEntityId String?
+  parentId      String?
+  name          String
+  code          String?
+  active        Boolean @default(true)
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org         Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity LegalEntity?   @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  parent      BusinessUnit?  @relation("BusinessUnitHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    BusinessUnit[] @relation("BusinessUnitHierarchy")
+  costCentres CostCentre[]
+
+  @@unique([orgId, code])
+  @@index([orgId])
+  @@index([legalEntityId])
+  @@index([parentId])
+}
+
+/// Stage 2 — enterprise platform. Optional cost centre for financial attribution.
+/// Used where an organisation runs cost-centre accounting / budgeting; ignored
+/// otherwise.
+model CostCentre {
+  id             String  @id @default(cuid())
+  orgId          String
+  legalEntityId  String?
+  businessUnitId String?
+  name           String
+  code           String
+  active         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org          Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity  LegalEntity?  @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  businessUnit BusinessUnit? @relation(fields: [businessUnitId], references: [id], onDelete: SetNull)
+
+  @@unique([orgId, code])
+  @@index([orgId])
+  @@index([legalEntityId])
+  @@index([businessUnitId])
 }
 
 model Department {
