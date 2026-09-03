@@ -96,23 +96,47 @@ export type OrganisationRegionalSettingsPatch = Partial<
 
 /**
  * Update an organisation's regional settings. Caller is responsible for
- * authorisation (`admin.org.manage`) and for recording a configuration-audit
- * entry — this function only touches the row and busts the cache.
+ * authorisation (`admin.org.manage`). Pass `audit` to record a configuration
+ * audit entry (before/after diff); omit it for internal / provisioning callers
+ * that write their own audit trail.
  */
 export async function updateOrganisationRegionalSettings(
   orgId: string,
   patch: OrganisationRegionalSettingsPatch,
+  audit?: { actorUserId?: string; actorLabel?: string; reason?: string; request?: Request | null },
 ): Promise<OrganisationRegionalSettings> {
   if (!orgId) throw new Error("updateOrganisationRegionalSettings: no organisation id");
   const data: Record<string, unknown> = {};
   for (const field of MUTABLE_FIELDS) {
     if (patch[field] !== undefined) data[field] = patch[field];
   }
+
+  const before = audit ? await loadOrCreate(orgId) : null;
+
   await db.organisationSettings.upsert({
     where: { orgId },
     update: data,
     create: { orgId, ...data },
   });
   revalidateTag(cacheTag(orgId), "max");
-  return loadOrCreate(orgId);
+  const after = await loadOrCreate(orgId);
+
+  if (audit && before) {
+    const { recordConfigChange } = await import("@/modules/core/config-audit");
+    await recordConfigChange({
+      orgId,
+      actor: audit.actorUserId
+        ? { userId: audit.actorUserId, label: audit.actorLabel }
+        : { label: audit.actorLabel ?? "system" },
+      action: "regional_settings.update",
+      targetType: "OrganisationSettings",
+      targetId: orgId,
+      before,
+      after,
+      reason: audit.reason ?? null,
+      request: audit.request ?? null,
+    });
+  }
+
+  return after;
 }

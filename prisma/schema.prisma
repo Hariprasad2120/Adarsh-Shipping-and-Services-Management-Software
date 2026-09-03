@@ -37,6 +37,7 @@ model Organisation {
   approvalRequests   ApprovalRequest[]
   customFieldDefinitions CustomFieldDefinition[]
   customFieldValues      CustomFieldValue[]
+  configAuditEntries     ConfigAuditEntry[]
 
   branches    Branch[]
   departments Department[]
@@ -502,6 +503,7 @@ model User {
   // Stage 2 — reusable approval engine
   approvalRequestsRaised      ApprovalRequest[]            @relation("ApprovalRequestRequester")
   approvalDecisions           ApprovalDecision[]           @relation("ApprovalDecisionActor")
+  configAuditEntries          ConfigAuditEntry[]           @relation("ConfigAuditActor")
 
   // Attendance & OT
   punches                     AttendancePunch[]
@@ -2040,6 +2042,48 @@ model CustomFieldValue {
 
   @@unique([definitionId, objectId])
   @@index([orgId, objectType, objectId])
+}
+
+/// Stage 2 — enterprise platform: append-only configuration audit trail (spec
+/// §13 / §14). One row per enterprise configuration change — who, what, before,
+/// after, which keys changed, why, and request provenance. Sensitive values are
+/// redacted before storage.
+///
+/// Append-only by contract: the service exposes create + read only, and the
+/// deployment should additionally REVOKE UPDATE/DELETE on this table from the
+/// application role so an ordinary admin cannot rewrite their own history.
+model ConfigAuditEntry {
+  id    String @id @default(cuid())
+  orgId String
+
+  actorUserId String? // null for system / provisioning actions
+  actorLabel  String? // human label when there is no user (e.g. "provisioning", API key name)
+
+  action     String // "regional_settings.update", "module.enable", "approval_policy.upsert", …
+  targetType String // "OrganisationSettings", "ApprovalPolicy", …
+  targetId   String?
+  summary    String? // one-line human description
+
+  before      Json? // redacted
+  after       Json? // redacted
+  changedKeys String[] @default([])
+  reason      String?
+
+  source        String  @default("app") // app | api | provisioning | system
+  result        String  @default("SUCCESS") // SUCCESS | FAILURE
+  ip            String?
+  userAgent     String?
+  correlationId String?
+
+  createdAt DateTime @default(now())
+
+  org   Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  actor User?        @relation("ConfigAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, createdAt])
+  @@index([orgId, targetType, targetId])
+  @@index([orgId, action, createdAt])
+  @@index([actorUserId])
 }
 
 model OrganisationThemeSettings {

@@ -111,6 +111,17 @@ per cluster (schema changes gated on concurrent-agent coordination).
 | `CustomField` (ServiceForm form-builder) | N/A | — | — | — | different concept — stays separate, not part of convergence |
 | Settings UI for custom fields | TODO | — | — | — | Cluster 8 |
 
+### Cluster 7b — Configuration audit trail (spec §13 / §14)  — DONE (platform service)
+| Task | Status | Files | Migration | Tests | Notes |
+|---|---|---|---|---|---|
+| `ConfigAuditEntry` model — actor (user or label), action, target, before/after (redacted), `changedKeys`, `reason`, source, result, ip/ua/correlationId. Append-only by contract. | VERIFIED | `prisma/schema.prisma` | `20260903170000_stage2_config_audit` — new table; migration notes the `REVOKE UPDATE/DELETE` to run for a hardened deployment | — | audit H3 / spec §13 |
+| `redact.ts` (pure) — `redact` (sensitive-key detector, depth-capped), `diffKeys` (order-insensitive top-level diff), `summarise` | VERIFIED | `src/modules/core/config-audit/redact.ts` | — | `__tests__/redact.test.ts` 10/10 | — |
+| `service.ts` — `recordConfigChange` (single write path; swallows its own errors so auditing never breaks the audited action), `listConfigAudit` (filter + cursor pagination) | VERIFIED | `src/modules/core/config-audit/service.ts` | — | E2E: record, redact (`apiKey`/`clientSecret`→`[redacted]`, `retries` kept), diff, provisioning actor, append-only surface | ip/ua via `extractRequestMeta` |
+| Wire `updateOrganisationRegionalSettings` — optional `audit` param records before/after | VERIFIED | `src/modules/core/regional/settings.ts` | — | tsc (runtime path needs request context for `revalidateTag`) | non-breaking optional arg |
+| Wire remaining Stage-2 services (module toggle, approval policy, legal entity, custom field def, numbering) | TODO | those services | — | — | each needs actor plumbing into its signature |
+| Wire critical business config changes (user-role changes, security policy, integrations) | TODO | admin routes | — | — | spec §13 |
+| Admin UI: configuration history view | TODO | — | — | — | Cluster 8 / Settings |
+
 ### Cluster 8 — Organisation Setup Wizard
 | Task | Status | Files | Migration | Tests | Notes |
 |---|---|---|---|---|---|
