@@ -1098,7 +1098,7 @@ export async function getCanonicalJournalDetail(orgId: string, journalId: string
       journal.functionalCurrencyCode ??
       journal.baseCurrencyCode ??
       journal.transactionCurrencyCode ??
-      "—",
+      "INR",
     transactionCurrencyCode: journal.transactionCurrencyCode,
     totalDebit: serialize(journal.totalDebit),
     totalCredit: serialize(journal.totalCredit),
