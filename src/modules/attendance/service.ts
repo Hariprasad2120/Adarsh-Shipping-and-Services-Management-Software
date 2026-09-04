@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
-import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
+import {
+  appendAttendancePunchEvent,
+  calculateOtForPunch,
+  resolveCheckOutAttendanceDate,
+} from "@/lib/ot";
 import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
 import { getCachedLeaveTypes } from "@/lib/cache";
 import { submitLeaveRequest, decideLeaveRequest as decideLeaveRequestV2 } from "@/modules/leave/request";
@@ -33,11 +37,16 @@ export async function punchIn(userId: string, date: Date) {
 
 export async function punchOut(userId: string, date: Date) {
   const now = await getNow();
-  const attendanceDate = toAttendanceDate(date);
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { orgId: true },
   });
+  // For an overnight shift a post-midnight punch-out closes the PREVIOUS
+  // attendance day's open punch rather than opening a new row on the calendar
+  // day it physically happened on.
+  const attendanceDate = user?.orgId
+    ? await resolveCheckOutAttendanceDate(userId, user.orgId, date)
+    : toAttendanceDate(date);
   const punch = await db.attendancePunch.upsert({
     where: { userId_date: { userId, date: attendanceDate } },
     update: { outAt: now },
@@ -257,12 +266,30 @@ export async function getMonthlyReport(orgId: string, year: number, month: numbe
 
   const punches = await db.attendancePunch.findMany({
     where: { userId: { in: users.map((u) => u.id) }, date: { gte: from, lte: to } },
+    select: { userId: true, inAt: true, status: true, lateMinutes: true },
   });
 
-  const byUser = new Map(users.map((u) => [u.id, { user: u, days: 0, lateCount: 0 }]));
+  const byUser = new Map(
+    users.map((u) => [
+      u.id,
+      { user: u, days: 0, halfDays: 0, lateCount: 0, absentCount: 0 },
+    ]),
+  );
   for (const p of punches) {
     const entry = byUser.get(p.userId);
-    if (entry) entry.days++;
+    if (!entry) continue;
+    // "days" counts real attendance days — a row with no check-in is not a
+    // present day. Half days count as 0.5. Late is driven by the persisted
+    // lateMinutes so payroll and the dashboards agree on one number.
+    if (p.status === "HALF_DAY") {
+      entry.halfDays++;
+      entry.days += 0.5;
+    } else if (p.status === "ABSENT") {
+      entry.absentCount++;
+    } else if (p.inAt) {
+      entry.days++;
+    }
+    if ((p.lateMinutes ?? 0) > 0) entry.lateCount++;
   }
 
   return [...byUser.values()];

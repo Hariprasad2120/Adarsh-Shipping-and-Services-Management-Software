@@ -236,8 +236,33 @@ export function PunchCard({
               : "Biometric connection offline",
           );
         }
-        const data = await res.json();
+        const payload = await res.json();
         if (!active) return;
+        const data = payload?.data ?? payload;
+
+        // Not an error: this org/employee just has no biometric source.
+        // Fall through to the local-punch fallback without a red error state.
+        if (data?.unavailable) {
+          setTimelineSessions([]);
+          const matchPunch = punches.find((p) =>
+            isSameLocalDate(p.date, selectedDateStr),
+          );
+          if (matchPunch?.inAt) {
+            setTimelineSessions([
+              {
+                in: matchPunch.inAt,
+                out: matchPunch.outAt,
+                durationHours:
+                  matchPunch.inAt && matchPunch.outAt
+                    ? (new Date(matchPunch.outAt).getTime() -
+                        new Date(matchPunch.inAt).getTime()) /
+                      3600000
+                    : null,
+              },
+            ]);
+          }
+          return;
+        }
 
         if (data.sessions && data.sessions.length > 0) {
           setTimelineSessions(data.sessions);

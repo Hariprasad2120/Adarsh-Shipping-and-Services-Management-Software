@@ -244,7 +244,7 @@ async function getHolidayDateStrings(
   return holidays.map((holiday) => toDateString(holiday.date));
 }
 
-async function resolveShiftForDate(
+export async function resolveShiftForDate(
   userId: string,
   orgId: string,
   attendanceDate: Date,
@@ -863,6 +863,58 @@ export async function replaceAttendancePunchEventsForDate(
   });
 }
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+/**
+ * Which attendance day a CHECK-OUT belongs to.
+ *
+ * For an overnight shift (e.g. 22:00 → 06:00) a 06:00 punch-out lands on the
+ * next calendar day, but it closes the previous day's shift. Without this the
+ * punch-out would open a fresh row on the wrong day and the shift-start day
+ * would be scored MISSING_CHECK_OUT.
+ *
+ * Returns the previous attendance date when ALL of:
+ *  - there is an open punch (inAt set, outAt null) on the previous day,
+ *  - the employee's shift active that previous day is overnight, and
+ *  - `punchAt` is at or before that shift's scheduled end + grace.
+ * Otherwise returns today's attendance date.
+ */
+export async function resolveCheckOutAttendanceDate(
+  userId: string,
+  orgId: string,
+  punchAt: Date,
+): Promise<Date> {
+  const todayAD = normalizeToISTMidnight(punchAt);
+  const prevAD = new Date(todayAD);
+  prevAD.setUTCDate(prevAD.getUTCDate() - 1);
+
+  const openPrev = await db.attendancePunch.findFirst({
+    where: { userId, date: prevAD, inAt: { not: null }, outAt: null },
+    select: { id: true },
+  });
+  if (!openPrev) return todayAD;
+
+  const shift = await resolveShiftForDate(userId, orgId, prevAD);
+  if (!shift) return todayAD;
+
+  const [sh, sm] = shift.startTime.split(":").map(Number);
+  const [eh, em] = shift.endTime.split(":").map(Number);
+  const startMin = (sh ?? 0) * 60 + (sm ?? 0);
+  const endMin = (eh ?? 0) * 60 + (em ?? 0);
+  const isOvernight = endMin <= startMin;
+  if (!isOvernight) return todayAD;
+
+  // prevAD carries IST calendar parts in its UTC fields. The scheduled end is
+  // `endTime` on the day AFTER prevAD, in IST wall time → convert to a real
+  // UTC instant by removing the IST offset.
+  const scheduledEndIstWallMs =
+    prevAD.getTime() + 24 * 60 * 60 * 1000 + endMin * 60 * 1000;
+  const scheduledEndUtcMs = scheduledEndIstWallMs - IST_OFFSET_MS;
+  const graceMs = (shift.graceAfterEndMins ?? 15) * 60 * 1000;
+
+  return punchAt.getTime() <= scheduledEndUtcMs + graceMs ? prevAD : todayAD;
+}
+
 export async function appendAttendancePunchEvent(
   userId: string,
   orgId: string,
@@ -966,7 +1018,74 @@ export async function calculateOtForPunch(
     },
   });
 
+  // Mirror the computed outcome onto the day's AttendancePunch summary row so
+  // the attendance dashboards, monthly report and payroll inputs all read the
+  // same status / late / working-hours numbers the OT engine produced.
+  // Best-effort: a failure here must never break the punch flow.
+  try {
+    await writeBackAttendancePunchSummary(userId, attendanceDate, computation);
+  } catch {
+    // swallow — OtRecord is already persisted and is the source of truth
+  }
+
   return true;
+}
+
+/**
+ * Derive AttendancePunch.status / lateMinutes / earlyLeavingMinutes /
+ * workingHours from an OvertimeComputation and persist them on the existing
+ * summary row. Only touches a row that already exists (created by the punch
+ * flow) and never overwrites a status owned by Leave ("LEAVE").
+ */
+async function writeBackAttendancePunchSummary(
+  userId: string,
+  attendanceDate: Date,
+  computation: OvertimeComputation,
+): Promise<void> {
+  const existing = await db.attendancePunch.findUnique({
+    where: { userId_date: { userId, date: attendanceDate } },
+    select: { id: true, status: true, inAt: true },
+  });
+  if (!existing) return;
+  if (existing.status === "LEAVE") return;
+
+  const rawLate = (computation.calculationDetails as { lateMinutes?: unknown })
+    .lateMinutes;
+  const lateMinutes =
+    typeof rawLate === "number" && Number.isFinite(rawLate)
+      ? Math.max(0, Math.round(rawLate))
+      : 0;
+
+  let status: string | null;
+  if (computation.dayType === "HOLIDAY") {
+    status = "HOLIDAY";
+  } else if (computation.dayType === "WEEKEND") {
+    status = "WEEKLY_OFF";
+  } else if (!computation.firstPunchAt && !existing.inAt) {
+    status = existing.status ?? null; // absent-marking is a separate concern
+  } else if (
+    computation.expectedMinutes > 0 &&
+    computation.workedMinutes >= computation.expectedMinutes * 0.5
+  ) {
+    status = "PRESENT";
+  } else if (computation.workedMinutes > 0) {
+    status = "HALF_DAY";
+  } else {
+    status = "PRESENT";
+  }
+
+  await db.attendancePunch.update({
+    where: { id: existing.id },
+    data: {
+      status,
+      lateMinutes,
+      earlyLeavingMinutes: Math.max(
+        0,
+        Math.round(computation.earlyLeavingMins ?? 0),
+      ),
+      workingHours: computation.hoursWorked ?? 0,
+    },
+  });
 }
 
 export async function processMonthOt(

@@ -50,13 +50,31 @@ export async function GET(req: NextRequest) {
     where: { id: hrmsEmployeeId, orgId },
     select: { employeeNumber: true, name: true },
   });
+  // "No biometric account linked" and "biometric not configured" are normal
+  // states for this org/employee, not request failures — return an empty,
+  // 200 result with an `unavailable` marker so the punch card can fall back
+  // to the local punch row without the browser logging a failed request.
   if (!employee?.employeeNumber) {
-    return err("Employee has no employeeNumber linked to eSSL", 404);
+    return ok({
+      date: parsed.data.date,
+      employeeId: hrmsEmployeeId,
+      employeeName: employee?.name ?? null,
+      sessions: [],
+      rawPunches: [],
+      unavailable: "no-essl-link",
+    });
   }
 
   const config = getEsslConfig();
   if (!config) {
-    return err("eSSL not configured", 503);
+    return ok({
+      date: parsed.data.date,
+      employeeId: hrmsEmployeeId,
+      employeeName: employee.name,
+      sessions: [],
+      rawPunches: [],
+      unavailable: "not-configured",
+    });
   }
 
   const [yearStr, monthStr, dayStr] = parsed.data.date.split("-") as [string, string, string];

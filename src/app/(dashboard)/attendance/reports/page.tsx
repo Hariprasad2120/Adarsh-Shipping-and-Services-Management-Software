@@ -55,7 +55,7 @@ export default async function AttendanceReportsPage({
       <PeopleTable>
         <PeopleTableHeader>
           <tr>
-            {["Employee", "Designation", "Days Present"].map((h) => (
+            {["Employee", "Designation", "Days Present", "Half Days", "Late Days"].map((h) => (
               <PeopleTableHead key={h}>{h}</PeopleTableHead>
             ))}
           </tr>
@@ -63,7 +63,7 @@ export default async function AttendanceReportsPage({
         <PeopleTableBody>
           {report.length === 0 ? (
             <PeopleTableEmpty
-              colSpan={3}
+              colSpan={5}
               message="No attendance data for this month."
             />
           ) : (
@@ -74,6 +74,8 @@ export default async function AttendanceReportsPage({
                   {r.user.designation ?? "—"}
                 </PeopleTableCell>
                 <PeopleTableCell>{r.days}</PeopleTableCell>
+                <PeopleTableCell className="mnx-people-muted">{r.halfDays}</PeopleTableCell>
+                <PeopleTableCell className="mnx-people-muted">{r.lateCount}</PeopleTableCell>
               </PeopleTableRow>
             ))
           )}

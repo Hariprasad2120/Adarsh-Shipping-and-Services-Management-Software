@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requirePermission, apiError } from "@/lib/rbac";
 import { getTrackingAlerts, getActiveOnDutyEmployees } from "@/modules/hrms/on-duty";
 
 export async function GET(request: Request) {
@@ -14,6 +15,11 @@ export async function GET(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // This endpoint exposes live location, checked-in employees and face
+    // enrollment counts — same surface as the /hrms/location-tracking page,
+    // which requires this permission. The API was previously auth-only.
+    await requirePermission(session.user.id, "hrms.tracking.admin");
 
     const orgId = (session.user as any).orgId;
     if (!orgId) return NextResponse.json({ error: "No organization" }, { status: 400 });
@@ -60,8 +66,10 @@ export async function GET(request: Request) {
         faceEnrollmentCount: faceEnrollments,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
+    // apiError maps ForbiddenError -> 403 and hides raw messages behind a
+    // generic INTERNAL_ERROR for everything else.
     console.error("tracking admin API error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 }

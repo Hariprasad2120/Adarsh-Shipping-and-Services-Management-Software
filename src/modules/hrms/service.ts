@@ -1795,35 +1795,82 @@ export async function executeApprovalDecision(
   }
 
   if (type === "REGULARIZATION") {
-    return db.attendanceRegularization.update({
-      where: { id: requestId },
+    // Scope by the employee's org (the row has no orgId column) so a checker
+    // in one tenant cannot action another tenant's request via a guessed id,
+    // and block self-approval.
+    const target = await db.attendanceRegularization.findFirst({
+      where: { id: requestId, user: { orgId } },
+      select: { id: true, userId: true, date: true },
+    });
+    if (!target) throw new Error("Regularization request not found");
+    if (target.userId === userId) {
+      throw new Error("You cannot approve or reject your own regularization request.");
+    }
+    const updated = await db.attendanceRegularization.update({
+      where: { id: target.id },
       data: { status: decision, approvedById: userId, remarks },
     });
+    // An approved/rejected regularization changes how the day is scored
+    // (computeOvertimeForDate reads regularization.status) — recompute now
+    // instead of waiting for the next punch.
+    await calculateOtForPunch(target.userId, target.date).catch(() => {});
+    await writeApprovalAudit(orgId, userId, "REGULARIZATION", decision, target.id, target.userId, remarks);
+    return updated;
   }
 
   if (type === "OT") {
-    return db.otRecord.update({
-      where: { id: requestId },
+    const target = await db.otRecord.findFirst({
+      where: { id: requestId, user: { orgId } },
+      select: { id: true, userId: true },
+    });
+    if (!target) throw new Error("Overtime record not found");
+    if (target.userId === userId) {
+      throw new Error("You cannot approve or reject your own overtime.");
+    }
+    const updated = await db.otRecord.update({
+      where: { id: target.id },
       data: {
         approvalStatus: decision,
         approvedById: userId,
         rejectionRemarks: remarks,
       },
     });
+    await writeApprovalAudit(orgId, userId, "OT", decision, target.id, target.userId, remarks);
+    return updated;
   }
 
   if (type === "TRAVEL") {
-    return db.travelRequest.update({
-      where: { id: requestId },
+    const target = await db.travelRequest.findFirst({
+      where: { id: requestId, orgId },
+      select: { id: true, userId: true },
+    });
+    if (!target) throw new Error("Travel request not found");
+    if (target.userId === userId) {
+      throw new Error("You cannot approve or reject your own travel request.");
+    }
+    const updated = await db.travelRequest.update({
+      where: { id: target.id },
       data: { status: decision, approvedById: userId },
     });
+    await writeApprovalAudit(orgId, userId, "TRAVEL", decision, target.id, target.userId, remarks);
+    return updated;
   }
 
   if (type === "TIMESHEET") {
-    return db.timesheetSubmission.update({
-      where: { id: requestId },
+    const target = await db.timesheetSubmission.findFirst({
+      where: { id: requestId, orgId },
+      select: { id: true, userId: true },
+    });
+    if (!target) throw new Error("Timesheet submission not found");
+    if (target.userId === userId) {
+      throw new Error("You cannot approve or reject your own timesheet.");
+    }
+    const updated = await db.timesheetSubmission.update({
+      where: { id: target.id },
       data: { status: decision, approvedById: userId },
     });
+    await writeApprovalAudit(orgId, userId, "TIMESHEET", decision, target.id, target.userId, remarks);
+    return updated;
   }
 
   if (type === "WORKREPORT") {
@@ -1837,4 +1884,37 @@ export async function executeApprovalDecision(
   }
 
   throw new Error("Unsupported approval type");
+}
+
+/**
+ * Records a maker-checker decision on the shared HrmsAuditLog. LEAVE and
+ * WORKREPORT already write their own audit trail inside their engines;
+ * regularization / OT / travel / timesheet had none before.
+ */
+async function writeApprovalAudit(
+  orgId: string,
+  actorId: string,
+  kind: "REGULARIZATION" | "OT" | "TRAVEL" | "TIMESHEET",
+  decision: "APPROVED" | "REJECTED",
+  requestId: string,
+  subjectUserId: string,
+  remarks?: string,
+): Promise<void> {
+  try {
+    await db.hrmsAuditLog.create({
+      data: {
+        orgId,
+        userId: actorId,
+        action: `${kind}_${decision}`,
+        details: {
+          requestId,
+          subjectUserId,
+          decision,
+          remarks: remarks ?? null,
+        },
+      },
+    });
+  } catch {
+    // audit failure must not roll back an already-committed decision
+  }
 }

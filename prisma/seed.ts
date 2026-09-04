@@ -250,6 +250,7 @@ const PERMISSIONS = [
   { key: "hrms.letters.mgmt_approve", label: "Approve letters for issuance", group: "HRMS" },
   { key: "hrms.letters.audit", label: "Audit all letters and changes", group: "HRMS" },
   { key: "hrms.letters.settings", label: "Configure letter templates and rules", group: "HRMS" },
+  { key: "hrms.settings.manage", label: "Manage HRMS settings and configuration", group: "HRMS" },
 
   // Location & Field Tracking
   { key: "hrms.tracking.admin", label: "View team/org location tracking (Overview, Tracker, Live Sales)", group: "HRMS" },
