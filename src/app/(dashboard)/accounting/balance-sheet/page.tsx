@@ -20,6 +20,17 @@ interface BSPageProps {
   searchParams: Promise<{ branchId?: string; toDate?: string }>;
 }
 
+/**
+ * Accounting-style currency: negatives (a credit balance sitting in an asset
+ * group, or vice versa) render as `(₹21.00)` rather than `₹-21.00`.
+ */
+function statementAmount(amount: number) {
+  const formatted = Math.abs(amount).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+  });
+  return amount < 0 ? `(₹${formatted})` : `₹${formatted}`;
+}
+
 function StatementLines({
   accounts,
   empty,
@@ -36,8 +47,11 @@ function StatementLines({
             <b>{account.name}</b>
             <small>{account.code}</small>
           </div>
-          <span className="mnx-accounting-amount">
-            ₹{account.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          <span
+            className="mnx-accounting-amount"
+            data-negative={account.amount < 0 ? "true" : undefined}
+          >
+            {statementAmount(account.amount)}
           </span>
         </li>
       ))}
@@ -140,11 +154,11 @@ export default async function BalanceSheetReportPage({
         {bs.currentYearProfit !== 0 ? (
           <p className="mnx-accounting-list-row">
             <span>Retained surplus (current-year profit/loss)</span>
-            <strong className="mnx-accounting-amount">
-              ₹
-              {bs.currentYearProfit.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-              })}
+            <strong
+              className="mnx-accounting-amount"
+              data-negative={bs.currentYearProfit < 0 ? "true" : undefined}
+            >
+              {statementAmount(bs.currentYearProfit)}
             </strong>
           </p>
         ) : null}

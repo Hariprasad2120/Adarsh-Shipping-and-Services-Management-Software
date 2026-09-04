@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { readWorkbook } from "@/lib/safe-xlsx";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { invalidateRbacCache } from "@/lib/rbac";
 
 type ImportResult = { ok: true; message: string } | { ok: false; error: string };
 type Row = Record<string, unknown>;
@@ -186,6 +187,11 @@ export async function importWorkbookAction(formData: FormData): Promise<ImportRe
         details: { fileName: file.name, importedUsers: imported },
       },
     });
+
+    // Role links were created directly on UserRole above; drop the cached
+    // permission bundles so imported users' access resolves without waiting
+    // out the 5-minute RBAC cache.
+    invalidateRbacCache();
 
     revalidatePath("/admin/data-tools");
     revalidatePath("/hrms/employees");

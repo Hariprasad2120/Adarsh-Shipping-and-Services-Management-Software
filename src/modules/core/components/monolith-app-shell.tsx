@@ -9,8 +9,20 @@ import {
   Search,
   Sun,
 } from "lucide-react";
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { Caps } from "@/lib/rbac";
+import {
+  getBreadcrumbLabels,
+  subscribeBreadcrumb,
+} from "@/lib/breadcrumb-store";
 import {
   getSearchCommandEntries,
   rankSearchCommandEntries,
@@ -404,9 +416,20 @@ function MonolithAppShellBody({
   userName,
 }: MonolithAppShellProps) {
   const pathname = usePathname();
+  // Dynamic-route pages (journal-entries/[id], employees/[id], …) push a human
+  // label for their id segment via <BreadcrumbLabel>. Prefer that over the
+  // raw cuid the segment fallback would otherwise render.
+  const breadcrumbLabels = useSyncExternalStore(
+    subscribeBreadcrumb,
+    getBreadcrumbLabels,
+    getBreadcrumbLabels,
+  );
+  const lastSegment =
+    pathname.split("/").filter(Boolean).at(-1) ?? "dashboard";
   const contextLabel =
     getPathLabel(pathname) ??
-    segmentToLabel(pathname.split("/").filter(Boolean).at(-1) ?? "dashboard");
+    breadcrumbLabels[lastSegment] ??
+    segmentToLabel(lastSegment);
   const { toggleChat } = useMonaChat();
   const themeContext = useContext(MonolithThemeContext);
   if (!themeContext) {

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { BreadcrumbLabel } from "@/components/navigation/breadcrumb-label";
 import { AccountingJournalApprovalAction, AccountingJournalDraftActions, CanonicalJournalDetailView } from "@/components/monolith";
 import {
   AccountingActionLink,
@@ -30,6 +31,7 @@ export default async function JournalEntryDetailPage({
     caps["accounting.post"] === true;
   return (
     <>
+      <BreadcrumbLabel segment={id} label={journal.voucherNo} />
       <AccountingRoutePageHeader
         title={`Journal ${journal.voucherNo}`}
         description={`${journal.journalType ?? "Journal entry"} · ${journal.status}`}
