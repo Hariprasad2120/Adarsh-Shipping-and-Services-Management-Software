@@ -4,7 +4,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { Calendar, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 interface LeaveTrackerProps {
   onFetchHolidays?: () => Promise<any[]>;

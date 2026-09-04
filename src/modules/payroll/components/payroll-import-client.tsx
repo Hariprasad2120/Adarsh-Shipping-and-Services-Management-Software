@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as XLSX from "xlsx";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Button } from "@/components/ui/button";
 import {
   WorkspaceAlert,

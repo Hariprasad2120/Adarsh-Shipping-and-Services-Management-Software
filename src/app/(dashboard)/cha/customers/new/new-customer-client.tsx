@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   createAccountAction,
   fetchGstDetailsAction,

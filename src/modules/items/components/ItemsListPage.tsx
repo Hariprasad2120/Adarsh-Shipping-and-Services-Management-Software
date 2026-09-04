@@ -7,7 +7,7 @@ import { ItemsToolbar } from "@/modules/items/components/ItemsToolbar";
 import { ItemsTable } from "@/modules/items/components/ItemsTable";
 import { ItemsPagination } from "@/modules/items/components/ItemsPagination";
 import { NewItemDialog } from "@/modules/items/components/NewItemDialog";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 function applyFilter(items: ItemListItem[], filter: ItemFilter, search: string): ItemListItem[] {
   let result = items;

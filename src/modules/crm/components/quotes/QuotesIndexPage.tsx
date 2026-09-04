@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { cn } from "@/lib/utils";
 import { quoteViews } from "@/modules/crm/components/quotes/lib/quote-list-data";
 import type { QuoteListStatus, QuoteRecord } from "@/modules/crm/components/quotes/lib/types";

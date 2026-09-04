@@ -4,7 +4,7 @@ import { CrmButton, CrmInput, CrmTextarea } from "@/modules/crm/components/works
 
 import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTicketAction } from "./actions";

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Button } from "@/components/ui/button";
 import { PeopleControlInput } from "@/modules/people/components";
 import { savePayrollOrgTaxProfileAction } from "@/modules/payroll/org-tax-profile-actions";

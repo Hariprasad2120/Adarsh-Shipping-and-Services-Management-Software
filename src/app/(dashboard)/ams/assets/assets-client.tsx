@@ -13,7 +13,7 @@ import {
 import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {

@@ -3,7 +3,7 @@
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { fetchAccountingItems } from "@/lib/items/accounting-item-client";
 import type { ItemListItem } from "@/lib/items/types";
 import { createInvoiceAction } from "@/modules/crm/actions";

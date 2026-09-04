@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Wand2 } from "lucide-react";
 import { CustomerSection } from "@/modules/crm/components/quotes/CustomerSection";
 import { QuoteMetaSection } from "@/modules/crm/components/quotes/QuoteMetaSection";

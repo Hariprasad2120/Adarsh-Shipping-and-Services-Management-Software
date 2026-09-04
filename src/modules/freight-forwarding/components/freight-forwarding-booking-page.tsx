@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { ButtonLink } from "@/components/ui/button";
 import { DocumentDropzoneField } from "@/components/forms/file-upload/document-dropzone-field";
 import {

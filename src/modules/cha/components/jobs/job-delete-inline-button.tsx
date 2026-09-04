@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChaModal as Modal } from "@/modules/cha/components/workspace/cha-workspace";

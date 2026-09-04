@@ -9,7 +9,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { deleteAccountAction } from "@/modules/crm/actions";
 import { NotesPanel } from "@/modules/crm/components/records/notes-panel";
 import { TimelinePanel } from "@/modules/crm/components/records/timeline-panel";

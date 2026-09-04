@@ -18,7 +18,7 @@ import {
   WalletCards,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Trash2 } from "lucide-react";
 import { WorkspaceAction } from "@/components/layout/workspace";
 import { deleteAllFreightForwardingDataAction } from "@/modules/freight-forwarding/actions";

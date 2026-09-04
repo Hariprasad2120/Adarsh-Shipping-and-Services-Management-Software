@@ -18,7 +18,7 @@ import {
   Waypoints,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { ButtonLink } from "@/components/ui/button";
 import {
   PeopleErrorState,

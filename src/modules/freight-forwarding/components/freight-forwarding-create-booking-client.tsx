@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Layers2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Button, ButtonLink } from "@/components/ui/button";
 import {
   WorkspaceAction,
@@ -123,7 +123,11 @@ export function FreightForwardingCreateBookingClient({
         return;
       }
 
-      router.push(successHref);
+      router.push(
+        result.bookingGroupId
+          ? `${successHref}?group=${result.bookingGroupId}&view=${mode === "HBL_ONLY" ? "HBL" : "MBL"}`
+          : successHref,
+      );
     });
   }
 

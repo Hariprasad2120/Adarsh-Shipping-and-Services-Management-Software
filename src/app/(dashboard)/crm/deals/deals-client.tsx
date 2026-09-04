@@ -11,7 +11,7 @@ import {
 import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { updateDealStageAction, deleteDealAction } from "@/modules/crm/actions";
 import { List, Kanban, Search, Plus, Eye, Trash2 } from "lucide-react";
 

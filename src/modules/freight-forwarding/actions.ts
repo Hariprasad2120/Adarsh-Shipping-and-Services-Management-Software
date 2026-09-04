@@ -381,6 +381,49 @@ export async function createFreightBookingTransactionsAction(
   }
 }
 
+export async function createStandaloneFreightTransactionAction(
+  transactionType: FreightTransactionType,
+): Promise<
+  ActionResult<{
+    transactionId: string;
+    transactionNumber: string;
+    transactionType: FreightTransactionType;
+  }>
+> {
+  try {
+    const { actorId, actorName, orgId } = await requireSessionContext();
+
+    const transaction = await createFreightTransaction({
+      actorId,
+      actorName,
+      bookingGroupId: null,
+      bookingMode: null,
+      linkedTransactionIds: [],
+      orgId,
+      transactionType,
+    });
+
+    revalidateFreightForwardingRoutes();
+
+    return {
+      ok: true,
+      data: {
+        transactionId: transaction.id,
+        transactionNumber: transaction.invoiceNumber,
+        transactionType,
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create standalone transaction.",
+    };
+  }
+}
+
 export async function saveFreightBookingTransactionAction(input: {
   accountId?: string | null;
   containers: FreightContainerRow[];

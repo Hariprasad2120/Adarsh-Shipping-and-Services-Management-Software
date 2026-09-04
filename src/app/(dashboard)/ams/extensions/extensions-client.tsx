@@ -11,7 +11,7 @@ import {
 } from "@/modules/performance/components/performance-workspace";
 import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition, FormEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   Card,
   CardContent,

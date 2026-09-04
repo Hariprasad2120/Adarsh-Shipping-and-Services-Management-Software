@@ -3,7 +3,7 @@
 import { ChevronDown, Info, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,

@@ -131,3 +131,4 @@ ngrok.yml
 /brain/
 /graphify-out/
 /Parsec *.mp4
+.playwright-mcp/

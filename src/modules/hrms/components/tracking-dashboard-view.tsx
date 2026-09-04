@@ -17,7 +17,7 @@ import {
   Waypoints,
   XCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   WorkspaceAction,
   WorkspaceAlert,

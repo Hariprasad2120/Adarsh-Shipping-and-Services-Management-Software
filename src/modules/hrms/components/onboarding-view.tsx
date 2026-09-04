@@ -21,7 +21,7 @@ import {
   UserRoundPlus,
   Users,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   OperationalDataTable,
   OperationalDataTableFooter,

@@ -15,7 +15,7 @@ import {
 } from "@/lib/gst-public-search";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   updateAccountAction,
   fetchGstDetailsAction,

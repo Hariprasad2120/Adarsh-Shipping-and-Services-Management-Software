@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 import { itemFormSchema, type ItemFormSchema } from "@/lib/items/validation";
 import { saveCustomItem, generateItemId } from "@/lib/items/item-store";

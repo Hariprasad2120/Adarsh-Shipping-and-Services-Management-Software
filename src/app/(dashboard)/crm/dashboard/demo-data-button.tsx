@@ -3,7 +3,7 @@
 import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Sparkles, Loader2 } from "lucide-react";
 import { seedCrmDemoDataAction } from "@/modules/crm/actions";
 

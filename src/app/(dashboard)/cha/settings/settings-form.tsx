@@ -7,7 +7,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {ChevronRight,Edit,Plus,Save,Search,ShieldCheck,Trash2,Truck,Users,Workflow,X,} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

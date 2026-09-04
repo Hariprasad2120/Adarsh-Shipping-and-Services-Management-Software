@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CircleDollarSign, RefreshCcw, Send, TrendingUp } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { CrmButton, CrmInput, CrmMetric, CrmMetrics, CrmPanel, CrmSection, CrmSelect, CrmStatus, CrmTable, CrmTextarea, WorkspaceAlert } from "@/components/monolith";
 
 type EmployeeOption = {

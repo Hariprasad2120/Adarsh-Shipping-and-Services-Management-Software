@@ -22,7 +22,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   WorkspaceAction,
   WorkspaceAlert,

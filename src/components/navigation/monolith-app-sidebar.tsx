@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import {
+  ChevronRight,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PrimaryNavSection } from "@/lib/navigation";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
@@ -46,7 +53,7 @@ function MonolithSidebarBrand() {
       href="/dashboard"
       aria-label="Monolith dashboard"
       className={cn(
-        "group flex min-h-12 w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 transition-colors hover:bg-sidebar-accent/50",
+        "group flex min-h-12 min-w-0 flex-1 items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 transition-colors hover:bg-sidebar-accent/50",
       )}
     >
       <span className="mnx-brand-mark flex size-8 shrink-0 items-center justify-center">
@@ -55,8 +62,8 @@ function MonolithSidebarBrand() {
       </span>
       <span
         className={cn(
-          "min-w-0 flex-1 overflow-hidden transition-[width,opacity,transform] duration-200 ease-linear",
-          collapsed ? "pointer-events-none w-0 translate-x-1 opacity-0" : "w-auto opacity-100",
+          "min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-150 ease-linear",
+          collapsed ? "pointer-events-none opacity-0" : "opacity-100",
         )}
       >
         <b className="block truncate text-[0.86rem] tracking-[0.22em] text-sidebar-foreground">
@@ -96,7 +103,7 @@ function MonolithSidebarLink({
       title={label}
     >
       <Icon size={16} />
-      <span>{label}</span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
     </Link>
   );
 }
@@ -111,7 +118,26 @@ function MonolithSidebarTree({
   const pathname = usePathname();
   const { state } = useSidebar();
   const sidebarCollapsed = state === "collapsed";
-  const [openSectionIds, setOpenSectionIds] = useState<Record<string, boolean>>({});
+
+  const activeSectionId = useMemo(() => {
+    const active = sections.find(
+      (section) =>
+        section.items.length > 0 &&
+        matchesPath(pathname, section.href, section.matchPaths),
+    );
+    return active?.id ?? null;
+  }, [pathname, sections]);
+
+  // Accordion: only one section open at a time.
+  const [openSectionId, setOpenSectionId] = useState<string | null>(
+    activeSectionId,
+  );
+
+  // Collapsing the rail closes every section so nothing animates while the
+  // width shrinks and nothing pops back open on re-expand.
+  useEffect(() => {
+    if (sidebarCollapsed) setOpenSectionId(null);
+  }, [sidebarCollapsed]);
 
   return (
     <SidebarGroup>
@@ -137,17 +163,14 @@ function MonolithSidebarTree({
               );
             }
 
-            const isOpen = openSectionIds[section.id] ?? isActive;
+            const isOpen = !sidebarCollapsed && openSectionId === section.id;
 
             return (
               <Collapsible
                 key={section.id}
                 isExpanded={isOpen}
                 onExpandedChange={(expanded) =>
-                  setOpenSectionIds((current) => ({
-                    ...current,
-                    [section.id]: expanded,
-                  }))
+                  setOpenSectionId(expanded ? section.id : null)
                 }
                 className="group/collapsible"
               >
@@ -161,9 +184,9 @@ function MonolithSidebarTree({
                     )}
                   >
                     <Icon size={16} />
-                    <span>{section.label}</span>
+                    <span className="min-w-0 flex-1 truncate">{section.label}</span>
                     <ChevronRight
-                      className="ml-auto size-3.5 transition-transform duration-200 group-data-[expanded=true]/collapsible:rotate-90"
+                      className="ml-auto size-3.5 shrink-0 transition-transform duration-200 group-data-[expanded=true]/collapsible:rotate-90"
                       aria-hidden="true"
                     />
                   </CollapsibleTrigger>
@@ -206,14 +229,14 @@ function MonolithSidebarTree({
                               onClick={onNavigate}
                               className={cn(
                                 sidebarMenuSubButtonClassName,
-                                "text-sidebar-foreground visited:text-sidebar-foreground [&_svg]:text-sidebar-foreground [&>span]:text-sidebar-foreground",
+                                "text-xs text-sidebar-foreground visited:text-sidebar-foreground [&_svg]:text-sidebar-foreground [&>span]:text-sidebar-foreground",
                                 activeItemHref === item.href &&
                                   "bg-sidebar-accent text-sidebar-accent-foreground",
                               )}
                               title={item.label}
                             >
                               <ItemIcon size={14} />
-                              <span>{item.label}</span>
+                              <span className="min-w-0 flex-1 truncate">{item.label}</span>
                             </Link>
                           </SidebarMenuSubItem>
                         );
@@ -246,7 +269,13 @@ function MonolithSidebarUserMenu({
 }) {
   const { state } = useSidebar();
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{
+    bottom: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const collapsed = state === "collapsed";
 
   useEffect(() => {
@@ -263,9 +292,52 @@ function MonolithSidebarUserMenu({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
+  // Close the menu whenever the rail collapses/expands so it never renders
+  // against a stale anchor.
+  useEffect(() => {
+    setOpen(false);
+  }, [collapsed]);
+
+  // The popover is position: fixed so it escapes the sidebar's overflow
+  // clipping — anchor it to the trigger and keep it in sync on scroll/resize.
+  useEffect(() => {
+    if (!open) return;
+
+    const update = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const viewportPadding = 16;
+      const width = Math.min(320, window.innerWidth - viewportPadding * 2);
+      const preferredLeft = collapsed ? rect.right + 12 : rect.left;
+      const left = Math.max(
+        viewportPadding,
+        Math.min(preferredLeft, window.innerWidth - width - viewportPadding),
+      );
+      const preferredBottom = collapsed
+        ? window.innerHeight - rect.bottom
+        : window.innerHeight - rect.top + 10;
+      const bottom = Math.max(
+        viewportPadding,
+        Math.min(preferredBottom, window.innerHeight - viewportPadding),
+      );
+
+      setPosition({ bottom, left, width });
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [collapsed, open]);
+
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-label="Open profile menu"
         aria-expanded={open}
@@ -282,8 +354,8 @@ function MonolithSidebarUserMenu({
         </span>
         <span
           className={cn(
-            "min-w-0 flex-1 overflow-hidden text-left transition-[width,opacity,transform] duration-200 ease-linear",
-            collapsed ? "pointer-events-none w-0 translate-x-1 opacity-0" : "w-auto opacity-100",
+            "min-w-0 flex-1 overflow-hidden whitespace-nowrap text-left transition-opacity duration-150 ease-linear",
+            collapsed ? "pointer-events-none opacity-0" : "opacity-100",
           )}
         >
           <span className="block truncate font-medium">{userName}</span>
@@ -300,13 +372,24 @@ function MonolithSidebarUserMenu({
         />
       </button>
 
-      {open ? (
+      {open && position ? (
         <section
-          className={cn(
-            "mnx-profile-popover z-30",
-            collapsed ? "left-full ml-3 bottom-0" : "bottom-full left-0 mb-3",
-          )}
+          className="mnx-sidebar-account-menu"
           role="menu"
+          style={{
+            bottom: position.bottom,
+            boxSizing: "border-box",
+            left: position.left,
+            maxHeight: "min(32rem, calc(100dvh - 2rem))",
+            maxWidth: "calc(100vw - 2rem)",
+            minWidth: 0,
+            overflowY: "auto",
+            position: "fixed",
+            right: "auto",
+            top: "auto",
+            width: position.width,
+            zIndex: 70,
+          }}
         >
           <header>
             <span>{initials(userName)}</span>
@@ -316,7 +399,7 @@ function MonolithSidebarUserMenu({
               <small>{userEmail}</small>
             </div>
           </header>
-          <div className="mnx-profile-context">
+          <div className="mnx-sidebar-account-context">
             <span>
               <UserRound size={14} />
             </span>
@@ -388,8 +471,33 @@ export function MonolithAppSidebar({
   userId: string;
   userName: string;
 }) {
-  const { setOpenMobile, state } = useSidebar();
+  const { isMobile, setOpen, setOpenMobile, state } = useSidebar();
   const collapsed = state === "collapsed";
+  const [pinned, setPinned] = useState(false);
+
+  // Restore the pinned preference once on mount.
+  useEffect(() => {
+    setPinned(window.localStorage.getItem("sidebarPinned") === "true");
+  }, []);
+
+  // Pinned keeps the sidebar expanded; unpinning drops it back to the icon rail.
+  // Only react to `pinned` changing — depending on `setOpen` (whose identity
+  // changes on every open/close) would fight the hover handlers below.
+  useEffect(() => {
+    window.localStorage.setItem("sidebarPinned", String(pinned));
+    setOpen(pinned);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinned]);
+
+  // Auto-collapse: unless pinned, the sidebar rests as an icon rail and expands
+  // only while hovered.
+  const autoCollapseHandlers =
+    isMobile || pinned
+      ? undefined
+      : {
+          onMouseEnter: () => setOpen(true),
+          onMouseLeave: () => setOpen(false),
+        };
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds, enabledFeatureIds),
     [caps, enabledFeatureIds, enabledModuleIds],
@@ -400,14 +508,26 @@ export function MonolithAppSidebar({
       collapsible="icon"
       className="border-r-0"
       aria-label="Primary navigation"
+      {...autoCollapseHandlers}
     >
-      <SidebarHeader
-        className={cn(
-          "border-b border-sidebar-border/90 py-3",
-          collapsed ? "px-2.5" : "px-2.5",
-        )}
-      >
+      <SidebarHeader className="flex-row items-center gap-1 overflow-hidden border-b border-sidebar-border/90 px-2.5 py-3">
         <MonolithSidebarBrand />
+        {!isMobile ? (
+          <button
+            type="button"
+            onClick={() => setPinned((current) => !current)}
+            aria-pressed={pinned}
+            aria-label={pinned ? "Unpin sidebar" : "Pin sidebar open"}
+            title={pinned ? "Unpin sidebar" : "Pin sidebar open"}
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-opacity duration-150 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+              pinned && "bg-sidebar-accent/50 text-sidebar-foreground",
+              collapsed && "pointer-events-none w-0 opacity-0",
+            )}
+          >
+            {pinned ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+          </button>
+        ) : null}
       </SidebarHeader>
       <SidebarContent className="px-1 py-2">
         <MonolithSidebarTree

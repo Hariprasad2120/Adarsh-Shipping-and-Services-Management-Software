@@ -23,11 +23,92 @@ import {
 } from "./document-adapters";
 import { seedAccountingDemoMonth } from "./demo";
 import { mapAccountingError } from "./operational-helpers";
+import { Prisma } from "@/generated/prisma/client";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
 function safeAccountingActionError(error: unknown) {
   return mapAccountingError(error).message;
+}
+
+/**
+ * Server Actions must return plain, JSON-serialisable data across the
+ * RSC → client boundary. Prisma rows carry values Next.js refuses to
+ * serialise — `Decimal` instances (totalDebit, grandTotal, rate, …), `Date`
+ * objects, `bigint`, `Buffer` — often nested inside included relations.
+ *
+ * `toPlain` deep-copies any value into a structurally-identical plain form:
+ * Decimal/bigint → string, Date → ISO string, Buffer → base64, arrays and
+ * plain objects recursed, everything else passed through. Wrap every entity
+ * an action hands back to the client in this.
+ *
+ * Not exported — this module is `"use server"`, where every export must be an
+ * async function.
+ */
+function toPlain<T>(value: T, seen = new WeakSet<object>()): T {
+  if (value == null) return value;
+
+  if (Prisma.Decimal.isDecimal(value)) {
+    return (value as Prisma.Decimal).toString() as unknown as T;
+  }
+  if (value instanceof Date) {
+    return value.toISOString() as unknown as T;
+  }
+  if (typeof value === "bigint") {
+    return value.toString() as unknown as T;
+  }
+  if (typeof Buffer !== "undefined" && Buffer.isBuffer(value)) {
+    return value.toString("base64") as unknown as T;
+  }
+  if (ArrayBuffer.isView(value)) {
+    return Buffer.from(value as unknown as Uint8Array).toString(
+      "base64",
+    ) as unknown as T;
+  }
+
+  if (typeof value !== "object") return value;
+
+  if (seen.has(value as object)) return undefined as unknown as T;
+  seen.add(value as object);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => toPlain(item, seen)) as unknown as T;
+  }
+
+  // Only plain objects; leave exotic class instances alone (they should not
+  // reach the client, and blindly cloning them loses behaviour).
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) return value;
+
+  const out: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+    out[key] = toPlain(item, seen);
+  }
+  return out as T;
+}
+
+/**
+ * Narrow reference shape for journal callers — they only read `id` after a
+ * mutation. Kept as a dedicated helper so the intent is explicit at the
+ * call site.
+ */
+function plainJournalRef(journal: {
+  id: string;
+  voucherNo?: string | null;
+  status?: string | null;
+  rowVersion?: number | null;
+  totalDebit?: unknown;
+  totalCredit?: unknown;
+}) {
+  return {
+    id: journal.id,
+    voucherNo: journal.voucherNo ?? null,
+    status: journal.status ?? null,
+    rowVersion: journal.rowVersion ?? null,
+    totalDebit: journal.totalDebit == null ? null : String(journal.totalDebit),
+    totalCredit:
+      journal.totalCredit == null ? null : String(journal.totalCredit),
+  };
 }
 
 // ─── Account Actions ─────────────────────────────────────────────────────────
@@ -96,7 +177,7 @@ export async function createJournalEntryAction(data: any): Promise<ActionRespons
 
     const journal = await accService.createJournalEntry(orgId, session.user.id, data);
     revalidatePath("/accounting/journal-entries");
-    return { ok: true, data: journal };
+    return { ok: true, data: plainJournalRef(journal) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -123,7 +204,8 @@ export async function submitJournalEntryAction(
     );
     revalidatePath("/accounting/journal-entries");
     revalidatePath(`/accounting/journal-entries/${id}`);
-    return { ok: true, data: journal };
+    revalidatePath("/accounting/approvals");
+    return { ok: true, data: plainJournalRef(journal) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -152,7 +234,7 @@ export async function updateJournalEntryAction(
     revalidatePath(`/accounting/journal-entries/${id}`);
     revalidatePath(`/accounting/journal-entries/${journal.id}`);
     revalidatePath("/accounting/approvals");
-    return { ok: true, data: journal };
+    return { ok: true, data: plainJournalRef(journal) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -171,7 +253,8 @@ export async function cancelJournalEntryAction(id: string): Promise<ActionRespon
     const journal = await accService.cancelJournalEntry(orgId, id, session.user.id);
     revalidatePath("/accounting/journal-entries");
     revalidatePath(`/accounting/journal-entries/${id}`);
-    return { ok: true, data: journal };
+    revalidatePath("/accounting/approvals");
+    return { ok: true, data: plainJournalRef(journal) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to cancel journal entry" };
   }
@@ -191,7 +274,7 @@ export async function createSalesInvoiceAction(data: any): Promise<ActionRespons
 
     const invoice = await accService.createSalesInvoice(orgId, session.user.id, data);
     revalidatePath("/accounting/sales-invoices");
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -214,7 +297,7 @@ export async function submitSalesInvoiceAction(id: string): Promise<ActionRespon
     });
     revalidatePath("/accounting/sales-invoices");
     revalidatePath(`/accounting/sales-invoices/${id}`);
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -239,7 +322,7 @@ export async function cancelSalesInvoiceAction(id: string): Promise<ActionRespon
     });
     revalidatePath("/accounting/sales-invoices");
     revalidatePath(`/accounting/sales-invoices/${id}`);
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to cancel sales invoice" };
   }
@@ -259,7 +342,7 @@ export async function createPurchaseInvoiceAction(data: any): Promise<ActionResp
 
     const invoice = await accService.createPurchaseInvoice(orgId, session.user.id, data);
     revalidatePath("/accounting/purchase-invoices");
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -282,7 +365,7 @@ export async function submitPurchaseInvoiceAction(id: string): Promise<ActionRes
     });
     revalidatePath("/accounting/purchase-invoices");
     revalidatePath(`/accounting/purchase-invoices/${id}`);
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -307,7 +390,7 @@ export async function cancelPurchaseInvoiceAction(id: string): Promise<ActionRes
     });
     revalidatePath("/accounting/purchase-invoices");
     revalidatePath(`/accounting/purchase-invoices/${id}`);
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to cancel purchase invoice" };
   }
@@ -328,7 +411,7 @@ export async function createPaymentEntryAction(data: any): Promise<ActionRespons
     const payment = await accService.createPaymentEntry(orgId, session.user.id, data);
     revalidatePath("/accounting/payment-entries");
     revalidatePath("/accounting/payments");
-    return { ok: true, data: payment };
+    return { ok: true, data: toPlain(payment) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -352,7 +435,7 @@ export async function submitPaymentEntryAction(id: string): Promise<ActionRespon
     revalidatePath("/accounting/payment-entries");
     revalidatePath("/accounting/payments");
     revalidatePath(`/accounting/payment-entries/${id}`);
-    return { ok: true, data: payment };
+    return { ok: true, data: toPlain(payment) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }
@@ -374,7 +457,7 @@ export async function approveAccountingDocumentAction(
       approverId: session.user.id,
     });
     revalidatePath("/accounting");
-    return { ok: true, data: result };
+    return { ok: true, data: toPlain(result) };
   } catch (err: unknown) {
     return {
       ok: false,
@@ -400,7 +483,7 @@ export async function approveAccountingPaymentAction(
       approverId: session.user.id,
     });
     revalidatePath("/accounting/payment-entries");
-    return { ok: true, data: result };
+    return { ok: true, data: toPlain(result) };
   } catch (err: unknown) {
     return {
       ok: false,
@@ -428,7 +511,7 @@ export async function cancelPaymentEntryAction(id: string): Promise<ActionRespon
     });
     revalidatePath("/accounting/payment-entries");
     revalidatePath(`/accounting/payment-entries/${id}`);
-    return { ok: true, data: payment };
+    return { ok: true, data: toPlain(payment) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to cancel payment entry" };
   }
@@ -448,7 +531,7 @@ export async function updateAccountingSettingsAction(data: any): Promise<ActionR
 
     const settings = await accService.updateAccountingSettings(orgId, session.user.id, data);
     revalidatePath("/accounting/settings");
-    return { ok: true, data: settings };
+    return { ok: true, data: toPlain(settings) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update settings" };
   }
@@ -496,7 +579,7 @@ export async function generateInvoiceFromDealAction(dealId: string): Promise<Act
 
     revalidatePath(`/crm/deals/${dealId}`);
     revalidatePath("/crm/deals");
-    return { ok: true, data: request };
+    return { ok: true, data: toPlain(request) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to generate sales invoice" };
   }
@@ -515,7 +598,7 @@ export async function getPayrollBatchesAction(): Promise<ActionResponse> {
     await requirePermission(session.user.id, "accounting.journal.read");
 
     const batches = await accService.getPayrollBatches(orgId);
-    return { ok: true, data: batches };
+    return { ok: true, data: toPlain(batches) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to fetch payroll batches" };
   }
@@ -532,7 +615,7 @@ export async function compilePayrollBatchAction(monthDate: Date): Promise<Action
     await requirePermission(session.user.id, "accounting.journal.prepare");
 
     const compilation = await accService.compilePayrollBatch(orgId, monthDate);
-    return { ok: true, data: compilation };
+    return { ok: true, data: toPlain(compilation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to compile payroll details" };
   }
@@ -553,7 +636,7 @@ export async function createPayrollBatchAction(monthDate: Date): Promise<ActionR
     revalidatePath("/payroll");
     revalidatePath("/payroll/pay-runs");
     revalidatePath("/payroll/payments");
-    return { ok: true, data: batch };
+    return { ok: true, data: toPlain(batch) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create payroll batch" };
   }
@@ -576,7 +659,7 @@ export async function finalizePayrollBatchAction(batchId: string): Promise<Actio
     revalidatePath("/payroll/payments");
     revalidatePath("/payroll/payslips");
     revalidatePath("/accounting/journal-entries");
-    return { ok: true, data: batch };
+    return { ok: true, data: toPlain(batch) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to finalize payroll batch" };
   }
@@ -599,7 +682,7 @@ export async function payPayrollBatchAction(batchId: string): Promise<ActionResp
     revalidatePath("/payroll/payments");
     revalidatePath("/payroll/payslips");
     revalidatePath("/accounting/journal-entries");
-    return { ok: true, data: batch };
+    return { ok: true, data: toPlain(batch) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to pay payroll batch" };
   }
@@ -618,7 +701,7 @@ export async function listAssetsAction(): Promise<ActionResponse> {
     await requirePermission(session.user.id, "accounting.journal.read");
 
     const assets = await accService.listAssets(orgId);
-    return { ok: true, data: assets };
+    return { ok: true, data: toPlain(assets) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to list assets" };
   }
@@ -635,7 +718,7 @@ export async function getAssetAction(id: string): Promise<ActionResponse> {
     await requirePermission(session.user.id, "accounting.journal.read");
 
     const asset = await accService.getAsset(orgId, id);
-    return { ok: true, data: asset };
+    return { ok: true, data: toPlain(asset) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to get asset" };
   }
@@ -653,7 +736,7 @@ export async function createAssetAction(data: any): Promise<ActionResponse> {
 
     const asset = await accService.createAsset(orgId, session.user.id, data);
     revalidatePath("/ams/assets");
-    return { ok: true, data: asset };
+    return { ok: true, data: toPlain(asset) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create asset" };
   }
@@ -673,7 +756,7 @@ export async function runDepreciationAction(assetId: string, monthDate: Date): P
     revalidatePath("/ams/assets");
     revalidatePath(`/ams/assets/${assetId}`);
     revalidatePath("/accounting/journal-entries");
-    return { ok: true, data: entry };
+    return { ok: true, data: toPlain(entry) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to run asset depreciation" };
   }
@@ -717,7 +800,7 @@ export async function createQuotationAction(data: any): Promise<ActionResponse> 
     await requirePermission(session.user.id, "accounting.quotation.create");
     const quotation = await accService.createQuotation(orgId, session.user.id, data);
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create quotation" };
   }
@@ -733,7 +816,7 @@ export async function updateQuotationAction(id: string, data: any): Promise<Acti
     const quotation = await accService.updateQuotationDraft(orgId, id, session.user.id, data);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update quotation" };
   }
@@ -748,7 +831,7 @@ export async function duplicateQuotationAction(id: string): Promise<ActionRespon
     await requirePermission(session.user.id, "accounting.quotation.create");
     const quotation = await accService.duplicateQuotation(orgId, id, session.user.id);
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to duplicate quotation" };
   }
@@ -764,7 +847,7 @@ export async function submitQuotationForApprovalAction(id: string, expectedVersi
     const quotation = await accService.submitQuotationApproval(orgId, id, session.user.id, expectedVersion);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to submit quotation for approval" };
   }
@@ -780,7 +863,7 @@ export async function approveQuotationAction(id: string, expectedVersion?: numbe
     const quotation = await accService.approveQuotationDraft(orgId, id, session.user.id, expectedVersion);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to approve quotation" };
   }
@@ -796,7 +879,7 @@ export async function returnQuotationForRevisionAction(id: string, reason: strin
     const quotation = await accService.returnQuotationDraftForRevision(orgId, id, session.user.id, reason, expectedVersion);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to return quotation for revision" };
   }
@@ -812,7 +895,7 @@ export async function sendQuotationAction(id: string, data: { expectedVersion?: 
     const quotation = await accService.sendQuotationDraft(orgId, id, session.user.id, data);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to send quotation" };
   }
@@ -828,7 +911,7 @@ export async function acceptQuotationAction(id: string, data: { expectedVersion?
     const quotation = await accService.acceptQuotationDraft(orgId, id, session.user.id, data);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to accept quotation" };
   }
@@ -844,7 +927,7 @@ export async function declineQuotationAction(id: string, data: { expectedVersion
     const quotation = await accService.declineQuotationDraft(orgId, id, session.user.id, data);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to decline quotation" };
   }
@@ -860,7 +943,7 @@ export async function cancelQuotationAction(id: string, data: { expectedVersion?
     const quotation = await accService.cancelQuotationDraft(orgId, id, session.user.id, data);
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
-    return { ok: true, data: quotation };
+    return { ok: true, data: toPlain(quotation) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to cancel quotation" };
   }
@@ -888,7 +971,7 @@ export async function convertQuotationToInvoiceAction(
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
     revalidatePath("/accounting/sales-invoices");
-    return { ok: true, data: invoice };
+    return { ok: true, data: toPlain(invoice) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to convert quotation" };
   }
@@ -916,7 +999,7 @@ export async function convertQuotationToSalesOrderAction(
     revalidatePath("/accounting/quotations");
     revalidatePath(`/accounting/quotations/${id}`);
     revalidatePath("/accounting/sales-orders");
-    return { ok: true, data: salesOrder };
+    return { ok: true, data: toPlain(salesOrder) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to convert quotation to sales order" };
   }
@@ -931,7 +1014,7 @@ export async function runQuotationExpiryAction(): Promise<ActionResponse> {
     await requirePermission(session.user.id, "accounting.quotation.manage");
     const expiredIds = await accService.runQuotationExpiry(orgId, session.user.id);
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: expiredIds };
+    return { ok: true, data: toPlain(expiredIds) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to run quotation expiry" };
   }
@@ -972,7 +1055,7 @@ export async function createCustomerNoteAction(data: any): Promise<ActionRespons
     if (!orgId) return { ok: false, error: "Missing organisation config" };
     const note = await accService.createCustomerNote(orgId, session.user.id, data);
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: note };
+    return { ok: true, data: toPlain(note) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create customer note" };
   }
@@ -990,7 +1073,7 @@ export async function submitCustomerNoteAction(id: string): Promise<ActionRespon
       makerId: session.user.id,
     });
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: note };
+    return { ok: true, data: toPlain(note) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to submit customer note" };
   }
@@ -1018,7 +1101,7 @@ export async function updateTransactionLockAction(data: any): Promise<ActionResp
     if (!orgId) return { ok: false, error: "Missing organisation config" };
     const lock = await accService.updateTransactionLock(orgId, data);
     revalidatePath("/accounting");
-    return { ok: true, data: lock };
+    return { ok: true, data: toPlain(lock) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update period lock" };
   }
@@ -1059,7 +1142,7 @@ export async function createJobCostingAction(data: any): Promise<ActionResponse>
     if (!orgId) return { ok: false, error: "Missing organisation config" };
     const job = await accService.createJobCosting(orgId, data);
     revalidatePath("/accounting/jobs");
-    return { ok: true, data: job };
+    return { ok: true, data: toPlain(job) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create job" };
   }
@@ -1074,7 +1157,7 @@ export async function updateJobCostingAction(id: string, data: any): Promise<Act
     const job = await accService.updateJobCosting(orgId, id, data);
     revalidatePath("/accounting/jobs");
     revalidatePath(`/accounting/jobs/${id}`);
-    return { ok: true, data: job };
+    return { ok: true, data: toPlain(job) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update job" };
   }
@@ -1285,7 +1368,7 @@ export async function recordBankTransferAction(data: {
     });
 
     revalidatePath("/accounting/banking");
-    return { ok: true, data: request };
+    return { ok: true, data: toPlain(request) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to record bank transfer" };
   }
@@ -1306,7 +1389,7 @@ export async function approveBankTransferRequestAction(inboxId: string): Promise
     });
     revalidatePath("/accounting/banking");
     revalidatePath("/accounting/journal-entries");
-    return { ok: true, data: result };
+    return { ok: true, data: toPlain(result) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to approve bank transfer" };
   }
@@ -1371,7 +1454,7 @@ export async function getUnitsAction(): Promise<ActionResponse> {
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
     const units = await accService.getUnits(orgId);
-    return { ok: true, data: units };
+    return { ok: true, data: toPlain(units) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to fetch units" };
   }
@@ -1411,7 +1494,7 @@ export async function createVendorNoteAction(data: any): Promise<ActionResponse>
     if (!orgId) return { ok: false, error: "Missing organisation config" };
     const note = await accService.createVendorNote(orgId, session.user.id, data);
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: note };
+    return { ok: true, data: toPlain(note) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create vendor note" };
   }
@@ -1429,7 +1512,7 @@ export async function submitVendorNoteAction(id: string): Promise<ActionResponse
       makerId: session.user.id,
     });
     revalidatePath("/accounting/quotations");
-    return { ok: true, data: note };
+    return { ok: true, data: toPlain(note) };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to submit vendor note" };
   }
@@ -1468,7 +1551,7 @@ export async function seedAccountingDemoMonthAction(): Promise<ActionResponse> {
     revalidatePath("/accounting/sales-invoices");
     revalidatePath("/accounting/trial-balance");
 
-    return { ok: true, data: result };
+    return { ok: true, data: toPlain(result) };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
   }

@@ -3,7 +3,7 @@
 import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { AccountingAction } from "@/modules/accounting/components/accounting-workspace";
 
 export function AccountingDeleteAction({

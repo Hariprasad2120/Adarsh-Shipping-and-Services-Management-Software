@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { MonolithSpecLabel } from "@/components/ui/foundation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,8 +142,6 @@ export function AttendanceCommand({
   onPunchAction,
 }: AttendanceCommandProps) {
   const [celebrating, setCelebrating] = useState(false);
-  const [actionBursting, setActionBursting] = useState(false);
-  const [lastPunchAction, setLastPunchAction] = useState<PunchAction | null>(null);
   const status = attendanceCopy[profile.attendanceStatus];
   const attendanceHue: SemanticHue =
     status.tone === "success" ? "success" : "warning";
@@ -225,17 +223,9 @@ export function AttendanceCommand({
     return () => window.clearTimeout(timeoutId);
   }, [celebrating]);
 
-  useEffect(() => {
-    if (!actionBursting) return;
-    const timeoutId = window.setTimeout(() => setActionBursting(false), 980);
-    return () => window.clearTimeout(timeoutId);
-  }, [actionBursting]);
-
   async function handlePunch(action: PunchAction) {
     try {
       await onPunchAction(action);
-      setLastPunchAction(action);
-      setActionBursting(true);
       setCelebrating(true);
       toast.success("Attendance updated successfully.");
     } catch (error) {
@@ -326,22 +316,10 @@ export function AttendanceCommand({
 
           <p className="mnx-attendance-detail">{status.detail}</p>
 
-          <div className={`mnx-attendance-actions${actionBursting ? " is-bursting" : ""}`}>
-            {actionBursting ? (
-              <div className="mnx-attendance-action-burst" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-            ) : null}
+          <div className="mnx-attendance-actions">
             {profile.attendanceStatus === "YET_TO_CHECK_IN" ? (
               <Button
-                className={`mnx-button-wide mnx-attendance-action-button${
-                  actionBursting && lastPunchAction === "CHECK_IN" ? " is-bursting" : ""
-                }`}
+                className="mnx-button-wide mnx-attendance-action-button"
                 disabled={loading}
                 onClick={() => handlePunch("CHECK_IN")}
               >
@@ -353,9 +331,7 @@ export function AttendanceCommand({
             {profile.attendanceStatus === "CHECKED_IN" ? (
               <>
                 <Button
-                  className={`mnx-attendance-action-button${
-                    actionBursting && lastPunchAction === "START_BREAK" ? " is-bursting" : ""
-                  }`}
+                  className="mnx-attendance-action-button"
                   variant="inverse"
                   disabled={loading}
                   onClick={() => handlePunch("START_BREAK")}
@@ -364,9 +340,7 @@ export function AttendanceCommand({
                   Start break
                 </Button>
                 <Button
-                  className={`mnx-attendance-action-button mnx-attendance-action-button-primary${
-                    actionBursting && lastPunchAction === "CHECK_OUT" ? " is-bursting" : ""
-                  }`}
+                  className="mnx-attendance-action-button mnx-attendance-action-button-primary"
                   disabled={loading}
                   onClick={() => handlePunch("CHECK_OUT")}
                 >
@@ -378,9 +352,7 @@ export function AttendanceCommand({
 
             {profile.attendanceStatus === "ON_BREAK" ? (
               <Button
-                className={`mnx-button-wide mnx-attendance-action-button${
-                  actionBursting && lastPunchAction === "RESUME_WORK" ? " is-bursting" : ""
-                }`}
+                className="mnx-button-wide mnx-attendance-action-button"
                 disabled={loading}
                 onClick={() => handlePunch("RESUME_WORK")}
               >

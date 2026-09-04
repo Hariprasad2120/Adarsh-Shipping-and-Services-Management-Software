@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PeopleControlInput } from "@/modules/people/components";

@@ -2652,6 +2652,230 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   width: min(340px, calc(100vw - 48px));
 }
 
+/* Sidebar-footer profile menu.
+   position: fixed so it escapes the sidebar's overflow clipping; the left/bottom
+   offsets are supplied inline from the trigger's bounding rect. Colours are
+   pinned to the sidebar palette so the panel matches the rail in every theme. */
+.mnx-sidebar-profile-popover {
+  position: fixed;
+  z-index: 70;
+  top: auto;
+  right: auto;
+  left: auto;
+  bottom: auto;
+  width: min(320px, calc(100vw - 1.5rem));
+  min-width: 0;
+  max-width: calc(100vw - 1.5rem);
+  max-height: min(32rem, calc(100dvh - 1.5rem));
+  box-sizing: border-box;
+  overflow: hidden auto;
+  border-color: var(--sidebar-border);
+  background-color: var(--sidebar);
+  background-image: none;
+  color: var(--sidebar-foreground);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.mnx-sidebar-profile-popover > header {
+  border-bottom-color: var(--sidebar-border);
+  background: color-mix(in srgb, var(--sidebar-foreground) 6%, var(--sidebar));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.mnx-sidebar-profile-popover > header > span {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+  box-shadow: none;
+}
+
+.mnx-sidebar-profile-popover em {
+  color: color-mix(in srgb, var(--sidebar-foreground) 60%, transparent);
+}
+
+.mnx-sidebar-profile-popover b {
+  color: var(--sidebar-foreground);
+}
+
+.mnx-sidebar-profile-popover small {
+  color: color-mix(in srgb, var(--sidebar-foreground) 58%, transparent);
+}
+
+.mnx-sidebar-profile-popover .mnx-profile-context {
+  border-color: var(--sidebar-border);
+  background: color-mix(in srgb, var(--sidebar-foreground) 5%, var(--sidebar));
+}
+
+.mnx-sidebar-profile-popover .mnx-profile-context > span {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.mnx-sidebar-profile-popover nav a,
+.mnx-sidebar-profile-popover nav button {
+  color: var(--sidebar-foreground);
+}
+
+.mnx-sidebar-profile-popover nav a > svg,
+.mnx-sidebar-profile-popover nav button > svg {
+  color: currentColor;
+}
+
+.mnx-sidebar-profile-popover nav a:hover,
+.mnx-sidebar-profile-popover nav button:hover {
+  border-color: var(--sidebar-border);
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.mnx-sidebar-account-menu {
+  position: fixed !important;
+  top: auto !important;
+  right: auto !important;
+  z-index: 70;
+  box-sizing: border-box;
+  width: min(320px, calc(100vw - 2rem)) !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 2rem) !important;
+  max-height: min(32rem, calc(100dvh - 2rem));
+  overflow: hidden auto;
+  border: 1px solid var(--sidebar-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+  box-shadow: var(--mnx-floating-shadow);
+  animation: mnx-panel-in 180ms ease both;
+}
+
+.mnx-sidebar-account-menu > header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
+  padding: 18px;
+  border-bottom: 1px solid var(--sidebar-border);
+  background: color-mix(in srgb, var(--sidebar-foreground) 6%, var(--sidebar));
+}
+
+.mnx-sidebar-account-menu > header > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+  font-family: var(--mn-font-mono);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.mnx-sidebar-account-menu > header > div,
+.mnx-sidebar-account-context > div,
+.mnx-sidebar-account-menu nav a > span,
+.mnx-sidebar-account-menu nav button > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  align-content: center;
+}
+
+.mnx-sidebar-account-menu em {
+  color: color-mix(in srgb, var(--sidebar-foreground) 60%, transparent);
+  font-family: var(--mn-font-mono);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 760;
+  letter-spacing: 0.13em;
+}
+
+.mnx-sidebar-account-menu b {
+  overflow: hidden;
+  color: var(--sidebar-foreground);
+  font-size: 11px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-sidebar-account-menu small {
+  overflow: hidden;
+  color: color-mix(in srgb, var(--sidebar-foreground) 58%, transparent);
+  font-size: 9px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-sidebar-account-context {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  margin: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--sidebar-foreground) 5%, var(--sidebar));
+}
+
+.mnx-sidebar-account-context > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.mnx-sidebar-account-menu nav {
+  display: grid;
+  gap: 5px;
+  padding: 0 12px 12px;
+}
+
+.mnx-sidebar-account-menu nav a,
+.mnx-sidebar-account-menu nav button {
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sidebar-foreground);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background var(--mnx-hover-duration) var(--mnx-hover-ease),
+    color var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-sidebar-account-menu nav a > svg,
+.mnx-sidebar-account-menu nav button > svg {
+  color: currentColor;
+}
+
+.mnx-sidebar-account-menu nav a:hover,
+.mnx-sidebar-account-menu nav button:hover {
+  border-color: var(--sidebar-border);
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+/* Clip nav/header content while the rail animates its width so long labels and
+   sub-menus do not spill past the collapsing edge. The fixed profile popover is
+   unaffected because it is no longer a positioned descendant of this box. */
+.mnx-dashboard-shell [data-slot="sidebar-inner"] {
+  overflow: hidden;
+}
+
 .mnx-profile-popover > header {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
@@ -7146,6 +7370,23 @@ svg + .mnx-field-control {
   flex-direction: column !important;
   gap: 0.625rem !important;
   padding: 1.25rem !important;
+}
+
+.mnx-notification-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-glass-surface-strong);
+  color: var(--mnx-text);
+  padding: var(--mn-space-5);
+  box-shadow: var(--mn-shadow-panel);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
+  transition:
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast),
+    box-shadow var(--mn-motion-fast);
 }
 
 .mnx-notification-record {
@@ -12536,6 +12777,10 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   min-width: 0;
 }
 
+.mnx-accounting-overview-lens {
+  margin-top: var(--mn-space-5);
+}
+
 .mnx-accounting-breadcrumbs {
   min-width: 0;
   color: var(--mnx-text-muted);
@@ -13189,38 +13434,25 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   outline: none;
 }
 
-.mnx-account-structure-filter-grid {
+.mnx-account-structure-filters,
+.mnx-account-transactions-filters {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mn-space-3);
+  width: 100%;
 }
 
-.mnx-account-structure-filter-grid label,
-.mnx-account-transactions-filters label {
-  display: grid;
-  gap: var(--mn-space-2);
+.mnx-account-transactions-filters {
+  align-items: end;
 }
 
-.mnx-account-structure-filter-grid span,
-.mnx-account-transactions-filters span {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mn-space-2);
-  color: var(--mnx-text-muted);
-  font-size: var(--mn-type-label-size);
-  font-weight: var(--mn-type-label-weight);
-  letter-spacing: var(--mn-type-label-tracking);
-  text-transform: uppercase;
+.mnx-account-transactions-filters .mnx-account-structure-search {
+  align-self: stretch;
 }
 
-.mnx-account-structure-filter-grid select,
-.mnx-account-transactions-filters select {
-  min-height: 2.875rem;
-  padding: 0 var(--mn-space-3);
-  border: 1px solid var(--mnx-border);
-  border-radius: var(--mnx-radius-md);
-  background: var(--mnx-surface);
-  color: var(--mnx-text);
+.mnx-account-structure-filters .mnx-field,
+.mnx-account-transactions-filters .mnx-field {
+  min-width: 0;
 }
 
 .mnx-account-structure-tree {
@@ -13336,6 +13568,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 .mnx-account-structure-detail-header {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--mn-space-4);
 }
@@ -13362,59 +13595,38 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 .mnx-account-structure-detail-header-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
+  align-self: flex-start;
   gap: var(--mn-space-2);
 }
 
-.mnx-account-balance-hero {
-  display: grid;
-  gap: var(--mn-space-3);
-  padding: var(--mn-space-5);
-  border: 1px dashed color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
-  border-radius: var(--mnx-radius-lg);
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--mnx-accent) 12%, transparent), transparent 40%),
-    var(--mnx-surface-gradient);
+.mnx-account-closing-balance {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mn-space-2);
+  font-size: var(--mn-type-title-size, 1.125rem);
+  font-weight: 600;
+  color: var(--mnx-text-strong);
 }
 
-.mnx-account-balance-hero span {
-  color: var(--mnx-text-muted);
-  font-size: var(--mn-type-label-size);
-  font-weight: var(--mn-type-label-weight);
+.mnx-account-closing-balance small {
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: var(--mn-type-label-tracking);
   text-transform: uppercase;
-}
-
-.mnx-account-balance-hero strong {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--mn-space-3);
-  margin-top: var(--mn-space-2);
-  color: var(--mnx-text-strong);
-  font-size: clamp(1.9rem, 2vw, 2.6rem);
-  line-height: 1.1;
-}
-
-.mnx-account-balance-hero strong small {
   color: var(--mnx-accent);
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
 }
 
-.mnx-account-balance-hero p {
+.mnx-account-structure-hint {
   margin: 0;
-  max-width: 38rem;
   color: var(--mnx-text-muted);
-}
-
-.mnx-account-structure-detail-grid {
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  font-size: 0.85rem;
 }
 
 .mnx-account-transactions-panel {
   display: grid;
   gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
 }
 
 .mnx-account-transactions-header {
@@ -13696,7 +13908,7 @@ button.mnx-accounting-record-card {
   .mnx-accounting-report-nav,
   .mnx-account-structure-layout,
   .mnx-account-structure-form-grid,
-  .mnx-account-structure-filter-grid {
+  .mnx-account-structure-filters {
     grid-template-columns: 1fr;
   }
 

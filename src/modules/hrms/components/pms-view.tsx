@@ -10,7 +10,7 @@ import {
   Plus,
   Target,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   PerformanceCard,
   PerformanceControlButton,

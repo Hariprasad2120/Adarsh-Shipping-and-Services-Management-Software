@@ -20,7 +20,7 @@ import {
   UserCog,
   Workflow,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { PeopleControlButton as MnxAction, PeopleControlInput as MnxInput, PeopleControlTextarea as MnxTextarea, PeopleErrorState, PeopleField, PeopleLoadingState, PeopleSection, PeopleSectionHeader, PeopleSelect, PeopleSummary, PeopleSummaryGrid, PeopleTable, PeopleTableBody, PeopleTableCell, PeopleTableEmpty, PeopleTableHead, PeopleTableHeader, PeopleTableRow, PeopleTextarea, PeopleToggleButton, WorkspaceAlert, WorkspaceBadge } from "@/components/monolith";
 
 type HelpDeskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";

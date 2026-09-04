@@ -1,5 +1,5 @@
 // Bump this when Prisma schema changes need a fresh dev-time singleton.
-const PRISMA_CLIENT_SCHEMA_VERSION = "2026-08-18-leave-external-calendar-sync";
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-09-03-hrms-task-dashboard";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -153,6 +153,7 @@ type PrismaClientWithDelegates = PrismaClient & {
   chaTeamGroup?: unknown;
   chaJobDeletionRequest?: unknown;
   googleChatInteractionEvent?: unknown;
+  hrmsTask?: unknown;
   employeeHrmsProfile?: unknown;
   employeeProfileField?: unknown;
   accountingCapabilityPolicy?: unknown;
@@ -181,6 +182,7 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.chaTeamGroup !== "undefined" &&
     typeof delegateClient.chaJobDeletionRequest !== "undefined" &&
     typeof delegateClient.googleChatInteractionEvent !== "undefined" &&
+    typeof delegateClient.hrmsTask !== "undefined" &&
     typeof delegateClient.employeeHrmsProfile !== "undefined" &&
     typeof delegateClient.employeeProfileField !== "undefined" &&
     typeof delegateClient.accountingCapabilityPolicy !== "undefined" &&

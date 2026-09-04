@@ -1,6 +1,121 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-28
+Last updated: 2026-09-03
+
+## 2026-09-03 Monolith notification system repair
+
+Repaired the existing Monolith notification path instead of introducing a
+second notification stack.
+
+Delivered:
+
+- kept the existing `Notification` / `NotificationActivity` Prisma model and
+  `src/modules/notifications/service.ts` creation/read/ack/dismiss service;
+- added `src/modules/notifications/realtime.ts` plus
+  `src/app/api/notifications/stream/route.ts` so server-created notifications
+  dispatch over an authenticated notification-specific SSE stream;
+- updated `src/modules/notifications/components/notification-provider.tsx` so
+  it initializes one stream in the dashboard provider, fetches unresolved
+  notifications on stream sync/recovery, deduplicates by notification id, and
+  no longer suppresses unresolved important notifications after refresh via
+  sessionStorage;
+- centralized transient client notifications through
+  `src/modules/notifications/client.ts` and moved existing direct Sonner
+  imports to that facade while leaving the root Sonner `<Toaster>` as the
+  rendering layer;
+- added `src/modules/notifications/client-state.ts` to centralize the
+  5000 ms normal duration, persistence, dedupe, and stack-limit rules;
+- added notification unit coverage under
+  `src/modules/notifications/__tests__/`.
+
+Root causes verified from current source:
+
+- server/domain notifications were persisted by `createNotification`, but
+  frontend delivery depended on `/api/runtime/updates` polling; that provider
+  waited 1800 ms before first refresh, then used a 60000 ms interval with
+  exponential backoff to 10 minutes after failures;
+- the provider stored `remote-toast-shown:<id>` in `sessionStorage` for every
+  fetched remote toast before rendering, so unacknowledged important
+  notifications could disappear for the rest of the browser session after a
+  refresh/navigation even though the server still returned them.
+
+Verification on Thursday, September 3, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd 'src/modules/notifications/**/*.{ts,tsx}' 'src/app/api/notifications/stream/route.ts' --max-warnings=0`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run src/modules/notifications/__tests__/client-state.test.ts src/modules/notifications/__tests__/service.test.ts --config vitest.unit.config.ts --reporter verbose`:
+  passed, 2 files / 8 tests;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  failed on the existing unrelated `src/components/ui/button.tsx#LinkButton`
+  registry issue already noted in the current handoff stream;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run security:coverage`:
+  route/auth scans reported no missing guards and no tenant-scope flags, then
+  the composed script ended with an existing Windows path error after the
+  scanner output;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`:
+  passed; the existing Turbopack NFT tracing warning remains from
+  `next.config.ts` through
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Known limits:
+
+- manual browser verification of normal and important notification flows is
+  still pending in this Codex session;
+- the SSE dispatcher is process-local, which matches the current monolith
+  deployable shape but is not cross-instance pub/sub;
+- several docs/package/auth/freight/sidebar/passkey files were already
+  modified before this notification pass and were preserved.
+
+## 2026-09-03 Freight Forwarding Workspace Home MBL/HBL creation workflow
+
+Updated the Freight Forwarding booking workflow so Workspace Home remains the
+primary creation and editing surface for booking-linked MBL/HBL transactions.
+
+Delivered:
+
+- changed `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`
+  so the Workspace Home `Create Booking` action opens an in-place chooser for
+  MBL-only, HBL-only, or linked MBL + HBL creation instead of navigating away;
+- embedded the existing shared `FreightForwardingBookingPage` editor on
+  Workspace Home so MBL-only and HBL-only bookings show the matching form, while
+  linked bookings expose separate `MBL View` and `HBL View` editors only for
+  `BOTH` booking groups;
+- kept saves pointed at `saveFreightBookingTransactionAction`, so Workspace
+  Home and the dedicated MBL/HBL detail pages update the same underlying
+  `FREIGHT_BOOKING` transaction records without creating duplicates;
+- added `createStandaloneFreightTransactionAction` in
+  `src/modules/freight-forwarding/actions.ts` so the MBL and HBL sidebar tabs
+  can create unlinked standalone transactions that may be connected to a
+  booking later;
+- updated the Freight Forwarding route loaders to pass reference data into the
+  workspace client for the embedded Home editor;
+- updated the legacy `/freight-forwarding/create-booking` success navigation so
+  direct URL users return to Workspace Home with the new booking group selected.
+
+Verification on Thursday, September 3, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; .\node_modules\.bin\eslint.cmd ... --max-warnings=0`:
+  passed for the touched Freight Forwarding action, client, and route files;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  failed on the existing unrelated coverage issue
+  `src/components/ui/button.tsx#LinkButton`;
+- focused Freight workflow tests are not present in the current repo; the only
+  discovered test reference is `src/lib/navigation.test.ts`.
+
+Known limits:
+
+- manual runtime verification across Light, Night, and Violet themes remains
+  pending in this Codex session;
+- the existing connect/disconnect surface remains on the dedicated transaction
+  detail pages, using the already-present audit-backed actions.
 
 ## 2026-08-28 Shared Monolith iconography foundation handoff
 

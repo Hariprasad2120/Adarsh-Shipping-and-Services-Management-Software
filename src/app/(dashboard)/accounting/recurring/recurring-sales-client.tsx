@@ -3,7 +3,7 @@
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { AccountingAction, AccountingDetail, AccountingDetailList, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMetric, AccountingMetrics, AccountingSection, AccountingSelect, AccountingStatus, AccountingTable, AccountingTextarea, DateInput } from "@/components/monolith";
 import {
   cancelRecurringSalesInvoiceProfileAction,

@@ -9,7 +9,7 @@ import {
 import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Loader2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { saveJustdialConfigAction } from "@/modules/crm/actions";

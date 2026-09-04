@@ -16,7 +16,7 @@ import {
   MapPin,
   Receipt,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 export function TravelView() {
   const [requests, setRequests] = useState<any[]>([]);

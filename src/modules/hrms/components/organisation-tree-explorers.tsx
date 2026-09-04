@@ -1,13 +1,11 @@
 "use client";
 
 import {
-  ArrowRight,
   Building2,
   GitBranch,
-  Landmark,
+  Layers3,
   Network,
   Search,
-  ShieldCheck,
   Users2,
 } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
@@ -68,6 +66,17 @@ type OrgInput = {
   branches?: unknown[];
   departments?: unknown[];
 } | null;
+
+type TreeNodeKind = "company" | "group" | "unit" | "person";
+
+type TreeNode = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  initials?: string;
+  kind: TreeNodeKind;
+  children: TreeNode[];
+};
 
 function employeeMatchesFilters(
   employee: OrganisationEmployee,
@@ -203,9 +212,170 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function countDescendants(nodes: TreeNode[]): number {
+  return nodes.reduce(
+    (total, node) => total + 1 + countDescendants(node.children),
+    0,
+  );
+}
+
+function collectExpandable(
+  nodes: TreeNode[],
+  depth: number,
+  maxDepth: number,
+  target: Set<string>,
+) {
+  for (const node of nodes) {
+    if (node.children.length > 0 && depth < maxDepth) target.add(node.id);
+    collectExpandable(node.children, depth + 1, maxDepth, target);
+  }
+}
+
+const KIND_ICON: Record<Exclude<TreeNodeKind, "person">, ReactNode> = {
+  company: <Building2 aria-hidden="true" />,
+  group: <Network aria-hidden="true" />,
+  unit: <GitBranch aria-hidden="true" />,
+};
+
+function TreeRow({
+  node,
+  depth,
+  expanded,
+  onToggle,
+}: {
+  node: TreeNode;
+  depth: number;
+  expanded: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const hasChildren = node.children.length > 0;
+  const isOpen = hasChildren && expanded.has(node.id);
+
+  return (
+    <div
+      className={cn("mnx-tree-row", isOpen && "is-open")}
+      role="treeitem"
+      aria-selected={false}
+      aria-expanded={hasChildren ? isOpen : undefined}
+    >
+      <div className={cn("mnx-tree-node", `is-${node.kind}`)}>
+        <span className="mnx-tree-node-avatar" aria-hidden="true">
+          {node.kind === "person"
+            ? node.initials ?? initials(node.title)
+            : KIND_ICON[node.kind]}
+        </span>
+        <span className="mnx-tree-node-copy">
+          <strong title={node.title}>{node.title}</strong>
+          {node.subtitle ? <small title={node.subtitle}>{node.subtitle}</small> : null}
+        </span>
+        {hasChildren ? (
+          // eslint-disable-next-line no-restricted-syntax -- compact inline tree expand/collapse control, not a standalone action button.
+          <button
+            type="button"
+            className={cn("mnx-tree-node-toggle", isOpen && "is-open")}
+            onClick={() => onToggle(node.id)}
+            aria-label={
+              isOpen
+                ? `Collapse ${node.title}`
+                : `Expand ${node.title} (${node.children.length})`
+            }
+          >
+            {node.children.length}
+          </button>
+        ) : null}
+      </div>
+
+      {isOpen ? (
+        <div className="mnx-tree-children" role="group">
+          {node.children.map((child) => (
+            <TreeRow
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              expanded={expanded}
+              onToggle={onToggle}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function HierarchyTree({
+  roots,
+  defaultExpandedDepth = 1,
+}: {
+  roots: TreeNode[];
+  defaultExpandedDepth?: number;
+}) {
+  const initialExpanded = useMemo(() => {
+    const target = new Set<string>();
+    collectExpandable(roots, 0, defaultExpandedDepth, target);
+    return target;
+    // Rebuild whenever the tree shape changes (filters, data refresh).
+  }, [roots, defaultExpandedDepth]);
+
+  const [manualExpanded, setManualExpanded] = useState<Set<string>>(new Set());
+  const [manualCollapsed, setManualCollapsed] = useState<Set<string>>(new Set());
+
+  const expanded = useMemo(() => {
+    const next = new Set(initialExpanded);
+    for (const id of manualExpanded) next.add(id);
+    for (const id of manualCollapsed) next.delete(id);
+    return next;
+  }, [initialExpanded, manualExpanded, manualCollapsed]);
+
+  function onToggle(id: string) {
+    if (expanded.has(id)) {
+      setManualExpanded((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+      setManualCollapsed((current) => new Set(current).add(id));
+    } else {
+      setManualCollapsed((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+      setManualExpanded((current) => new Set(current).add(id));
+    }
+  }
+
+  return (
+    <div className="mnx-tree" role="tree">
+      <div className="mnx-tree-children is-root" role="group">
+        {roots.map((node) => (
+          <TreeRow
+            key={node.id}
+            node={node}
+            depth={0}
+            expanded={expanded}
+            onToggle={onToggle}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function pruneTree(
+  node: TreeNode,
+  matches: (node: TreeNode) => boolean,
+): TreeNode | null {
+  const children = node.children
+    .map((child) => pruneTree(child, matches))
+    .filter((child): child is TreeNode => child !== null);
+
+  if (children.length === 0 && !matches(node)) return null;
+  return { ...node, children };
+}
+
 export function OrganisationTreeExplorer({
   className,
-  description = "Inspect branches, departments, and divisions in one tree-shaped operating map.",
+  description = "Read branches, departments, and divisions as one branched operating tree.",
   org,
   title = "Organisation tree",
 }: {
@@ -217,7 +387,73 @@ export function OrganisationTreeExplorer({
   const normalizedOrg = useMemo(() => normalizeOrganisationTree(org), [org]);
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<OrganisationTreeScope>("all");
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+
+  const roots = useMemo(() => {
+    if (!normalizedOrg) return [];
+
+    const branchGroup: TreeNode[] =
+      scope !== "departments" && normalizedOrg.branches.length > 0
+        ? [
+            {
+              id: "org-branches",
+              title: "Branches",
+              subtitle: `${normalizedOrg.branches.length} operating location${
+                normalizedOrg.branches.length === 1 ? "" : "s"
+              }`,
+              kind: "group",
+              children: normalizedOrg.branches.map((branch) => ({
+                id: `branch-${branch.id}`,
+                title: branch.name,
+                subtitle: `Code ${branch.code}`,
+                kind: "unit" as const,
+                children: [],
+              })),
+            },
+          ]
+        : [];
+
+    const departmentGroup: TreeNode[] =
+      scope !== "branches"
+        ? normalizedOrg.departments.map((department) => ({
+            id: `dept-${department.id}`,
+            title: department.name,
+            subtitle:
+              department.divisions.length > 0
+                ? `Code ${department.code} · ${department.divisions.length} division${
+                    department.divisions.length === 1 ? "" : "s"
+                  }`
+                : `Code ${department.code} · no divisions yet`,
+            kind: "group" as const,
+            children: department.divisions.map((division) => ({
+              id: `div-${division.id}`,
+              title: division.name,
+              subtitle: "Division",
+              kind: "unit" as const,
+              children: [],
+            })),
+          }))
+        : [];
+
+    const companyRoot: TreeNode = {
+      id: "org-root",
+      title: normalizedOrg.name,
+      subtitle: `${normalizedOrg.branches.length} branch${
+        normalizedOrg.branches.length === 1 ? "" : "es"
+      } · ${normalizedOrg.departments.length} department${
+        normalizedOrg.departments.length === 1 ? "" : "s"
+      }`,
+      kind: "company",
+      children: [...branchGroup, ...departmentGroup],
+    };
+
+    const queryValue = query.trim().toLowerCase();
+    if (!queryValue) return [companyRoot];
+
+    const matches = (node: TreeNode) =>
+      `${node.title} ${node.subtitle ?? ""}`.toLowerCase().includes(queryValue);
+    const pruned = pruneTree(companyRoot, matches);
+    return pruned ? [pruned] : [];
+  }, [normalizedOrg, query, scope]);
 
   if (!normalizedOrg) {
     return (
@@ -231,25 +467,6 @@ export function OrganisationTreeExplorer({
     );
   }
 
-  const queryValue = query.trim().toLowerCase();
-  const filteredBranches = normalizedOrg.branches.filter((branch) =>
-    `${branch.name} ${branch.code}`.toLowerCase().includes(queryValue),
-  );
-  const filteredDepartments = normalizedOrg.departments.filter((department) => {
-    const matchesQuery =
-      `${department.name} ${department.code}`.toLowerCase().includes(queryValue) ||
-      department.divisions.some((division) =>
-        division.name.toLowerCase().includes(queryValue),
-      );
-    if (!matchesQuery) return false;
-    if (scope === "branches") return false;
-    return true;
-  });
-  const selectedDepartment =
-    filteredDepartments.find((department) => department.id === selectedDepartmentId) ??
-    filteredDepartments[0] ??
-    normalizedOrg.departments[0] ??
-    null;
   const totalDivisions = normalizedOrg.departments.reduce(
     (count, department) => count + department.divisions.length,
     0,
@@ -302,9 +519,8 @@ export function OrganisationTreeExplorer({
           <div>
             <strong>{normalizedOrg.name}</strong>
             <p>
-              Use the branch footprint, department blueprint, and division depth
-              together to read the organisation shape honestly without inventing
-              missing reporting links.
+              Expand any node to walk the structure. Counts show how many
+              children sit under a collapsed branch.
             </p>
           </div>
         </div>
@@ -324,175 +540,22 @@ export function OrganisationTreeExplorer({
         </div>
       </div>
 
-      <div className="mnx-org-visual-grid">
-        {scope !== "departments" ? (
-          <section className="mnx-org-visual-lane">
-            <header className="mnx-org-visual-lane-header">
-              <div>
-                <span>Branch footprint</span>
-                <strong>{filteredBranches.length} operating locations</strong>
-              </div>
-              <WorkspaceBadge
-                variant={filteredBranches.length > 0 ? "success" : "warning"}
-              >
-                Active map
-              </WorkspaceBadge>
-            </header>
-
-            <div className="mnx-org-visual-list">
-              {filteredBranches.length === 0 ? (
-                <VisualEmptyState
-                  icon={<Landmark aria-hidden="true" />}
-                  title="No branches match this view"
-                  description="Adjust the search or add more operating locations to strengthen the branch network."
-                />
-              ) : (
-                filteredBranches.map((branch) => (
-                  <article key={branch.id} className="mnx-org-visual-node">
-                    <div className="mnx-org-visual-node-top">
-                      <span className="mnx-org-visual-chip">{branch.code}</span>
-                      <WorkspaceBadge variant="neutral">Location</WorkspaceBadge>
-                    </div>
-                    <strong>{branch.name}</strong>
-                    <p>Available for employee assignment, attendance mapping, and downstream operations.</p>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
-        ) : null}
-
-        {scope !== "branches" ? (
-          <section className="mnx-org-visual-lane">
-            <header className="mnx-org-visual-lane-header">
-              <div>
-                <span>Department blueprint</span>
-                <strong>{filteredDepartments.length} hierarchy nodes</strong>
-              </div>
-              <WorkspaceBadge
-                variant={
-                  departmentsWithoutDivisions === 0 ? "success" : "warning"
-                }
-              >
-                {departmentsWithoutDivisions === 0
-                  ? "Structured"
-                  : `${departmentsWithoutDivisions} gaps`}
-              </WorkspaceBadge>
-            </header>
-
-            <div className="mnx-org-visual-list">
-              {filteredDepartments.length === 0 ? (
-                <VisualEmptyState
-                  icon={<Network aria-hidden="true" />}
-                  title="No departments match this view"
-                  description="Search again or add departments to begin shaping the organisation hierarchy."
-                />
-              ) : (
-                filteredDepartments.map((department) => (
-                  // eslint-disable-next-line no-restricted-syntax -- This is an intentional full-card hierarchy selection control, not a generic action button.
-                  <button
-                    type="button"
-                    key={department.id}
-                    className={cn(
-                      "mnx-org-visual-node mnx-org-visual-node-button",
-                      selectedDepartment?.id === department.id && "is-active",
-                    )}
-                    onClick={() => setSelectedDepartmentId(department.id)}
-                  >
-                    <div className="mnx-org-visual-node-top">
-                      <span className="mnx-org-visual-chip">{department.code}</span>
-                      <WorkspaceBadge
-                        variant={
-                          department.divisions.length > 0 ? "accent" : "warning"
-                        }
-                      >
-                        {department.divisions.length > 0
-                          ? `${department.divisions.length} divisions`
-                          : "Needs division"}
-                      </WorkspaceBadge>
-                    </div>
-                    <strong>{department.name}</strong>
-                    <p>
-                      {department.divisions.length > 0
-                        ? department.divisions.map((division) => division.name).join(" • ")
-                        : "No division layer exists yet for this department."}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          </section>
-        ) : null}
-
-        <aside className="mnx-org-visual-focus">
-          <header className="mnx-org-visual-lane-header">
-            <div>
-              <span>Focus panel</span>
-              <strong>
-                {selectedDepartment ? selectedDepartment.name : "No department selected"}
-              </strong>
-            </div>
-            <WorkspaceBadge
-              variant={
-                selectedDepartment?.divisions.length ? "success" : "warning"
-              }
-            >
-              {selectedDepartment?.divisions.length
-                ? "Ready"
-                : "Needs framing"}
-            </WorkspaceBadge>
-          </header>
-
-          {selectedDepartment ? (
-            <div className="mnx-org-visual-focus-stack">
-              <article className="mnx-org-visual-spotlight">
-                <span className="mnx-org-visual-chip">{selectedDepartment.code}</span>
-                <strong>{selectedDepartment.name}</strong>
-                <p>
-                  {selectedDepartment.divisions.length > 0
-                    ? `${selectedDepartment.divisions.length} operating division${
-                        selectedDepartment.divisions.length === 1 ? "" : "s"
-                      } currently shape this department.`
-                    : "This department is still waiting for its first division layer."}
-                </p>
-              </article>
-
-              <div className="mnx-org-visual-division-stack">
-                {selectedDepartment.divisions.length > 0 ? (
-                  selectedDepartment.divisions.map((division, index) => (
-                    <div key={division.id} className="mnx-org-visual-step">
-                      <span>{String(index + 1).padStart(2, "0")}</span>
-                      <div>
-                        <strong>{division.name}</strong>
-                        <p>Division within {selectedDepartment.name}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <VisualEmptyState
-                    icon={<GitBranch aria-hidden="true" />}
-                    title="Division framing is pending"
-                    description="Add subordinate units for teams, desks, or service lines to complete this department."
-                  />
-                )}
-              </div>
-            </div>
-          ) : (
-            <VisualEmptyState
-              icon={<ShieldCheck aria-hidden="true" />}
-              title="Select a department"
-              description="Choose a department from the hierarchy lane to inspect its internal structure and division readiness."
-            />
-          )}
-        </aside>
-      </div>
+      {roots.length === 0 ? (
+        <TreeEmptyState
+          icon={<Network aria-hidden="true" />}
+          title="Nothing matches this view"
+          description="Adjust the search or scope to see the organisation tree."
+        />
+      ) : (
+        <HierarchyTree roots={roots} defaultExpandedDepth={2} />
+      )}
     </div>
   );
 }
 
 export function EmployeeTreeExplorer({
   className,
-  description = "Read the reporting structure through leaders, direct reports, and second-line visibility.",
+  description = "Walk the reporting structure branch by branch, from leaders down to every direct report.",
   employees,
   title = "Employee tree",
 }: {
@@ -508,14 +571,13 @@ export function EmployeeTreeExplorer({
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<EmployeeTreeScope>("all");
   const [scopeValue, setScopeValue] = useState("all");
-  const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const queryValue = query.trim().toLowerCase();
 
   const employeeMap = useMemo(
     () => new Map(normalizedEmployees.map((employee) => [employee.id, employee])),
     [normalizedEmployees],
   );
+
   const directReportMap = useMemo(() => {
     const reportMap = new Map<string, OrganisationEmployee[]>();
 
@@ -559,62 +621,67 @@ export function EmployeeTreeExplorer({
     [normalizedEmployees],
   );
 
-  const leaders = useMemo(() => {
-    const rootCandidates = normalizedEmployees.filter((employee) => {
-      if (!directReportMap.has(employee.id)) return false;
-      return !employee.managerId || !employeeMap.has(employee.managerId);
-    });
-
-    const filtered = rootCandidates.filter((leader) => {
-      if (employeeMatchesFilters(leader, queryValue, scope, scopeValue)) return true;
-      const directs = directReportMap.get(leader.id) ?? [];
-      return directs.some((report) => {
-        if (employeeMatchesFilters(report, queryValue, scope, scopeValue))
-          return true;
-        return (directReportMap.get(report.id) ?? []).some((employee) =>
-          employeeMatchesFilters(employee, queryValue, scope, scopeValue),
-        );
-      });
-    });
-
-    return filtered.sort((left, right) => {
-      const countDelta =
-        (directReportMap.get(right.id)?.length ?? 0) -
-        (directReportMap.get(left.id)?.length ?? 0);
-      if (countDelta !== 0) return countDelta;
-      return left.name.localeCompare(right.name, undefined, {
-        sensitivity: "base",
-      });
-    });
-  }, [directReportMap, employeeMap, normalizedEmployees, queryValue, scope, scopeValue]);
-
-  const selectedLeader =
-    leaders.find((leader) => leader.id === selectedLeaderId) ?? leaders[0] ?? null;
-  const directReports = useMemo(
+  const rootEmployees = useMemo(
     () =>
-      selectedLeader
-        ? (directReportMap.get(selectedLeader.id) ?? []).filter((employee) =>
-            employeeMatchesFilters(employee, queryValue, scope, scopeValue),
-          )
-        : [],
-    [directReportMap, queryValue, scope, scopeValue, selectedLeader],
+      normalizedEmployees
+        .filter((employee) => {
+          if (!directReportMap.has(employee.id)) return false;
+          return !employee.managerId || !employeeMap.has(employee.managerId);
+        })
+        .sort((left, right) => {
+          const countDelta =
+            (directReportMap.get(right.id)?.length ?? 0) -
+            (directReportMap.get(left.id)?.length ?? 0);
+          if (countDelta !== 0) return countDelta;
+          return left.name.localeCompare(right.name, undefined, {
+            sensitivity: "base",
+          });
+        }),
+    [directReportMap, employeeMap, normalizedEmployees],
   );
-  const selectedReport =
-    directReports.find((report) => report.id === selectedReportId) ??
-    directReports[0] ??
-    null;
-  const secondLineReports = useMemo(
-    () =>
-      selectedReport
-        ? (directReportMap.get(selectedReport.id) ?? []).filter((employee) =>
-            employeeMatchesFilters(employee, queryValue, scope, scopeValue),
-          )
-        : [],
-    [directReportMap, queryValue, scope, scopeValue, selectedReport],
-  );
+
+  const roots = useMemo(() => {
+    const buildNode = (
+      employee: OrganisationEmployee,
+      seen: Set<string>,
+    ): TreeNode => {
+      const nextSeen = new Set(seen).add(employee.id);
+      const children = (directReportMap.get(employee.id) ?? [])
+        .filter((report) => !nextSeen.has(report.id))
+        .map((report) => buildNode(report, nextSeen));
+
+      return {
+        id: employee.id,
+        title: employee.name,
+        subtitle: employee.designation,
+        initials: initials(employee.name),
+        kind: "person",
+        children,
+      };
+    };
+
+    const fullRoots = rootEmployees.map((employee) =>
+      buildNode(employee, new Set()),
+    );
+
+    if (!queryValue && scope === "all") return fullRoots;
+
+    const matches = (node: TreeNode) => {
+      const employee = employeeMap.get(node.id);
+      return employee
+        ? employeeMatchesFilters(employee, queryValue, scope, scopeValue)
+        : false;
+    };
+
+    return fullRoots
+      .map((node) => pruneTree(node, matches))
+      .filter((node): node is TreeNode => node !== null);
+  }, [directReportMap, employeeMap, queryValue, rootEmployees, scope, scopeValue]);
+
   const mappedEmployees = normalizedEmployees.filter(
     (employee) => employee.managerId && employeeMap.has(employee.managerId),
   ).length;
+  const peopleInTree = countDescendants(roots);
 
   if (normalizedEmployees.length === 0) {
     return (
@@ -693,9 +760,8 @@ export function EmployeeTreeExplorer({
           <div>
             <strong>Reporting visibility</strong>
             <p>
-              This tree reads current manager mappings. Employees without a
-              linked manager stay visible, but they do not appear inside a
-              supervised reporting chain.
+              This tree follows current manager mappings. Employees without a
+              linked manager stay out of the supervised chain.
             </p>
           </div>
         </div>
@@ -704,10 +770,8 @@ export function EmployeeTreeExplorer({
           <WorkspaceBadge variant="accent">
             {normalizedEmployees.length} active employees
           </WorkspaceBadge>
-          <WorkspaceBadge
-            variant={leaders.length > 0 ? "success" : "warning"}
-          >
-            {leaders.length} top-level leads
+          <WorkspaceBadge variant={rootEmployees.length > 0 ? "success" : "warning"}>
+            {rootEmployees.length} top-level leads
           </WorkspaceBadge>
           <WorkspaceBadge
             variant={
@@ -719,175 +783,37 @@ export function EmployeeTreeExplorer({
         </div>
       </div>
 
-      <div className="mnx-org-employee-grid">
-        <section className="mnx-org-visual-lane">
-          <header className="mnx-org-visual-lane-header">
-            <div>
-              <span>Leadership layer</span>
-              <strong>{leaders.length} visible leaders</strong>
-            </div>
-            <WorkspaceBadge
-              variant={leaders.length > 0 ? "success" : "warning"}
-            >
-              Root nodes
-            </WorkspaceBadge>
-          </header>
-
-          <div className="mnx-org-visual-list">
-            {leaders.length === 0 ? (
-              <VisualEmptyState
-                icon={<ShieldCheck aria-hidden="true" />}
-                title="No reporting roots match this view"
-                description="Search more broadly or complete manager mappings so the employee tree can be built."
-              />
-            ) : (
-              leaders.map((leader) => (
-                // eslint-disable-next-line no-restricted-syntax -- This is an intentional full-card hierarchy selection control, not a generic action button.
-                <button
-                  type="button"
-                  key={leader.id}
-                  className={cn(
-                    "mnx-org-person-card",
-                    selectedLeader?.id === leader.id && "is-active",
-                  )}
-                  onClick={() => setSelectedLeaderId(leader.id)}
-                >
-                  <span className="mnx-org-person-avatar">{initials(leader.name)}</span>
-                  <div className="mnx-org-person-copy">
-                    <strong>{leader.name}</strong>
-                    <p>{leader.designation}</p>
-                    <small>
-                      {leader.departmentName} • {directReportMap.get(leader.id)?.length ?? 0} direct reports
-                    </small>
-                  </div>
-                  <ArrowRight aria-hidden="true" />
-                </button>
-              ))
-            )}
+      {roots.length === 0 ? (
+        <TreeEmptyState
+          icon={<Users2 aria-hidden="true" />}
+          title={
+            rootEmployees.length === 0
+              ? "No reporting roots are mapped yet"
+              : "No one matches this view"
+          }
+          description={
+            rootEmployees.length === 0
+              ? "Complete manager mappings so the employee tree can be built."
+              : "Search more broadly or clear the group filter to see the tree."
+          }
+        />
+      ) : (
+        <>
+          <div className="mnx-tree-hint">
+            <Layers3 aria-hidden="true" />
+            <span>
+              Showing {peopleInTree} of {normalizedEmployees.length} people across{" "}
+              {roots.length} reporting root{roots.length === 1 ? "" : "s"}.
+            </span>
           </div>
-        </section>
-
-        <section className="mnx-org-visual-lane">
-          <header className="mnx-org-visual-lane-header">
-            <div>
-              <span>Direct reports</span>
-              <strong>
-                {selectedLeader ? selectedLeader.name : "Choose a leader"}
-              </strong>
-            </div>
-            <WorkspaceBadge
-              variant={directReports.length > 0 ? "accent" : "warning"}
-            >
-              {directReports.length} people
-            </WorkspaceBadge>
-          </header>
-
-          <div className="mnx-org-visual-list">
-            {selectedLeader ? (
-              directReports.length > 0 ? (
-                directReports.map((report) => (
-                  // eslint-disable-next-line no-restricted-syntax -- This is an intentional full-card hierarchy selection control, not a generic action button.
-                  <button
-                    type="button"
-                    key={report.id}
-                    className={cn(
-                      "mnx-org-person-card",
-                      selectedReport?.id === report.id && "is-active",
-                    )}
-                    onClick={() => setSelectedReportId(report.id)}
-                  >
-                    <span className="mnx-org-person-avatar">{initials(report.name)}</span>
-                    <div className="mnx-org-person-copy">
-                      <strong>{report.name}</strong>
-                      <p>{report.designation}</p>
-                      <small>
-                        {report.departmentName} • {directReportMap.get(report.id)?.length ?? 0} second-line reports
-                      </small>
-                    </div>
-                    <ArrowRight aria-hidden="true" />
-                  </button>
-                ))
-              ) : (
-                <VisualEmptyState
-                  icon={<Users2 aria-hidden="true" />}
-                  title="No direct reports match this view"
-                  description="This leader has no visible direct reports in the current filter scope."
-                />
-              )
-            ) : (
-              <VisualEmptyState
-                icon={<Users2 aria-hidden="true" />}
-                title="Choose a leader"
-                description="Select a root node to inspect the next reporting layer."
-              />
-            )}
-          </div>
-        </section>
-
-        <section className="mnx-org-visual-lane">
-          <header className="mnx-org-visual-lane-header">
-            <div>
-              <span>Second line</span>
-              <strong>
-                {selectedReport ? selectedReport.name : "Extended team view"}
-              </strong>
-            </div>
-            <WorkspaceBadge
-              variant={secondLineReports.length > 0 ? "success" : "neutral"}
-            >
-              {secondLineReports.length} people
-            </WorkspaceBadge>
-          </header>
-
-          <div className="mnx-org-visual-list">
-            {selectedReport && secondLineReports.length > 0 ? (
-              secondLineReports.map((report) => (
-                <article key={report.id} className="mnx-org-person-card is-static">
-                  <span className="mnx-org-person-avatar">{initials(report.name)}</span>
-                  <div className="mnx-org-person-copy">
-                    <strong>{report.name}</strong>
-                    <p>{report.designation}</p>
-                    <small>
-                      {report.departmentName} • {report.branchName}
-                    </small>
-                  </div>
-                </article>
-              ))
-            ) : selectedLeader ? (
-              <article className="mnx-org-visual-spotlight">
-                <span className="mnx-org-visual-chip">
-                  {selectedLeader.employeeNumber}
-                </span>
-                <strong>{selectedLeader.name}</strong>
-                <p>
-                  {selectedLeader.designation} leads the current visible span
-                  from {selectedLeader.branchName}. Select a direct report with
-                  subordinates to extend the tree further.
-                </p>
-                <div className="mnx-org-visual-inline-meta">
-                  <WorkspaceBadge variant="neutral">
-                    {selectedLeader.departmentName}
-                  </WorkspaceBadge>
-                  <WorkspaceBadge variant="neutral">
-                    {selectedLeader.branchName}
-                  </WorkspaceBadge>
-                </div>
-              </article>
-            ) : (
-              <VisualEmptyState
-                icon={<Network aria-hidden="true" />}
-                title="The employee tree is waiting"
-                description="Choose a leader and a direct report to inspect the second reporting layer."
-              />
-            )}
-          </div>
-        </section>
-      </div>
+          <HierarchyTree roots={roots} defaultExpandedDepth={2} />
+        </>
+      )}
     </div>
   );
 }
 
-function VisualEmptyState({
+function TreeEmptyState({
   description,
   icon,
   title,

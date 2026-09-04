@@ -5,7 +5,7 @@ import { CrmButton, CrmInput } from "@/modules/crm/components/workspace/crm-work
 import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { updateTicketStatusAction, assignTicketAction } from "./actions";

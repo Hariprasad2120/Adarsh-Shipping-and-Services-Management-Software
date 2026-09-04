@@ -618,7 +618,7 @@ async function createJournalEntryRecord(
       parsedLines.map((line: any) => String(line.accountId || "")),
     ),
   ];
-  const [accounts, branch] = await Promise.all([
+  const [accounts, branch, orgProfile] = await Promise.all([
     tx.account.findMany({
       where: {
         orgId,
@@ -638,7 +638,14 @@ async function createJournalEntryRecord(
           select: { id: true },
         })
       : Promise.resolve(null),
+    tx.accountingOrganisationProfile.findUnique({
+      where: { orgId },
+      select: { functionalCurrencyCode: true },
+    }),
   ]);
+  // Stamp the org's functional currency onto the draft so registers and
+  // detail views render an ISO code instead of a placeholder dash.
+  const draftCurrencyCode = orgProfile?.functionalCurrencyCode ?? "INR";
   if (accountIds.some((id) => !id) || accounts.length !== accountIds.length) {
     throw new Error("Every journal line must use an active posting account");
   }
@@ -668,6 +675,9 @@ async function createJournalEntryRecord(
       status: "DRAFT",
       totalDebit,
       totalCredit,
+      functionalCurrencyCode: draftCurrencyCode,
+      transactionCurrencyCode: draftCurrencyCode,
+      baseCurrencyCode: draftCurrencyCode,
       createdById,
       lines: {
         create: parsedLines.map((l: any) => ({

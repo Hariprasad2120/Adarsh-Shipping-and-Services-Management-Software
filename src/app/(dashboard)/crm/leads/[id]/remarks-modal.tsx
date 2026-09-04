@@ -3,7 +3,7 @@
 import { CrmButton, CrmDialog, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState, useRef, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { updateLeadStatusAction } from "@/modules/crm/actions";
 
 interface RemarksModalProps {

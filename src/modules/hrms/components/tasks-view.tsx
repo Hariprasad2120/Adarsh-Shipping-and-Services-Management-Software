@@ -19,7 +19,7 @@ import {
   User,
   CheckCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 export function TasksView() {
   const [tasks, setTasks] = useState<any[]>([]);

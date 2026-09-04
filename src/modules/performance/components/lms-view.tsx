@@ -9,7 +9,7 @@ import {
   Loader2,
   Play,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   DashboardInsightCard,
   DashboardInsightGrid,

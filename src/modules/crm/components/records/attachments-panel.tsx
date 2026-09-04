@@ -3,7 +3,7 @@
 import { CrmButton, CrmInput } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { createAttachmentAction, deleteAttachmentAction } from "@/modules/crm/actions";
 import { Paperclip, Trash2, Download, File, UploadCloud } from "lucide-react";
 

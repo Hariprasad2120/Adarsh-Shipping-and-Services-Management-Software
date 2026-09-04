@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Fingerprint } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Button } from "@/components/ui/button";
 
 interface AttendanceCalendarProps {

@@ -10,7 +10,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { createDealAction, updateDealAction } from "@/modules/crm/actions";
 import { Save, Landmark, Tag } from "lucide-react";
 

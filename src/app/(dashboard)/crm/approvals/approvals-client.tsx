@@ -6,7 +6,7 @@ import React, { useState, useTransition } from "react";
 import {ClipboardList,CheckCircle2,XCircle,RotateCcw,Clock,TrendingUp,FileText,ShoppingCart,Receipt,Loader2,} from "lucide-react";
 import { ApprovalStatusBadge } from "@/modules/crm/components/ApprovalActionBar";
 import {actionApproveDocument,actionRequestRework,actionDeclineDocument,} from "@/modules/crm/approval-actions";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 type PendingItem = {
   id: string;

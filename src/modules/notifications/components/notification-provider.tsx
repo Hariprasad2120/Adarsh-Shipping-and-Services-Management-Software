@@ -11,11 +11,19 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SESSION_COOKIE_NAME } from "@/lib/session-config";
 import { dispatchMonaPetNotification } from "@/modules/mona/pet-events";
+import {
+  getRemoteToastShownStorageKey,
+  mergeRemoteNotifications,
+  NORMAL_NOTIFICATION_DURATION_MS,
+  shouldAutoDismissRemoteNotification,
+  shouldPersistRemoteNotification,
+  shouldShowFetchedRemoteNotification,
+} from "@/modules/notifications/client-state";
+import type { MonolithNotificationPayload } from "@/modules/notifications/realtime";
 
 type ToastVariant =
   | "secondary"
@@ -38,20 +46,7 @@ type LocalToast = {
   onAction?: () => Promise<void> | void;
 };
 
-type RemoteToast = {
-  id: string;
-  title: string;
-  body: string | null;
-  link: string | null;
-  variant: ToastVariant;
-  appearance: ToastAppearance;
-  priority: "normal" | "important";
-  requiresAck: boolean;
-  policy: {
-    allowDismiss: boolean;
-    labels?: { open?: string; acknowledge?: string };
-  };
-};
+type RemoteToast = MonolithNotificationPayload;
 
 type UpcomingReminder = {
   id: string;
@@ -74,15 +69,10 @@ type NotificationContextValue = {
 const NotificationContext = createContext<NotificationContextValue | null>(
   null,
 );
-const REMOTE_TOAST_SHOWN_PREFIX = "remote-toast-shown:";
 const NOTIFICATION_ACTION_CLASS =
-  "!text-sm !font-medium uppercase tracking-[0.14em]";
-const RUNTIME_POLL_INTERVAL_MS = 60_000;
+  "!text-sm !font-medium uppercase";
+const RUNTIME_POLL_INTERVAL_MS = 15_000;
 const RUNTIME_MAX_BACKOFF_MS = 10 * 60_000;
-
-function getRemoteToastShownStorageKey(notificationId: string) {
-  return `${REMOTE_TOAST_SHOWN_PREFIX}${notificationId}`;
-}
 
 function hasShownRemoteToast(notificationId: string) {
   if (typeof window === "undefined") {
@@ -173,9 +163,10 @@ function NotificationToastCard({
 
   return (
     <div
+      role={variant === "destructive" ? "alert" : "status"}
+      aria-live={variant === "destructive" ? "assertive" : "polite"}
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-mono-card/95 p-5 backdrop-blur-xl transition-all duration-200",
-        "mnx-shadow-panel hover:-translate-y-px",
+        "mnx-notification-card",
         tone.border,
       )}
     >
@@ -192,19 +183,21 @@ function NotificationToastCard({
             </div>
 
             {dismissible ? (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={onClose}
                 aria-label="Dismiss notification"
                 className={cn(
                   "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-mono-soft/70",
-                  "transition-all duration-200 hover:-translate-y-0.5 hover:rotate-90 hover:scale-105 active:translate-y-0 active:rotate-0 active:scale-95",
+                  "transition-all duration-200 active:scale-95",
                   tone.closeBorder,
                   tone.closeText,
                 )}
               >
                 <X className="size-4" />
-              </button>
+              </Button>
             ) : null}
           </div>
 
@@ -229,6 +222,7 @@ export function NotificationProvider({
   const seenRemoteToastIdsRef = useRef<Set<string>>(new Set());
   const refreshInFlightRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const etagRef = useRef<string | null>(null);
   const failureCountRef = useRef(0);
 
@@ -268,11 +262,17 @@ export function NotificationProvider({
 
       etagRef.current = res.headers.get("etag");
       const data = (await res.json()) as RuntimeUpdates;
-      const unseenToasts = data.notifications.filter(
-        (toast) => !hasShownRemoteToast(toast.id),
+      const nextToasts = data.notifications.filter((notification) =>
+        shouldShowFetchedRemoteNotification(notification, hasShownRemoteToast),
       );
-      markRemoteToastsShown(unseenToasts.map((toast) => toast.id));
-      setRemoteToasts(unseenToasts);
+      markRemoteToastsShown(
+        nextToasts
+          .filter((notification) => !shouldPersistRemoteNotification(notification))
+          .map((toast) => toast.id),
+      );
+      setRemoteToasts((current) =>
+        mergeRemoteNotifications(current, nextToasts),
+      );
 
       if (data.notifications.length > 0) {
         const ids = data.notifications.map((notification) => notification.id);
@@ -297,6 +297,63 @@ export function NotificationProvider({
       if (abortRef.current === controller) abortRef.current = null;
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !hasSessionCookie()) return;
+
+    let active = true;
+    const es = new EventSource("/api/notifications/stream");
+    eventSourceRef.current = es;
+
+    es.addEventListener("sync", (event) => {
+      if (!active) return;
+      const notifications = JSON.parse(
+        (event as MessageEvent<string>).data,
+      ) as RemoteToast[];
+      const nextToasts = notifications.filter((notification) =>
+        shouldShowFetchedRemoteNotification(notification, hasShownRemoteToast),
+      );
+      markRemoteToastsShown(
+        nextToasts
+          .filter((notification) => !shouldPersistRemoteNotification(notification))
+          .map((notification) => notification.id),
+      );
+      setRemoteToasts((current) =>
+        mergeRemoteNotifications(current, nextToasts),
+      );
+    });
+
+    es.addEventListener("notification", (event) => {
+      if (!active) return;
+      const notification = JSON.parse(
+        (event as MessageEvent<string>).data,
+      ) as RemoteToast;
+      if (
+        !shouldShowFetchedRemoteNotification(
+          notification,
+          hasShownRemoteToast,
+        )
+      ) {
+        return;
+      }
+      if (!shouldPersistRemoteNotification(notification)) {
+        markRemoteToastsShown([notification.id]);
+      }
+      setRemoteToasts((current) =>
+        mergeRemoteNotifications(current, [notification]),
+      );
+    });
+
+    es.onerror = () => {
+      void refreshRemoteToasts();
+    };
+
+    return () => {
+      active = false;
+      es.close();
+      if (eventSourceRef.current === es) eventSourceRef.current = null;
+    };
+  }, [refreshRemoteToasts]);
 
   useEffect(() => {
     let timer: number | null = null;
@@ -347,7 +404,7 @@ export function NotificationProvider({
           setLocalToasts((current) =>
             current.filter((entry) => entry.id !== toast.id),
           );
-        }, 5000),
+        }, NORMAL_NOTIFICATION_DURATION_MS),
       );
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
@@ -370,13 +427,13 @@ export function NotificationProvider({
 
   useEffect(() => {
     const timers = remoteToasts
-      .filter((toast) => toast.priority !== "important")
+      .filter(shouldAutoDismissRemoteNotification)
       .map((toast) =>
         window.setTimeout(() => {
           setRemoteToasts((current) =>
             current.filter((entry) => entry.id !== toast.id),
           );
-        }, 5000),
+        }, toast.policy.autoFadeMs ?? NORMAL_NOTIFICATION_DURATION_MS),
       );
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
@@ -413,14 +470,6 @@ export function NotificationProvider({
     () => ({
       pushToast,
       success: (title, body) => {
-        if (title === "Action completed") {
-          toast.success(title, {
-            description: body,
-            duration: 4000,
-            position: "top-center",
-          });
-          return;
-        }
         pushToast({ title, body, variant: "success", appearance: "light" });
       },
       error: (title, body) =>
@@ -470,7 +519,7 @@ export function NotificationProvider({
                 title={toast.title}
                 body={toast.body}
                 variant={toast.variant}
-                dismissible={toast.policy.allowDismiss}
+                dismissible={toast.policy.allowDismiss && !toast.requiresAck}
                 onClose={async () => {
                   await postAction(`/api/notifications/${toast.id}/dismiss`);
                   setRemoteToasts((current) =>

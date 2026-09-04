@@ -36,7 +36,7 @@ import {
   actionRequestRework,
   actionSubmitForApproval,
 } from "@/modules/crm/approval-actions";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 export type ApprovalCaps = {
   canSubmit: boolean;

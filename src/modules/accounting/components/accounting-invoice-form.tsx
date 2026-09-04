@@ -3,7 +3,7 @@
 import { Loader2, Plus, Trash2, HelpCircle, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { DateInput } from "@/components/ui/date-input";
 import { Button } from "@/components/ui/button";
 import { AccountingNoteReasonSelect, AccountingOptionalInvoiceLink } from "@/components/monolith";

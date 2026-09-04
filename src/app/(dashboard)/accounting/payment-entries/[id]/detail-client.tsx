@@ -5,7 +5,7 @@
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   AccountingAction,
   AccountingActionLink,

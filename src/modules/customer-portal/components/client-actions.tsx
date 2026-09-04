@@ -17,7 +17,7 @@ import {
   ShieldAlert,
   Ship,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   MonolithThemePicker,
   MonolithThemeProvider,

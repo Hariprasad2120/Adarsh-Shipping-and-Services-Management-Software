@@ -12,7 +12,7 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import * as XLSX from "xlsx";
 import { getAllItems } from "@/lib/items/item-store";
 import { cn } from "@/lib/utils";

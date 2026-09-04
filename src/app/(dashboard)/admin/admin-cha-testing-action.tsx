@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Trash2 } from "lucide-react";
 
 import { AdminButton } from "@/modules/admin/components/admin-workspace";

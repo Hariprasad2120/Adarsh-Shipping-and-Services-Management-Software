@@ -22,7 +22,7 @@ import {
   Trash2,
   UserRoundCheck,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { useCan } from "@/lib/caps-context";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";

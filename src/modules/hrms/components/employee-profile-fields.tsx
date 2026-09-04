@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Pencil, Plus, Settings2, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { PeopleControlButton as MnxAction } from "@/modules/people/components";

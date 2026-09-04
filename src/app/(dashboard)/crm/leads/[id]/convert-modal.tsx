@@ -5,7 +5,7 @@ import { CrmButton, CrmDialog, CrmInput } from "@/modules/crm/components/workspa
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { convertLeadAction } from "@/modules/crm/actions";
 import { Landmark, AlertCircle } from "lucide-react";
 

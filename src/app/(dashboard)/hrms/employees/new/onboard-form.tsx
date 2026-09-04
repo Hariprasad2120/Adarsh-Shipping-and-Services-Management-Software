@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 type Division = { id: string; name: string };
 type Department = {

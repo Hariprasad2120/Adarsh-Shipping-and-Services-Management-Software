@@ -3,7 +3,7 @@
 import { Check, Loader2, RotateCcw, ShieldAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 import { submitJournalEntryAction } from "@/modules/accounting/actions";
 import {

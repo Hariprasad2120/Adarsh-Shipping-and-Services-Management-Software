@@ -20,7 +20,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   createAccountingItemRequest,
   deleteAccountingItemsRequest,

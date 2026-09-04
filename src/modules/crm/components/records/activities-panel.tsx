@@ -5,7 +5,7 @@ import { CrmButton, CrmInput, CrmTextarea } from "@/modules/crm/components/works
 import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { createActivityAction } from "@/modules/crm/actions";
 import {Calendar,CheckSquare,PhoneCall,Plus,Clock,MapPin,X} from "lucide-react";
 

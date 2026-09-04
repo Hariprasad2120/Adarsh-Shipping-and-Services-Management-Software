@@ -5,6 +5,10 @@ import { timeBlock } from "@/lib/performance";
 import type { Prisma } from "@/generated/prisma/client";
 import { finalizeChecklistMainCustomerEmail } from "@/modules/cha/checklist-email-automation";
 import { getNotificationPolicy, type NotificationAppearance, type NotificationPriority, type NotificationSource, type NotificationVariant } from "./policy";
+import {
+  dispatchUserNotification,
+  type MonolithNotificationPayload,
+} from "./realtime";
 
 export type NotificationEvent =
   | "CREATED"
@@ -91,6 +95,79 @@ export async function recordNotificationActivity(params: {
   });
 }
 
+export function toMonolithNotificationPayload(notification: {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  variant: string;
+  appearance: string;
+  priority: string;
+  requiresAck: boolean;
+}): MonolithNotificationPayload {
+  const policy = getNotificationPolicy(notification.kind);
+  const priority =
+    notification.priority === "important" ? "important" : "normal";
+  const requiresAck = notification.requiresAck || priority === "important";
+
+  return {
+    id: notification.id,
+    title: notification.title,
+    body: notification.body,
+    link: notification.link,
+    variant: normalizeNotificationVariant(notification.variant, policy.variant),
+    appearance: normalizeNotificationAppearance(
+      notification.appearance,
+      policy.appearance,
+    ),
+    priority,
+    requiresAck,
+    policy: {
+      allowDismiss: policy.allowDismiss && !requiresAck,
+      autoFadeMs: priority === "important" || requiresAck
+        ? null
+        : policy.autoFadeMs,
+      labels: policy.labels,
+    },
+  };
+}
+
+function normalizeNotificationVariant(
+  value: string,
+  fallback: NotificationVariant,
+): NotificationVariant {
+  if (
+    value === "secondary" ||
+    value === "primary" ||
+    value === "destructive" ||
+    value === "success" ||
+    value === "info" ||
+    value === "mono" ||
+    value === "warning"
+  ) {
+    return value;
+  }
+
+  return fallback;
+}
+
+function normalizeNotificationAppearance(
+  value: string,
+  fallback: NotificationAppearance,
+): NotificationAppearance {
+  if (
+    value === "solid" ||
+    value === "outline" ||
+    value === "light" ||
+    value === "stroke"
+  ) {
+    return value;
+  }
+
+  return fallback;
+}
+
 async function enqueueNotificationEmail(params: {
   to: string;
   subject: string;
@@ -162,6 +239,11 @@ export async function createNotification(params: CreateNotificationParams) {
       lastSentAt: now,
     },
   });
+
+  dispatchUserNotification(
+    notification.userId,
+    toMonolithNotificationPayload(notification),
+  );
 
   // Fire activity record and optional email queue insert in parallel.
   await Promise.all([
@@ -308,10 +390,7 @@ export async function listActiveUserNotifications(userId: string) {
     .filter((notification): notification is (typeof notifications)[number] => notification !== null)
     .slice(0, 5);
 
-  return activeNotifications.map((notification) => ({
-    ...notification,
-    policy: getNotificationPolicy(notification.kind),
-  }));
+  return activeNotifications.map(toMonolithNotificationPayload);
 }
 
 export async function markNotificationsPresented(userId: string, notificationIds: string[]) {
@@ -522,7 +601,14 @@ export async function dismissNotification(userId: string, notificationId: string
 
 export async function dismissAllNotifications(userId: string) {
   const notifications = await db.notification.findMany({
-    where: { userId, dismissedAt: null },
+    where: {
+      userId,
+      dismissedAt: null,
+      AND: [
+        { OR: [{ priority: { not: "important" } }, { acknowledgedAt: { not: null } }] },
+        { OR: [{ requiresAck: false }, { acknowledgedAt: { not: null } }] },
+      ],
+    },
     select: { id: true, orgId: true },
   });
   const now = await getNow();

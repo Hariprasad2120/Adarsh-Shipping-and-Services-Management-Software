@@ -5,7 +5,7 @@ import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { deleteDealAction } from "@/modules/crm/actions";
 import { generateInvoiceFromDealAction } from "@/modules/accounting/actions";
 import { NotesPanel } from "@/modules/crm/components/records/notes-panel";

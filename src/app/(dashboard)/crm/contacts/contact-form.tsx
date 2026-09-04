@@ -5,7 +5,7 @@ import { CrmButton, CrmInput } from "@/modules/crm/components/workspace/crm-work
 import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   createContactAction,
   updateContactAction,

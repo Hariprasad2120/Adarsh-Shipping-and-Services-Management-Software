@@ -993,7 +993,7 @@ export async function listCanonicalJournals(
         : "Legacy / unassigned",
       remarks: row.remarks,
       currencyCode:
-        row.transactionCurrencyCode ?? row.functionalCurrencyCode ?? "—",
+        row.transactionCurrencyCode ?? row.functionalCurrencyCode ?? "INR",
       totalDebit: serialize(row.totalDebit),
       totalCredit: serialize(row.totalCredit),
       createdBy: userNames.get(row.createdById) ?? "Unknown user",

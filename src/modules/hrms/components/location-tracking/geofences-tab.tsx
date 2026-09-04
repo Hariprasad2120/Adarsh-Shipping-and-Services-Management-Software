@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   PeopleErrorState,
   PeopleLoadingState,

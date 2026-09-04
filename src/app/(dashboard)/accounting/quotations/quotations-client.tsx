@@ -4,7 +4,7 @@ import { FileCheck2, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   convertQuotationToInvoiceAction,
   createCustomerNoteAction,

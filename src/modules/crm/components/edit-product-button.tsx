@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Pencil, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   CrmButton,
   CrmDialog,

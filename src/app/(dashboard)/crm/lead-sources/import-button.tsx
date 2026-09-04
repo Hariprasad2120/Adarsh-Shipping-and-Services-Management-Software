@@ -3,7 +3,7 @@
 import { CrmButton, CrmDialogLayer } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Play, Loader2, Monitor, Terminal } from "lucide-react";
 import { runJustdialImportAction } from "@/modules/crm/actions";
 

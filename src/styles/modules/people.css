@@ -1271,6 +1271,230 @@
   padding-inline: 0;
 }
 
+/* ---------------------------------------------------------------------------
+   Branched hierarchy tree (organisation + employee explorers)
+   --------------------------------------------------------------------------- */
+
+.mnx-tree {
+  --tree-card-h: 46px;
+  --tree-indent: 34px;
+  --tree-gap: 10px;
+  --tree-line: color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--mn-space-2) var(--mn-space-1) var(--mn-space-3);
+  scrollbar-width: thin;
+}
+
+.mnx-tree-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-helper-size);
+}
+
+.mnx-tree-hint > svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
+}
+
+.mnx-tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tree-gap);
+  margin-left: var(--tree-indent);
+  position: relative;
+}
+
+.mnx-tree-children.is-root {
+  margin-left: 0;
+}
+
+/* incoming connector: vertical spine segment per child row */
+.mnx-tree-children > .mnx-tree-row {
+  position: relative;
+}
+
+.mnx-tree-children:not(.is-root) > .mnx-tree-row::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--tree-indent) / -2);
+  top: 0;
+  bottom: calc(var(--tree-gap) * -1);
+  border-left: 1.5px solid var(--tree-line);
+}
+
+.mnx-tree-children:not(.is-root) > .mnx-tree-row:first-child::before {
+  top: calc(var(--tree-card-h) / 2);
+}
+
+.mnx-tree-children:not(.is-root) > .mnx-tree-row:last-child::before {
+  bottom: auto;
+  height: calc(var(--tree-card-h) / 2);
+}
+
+.mnx-tree-children:not(.is-root) > .mnx-tree-row:only-child::before {
+  display: none;
+}
+
+/* incoming connector: horizontal stub into each child card */
+.mnx-tree-children:not(.is-root) > .mnx-tree-row::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--tree-indent) / -2);
+  width: calc(var(--tree-indent) / 2);
+  top: calc(var(--tree-card-h) / 2);
+  border-top: 1.5px solid var(--tree-line);
+}
+
+/* outgoing connector: from an expanded parent card into its children spine */
+.mnx-tree-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.mnx-tree-row > .mnx-tree-node {
+  position: relative;
+}
+
+.mnx-tree-row.is-open > .mnx-tree-node::after {
+  content: "";
+  position: absolute;
+  right: calc(var(--tree-indent) / -2);
+  width: calc(var(--tree-indent) / 2);
+  top: calc(var(--tree-card-h) / 2);
+  border-top: 1.5px solid var(--tree-line);
+}
+
+.mnx-tree-node {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  height: var(--tree-card-h);
+  min-width: 12rem;
+  max-width: 15rem;
+  padding: 0 0.4rem 0 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-border) 92%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--mnx-surface) 94%, transparent);
+  box-shadow: var(--mn-shadow-sm);
+  transition:
+    border-color var(--mnx-hover-duration, 140ms) ease,
+    box-shadow var(--mnx-hover-duration, 140ms) ease,
+    transform var(--mnx-hover-duration, 140ms) ease;
+}
+
+.mnx-tree-node:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 40%, var(--mnx-border));
+  box-shadow: var(--mn-shadow-md, var(--mn-shadow-sm));
+}
+
+.mnx-tree-node.is-company {
+  border-color: color-mix(in srgb, var(--mnx-accent) 46%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface));
+}
+
+.mnx-tree-node.is-group {
+  background: color-mix(in srgb, var(--mnx-accent) 5%, var(--mnx-surface));
+}
+
+.mnx-tree-node-avatar {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent) 16%, transparent);
+  color: var(--mnx-accent-text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mnx-tree-node.is-company .mnx-tree-node-avatar,
+.mnx-tree-node.is-group .mnx-tree-node-avatar,
+.mnx-tree-node.is-unit .mnx-tree-node-avatar {
+  border-radius: 8px;
+}
+
+.mnx-tree-node-avatar > svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.mnx-tree-node-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mnx-tree-node-copy strong {
+  overflow: hidden;
+  color: var(--mnx-text-strong);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-tree-node-copy small {
+  overflow: hidden;
+  color: var(--mnx-text-muted);
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-tree-node-toggle {
+  display: grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.3rem;
+  flex: 0 0 auto;
+  padding: 0 0.3rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--mnx-accent) 12%, transparent);
+  color: var(--mnx-accent-text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--mnx-hover-duration, 140ms) ease,
+    color var(--mnx-hover-duration, 140ms) ease,
+    border-color var(--mnx-hover-duration, 140ms) ease;
+}
+
+.mnx-tree-node-toggle:hover {
+  border-color: var(--mnx-accent);
+  background: color-mix(in srgb, var(--mnx-accent) 22%, transparent);
+}
+
+.mnx-tree-node-toggle.is-open {
+  border-color: var(--mnx-accent);
+  background: var(--mnx-accent);
+  color: var(--mnx-accent-contrast, #fff);
+}
+
+@media (max-width: 640px) {
+  .mnx-tree {
+    --tree-indent: 24px;
+    --tree-card-h: 44px;
+  }
+
+  .mnx-tree-node {
+    min-width: 10.5rem;
+    max-width: 12.5rem;
+  }
+}
+
 .mnx-ownership-workspace {
   display: grid;
   gap: var(--mn-layout-workspace-stack-gap);

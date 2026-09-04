@@ -3,7 +3,6 @@
 import {
   ChevronDown,
   ChevronRight,
-  Filter,
   FolderOpen,
   Loader2,
   PencilLine,
@@ -12,7 +11,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   AccountingAction,
   AccountingActionLink,
@@ -25,6 +24,7 @@ import {
   AccountingField,
   AccountingInput,
   AccountingMoney,
+  AccountingPanel,
   AccountingSection,
   AccountingSelect,
   AccountingTable,
@@ -331,6 +331,8 @@ export function AccountsClient({
     }
   }
 
+  const isTreeFiltered =
+    searchTerm.trim() !== "" || rootFilter !== "" || accountTypeFilter !== "";
   const filteredTree = filterTree(
     initialCoa,
     searchTerm,
@@ -356,9 +358,12 @@ export function AccountsClient({
   );
 
   function renderAccountNode(node: AccountNode, depth = 0): React.ReactNode {
-    const expanded = expandedNodes[node.id] ?? depth < 1;
+    const expanded = isTreeFiltered
+      ? true
+      : expandedNodes[node.id] ?? depth < 1;
     const selected = selectedAccountId === node.id;
     const childCount = node.children?.length ?? 0;
+    const childLabel = childCount === 1 ? "sub-account" : "sub-accounts";
 
     return (
       <div className="mnx-account-structure-node" key={node.id}>
@@ -401,7 +406,11 @@ export function AccountsClient({
             <span className="mnx-account-structure-meta">
               <span>{prettyEnum(node.rootType)}</span>
               {node.branchName ? <span>{node.branchName}</span> : null}
-              {node.isGroup ? <span>{childCount} sub-accounts</span> : null}
+              {node.isGroup ? (
+                <span>
+                  {childCount} {childLabel}
+                </span>
+              ) : null}
             </span>
           </span>
         </button>
@@ -457,13 +466,9 @@ export function AccountsClient({
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />
               </label>
-              <div className="mnx-account-structure-filter-grid">
-                <label>
-                  <span>
-                    <Filter aria-hidden="true" size={14} />
-                    Root type
-                  </span>
-                  <select
+              <div className="mnx-account-structure-filters">
+                <AccountingField label="Root type">
+                  <AccountingSelect
                     value={rootFilter}
                     onChange={(event) => setRootFilter(event.target.value)}
                   >
@@ -473,11 +478,10 @@ export function AccountsClient({
                         {prettyEnum(type)}
                       </option>
                     ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Account type</span>
-                  <select
+                  </AccountingSelect>
+                </AccountingField>
+                <AccountingField label="Account type">
+                  <AccountingSelect
                     value={accountTypeFilter}
                     onChange={(event) => setAccountTypeFilter(event.target.value)}
                   >
@@ -487,8 +491,8 @@ export function AccountsClient({
                         {prettyEnum(type)}
                       </option>
                     ))}
-                  </select>
-                </label>
+                  </AccountingSelect>
+                </AccountingField>
               </div>
             </div>
 
@@ -530,24 +534,21 @@ export function AccountsClient({
                   </div>
                 </header>
 
-                <div className="mnx-account-balance-hero">
-                  <div>
-                    <span>Closing balance</span>
-                    <strong>
-                      <AccountingMoney
-                        amount={Math.abs(selectedAccount.closingBalance).toFixed(2)}
-                        currencyCode="INR"
-                      />
-                      <small>{formatBalanceLabel(selectedAccount.closingBalance)}</small>
-                    </strong>
-                  </div>
-                  <p>
-                    Opening balances and every posted ledger transaction are included in
-                    this running position.
-                  </p>
-                </div>
-
-                <AccountingDetailList className="mnx-account-structure-detail-grid">
+                <AccountingDetailList>
+                  <AccountingDetail
+                    label="Closing balance"
+                    value={
+                      <span className="mnx-account-closing-balance">
+                        <AccountingMoney
+                          amount={Math.abs(selectedAccount.closingBalance).toFixed(2)}
+                          currencyCode="INR"
+                        />
+                        <small>
+                          {formatBalanceLabel(selectedAccount.closingBalance)}
+                        </small>
+                      </span>
+                    }
+                  />
                   <AccountingDetail
                     label="Parent account"
                     value={selectedAccount.parentAccountName ?? "Root account"}
@@ -606,7 +607,12 @@ export function AccountsClient({
                   />
                 </AccountingDetailList>
 
-                <div className="mnx-account-transactions-panel">
+                <p className="mnx-account-structure-hint">
+                  Opening balances and every posted ledger transaction are included
+                  in the closing position above.
+                </p>
+
+                <AccountingPanel className="mnx-account-transactions-panel">
                   <div className="mnx-account-transactions-header">
                     <div>
                       <h4>Recent transactions</h4>
@@ -633,9 +639,8 @@ export function AccountsClient({
                         onChange={(event) => setTransactionSearch(event.target.value)}
                       />
                     </label>
-                    <label>
-                      <span>Transaction filter</span>
-                      <select
+                    <AccountingField label="Transaction filter">
+                      <AccountingSelect
                         value={transactionFilter}
                         onChange={(event) => setTransactionFilter(event.target.value)}
                       >
@@ -647,8 +652,8 @@ export function AccountsClient({
                             {prettyEnum(type)}
                           </option>
                         ))}
-                      </select>
-                    </label>
+                      </AccountingSelect>
+                    </AccountingField>
                   </div>
 
                   <AccountingTable scrollLabel="Recent transactions">
@@ -707,7 +712,7 @@ export function AccountsClient({
                       )}
                     </tbody>
                   </AccountingTable>
-                </div>
+                </AccountingPanel>
               </>
             ) : (
               <div className="mnx-account-structure-empty">

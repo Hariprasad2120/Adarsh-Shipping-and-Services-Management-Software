@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 import { itemFormSchema, type ItemFormSchema } from "@/lib/items/validation";
 import type { ItemListItem } from "@/lib/items/types";

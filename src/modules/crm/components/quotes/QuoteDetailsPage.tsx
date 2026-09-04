@@ -44,7 +44,7 @@ import { bankAccounts } from "@/modules/crm/components/quotes/lib/mock-data";
 import type { QuoteDetailRecord, QuoteListStatus, QuoteRecord } from "@/modules/crm/components/quotes/lib/types";
 import { ApprovalActionBar, ApprovalLogList, type ApprovalCaps, type ApprovalLogEntry } from "@/modules/crm/components/ApprovalActionBar";
 import type { ApprovalStatus } from "@/modules/crm/approval-workflow";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { deleteInvoiceAction } from "@/modules/crm/actions";
 import { getStateCodeForLocation } from "@/modules/crm/components/quotes/lib/gst-states";
 import { useCollapsiblePanel } from "@/modules/core/hooks/use-collapsible-panel";

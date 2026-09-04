@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { updateLeadStatusAction } from "@/modules/crm/actions";
 import { Ship, Plane } from "lucide-react";
 

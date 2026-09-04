@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Boxes, FileStack, Link2 } from "lucide-react";
+import { toast } from "@/modules/notifications/client";
 import { ButtonLink } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import {
   DashboardInsightCard,
   DashboardInsightGrid,
@@ -31,10 +33,17 @@ import {
   WorkspacePanelHeader,
   WorkspaceSectionHeading,
 } from "@/components/layout/workspace";
+import {
+  createFreightBookingTransactionsAction,
+  createStandaloneFreightTransactionAction,
+  saveFreightBookingTransactionAction,
+} from "@/modules/freight-forwarding/actions";
 import type {
   FreightBookingCreationMode,
+  FreightBookingReferenceData,
   FreightTransactionType,
 } from "@/modules/freight-forwarding/booking-shared";
+import { FreightForwardingBookingPage } from "@/modules/freight-forwarding/components/freight-forwarding-booking-page";
 import type {
   FreightBookingGroup,
   FreightBookingTransaction,
@@ -47,6 +56,7 @@ type FreightForwardingWorkspaceClientProps = {
   initialGroupId?: string | null;
   initialTransactionId?: string | null;
   initialView?: FreightTransactionType | null;
+  reference: FreightBookingReferenceData;
   section: WorkspaceSection;
   transactions: FreightBookingTransaction[];
 };
@@ -88,10 +98,13 @@ export function FreightForwardingWorkspaceClient({
   initialGroupId,
   initialTransactionId,
   initialView,
+  reference,
   section,
   transactions,
 }: FreightForwardingWorkspaceClientProps) {
   const router = useRouter();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
     initialGroupId ||
       bookingGroups[0]?.bookingGroupId ||
@@ -116,6 +129,53 @@ export function FreightForwardingWorkspaceClient({
 
   function openTransactionDetail(type: FreightTransactionType, transactionId: string) {
     router.push(`/freight-forwarding/${type.toLowerCase()}/${transactionId}`);
+  }
+
+  function selectBookingGroup(group: FreightBookingGroup) {
+    const target = getBookingGroupTarget(group);
+    setSelectedGroupId(group.bookingGroupId);
+    setSelectedView(target.nextView);
+    setSelectedTransactionId(null);
+    router.replace(`/freight-forwarding?group=${group.bookingGroupId}&view=${target.nextView}`);
+  }
+
+  function handleCreateBooking(mode: FreightBookingCreationMode) {
+    startTransition(async () => {
+      const result = await createFreightBookingTransactionsAction(mode);
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      const nextView =
+        mode === "HBL_ONLY" ? "HBL" : "MBL";
+
+      toast.success("Booking transaction created.");
+      setIsCreateDialogOpen(false);
+      setSelectedGroupId(result.data.bookingGroupId);
+      setSelectedView(nextView);
+      setSelectedTransactionId(null);
+
+      if (result.data.bookingGroupId) {
+        router.replace(`/freight-forwarding?group=${result.data.bookingGroupId}&view=${nextView}`);
+      }
+      router.refresh();
+    });
+  }
+
+  function handleCreateStandaloneTransaction(transactionType: FreightTransactionType) {
+    startTransition(async () => {
+      const result = await createStandaloneFreightTransactionAction(transactionType);
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(`${transactionType} transaction created.`);
+      router.push(`/freight-forwarding/${transactionType.toLowerCase()}/${result.data.transactionId}`);
+    });
   }
 
   const metrics = {
@@ -153,17 +213,23 @@ export function FreightForwardingWorkspaceClient({
         actions={
           <div className="ff-booking-header-actions">
             {section === "HOME" ? (
-              <ButtonLink href="/freight-forwarding/create-booking" variant="accent">
+              <WorkspaceAction
+                type="button"
+                variant="primary"
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
                 Create Booking
-              </ButtonLink>
+              </WorkspaceAction>
             ) : (
               <>
-                <ButtonLink
-                  href={`/freight-forwarding/create-booking?mode=${section === "MBL" ? "MBL_ONLY" : "HBL_ONLY"}`}
-                  variant="accent"
+                <WorkspaceAction
+                  type="button"
+                  variant="primary"
+                  disabled={isPending}
+                  onClick={() => handleCreateStandaloneTransaction(section)}
                 >
-                  New {section} Transaction
-                </ButtonLink>
+                  {isPending ? "Creating..." : `New ${section} Transaction`}
+                </WorkspaceAction>
                 <ButtonLink href="/freight-forwarding" variant="inverse">
                   Workspace Home
                 </ButtonLink>
@@ -266,17 +332,17 @@ export function FreightForwardingWorkspaceClient({
                         const hasMbl = Boolean(group.mblTransaction);
                         const hasHbl = Boolean(group.hblTransaction);
                         const bookingGroupTarget = getBookingGroupTarget(group);
+                        const bookingHomeHref = `/freight-forwarding?group=${group.bookingGroupId}&view=${bookingGroupTarget.nextView}`;
                         return (
                           <OperationalLinkedRow
                             key={group.bookingGroupId}
-                            href={bookingGroupTarget.href}
+                            href={bookingHomeHref}
                             ariaLabel={`Open booking group ${group.bookingGroupId.slice(0, 8).toUpperCase()}`}
                             className={
                               group.bookingGroupId === selectedGroupId ? "bg-[var(--mnx-accent)]/6" : undefined
                             }
                             onClick={() => {
-                              setSelectedGroupId(group.bookingGroupId);
-                              setSelectedView(bookingGroupTarget.nextView);
+                              selectBookingGroup(group);
                             }}
                           >
                             <OperationalPrimaryCell
@@ -317,10 +383,10 @@ export function FreightForwardingWorkspaceClient({
                                 onClick={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
-                                  router.push(bookingGroupTarget.href);
+                                  selectBookingGroup(group);
                                 }}
                               >
-                                Process
+                                Work on Home
                                 <ArrowRight className="size-3.5" />
                               </WorkspaceAction>
                             </OperationalTableCell>
@@ -341,40 +407,48 @@ export function FreightForwardingWorkspaceClient({
             <WorkspacePanel>
               <WorkspacePanelHeader
                 eyebrow="Booking actions"
-                title="Open transaction tabs"
-                description="Workspace Home stays as the dashboard. Use the dedicated MBL and HBL tabs to create or edit transaction details."
+                title="Workspace Home transaction views"
+                description="Edit the selected booking directly here. The MBL and HBL tabs use the same underlying transaction records."
               />
               <div className="ff-home-view-switch">
-                {selectedGroup.mblTransaction ? (
+                {selectedGroup.bookingMode === "BOTH" && selectedGroup.mblTransaction ? (
                   <WorkspaceAction
                     type="button"
                     variant={selectedView === "MBL" ? "primary" : "secondary"}
                     onClick={() => {
                       setSelectedView("MBL");
-                      if (selectedGroup.mblTransaction?.id) {
-                        openTransactionDetail("MBL", selectedGroup.mblTransaction.id);
-                      }
+                      router.replace(`/freight-forwarding?group=${selectedGroup.bookingGroupId}&view=MBL`);
                     }}
                   >
-                    Open MBL
+                    MBL View
                   </WorkspaceAction>
                 ) : null}
-                {selectedGroup.hblTransaction ? (
+                {selectedGroup.bookingMode === "BOTH" && selectedGroup.hblTransaction ? (
                   <WorkspaceAction
                     type="button"
                     variant={selectedView === "HBL" ? "primary" : "secondary"}
                     onClick={() => {
                       setSelectedView("HBL");
-                      if (selectedGroup.hblTransaction?.id) {
-                        openTransactionDetail("HBL", selectedGroup.hblTransaction.id);
-                      }
+                      router.replace(`/freight-forwarding?group=${selectedGroup.bookingGroupId}&view=HBL`);
                     }}
                   >
-                    Open HBL
+                    HBL View
                   </WorkspaceAction>
                 ) : null}
               </div>
             </WorkspacePanel>
+          ) : null}
+
+          {selectedGroup ? (
+            <FreightForwardingHomeTransactionEditor
+              key={`${selectedGroup.bookingGroupId}-${selectedView}`}
+              reference={reference}
+              transaction={
+                selectedView === "HBL"
+                  ? selectedGroup.hblTransaction || selectedGroup.mblTransaction
+                  : selectedGroup.mblTransaction || selectedGroup.hblTransaction
+              }
+            />
           ) : null}
         </>
       ) : (
@@ -517,6 +591,125 @@ export function FreightForwardingWorkspaceClient({
           ) : null}
         </>
       )}
+
+      <FreightForwardingCreateBookingDialog
+        isPending={isPending}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onCreate={handleCreateBooking}
+        open={isCreateDialogOpen}
+      />
     </WorkspacePage>
+  );
+}
+
+function FreightForwardingCreateBookingDialog({
+  isPending,
+  onClose,
+  onCreate,
+  open,
+}: {
+  isPending: boolean;
+  onClose: () => void;
+  onCreate: (mode: FreightBookingCreationMode) => void;
+  open: boolean;
+}) {
+  return (
+    <Modal
+      eyebrow="Freight forwarding"
+      open={open}
+      onClose={onClose}
+      title="Choose transaction scope"
+      description="Select which transaction records should be created for this booking. Workspace Home will stay open after creation."
+    >
+      <div className="ff-booking-dialog-options">
+        <WorkspaceAction
+          type="button"
+          variant="secondary"
+          disabled={isPending}
+          onClick={() => onCreate("MBL_ONLY")}
+        >
+          <strong>Create MBL Transaction Only</strong>
+          <span>Create one master-bill transaction and show its form on Workspace Home.</span>
+          <small>No HBL transaction will be created.</small>
+        </WorkspaceAction>
+        <WorkspaceAction
+          type="button"
+          variant="secondary"
+          disabled={isPending}
+          onClick={() => onCreate("HBL_ONLY")}
+        >
+          <strong>Create HBL Transaction Only</strong>
+          <span>Create one house-bill transaction and show its form on Workspace Home.</span>
+          <small>No MBL transaction will be created.</small>
+        </WorkspaceAction>
+        <WorkspaceAction
+          type="button"
+          variant="secondary"
+          disabled={isPending}
+          onClick={() => onCreate("BOTH")}
+        >
+          <strong>Create Both MBL and HBL Transactions</strong>
+          <span>Create a linked booking set with separate MBL View and HBL View editors.</span>
+          <small>Both records remain connected to the same booking.</small>
+        </WorkspaceAction>
+      </div>
+    </Modal>
+  );
+}
+
+function FreightForwardingHomeTransactionEditor({
+  reference,
+  transaction,
+}: {
+  reference: FreightBookingReferenceData;
+  transaction: FreightBookingTransaction | null;
+}) {
+  const router = useRouter();
+  const [draft, setDraft] = useState(transaction?.formData);
+  const [containers, setContainers] = useState(transaction?.containers || []);
+  const [equipmentTypes, setEquipmentTypes] = useState(transaction?.equipmentTypes || []);
+
+  if (!transaction || !draft) {
+    return null;
+  }
+
+  const transactionId = transaction.id;
+
+  async function handleSave(input: {
+    accountId: string | null;
+    containers: FreightBookingTransaction["containers"];
+    equipmentTypes: string[];
+    formData: FreightBookingTransaction["formData"];
+  }) {
+    const result = await saveFreightBookingTransactionAction({
+      accountId: input.accountId,
+      containers: input.containers,
+      equipmentTypes: input.equipmentTypes,
+      formData: input.formData,
+      transactionId,
+    });
+
+    if (result.ok) {
+      router.refresh();
+      return { ok: true };
+    }
+
+    return { ok: false, error: result.error };
+  }
+
+  return (
+    <FreightForwardingBookingPage
+      embedded
+      activeDocumentTab={transaction.transactionType}
+      initialContainers={containers}
+      initialDraft={draft}
+      initialEquipmentTypes={equipmentTypes}
+      onContainersChange={setContainers}
+      onDraftChange={setDraft}
+      onEquipmentTypesChange={setEquipmentTypes}
+      onSave={handleSave}
+      reference={reference}
+      saveButtonLabel={`Save ${transaction.transactionType}`}
+    />
   );
 }

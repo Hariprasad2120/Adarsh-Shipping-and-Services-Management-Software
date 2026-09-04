@@ -5,7 +5,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, FilePenLine, Loader2, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   WorkspaceAlert,

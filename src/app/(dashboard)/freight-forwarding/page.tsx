@@ -2,6 +2,7 @@ import { FreightForwardingWorkspaceClient } from "@/modules/freight-forwarding/c
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import {
+  buildFreightBookingReferenceData,
   groupFreightBookingTransactions,
   listFreightBookingTransactions,
 } from "@/modules/freight-forwarding/service";
@@ -20,13 +21,17 @@ export default async function FreightForwardingPage({
   const orgId = session.user.orgId;
   if (!orgId) redirect("/login");
   const params = await searchParams;
-  const transactions = await listFreightBookingTransactions(orgId);
+  const [reference, transactions] = await Promise.all([
+    buildFreightBookingReferenceData(orgId),
+    listFreightBookingTransactions(orgId),
+  ]);
 
   return (
     <FreightForwardingWorkspaceClient
       bookingGroups={groupFreightBookingTransactions(transactions)}
       initialGroupId={params.group || null}
       initialView={params.view || null}
+      reference={reference}
       section="HOME"
       transactions={transactions}
     />

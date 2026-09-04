@@ -3,7 +3,7 @@
 import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { Loader2 } from "lucide-react";
 import { toggleJustdialActiveAction } from "@/modules/crm/actions";
 

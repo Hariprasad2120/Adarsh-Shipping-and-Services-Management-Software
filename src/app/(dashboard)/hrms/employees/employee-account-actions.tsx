@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { useCan } from "@/lib/caps-context";
 import { PeopleToggleButton } from "@/modules/people/components/people-controls";
 

@@ -6,7 +6,7 @@ import {
 
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
 import {
   OperationalDataTable,

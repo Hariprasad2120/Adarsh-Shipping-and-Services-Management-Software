@@ -1,6 +1,5 @@
 import {
   AccountingActionLink,
-  AccountingAlert,
   AccountingMetric,
   AccountingMetrics,
   AccountingRoutePageHeader,
@@ -104,30 +103,10 @@ export default async function AccountingDashboardPage() {
       />
 
       <AccountingSection
-        eyebrow="Workspace navigation"
-        title="Accounting workspaces"
-        description="Every Accounting route currently available to your role is listed here for direct access."
+        eyebrow="Command centre"
+        title="Operational position"
+        description={`Live accounting queues and controls for your role. Counts as of ${new Date(dashboard.asOf).toLocaleString("en-IN")}.`}
       >
-        <div className="space-y-6">
-          {groupedWorkflows.map((group, index) => (
-            <section className="space-y-4" key={`${group.label ?? "core"}-${index}`}>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--mnx-text-muted)]">
-                {sectionTitle(group.label)}
-              </h3>
-              <AccountingWorkflowCards items={group.items} />
-            </section>
-          ))}
-        </div>
-      </AccountingSection>
-
-      <AccountingAlert>
-        Operational counts as of{" "}
-        <strong>{new Date(dashboard.asOf).toLocaleString("en-IN")}</strong>.
-        The live dashboard now includes late-phase statutory, reporting,
-        integration, and customization signals alongside the core operational
-        queues.
-      </AccountingAlert>
-
       <AccountingMetrics>
         <AccountingMetric
           label="Drafts requiring action"
@@ -185,11 +164,7 @@ export default async function AccountingDashboardPage() {
         )}
       </AccountingMetrics>
 
-      <AccountingSection
-        eyebrow="Operational lens"
-        title="Accounting dashboard focus"
-        description="The command centre now adds compact visual readouts so the home route feels like a control surface before it becomes a navigation catalogue."
-      >
+        <div className="mnx-accounting-overview-lens">
         <DashboardInsightGrid>
           <DashboardInsightCard
             eyebrow="Queue health"
@@ -222,58 +197,42 @@ export default async function AccountingDashboardPage() {
             )}
           />
         </DashboardInsightGrid>
+        </div>
       </AccountingSection>
 
       <AccountingSection
-        eyebrow="Phase 9 controls"
-        title="Late-phase operational coverage"
-        description="Track the higher-order Finance controls that were added later in the specification so statutory readiness, reporting setup, integrations, and workspace customization stay visible from the Accounting home route."
+        eyebrow="Recent activity"
+        title="Audit timeline"
+        description="Latest bounded, tenant-scoped canonical Accounting events."
       >
-        <AccountingMetrics>
-          <AccountingMetric
-            label="Foreign-currency subledgers"
-            value={foreignCurrencyProfiles.toLocaleString("en-IN")}
-            detail={`${currencyWorkspace.functionalCurrencyCode} functional currency baseline`}
-            href="/accounting/currency-adjustments"
-            actionLabel="Open currency controls"
-          />
-          <AccountingMetric
-            label="Open filing periods"
-            value={taxSettlementWorkspace.metrics.openFilingPeriods.toLocaleString(
-              "en-IN",
-            )}
-            detail={`${taxSettlementWorkspace.metrics.activeRegistrations.toLocaleString("en-IN")} active registrations`}
-            href="/accounting/tax-settlement"
-            actionLabel="Open tax settlement"
-          />
-          <AccountingMetric
-            label="Active export profiles"
-            value={activeExportProfiles.toLocaleString("en-IN")}
-            detail="Saved report outputs ready for controlled delivery"
-            href="/accounting/report-builder"
-            actionLabel="Open report builder"
-          />
-          <AccountingMetric
-            label="Active source mappings"
-            value={activeSourceMappings.toLocaleString("en-IN")}
-            detail="Integration contracts currently enabled"
-            href="/accounting/integrations"
-            actionLabel="Open integrations"
-          />
-          <AccountingMetric
-            label="Active custom metadata"
-            value={(activeCustomFields + activeAutomationRules).toLocaleString("en-IN")}
-            detail={`${activeCustomFields.toLocaleString("en-IN")} fields and ${activeAutomationRules.toLocaleString("en-IN")} automation rules`}
-            href="/accounting/customization"
-            actionLabel="Open customization"
-          />
-        </AccountingMetrics>
+        <ul className="mnx-accounting-list">
+          {dashboard.recentActivity.length ? (
+            dashboard.recentActivity.map((event) => (
+              <li className="mnx-accounting-list-row" key={`top-${event.id}`}>
+                <div>
+                  <b>{event.action.replaceAll("_", " ")}</b>
+                  <small>
+                    {event.entityType} · {event.actor}
+                  </small>
+                </div>
+                <div>
+                  <span>
+                    {new Date(event.occurredAt).toLocaleString("en-IN")}
+                  </span>
+                  <AccountingStatus status="AUDITED" />
+                </div>
+              </li>
+            ))
+          ) : (
+            <li>No canonical Accounting activity has been recorded.</li>
+          )}
+        </ul>
       </AccountingSection>
 
       <AccountingSection
-        eyebrow="Control centre"
-        title="Connected Phase 9 workspaces"
-        description="These live workspaces now cover the late-phase operational slices that were previously only grounded in configuration foundations."
+        eyebrow="Late-phase controls"
+        title="Connected statutory &amp; integration workspaces"
+        description="Higher-order Finance controls — statutory readiness, reporting setup, integrations, and workspace customization — with their current live signal."
       >
         <AccountingTable>
           <thead>
@@ -385,32 +344,20 @@ export default async function AccountingDashboardPage() {
       </AccountingSection>
 
       <AccountingSection
-        eyebrow="Recent activity"
-        title="Accounting audit timeline"
-        description="Latest bounded, tenant-scoped canonical Accounting events."
+        eyebrow="Workspace navigation"
+        title="Accounting workspaces"
+        description="Every Accounting route currently available to your role, grouped for direct access."
       >
-        <ul className="mnx-accounting-list">
-          {dashboard.recentActivity.length ? (
-            dashboard.recentActivity.map((event) => (
-              <li className="mnx-accounting-list-row" key={event.id}>
-                <div>
-                  <b>{event.action.replaceAll("_", " ")}</b>
-                  <small>
-                    {event.entityType} · {event.actor}
-                  </small>
-                </div>
-                <div>
-                  <span>
-                    {new Date(event.occurredAt).toLocaleString("en-IN")}
-                  </span>
-                  <AccountingStatus status="AUDITED" />
-                </div>
-              </li>
-            ))
-          ) : (
-            <li>No canonical Accounting activity has been recorded.</li>
-          )}
-        </ul>
+        <div className="space-y-6">
+          {groupedWorkflows.map((group, index) => (
+            <section className="space-y-4" key={`${group.label ?? "core"}-${index}`}>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--mnx-text-muted)]">
+                {sectionTitle(group.label)}
+              </h3>
+              <AccountingWorkflowCards items={group.items} />
+            </section>
+          ))}
+        </div>
       </AccountingSection>
     </>
   );

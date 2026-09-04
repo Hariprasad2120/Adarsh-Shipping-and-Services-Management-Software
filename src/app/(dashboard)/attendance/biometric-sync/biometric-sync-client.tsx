@@ -31,7 +31,7 @@ import {
   Building,
   Flash,
 } from "@carbon/icons-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 const Spinner = ({ className }: { className?: string }) => (
   <svg

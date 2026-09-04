@@ -13,7 +13,7 @@ import {
   Timer,
   XCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,

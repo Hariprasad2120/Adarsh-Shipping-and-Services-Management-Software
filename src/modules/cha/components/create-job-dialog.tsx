@@ -9,7 +9,7 @@ import {
 } from "@/modules/cha/components/workspace/cha-workspace";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X,

@@ -9,7 +9,7 @@ import {
 
 import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition, FormEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { addTicketCommentAction, updateTicketStatusAction, assignTicketAction } from "../actions";
 import { MessageSquare, User, Calendar, ArrowLeft, Send, Shield, Info, Clock } from "lucide-react";
 

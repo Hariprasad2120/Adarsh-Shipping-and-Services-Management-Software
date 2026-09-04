@@ -3,7 +3,7 @@
 import { CrmButton, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { createNoteAction, deleteNoteAction } from "@/modules/crm/actions";
 import { MessageSquare, Trash2, User, Clock } from "lucide-react";
 

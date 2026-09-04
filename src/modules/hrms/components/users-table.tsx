@@ -17,7 +17,7 @@ import {
   UserCog,
   UserX2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { cn } from "@/lib/utils";
 import { ButtonLink } from "@/components/ui/button";
 import {

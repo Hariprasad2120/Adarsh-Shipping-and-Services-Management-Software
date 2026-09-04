@@ -23,7 +23,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import * as XLSX from "xlsx";
 import {
   Card,

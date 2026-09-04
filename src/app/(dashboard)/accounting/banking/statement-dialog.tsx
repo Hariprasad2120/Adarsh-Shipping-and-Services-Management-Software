@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 
 import { AccountingAction, AccountingAlert, AccountingDialog, AccountingEmptyTableRow, AccountingField, AccountingInput, AccountingMoney, AccountingPanel, AccountingSelect, AccountingStatus, AccountingTable, AccountingTextarea, FileUploadField } from "@/components/monolith";
 import {

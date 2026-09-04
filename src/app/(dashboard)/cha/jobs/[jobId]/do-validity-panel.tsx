@@ -5,7 +5,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/modules/notifications/client";
 import { ExternalLink, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as actions from "@/modules/cha/actions";

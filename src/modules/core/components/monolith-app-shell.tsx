@@ -20,6 +20,7 @@ import { MonolithAppSidebar } from "@/components/navigation/monolith-app-sidebar
 import { MonolithSearchCommand } from "@/components/navigation/monolith-search-command";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MonaDesktopPet,
   MonaGuidanceOverlay,
@@ -412,6 +413,7 @@ function MonolithAppShellBody({
     throw new Error("MonolithAppShellBody requires MonolithThemeProvider.");
   }
   const { theme } = themeContext;
+  const isMobile = useIsMobile();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const searchEntries = useMemo(
@@ -461,6 +463,7 @@ function MonolithAppShellBody({
 
   return (
     <SidebarProvider
+      defaultOpen={false}
       className="mnx-dashboard-shell"
       data-theme={theme}
     >
@@ -477,7 +480,7 @@ function MonolithAppShellBody({
       <SidebarInset className="mnx-dashboard-frame">
         <header className="mnx-topbar">
           <div className="mnx-topbar-context">
-            <SidebarTrigger className="mnx-mobile-menu" />
+            {isMobile ? <SidebarTrigger className="mnx-mobile-menu" /> : null}
             <div>
               <span>Monolith</span>
               <i>/</i>
