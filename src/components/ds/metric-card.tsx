@@ -36,11 +36,12 @@ export interface MetricCardProps
   /** wrap in a Card (default). Set false to render bare inside another Card. */
   boxed?: boolean;
   variant?: CardVariant;
+  tone?: "primary" | "success" | "warning" | "danger" | "info" | "default";
 }
 
-function Body({ label, value, unit, trend, caption, icon }: MetricCardProps) {
+function Body({ label, value, unit, trend, caption, icon, tone }: MetricCardProps) {
   return (
-    <div className="ds-metric">
+    <div className="ds-metric" data-tone={tone}>
       <div className="ds-metric-top">
         <p className="ds-metric-label">{label}</p>
         {trend ? (
@@ -50,7 +51,7 @@ function Body({ label, value, unit, trend, caption, icon }: MetricCardProps) {
             srLabel={trend.srLabel}
           />
         ) : icon ? (
-          <span className="ds-metric-icon" aria-hidden="true">
+          <span className="ds-metric-icon-badge" aria-hidden="true" data-tone={tone}>
             {icon}
           </span>
         ) : null}
@@ -67,6 +68,7 @@ function Body({ label, value, unit, trend, caption, icon }: MetricCardProps) {
 export function MetricCard({
   boxed = true,
   variant = "default",
+  tone = "default",
   className,
   label,
   value,
@@ -84,17 +86,18 @@ export function MetricCard({
       trend={trend}
       caption={caption}
       icon={icon}
+      tone={tone}
     />
   );
   if (!boxed) {
     return (
-      <div className={cn(className)} {...rest}>
+      <div className={cn(className)} data-tone={tone} {...rest}>
         {body}
       </div>
     );
   }
   return (
-    <Card variant={variant} pad="sm" className={className} {...rest}>
+    <Card variant={variant} data-tone={tone} pad="sm" className={className} {...rest}>
       {body}
     </Card>
   );

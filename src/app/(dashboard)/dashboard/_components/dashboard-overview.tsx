@@ -1,20 +1,21 @@
-"use client";
-
 import * as React from "react";
-import { CalendarClock } from "lucide-react";
+import {
+  CalendarClock,
+  AlertCircle,
+  FileText,
+  DollarSign,
+  CheckCircle2,
+} from "lucide-react";
+import { ActionNeeded } from "@/components/data-display/action-needed";
 import {
   Card,
-  ChartCard,
   DefinitionList,
   FilterBar,
   DateRangeSelect,
   type DateRangePreset,
-  FunnelBars,
   MetricCard,
   SectionHeader,
   StatGrid,
-  TrendArea,
-  TrendBadge,
 } from "@/components/ds";
 import type { DashboardCommandCenterSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
@@ -29,8 +30,37 @@ interface DashboardOverviewProps {
 
 const numberFormat = new Intl.NumberFormat("en-IN");
 
-function windowDays(preset: DateRangePreset) {
-  return preset === "24h" ? 1 : preset === "7d" ? 7 : preset === "30d" ? 30 : 90;
+const financialModules = new Set(["Accounting", "Payroll", "Expense"]);
+const operationalModules = new Set(["CHA", "CRM", "Attendance"]);
+
+const KPI_TONES: Array<"primary" | "info" | "warning" | "success"> = [
+  "primary",
+  "info",
+  "warning",
+  "success",
+];
+const KPI_ICONS = [
+  <AlertCircle key="1" size={16} />,
+  <FileText key="2" size={16} />,
+  <DollarSign key="3" size={16} />,
+  <CheckCircle2 key="4" size={16} />,
+];
+
+function formatWhen(value?: string | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(value));
+}
+
+function ModuleBadge({ module }: { module: string }) {
+  const modUpper = module.toUpperCase();
+  return (
+    <span className="ds-mod-badge" data-module={modUpper}>
+      {module}
+    </span>
+  );
 }
 
 export function DashboardOverview({
@@ -39,33 +69,24 @@ export function DashboardOverview({
   const [range, setRange] = React.useState<DateRangePreset>("7d");
 
   const {
+    actionNeededItems,
+    totalActionNeededCount,
     pulseMetrics,
-    appraisalStages,
     attendanceSignals,
-    activityTrend,
+    recentActivity,
   } = commandCenterSnapshot;
 
   const kpis = pulseMetrics.slice(0, 4);
 
-  const days = windowDays(range);
-  const trendData = activityTrend
-    .slice(-days)
-    .map((p) => ({ label: p.label, value: p.value }));
-  const trendTotal = trendData.reduce((sum, p) => sum + p.value, 0);
-  const trendPrev = activityTrend
-    .slice(-days * 2, -days)
-    .reduce((sum, p) => sum + p.value, 0);
-  const trendDelta =
-    trendPrev > 0
-      ? Math.round(((trendTotal - trendPrev) / trendPrev) * 100)
-      : null;
-
-  const pipelineStages = appraisalStages.filter((s) => s.value >= 0);
-  const pipelineEntry = pipelineStages[0]?.value ?? 0;
-  const pipelineExit = pipelineStages[pipelineStages.length - 1]?.value ?? 0;
-  const conversionRate =
-    pipelineEntry > 0 ? Math.round((pipelineExit / pipelineEntry) * 100) : 0;
-  const hasPipeline = pipelineStages.some((s) => s.value > 0);
+  const upcomingDeadlines = actionNeededItems
+    .filter((item) => item.dueDate)
+    .slice(0, 5);
+  const operationalAttention = actionNeededItems.filter((item) =>
+    operationalModules.has(item.module),
+  );
+  const financialAttention = actionNeededItems.filter((item) =>
+    financialModules.has(item.module),
+  );
 
   return (
     <div className="ds-dash">
@@ -79,61 +100,85 @@ export function DashboardOverview({
 
       {kpis.length > 0 ? (
         <StatGrid cols={4} aria-label="Key metrics">
-          {kpis.map((metric) => (
+          {kpis.map((metric, idx) => (
             <MetricCard
               key={metric.id}
               label={metric.label}
               value={numberFormat.format(metric.value)}
               caption={metric.detail}
+              tone={KPI_TONES[idx % KPI_TONES.length]}
+              icon={KPI_ICONS[idx % KPI_ICONS.length]}
             />
           ))}
         </StatGrid>
       ) : null}
 
-      <div className="ds-dash-analytics">
-        <ChartCard
-          title="Activity volume"
-          description={`Operational activity routed to you - last ${days} days`}
-          height={260}
-          isEmpty={trendTotal === 0}
-          emptyLabel="No activity in this window."
-          actions={
-            trendDelta !== null ? (
-              <TrendBadge
-                direction={
-                  trendDelta > 0 ? "up" : trendDelta < 0 ? "down" : "flat"
-                }
-                value={`${trendDelta > 0 ? "+" : ""}${trendDelta}%`}
-                srLabel={`${
-                  trendDelta > 0 ? "up" : trendDelta < 0 ? "down" : "unchanged"
-                } ${Math.abs(trendDelta)} percent versus the previous ${days} days`}
-              />
-            ) : undefined
-          }
-        >
-          <TrendArea data={trendData} height={260} />
-        </ChartCard>
+      <div className="ds-dash-widget-grid">
+        <ActionNeeded
+          className="ds-widget-span-8"
+          items={actionNeededItems}
+          totalCount={totalActionNeededCount}
+          viewAllUrl="/notifications"
+        />
 
-        <Card className="ds-dash-panel-stack">
-          <SectionHeader
-            title="Appraisal pipeline"
-            description="Live count of appraisals at each lifecycle stage"
-            actions={
-              <span className="ds-badge" data-tone="neutral">
-                {conversionRate}% reach decision
-              </span>
-            }
-          />
-          {hasPipeline ? (
-            <FunnelBars
-              stages={pipelineStages.map((s) => ({
-                id: s.id,
-                label: s.label,
-                value: s.value,
+        <Card as="section" className="ds-dash-panel-stack ds-widget-span-4">
+          <SectionHeader title="Upcoming Deadlines" />
+          {upcomingDeadlines.length > 0 ? (
+            <DefinitionList
+              items={upcomingDeadlines.map((item) => ({
+                term: item.title,
+                description: (
+                  <span className="flex items-center gap-1.5 justify-end">
+                    <span>{formatWhen(item.dueDate) ?? "Soon"}</span>
+                    <ModuleBadge module={item.module} />
+                  </span>
+                ),
               }))}
             />
           ) : (
-            <FunnelBars stages={[]} emptyLabel="No active appraisal cycle." />
+            <p className="mnx-dashboard-muted">No urgent deadlines in the action queue.</p>
+          )}
+        </Card>
+
+        <Card as="section" className="ds-dash-panel-stack ds-widget-span-4">
+          <SectionHeader title="Financial Attention" />
+          {financialAttention.length > 0 ? (
+            <DefinitionList
+              items={financialAttention.slice(0, 5).map((item) => ({
+                term: <ModuleBadge module={item.module} />,
+                description: item.title,
+              }))}
+            />
+          ) : (
+            <p className="mnx-dashboard-muted">No financial items require attention.</p>
+          )}
+        </Card>
+
+        <Card as="section" className="ds-dash-panel-stack ds-widget-span-4">
+          <SectionHeader title="Recent Activity" />
+          {recentActivity.length > 0 ? (
+            <DefinitionList
+              items={recentActivity.slice(0, 6).map((activity) => ({
+                term: <ModuleBadge module={activity.source} />,
+                description: activity.title,
+              }))}
+            />
+          ) : (
+            <p className="mnx-dashboard-muted">No recent activity in this window.</p>
+          )}
+        </Card>
+
+        <Card as="section" className="ds-dash-panel-stack ds-widget-span-4">
+          <SectionHeader title="Operational Attention" />
+          {operationalAttention.length > 0 ? (
+            <DefinitionList
+              items={operationalAttention.slice(0, 5).map((item) => ({
+                term: <ModuleBadge module={item.module} />,
+                description: item.title,
+              }))}
+            />
+          ) : (
+            <p className="mnx-dashboard-muted">No operational blockers need action.</p>
           )}
 
           {attendanceSignals.length > 0 ? (

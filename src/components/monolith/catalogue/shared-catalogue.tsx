@@ -83,6 +83,7 @@ import {
   WorkspaceSectionHeading,
   WorkspaceStateIcon,
   WorkspaceState,
+  ActionNeeded,
 } from "@/components/monolith";
 import {
   allCatalogueThemes,
@@ -280,6 +281,60 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["billing form", "payment options", "trial timeline", "price confirmation"],
     interactive: true,
     accessibility: "The layout preserves native field controls, grouped payment options, and visible price/timeline text that does not rely on icon-only meaning.",
+  },
+  {
+    id: "action-needed",
+    component: "ActionNeeded",
+    displayName: "Action needed",
+    category: "Dashboard",
+    scope: "shared",
+    description: "Unified dashboard queue for the highest-value approvals, overdue work, blocked workflows, and unresolved alerts across modules.",
+    status: "stable",
+    source: "src/components/data-display/action-needed.tsx",
+    render: () => (
+      <ActionNeeded
+        items={[
+          {
+            id: "catalogue-cha-checklist",
+            title: "Checklist Approval Required",
+            description: "A CHA checklist is waiting for approval before the job can proceed.",
+            module: "CHA",
+            priority: "critical",
+            actionLabel: "Review Checklist",
+            actionUrl: "#catalogue-operational-table",
+            dueDate: "2026-09-01",
+            status: "Pending approval",
+          },
+          {
+            id: "catalogue-crm-follow-up",
+            title: "CRM Follow-up Due",
+            description: "A lead assigned to you has reached its follow-up date and requires action.",
+            module: "CRM",
+            priority: "high",
+            actionLabel: "Follow Up",
+            actionUrl: "#catalogue-operational-table",
+            dueDate: "2026-09-02",
+            status: "Due soon",
+          },
+          {
+            id: "catalogue-payroll-issue",
+            title: "Payroll Setup Missing",
+            description: "An employee record is missing payroll data required before the next pay run.",
+            module: "Payroll",
+            priority: "normal",
+            actionLabel: "Fix Payroll Issue",
+            actionUrl: "#catalogue-operational-table",
+            status: "Needs review",
+          },
+        ]}
+        totalCount={9}
+        viewAllUrl="#catalogue-operational-table"
+      />
+    ),
+    themes,
+    states: ["critical", "high", "normal", "view all", "empty state"],
+    interactive: true,
+    accessibility: "Items use readable text for module, priority, status, and due dates; each action is a named link with keyboard focus support.",
   },
   {
     id: "monolith-theme-picker",

@@ -43,6 +43,7 @@
     "rubric-&-criteria-builder",
     "scrap",
     "scripts",
+    "tools",
     "OLD UI code",
     "_design-reference",
     "**/*.test.ts",

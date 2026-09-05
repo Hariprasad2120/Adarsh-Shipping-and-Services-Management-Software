@@ -17,6 +17,7 @@ export * from "@/components/forms/file-upload/document-dropzone-field";
 export * from "@/components/feedback/warning-indicator-popover";
 export * from "@/components/data-display/operational-data-table";
 export * from "@/components/data-display/dashboard-insights";
+export * from "@/components/data-display/action-needed";
 export * from "@/components/navigation/clickable-row";
 export * from "@/components/navigation/monolith-search-command";
 export * from "@/modules/admin/components/admin-workspace";

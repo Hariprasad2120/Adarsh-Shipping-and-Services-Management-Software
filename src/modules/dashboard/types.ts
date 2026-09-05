@@ -52,6 +52,7 @@ export type DashboardModuleSnapshot = {
 };
 
 export type DashboardAttentionSeverity = "critical" | "warning" | "info";
+export type DashboardActionNeededPriority = "critical" | "high" | "normal";
 
 export type DashboardAttentionItem = {
   id: string;
@@ -61,6 +62,18 @@ export type DashboardAttentionItem = {
   source: string;
   severity: DashboardAttentionSeverity;
   createdAt?: string;
+};
+
+export type DashboardActionNeededItem = {
+  id: string;
+  title: string;
+  description: string;
+  module: string;
+  priority: DashboardActionNeededPriority;
+  actionLabel: string;
+  actionUrl: string;
+  dueDate?: string | null;
+  status?: string | null;
 };
 
 export type DashboardPulseMetric = {
@@ -96,6 +109,8 @@ export type DashboardTrendPoint = {
 
 export type DashboardCommandCenterSnapshot = {
   generatedAt: string;
+  actionNeededItems: DashboardActionNeededItem[];
+  totalActionNeededCount: number;
   attentionItems: DashboardAttentionItem[];
   pulseMetrics: DashboardPulseMetric[];
   appraisalStages: DashboardStageCount[];

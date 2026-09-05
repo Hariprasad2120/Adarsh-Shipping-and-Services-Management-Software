@@ -48,12 +48,20 @@ export function DefinitionList({
 }) {
   return (
     <dl className={cn("ds-deflist", className)}>
-      {items.map((it, i) => (
-        <div className="ds-deflist-row" key={i}>
-          <dt className="ds-deflist-term">{it.term}</dt>
-          <dd className="ds-deflist-desc">{it.description}</dd>
-        </div>
-      ))}
+      {items.map((it, i) => {
+        const termTitle = typeof it.term === "string" ? it.term : undefined;
+        const descTitle = typeof it.description === "string" ? it.description : undefined;
+        return (
+          <div className="ds-deflist-row" key={i}>
+            <dt className="ds-deflist-term" title={termTitle}>
+              {it.term}
+            </dt>
+            <dd className="ds-deflist-desc" title={descTitle}>
+              {it.description}
+            </dd>
+          </div>
+        );
+      })}
     </dl>
   );
 }

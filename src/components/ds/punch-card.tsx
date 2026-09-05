@@ -1,19 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, Check, Coffee, LogOut, Play } from "lucide-react";
+import { ArrowRight, Check, Clock, Coffee, LogOut, Play } from "lucide-react";
 import { toast } from "sonner";
 import { DsButton } from "./ds-button";
 import { DsIcon } from "./ds-icon";
 
 /**
- * PunchCard — compact attendance control for the Monolith design system.
+ * PunchCard — attendance control and live shift ticker for the Monolith design system.
  *
- * One band: a state chip (dot + label + live timer) and the punch action(s)
- * for the current state. Designed to sit inline beside a WelcomeNote.
- *
- * It owns no data-fetching: pass `status`, the running `sinceSeconds`, a
- * `loading` flag, and an `onPunch` handler.
+ * Designed with a rich dashboard aesthetic (Skymetrics style):
+ * 1. Header band: "ATTENDANCE" category tag + status pill badge (dot + label).
+ * 2. Hero metric: prominent tabular time ticker + metric caption.
+ * 3. Action bar: sleek primary/secondary DS action buttons.
  */
 
 export type PunchStatus =
@@ -33,13 +32,6 @@ const STATUS_LABEL: Record<PunchStatus, string> = {
   CHECKED_IN: "On the clock",
   ON_BREAK: "On break",
   CHECKED_OUT: "Day closed",
-};
-
-const STATUS_TONE: Record<PunchStatus, string> = {
-  YET_TO_CHECK_IN: "var(--ds-text-subtle)",
-  CHECKED_IN: "var(--ds-success)",
-  ON_BREAK: "var(--ds-warning)",
-  CHECKED_OUT: "var(--ds-primary)",
 };
 
 function parseClock(value: string) {
@@ -111,19 +103,54 @@ export function PunchCard({
   }
 
   return (
-    <div className="ds-punch" data-status={status.toLowerCase()} role="status">
-      <div className="ds-punch-state">
-        <span
-          className="ds-punch-dot"
-          style={{ background: STATUS_TONE[status] }}
-          aria-hidden="true"
-        />
-        <span className="ds-punch-label">{STATUS_LABEL[status]}</span>
-        {showTimer ? (
-          <PunchTimer key={since} since={since} running={running} />
-        ) : null}
+    <div
+      className="ds-punch ds-punch-symmetric"
+      data-status={status.toLowerCase()}
+      role="status"
+    >
+      {/* Header Band: Category Tag + Status Badge Pill */}
+      <div className="ds-punch-header">
+        <div className="ds-punch-eyebrow">
+          <Clock className="ds-punch-eyebrow-icon" />
+          <span>ATTENDANCE</span>
+        </div>
+        <div className="ds-punch-badge" data-status={status.toLowerCase()}>
+          <span className="ds-punch-dot" aria-hidden="true" />
+          <span className="ds-punch-label">{STATUS_LABEL[status]}</span>
+        </div>
       </div>
 
+      {/* Hero Metric Band: Centered Tabular Clock + Caption */}
+      <div className="ds-punch-hero">
+        <div className="ds-punch-ticker-wrap">
+          {showTimer ? (
+            <PunchTimer key={since} since={since} running={running} />
+          ) : status === "CHECKED_OUT" ? (
+            <span className="ds-punch-timer-static">{since || "08:00:00"}</span>
+          ) : (
+            <span className="ds-punch-timer-static">00:00:00</span>
+          )}
+        </div>
+        <div className="ds-punch-caption">
+          {status === "CHECKED_IN"
+            ? "WORKED TIME TODAY"
+            : status === "ON_BREAK"
+              ? "PAUSED (ON BREAK)"
+              : status === "CHECKED_OUT"
+                ? "TOTAL WORKED TIME"
+                : "SHIFT: 09:30 AM – 05:30 PM"}
+        </div>
+        {/* Subtle Animated Progress Track */}
+        <div className="ds-punch-progress-track" aria-hidden="true">
+          <div
+            className="ds-punch-progress-bar"
+            data-running={running}
+            data-status={status.toLowerCase()}
+          />
+        </div>
+      </div>
+
+      {/* Action Bar: Symmetrically Centered */}
       <div className="ds-punch-actions">
         {status === "YET_TO_CHECK_IN" ? (
           <DsButton
@@ -131,6 +158,9 @@ export function PunchCard({
             size="sm"
             disabled={loading}
             onClick={() => punch("CHECK_IN")}
+            className="ds-punch-btn-hero"
+            data-punch-action="check_in"
+            data-tone="success"
           >
             <DsIcon icon={Play} size="sm" />
             {loading ? "Checking in…" : "Check in"}
@@ -140,10 +170,13 @@ export function PunchCard({
         {status === "CHECKED_IN" ? (
           <>
             <DsButton
-              variant="outlined"
+              variant="secondary"
               size="sm"
               disabled={loading}
               onClick={() => punch("START_BREAK")}
+              className="ds-punch-btn-half"
+              data-punch-action="start_break"
+              data-tone="warning"
             >
               <DsIcon icon={Coffee} size="sm" />
               Break
@@ -153,6 +186,9 @@ export function PunchCard({
               size="sm"
               disabled={loading}
               onClick={() => punch("CHECK_OUT")}
+              className="ds-punch-btn-half"
+              data-punch-action="check_out"
+              data-tone="danger"
             >
               <DsIcon icon={LogOut} size="sm" />
               Check out
@@ -161,23 +197,42 @@ export function PunchCard({
         ) : null}
 
         {status === "ON_BREAK" ? (
-          <DsButton
-            variant="primary"
-            size="sm"
-            disabled={loading}
-            onClick={() => punch("RESUME_WORK")}
-          >
-            <DsIcon icon={ArrowRight} size="sm" />
-            {loading ? "Resuming…" : "Resume"}
-          </DsButton>
+          <>
+            <DsButton
+              variant="primary"
+              size="sm"
+              disabled={loading}
+              onClick={() => punch("RESUME_WORK")}
+              className="ds-punch-btn-half"
+              data-punch-action="resume_work"
+              data-tone="success"
+            >
+              <DsIcon icon={ArrowRight} size="sm" />
+              {loading ? "Resuming…" : "Continue working"}
+            </DsButton>
+            <DsButton
+              variant="secondary"
+              size="sm"
+              disabled={loading}
+              onClick={() => punch("CHECK_OUT")}
+              className="ds-punch-btn-half"
+              data-punch-action="check_out"
+              data-tone="danger"
+            >
+              <DsIcon icon={LogOut} size="sm" />
+              Check out
+            </DsButton>
+          </>
         ) : null}
 
         {status === "CHECKED_OUT" ? (
           <span className="ds-punch-done">
             <DsIcon icon={Check} size="sm" label="Day closed" />
+            <span>Shift Completed</span>
           </span>
         ) : null}
       </div>
     </div>
   );
 }
+
