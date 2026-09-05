@@ -95,6 +95,34 @@ export function LeadDetailWrapper({
     }
   };
 
+  const statusActions: {
+    label: string;
+    value: string;
+    tone: "accent" | "danger";
+    onClick: () => void;
+  }[] = [
+    { label: "Interested", value: "INTERESTED", tone: "accent", onClick: () => setShowInterestedModal(true) },
+    { label: "Not Interested", value: "NOT_INTERESTED", tone: "danger", onClick: () => setShowRemarksModal(true) },
+    {
+      label: "Not Picked",
+      value: "NOT_PICKED",
+      tone: "accent",
+      onClick: () => {
+        setFollowUpStatus("NOT_PICKED");
+        setShowFollowUpModal(true);
+      },
+    },
+    {
+      label: "Not Reachable",
+      value: "NOT_REACHABLE",
+      tone: "accent",
+      onClick: () => {
+        setFollowUpStatus("NOT_REACHABLE");
+        setShowFollowUpModal(true);
+      },
+    },
+  ];
+
   const leadName = `${lead.firstName || ""} ${lead.lastName}`.trim();
   const creator = lead.createdBy ?? lead.owner;
   const creatorName = creator?.name || "Unknown user";
@@ -113,92 +141,60 @@ export function LeadDetailWrapper({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Business Card & Structured Fields */}
         <div className="lg:col-span-2 space-y-6">
-          {/* 3D Call Action & Operations Panel */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel transition-all duration-200 mnx-crm-panel-surface">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(260px,1fr)]">
-              <div className="space-y-3">
-                <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">
-                  Call Action / Lead Status
-                </span>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <CrmButton
-                  onClick={() => setShowInterestedModal(true)}
-                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
-                    lead.status === "INTERESTED"
-                      ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                  }`}
-                >
-                  Interested
-                </CrmButton>
-                <CrmButton
-                  onClick={() => setShowRemarksModal(true)}
-                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
-                    lead.status === "NOT_INTERESTED"
-                      ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-text-strong)] border-[var(--mnx-danger)] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[var(--mnx-surface)] text-[var(--mnx-danger)] border-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                  }`}
-                >
-                  Not Interested
-                </CrmButton>
-                <CrmButton
-                  onClick={() => {
-                    setFollowUpStatus("NOT_PICKED");
-                    setShowFollowUpModal(true);
-                  }}
-                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
-                    lead.status === "NOT_PICKED"
-                      ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/80 mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                  }`}
-                >
-                  Not Picked
-                </CrmButton>
-                <CrmButton
-                  onClick={() => {
-                    setFollowUpStatus("NOT_REACHABLE");
-                    setShowFollowUpModal(true);
-                  }}
-                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
-                    lead.status === "NOT_REACHABLE"
-                      ? "bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/80 mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                  }`}
-                >
-                  Not Reachable
-                </CrmButton>
-                </div>
-              </div>
-              <div className="space-y-3 rounded-xl border border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]/35 p-4">
-                <span className="text-[10px] font-bold text-[var(--mnx-muted)] uppercase tracking-widest block font-sans">
-                  Operations
-                </span>
-                <div className="grid gap-3">
-                <CrmButton
-                  onClick={() => setShowConvertModal(true)}
-                  className="flex w-full items-center justify-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-[var(--mnx-text-strong)] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-                >
-                  <RefreshCcw className="size-3.5" />
-                  <span>Convert Lead</span>
-                </CrmButton>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Link
-                      href={`/crm/leads/${lead.id}/edit`}
-                      className="flex items-center justify-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-[var(--mnx-border)] text-[var(--mnx-muted)] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-                    >
-                      <Edit2 className="size-3.5" />
-                      <span>Edit</span>
-                    </Link>
+          {/* Call action & operations toolbar */}
+          <div className="rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 p-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+            <div className="space-y-2">
+              <span className="text-[10px] font-semibold text-[var(--mnx-accent)] uppercase tracking-[0.16em]">
+                Call Action / Lead Status
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {statusActions.map((s) => {
+                  const active = lead.status === s.value;
+                  const activeCls =
+                    s.tone === "danger"
+                      ? "bg-[var(--mnx-danger)] border-[var(--mnx-danger)] text-[var(--mnx-text-strong)]"
+                      : "bg-[var(--mnx-accent)] border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]";
+                  const idleCls =
+                    s.tone === "danger"
+                      ? "border-[var(--mnx-danger)]/40 text-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)]"
+                      : "border-[var(--mnx-border)] text-[var(--mnx-muted)] hover:border-[var(--mnx-accent)] hover:text-[var(--mnx-accent)]";
+                  return (
                     <CrmButton
-                      onClick={handleDelete}
-                      className="flex items-center justify-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] border-2 border-[var(--mnx-danger)] text-[var(--mnx-danger)] hover:text-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                      key={s.value}
+                      onClick={s.onClick}
+                      className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors cursor-pointer ${
+                        active ? activeCls : `bg-[var(--mnx-surface)] ${idleCls}`
+                      }`}
                     >
-                      <Trash2 className="size-3.5" />
-                      <span>Delete</span>
+                      {s.label}
                     </CrmButton>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <CrmButton
+                onClick={() => setShowConvertModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--mnx-accent)] px-3.5 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--mnx-text-strong)] transition-colors hover:opacity-90 cursor-pointer"
+              >
+                <RefreshCcw className="size-3.5" />
+                <span>Convert Lead</span>
+              </CrmButton>
+              <Link
+                href={`/crm/leads/${lead.id}/edit`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--mnx-muted)] transition-colors hover:text-[var(--mnx-text-strong)] hover:border-[var(--mnx-text-strong)]/40 cursor-pointer"
+              >
+                <Edit2 className="size-3.5" />
+                <span>Edit</span>
+              </Link>
+              <CrmButton
+                onClick={handleDelete}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-danger)]/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--mnx-danger)] transition-colors hover:bg-[var(--mnx-danger-bg)] hover:border-[var(--mnx-danger)] cursor-pointer"
+              >
+                <Trash2 className="size-3.5" />
+                <span>Delete</span>
+              </CrmButton>
             </div>
           </div>
 

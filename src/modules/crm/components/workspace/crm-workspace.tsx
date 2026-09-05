@@ -527,10 +527,65 @@ export function CrmWorkspaceFrame({ children }: { children: ReactNode }) {
   );
 }
 
+// Honest guidance for workspaces that are on the roadmap but not built yet.
+// Each entry names the capability and points to the closest tool that works today.
+const CRM_PLANNED_WORKSPACES: Record<
+  string,
+  { summary: string; detail: string; useInstead?: { href: string; label: string } }
+> = {
+  "/crm/campaigns": {
+    summary: "Campaign tracking is on the roadmap.",
+    detail: "Channel and origin attribution is available today under Lead Sources.",
+    useInstead: { href: "/crm/lead-sources", label: "Go to Lead Sources" },
+  },
+  "/crm/documents": {
+    summary: "A central CRM document library is on the roadmap.",
+    detail:
+      "Files can be attached directly to each Lead, Deal, Customer and Quote record today.",
+    useInstead: { href: "/crm/customers", label: "Open Customers" },
+  },
+  "/crm/price-books": {
+    summary: "Price books are on the roadmap.",
+    detail: "Rate cards and standard buy rates are maintained today under Masters.",
+    useInstead: { href: "/crm/masters", label: "Go to Masters" },
+  },
+  "/crm/services": {
+    summary: "A dedicated service catalog is on the roadmap.",
+    detail: "Service lines are maintained today under Products & Services.",
+    useInstead: { href: "/crm/products", label: "Go to Products & Services" },
+  },
+  "/crm/sales-inbox": {
+    summary: "A unified sales inbox is on the roadmap.",
+    detail: "Inbound demand is captured today under Enquiries.",
+    useInstead: { href: "/crm/enquiries", label: "Go to Enquiries" },
+  },
+  "/crm/solutions": {
+    summary: "A solutions knowledge base is on the roadmap.",
+    detail: "Customer issues are tracked today under Support Cases.",
+    useInstead: { href: "/crm/tickets", label: "Go to Support Cases" },
+  },
+  "/crm/social": {
+    summary: "Social lead capture is on the roadmap.",
+    detail: "Channel attribution is available today under Lead Sources.",
+    useInstead: { href: "/crm/lead-sources", label: "Go to Lead Sources" },
+  },
+  "/crm/voc": {
+    summary: "Voice-of-Customer surveys are on the roadmap.",
+    detail: "Structured customer feedback is captured today under Support Cases.",
+    useInstead: { href: "/crm/tickets", label: "Go to Support Cases" },
+  },
+  "/crm/visits": {
+    summary: "Field-visit logging inside CRM is on the roadmap.",
+    detail:
+      "Customer visits are logged today through Location & Field Tracking in the HRMS module.",
+  },
+};
+
 export function CrmRouteOverview() {
   const pathname = usePathname();
   const meta = getCrmRouteMeta(pathname);
   const Icon = meta.icon;
+  const planned = CRM_PLANNED_WORKSPACES[normalizePathname(pathname)];
 
   return (
     <CrmSection
@@ -543,12 +598,22 @@ export function CrmRouteOverview() {
           <Icon aria-hidden="true" />
         </span>
         <div>
-          <CrmStatus variant="success">Synchronised and live</CrmStatus>
-          <h3>{meta.title} is active</h3>
+          <CrmStatus variant={planned ? "warning" : "success"}>
+            {planned ? "Planned — not yet available" : "Synchronised and live"}
+          </CrmStatus>
+          <h3>{planned ? `${meta.title} is coming soon` : `${meta.title} is active`}</h3>
           <p>
-            Records remain organisation-scoped and permission-aware in the
-            shared customer operations workspace.
+            {planned
+              ? `${planned.summary} ${planned.detail}`
+              : "Records remain organisation-scoped and permission-aware in the shared customer operations workspace."}
           </p>
+          {planned?.useInstead ? (
+            <p>
+              <Link className="mnx-crm-inline-link" href={planned.useInstead.href}>
+                {planned.useInstead.label} →
+              </Link>
+            </p>
+          ) : null}
         </div>
       </CrmPanel>
     </CrmSection>

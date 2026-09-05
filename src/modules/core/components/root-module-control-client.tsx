@@ -251,6 +251,7 @@ export function RootModuleControlClient({
                         </div>
                         <Button
                           size="sm"
+                          className="shrink-0 whitespace-nowrap"
                           variant={featureEnabled ? "outline" : "default"}
                           onClick={() =>
                             void saveFeature(nextEnabledFeatures, feature.id)

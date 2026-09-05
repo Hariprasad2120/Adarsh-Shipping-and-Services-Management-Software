@@ -434,6 +434,19 @@
   color: var(--mnx-text-muted);
 }
 
+.mnx-crm-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: var(--mnx-accent-text, var(--mnx-accent));
+  text-decoration: none;
+}
+
+.mnx-crm-inline-link:hover {
+  text-decoration: underline;
+}
+
 .mnx-crm-masters-panel {
   padding: var(--mn-space-5);
 }

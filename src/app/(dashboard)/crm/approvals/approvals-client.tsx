@@ -3,6 +3,7 @@
 import { CrmButton, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {ClipboardList,CheckCircle2,XCircle,RotateCcw,Clock,TrendingUp,FileText,ShoppingCart,Receipt,Loader2,} from "lucide-react";
 import { ApprovalStatusBadge } from "@/modules/crm/components/ApprovalActionBar";
 import {actionApproveDocument,actionRequestRework,actionDeclineDocument,} from "@/modules/crm/approval-actions";
@@ -65,6 +66,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
   const [reworkId, setReworkId] = useState<string | null>(null);
   const [reworkNote, setReworkNote] = useState("");
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const filtered =
     filterType === "all" ? pending : pending.filter((p) => p.type === filterType);
@@ -75,6 +77,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
       try {
         await actionApproveDocument(id);
         toast.success("Approved");
+        router.refresh();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed");
       } finally {
@@ -89,6 +92,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
       try {
         await actionDeclineDocument(id);
         toast.success("Declined");
+        router.refresh();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed");
       } finally {
@@ -109,6 +113,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
         toast.success("Sent back for rework");
         setReworkId(null);
         setReworkNote("");
+        router.refresh();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed");
       } finally {

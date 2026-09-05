@@ -3589,9 +3589,102 @@ export async function createActivityAction(formData: FormData): Promise<ActionRe
     if (data.relatedToType && data.relatedToId) {
       revalidatePath(`/crm/${data.relatedToType.toLowerCase()}s/${data.relatedToId}`);
     }
+    revalidatePath("/crm/tasks");
+    revalidatePath("/crm/events");
+    revalidatePath("/crm/calls");
     return { ok: true, data: activity };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create activity" };
+  }
+}
+
+export async function updateActivityAction(
+  id: string,
+  formData: FormData,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.activity.manage");
+
+    const existing = await db.crmActivity.findFirst({
+      where: { id, orgId },
+      select: { id: true, relatedToType: true, relatedToId: true },
+    });
+    if (!existing) return { ok: false, error: "Activity not found" };
+
+    const data: Record<string, unknown> = {};
+    const setStr = (key: string, field = key) => {
+      if (formData.has(field)) {
+        const v = (formData.get(field) as string)?.trim();
+        data[key] = v ? v : null;
+      }
+    };
+    const setDate = (key: string, field = key) => {
+      if (formData.has(field)) {
+        const v = formData.get(field) as string;
+        data[key] = v ? new Date(v) : null;
+      }
+    };
+    setStr("title");
+    setStr("description");
+    setStr("status");
+    setStr("priority");
+    setStr("location");
+    setStr("callResult");
+    setStr("ownerId");
+    setDate("dueAt");
+    setDate("startAt");
+    setDate("endAt");
+    if (formData.has("durationMins")) {
+      data.durationMins =
+        parseInt((formData.get("durationMins") as string) || "0", 10) || null;
+    }
+
+    const activity = await crmService.updateActivity(orgId, id, session.user.id, data);
+
+    if (existing.relatedToType && existing.relatedToId) {
+      revalidatePath(
+        `/crm/${existing.relatedToType.toLowerCase()}s/${existing.relatedToId}`,
+      );
+    }
+    revalidatePath("/crm/tasks");
+    revalidatePath("/crm/events");
+    revalidatePath("/crm/calls");
+    return { ok: true, data: activity };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update activity" };
+  }
+}
+
+export async function deleteActivityAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.activity.manage");
+
+    const existing = await db.crmActivity.findFirst({
+      where: { id, orgId },
+      select: { id: true },
+    });
+    if (!existing) return { ok: false, error: "Activity not found" };
+
+    await crmService.deleteActivity(orgId, id);
+
+    revalidatePath("/crm/tasks");
+    revalidatePath("/crm/events");
+    revalidatePath("/crm/calls");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to delete activity" };
   }
 }
 
