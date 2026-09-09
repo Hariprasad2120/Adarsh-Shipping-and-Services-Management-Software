@@ -121,7 +121,11 @@ export function WorkspaceSectionHeading({
     <header className={cn("mnx-section-heading", className)} {...props}>
       <div className="mnx-section-heading-title">
         <Heading>
-          <span className="mnx-section-heading-index">{index}</span>
+          {index !== undefined && index !== null && index !== false && index !== "" ? (
+            <span className="mnx-section-heading-index" aria-hidden="true">
+              {index}
+            </span>
+          ) : null}
           <span className="mnx-section-heading-text">{title}</span>
           {badge ? <span className="mnx-section-heading-badge">{badge}</span> : null}
         </Heading>
@@ -573,7 +577,7 @@ export function WorkspaceState({
     >
       <span className="mnx-workspace-state-icon">{icon}</span>
       <MonolithSpecLabel as="p">{eyebrow}</MonolithSpecLabel>
-      <h1>{title}</h1>
+      <h2>{title}</h2>
       <p>{description}</p>
       {action ? <div className="mnx-workspace-state-action">{action}</div> : null}
     </section>

@@ -6,7 +6,18 @@ import { can } from "@/lib/rbac";
 import { createFileResponseHeaders } from "@/lib/document-preview";
 import { resolveInside } from "@/lib/security";
 
-const EXPENSE_ARTIFACT_LOCAL_ROOT = path.join(process.cwd(), "storage", "cha", "receipts-and-payment-proof");
+// Lazily resolved so the module scope stays free of process.cwd(): a
+// module-scope cwd() call makes Next's NFT tracer pull the whole project into
+// the route's server chunk (build EPERM on the oversized root chunk).
+let cachedExpenseArtifactLocalRoot: string | undefined;
+function expenseArtifactLocalRoot() {
+  return (cachedExpenseArtifactLocalRoot ??= path.join(
+    process.cwd(),
+    "storage",
+    "cha",
+    "receipts-and-payment-proof",
+  ));
+}
 
 function inferMimeType(fileName: string) {
   const extension = fileName.toLowerCase().split(".").pop();
@@ -68,7 +79,7 @@ export async function GET(
   const fileName = decodeURIComponent(pathSegments[pathSegments.length - 1] || "expense-artifact");
   let absolutePath: string;
   try {
-    absolutePath = resolveInside(EXPENSE_ARTIFACT_LOCAL_ROOT, path.join(...pathSegments.map(decodeURIComponent)));
+    absolutePath = resolveInside(expenseArtifactLocalRoot(), path.join(...pathSegments.map(decodeURIComponent)));
   } catch {
     return new Response("Invalid file path", { status: 400 });
   }

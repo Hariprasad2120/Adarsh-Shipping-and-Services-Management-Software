@@ -60,6 +60,21 @@
   min-width: 0;
 }
 
+/* CHA metric cards expose their supporting copy through the "!" popover, so the
+   card body is just the value — collapse the reserved detail space that would
+   otherwise leave every card half-empty. */
+.mnx-cha-metrics .mnx-workspace-metric {
+  grid-template-rows: auto auto;
+}
+
+.mnx-cha-metrics .mnx-workspace-metric-body {
+  min-height: 0;
+}
+
+.mnx-cha-metrics .mnx-workspace-metric-header {
+  min-height: 0;
+}
+
 .mnx-cha-metrics > *::after {
   display: none;
 }
@@ -103,7 +118,7 @@
   padding: var(--mn-space-4);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-md);
-  background: var(--mnx-control-gradient);
+  background: var(--mnx-surface);
 }
 
 .mnx-cha-jobs-table-controls {
@@ -210,7 +225,7 @@
   padding: var(--mn-space-1);
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-sm);
-  background: var(--mnx-control-gradient);
+  background: var(--mnx-surface);
 }
 
 .mnx-cha-page-workflow-builder {
@@ -272,7 +287,7 @@
   border-color: var(--mnx-border) !important;
   border-radius: 13px !important;
   color: var(--mnx-text) !important;
-  background: var(--mnx-control-gradient) !important;
+  background: var(--mnx-surface) !important;
   box-shadow: none !important;
 }
 
@@ -312,11 +327,9 @@
   border: 1px solid var(--mnx-glass-border);
   border-radius: 16px;
   color: var(--mnx-text);
-  background-color: var(--mnx-glass-surface-strong);
-  background-image: var(--mnx-glass-gradient);
+  background-color: var(--mnx-surface);
+  background-image: none;
   box-shadow: var(--mnx-floating-shadow);
-  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
-  backdrop-filter: var(--mnx-glass-filter-compact);
 }
 
 .mnx-cha-autocomplete {
@@ -362,7 +375,7 @@
   padding: 18px;
   border: 1px solid var(--mnx-border);
   border-radius: 18px;
-  background: var(--mnx-control-gradient);
+  background: var(--mnx-surface);
 }
 
 .mnx-cha-success-icon {
@@ -409,16 +422,19 @@
 
 .mnx-cha-outside-heading {
   container-type: inline-size;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.72fr);
-  align-items: start;
-  gap: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 1.5rem;
+  row-gap: 0.35rem;
   padding: 0.35rem 0 0.2rem;
 }
 
 .mnx-cha-outside-heading .mnx-section-heading-title {
+  flex: 1 1 20rem;
   align-items: baseline;
-  gap: 0.8rem;
+  gap: 0.6rem;
 }
 
 .mnx-cha-outside-heading .mnx-section-heading-index {
@@ -433,13 +449,13 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.55rem;
+  gap: 0.5rem;
   margin: 0;
   color: var(--mnx-text-strong);
-  font-size: clamp(1.72rem, 2.5vw, 2.3rem);
-  font-weight: 440;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
+  font-size: var(--mn-type-title-size);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 
 .mnx-cha-outside-heading .mnx-section-heading-text {
@@ -447,19 +463,19 @@
 }
 
 .mnx-cha-outside-heading .mnx-section-heading-aside {
-  display: grid;
-  justify-items: end;
-  gap: 0.45rem;
-  padding-top: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .mnx-cha-outside-heading .mnx-section-heading-aside p {
-  max-width: 32rem;
+  max-width: 40rem;
   margin: 0;
   color: var(--mnx-text-muted);
-  font-size: 0.92rem;
-  line-height: 1.55;
-  text-align: right;
+  font-size: var(--mn-type-helper-size);
+  line-height: 1.5;
+  text-align: left;
 }
 
 .mnx-cha-heading-title {
@@ -648,26 +664,22 @@
 
 .mnx-cha-job-meta-secondary {
   margin: 2px 0 0;
-  overflow: hidden;
   color: var(--mnx-muted);
   font-size: 11px;
   line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .mnx-cha-job-meta-action {
-  min-height: 22px;
-  margin-top: 6px;
-  padding: 0 10px;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 26%, var(--mnx-border));
+  align-self: flex-start;
+  min-height: 24px;
+  margin-top: 8px;
+  padding: 2px 12px;
   border-radius: 999px;
-  color: var(--mnx-accent-text);
-  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-card));
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .mnx-cha-panel-actions-row {
@@ -873,6 +885,30 @@
 
 .mnx-cha-status-muted {
   color: var(--mnx-muted);
+}
+
+/* Slide-to-complete refusal feedback — a short horizontal shake + a danger
+   ring when the underlying action rejects the slide (validation, upload still
+   running). Without this the thumb just silently snaps back. */
+.mnx-slide-to-complete[data-rejected="true"] {
+  animation: mnx-slide-reject-shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  border-color: var(--mnx-danger, #e5484d);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mnx-danger, #e5484d) 22%, transparent);
+}
+
+@keyframes mnx-slide-reject-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px); }
+  30% { transform: translateX(7px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-slide-to-complete[data-rejected="true"] {
+    animation: none;
+  }
 }
 
 .mnx-cha-section-block {

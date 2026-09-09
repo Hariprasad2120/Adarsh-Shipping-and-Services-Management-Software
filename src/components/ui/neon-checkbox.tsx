@@ -18,9 +18,10 @@ const NeonCheckbox: React.FC<MonolithCheckboxProps> = ({ label, className = "", 
   };
 
   return (
-    <label className={cn("mnx-checkbox", className)}>
+    <label className={cn("mnx-checkbox", className)} data-checked={isChecked ? "true" : "false"}>
       <input type="checkbox" checked={isChecked} onChange={handleChange} {...props} />
-      <span aria-hidden="true">{isChecked ? "✓" : ""}</span>
+      {/* Visual box. The check glyph is drawn by CSS ::after so it can animate. */}
+      <span aria-hidden="true" />
       {label ? <em>{label}</em> : null}
     </label>
   );

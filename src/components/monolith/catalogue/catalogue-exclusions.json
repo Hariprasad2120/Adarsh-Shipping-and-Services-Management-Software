@@ -1330,5 +1330,29 @@
     "source": "src/modules/performance/components/performance-workspace.tsx",
     "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
     "owner": "performance module"
+  },
+  {
+    "component": "LinkButton",
+    "source": "src/components/ui/button.tsx",
+    "reason": "Backwards-compatible alias of ButtonLink (export const LinkButton = ButtonLink); the canonical specimen is registered as ButtonLink.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "CardContent",
+    "source": "src/components/ui/card.tsx",
+    "reason": "Structural subcomponent of the registered Card specimen (content padding slot); not a standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "CardHeader",
+    "source": "src/components/ui/card.tsx",
+    "reason": "Structural subcomponent of the registered Card specimen (header slot); not a standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "CardTitle",
+    "source": "src/components/ui/card.tsx",
+    "reason": "Structural subcomponent of the registered Card specimen (title element); not a standalone catalogue pattern.",
+    "owner": "Monolith design system"
   }
 ]

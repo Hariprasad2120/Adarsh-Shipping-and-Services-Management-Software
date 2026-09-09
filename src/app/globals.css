@@ -9,6 +9,7 @@
 @import "../styles/modules/people.css";
 @import "../styles/modules/performance.css";
 @import "../styles/modules/crm.css";
+@import "../styles/dashboard-widgets.css";
 @import "../styles/legacy-compatibility.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

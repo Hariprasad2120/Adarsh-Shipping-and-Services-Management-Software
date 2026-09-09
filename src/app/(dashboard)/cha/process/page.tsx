@@ -1,16 +1,36 @@
-import Link from "next/link";
 import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import { ButtonLink } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { listPendingChaQuoteProcesses } from "@/modules/crm/quote-process";
-import { ChaPageHeader } from "@/modules/cha/components/workspace/cha-operations-shared";
+import {
+  ChaMetricCard,
+  ChaMetrics,
+  ChaPageHeader,
+} from "@/modules/cha/components/workspace/cha-operations-shared";
 import {
   ChaSection,
   ChaStatus,
   ChaTable,
 } from "@/modules/cha/components/workspace/cha-workspace";
 import { redirect } from "next/navigation";
+
+function formatQueueDate(value: Date | string) {
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatWaiting(value: Date | string) {
+  const days = Math.floor(
+    (Date.now() - new Date(value).getTime()) / (24 * 60 * 60 * 1000),
+  );
+  if (days <= 0) return "Today";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+}
 
 export default async function ChaProcessPage() {
   const session = await getSession();
@@ -22,6 +42,12 @@ export default async function ChaProcessPage() {
   await requirePermission(session.user.id, "cha.job.read");
   const items = await listPendingChaQuoteProcesses(orgId);
 
+  const oldest = items.reduce<Date | null>((acc, item) => {
+    const created = new Date(item.createdAt);
+    return !acc || created < acc ? created : acc;
+  }, null);
+  const distinctCustomers = new Set(items.map((item) => item.customerName)).size;
+
   return (
     <div className="space-y-8">
       <ChaPageHeader
@@ -30,7 +56,29 @@ export default async function ChaProcessPage() {
         description="Approved quotations land here first for customs processing. Open a quotation to create the real CHA job and complete the remaining operational details."
       />
 
-      <ChaSection>
+      <ChaMetrics>
+        <ChaMetricCard
+          title="Awaiting Processing"
+          value={items.length}
+          note="Approved quotations not yet converted into a CHA job"
+        />
+        <ChaMetricCard
+          title="Customers Waiting"
+          value={distinctCustomers}
+          note="Distinct customer accounts in the processing queue"
+        />
+        <ChaMetricCard
+          title="Oldest In Queue"
+          value={oldest ? formatWaiting(oldest) : "—"}
+          note="Time the earliest quotation has been waiting for processing"
+        />
+      </ChaMetrics>
+
+      <ChaSection
+        index="01"
+        title="Approved Quotations"
+        description="Open a quotation to create the CHA job and capture the remaining operational details."
+      >
         {items.length === 0 ? (
           <div className="mnx-panel-state">
             <WorkspaceEmptyState
@@ -52,6 +100,7 @@ export default async function ChaProcessPage() {
                 <th>Reference</th>
                 <th>Location</th>
                 <th>Commodity</th>
+                <th>Waiting</th>
                 <th>Status</th>
                 <th className="text-right">Open</th>
               </tr>
@@ -63,7 +112,7 @@ export default async function ChaProcessPage() {
                     <div className="flex flex-col">
                       <span className="font-semibold">{item.quoteNumber}</span>
                       <span className="text-xs mnx-text-muted">
-                        {new Date(item.createdAt).toLocaleDateString("en-GB")}
+                        {formatQueueDate(item.createdAt)}
                       </span>
                     </div>
                   </td>
@@ -78,16 +127,18 @@ export default async function ChaProcessPage() {
                   <td>{item.referenceNumber}</td>
                   <td>{item.location || item.portOfLoading || "Not captured"}</td>
                   <td>{item.commodity || "Not captured"}</td>
+                  <td className="mnx-text-muted">{formatWaiting(item.createdAt)}</td>
                   <td>
                     <ChaStatus>Awaiting processing</ChaStatus>
                   </td>
                   <td className="text-right">
-                    <Link
+                    <ButtonLink
                       href={`/cha/process/${item.id}`}
-                      className="inline-flex items-center rounded-xl bg-[var(--mnx-surface)] px-3 py-2 text-xs font-semibold text-[var(--mnx-text-strong)]"
+                      variant="outline"
+                      size="sm"
                     >
                       Open
-                    </Link>
+                    </ButtonLink>
                   </td>
                 </tr>
               ))}

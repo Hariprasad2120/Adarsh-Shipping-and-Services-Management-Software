@@ -512,7 +512,7 @@ export function JobsClient({
                   <OperationalTableHead>Customer</OperationalTableHead>
                   <OperationalTableHead>Mode</OperationalTableHead>
                   <OperationalTableHead>Current Stage</OperationalTableHead>
-                  <OperationalTableHead>Status</OperationalTableHead>
+                  <OperationalTableHead>Priority</OperationalTableHead>
                   <OperationalTableHead>Process</OperationalTableHead>
                 </tr>
               </thead>
@@ -568,7 +568,7 @@ export function JobsClient({
                                     : "info"
                             }
                           >
-                            {job.status === "COMPLETED" ? "Completed" : job.priority}
+                            {job.priority}
                           </OperationalStatus>
                         </OperationalTableCell>
                         <OperationalTableCell>

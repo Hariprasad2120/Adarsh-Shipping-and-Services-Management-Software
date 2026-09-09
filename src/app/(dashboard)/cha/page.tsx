@@ -421,7 +421,7 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
                   <OperationalTableHead>Customer</OperationalTableHead>
                   <OperationalTableHead>Mode</OperationalTableHead>
                   <OperationalTableHead>Current Stage</OperationalTableHead>
-                  <OperationalTableHead>Status</OperationalTableHead>
+                  <OperationalTableHead>Priority</OperationalTableHead>
                   <OperationalTableHead />
                 </tr>
               </thead>

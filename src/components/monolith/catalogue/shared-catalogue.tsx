@@ -27,6 +27,12 @@ import {
 import {
   Button,
   ButtonLink,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Chip,
+  Switch,
   DashboardInsightCard,
   DashboardInsightGrid,
   DashboardMiniBarChart,
@@ -488,6 +494,59 @@ export const sharedCatalogue: CatalogueEntry[] = [
     accessibility: "Rendered as links with keyboard navigation and shared button semantics.",
   },
   {
+    id: "cards",
+    component: "Card",
+    displayName: "Cards — the three families",
+    category: "Surfaces",
+    scope: "shared",
+    description:
+      "The ONLY three card families in Monolith. Interactive/3D: the whole surface is the control (module tiles, primary dashboard actions) — subtle lift + focus ring on hover. Flat/2D (default): repeatable stat / KPI / catalogue tiles — border, restrained shadow, no elevation. Plain: quiet container for grouped content, forms, settings, queues, empty states — no shadow, no hover. No page may invent a fourth.",
+    status: "stable",
+    source: "src/components/ui/card.tsx",
+    render: () => (
+      <div className="mnx-catalogue-family">
+        <Card variant="interactive" interactive as="button" style={{ textAlign: "left", width: "100%" }}>
+          <CardHeader>
+            <CardTitle>Interactive / 3D</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mnx-dashboard-muted">
+              Whole surface is clickable. Hover lifts 2px, shadow deepens, focus ring on keyboard focus.
+              Use for module navigation tiles and major dashboard actions only.
+            </p>
+          </CardContent>
+        </Card>
+        <Card variant="flat">
+          <CardHeader>
+            <CardTitle>Flat / 2D</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mnx-dashboard-muted">
+              Default. Border + restrained shadow, no elevation, no hover motion. Use for KPI groups,
+              catalogue summaries and repeated informational tiles.
+            </p>
+          </CardContent>
+        </Card>
+        <Card variant="plain">
+          <CardHeader>
+            <CardTitle>Plain</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mnx-dashboard-muted">
+              Quiet surface, no shadow, no decorative hover. Use for forms, settings sections, queues,
+              HR cases, detail groups and empty-state containers.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    ),
+    themes,
+    states: ["interactive / 3D", "flat / 2D (default)", "plain"],
+    interactive: true,
+    accessibility:
+      "Interactive cards render as a real button/link, are keyboard focusable, expose a visible focus ring, and respect prefers-reduced-motion (no transform on hover). Flat and plain cards are non-interactive containers.",
+  },
+  {
     id: "workspace-fields",
     component: "WorkspaceField",
     displayName: "Fields and controls",
@@ -533,6 +592,54 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["required", "searchable", "selected", "checked", "textarea"],
     interactive: true,
     accessibility: "Every control has a programmatic label; dropdowns support typing to filter, arrow-key navigation, and scroll selection.",
+  },
+  {
+    id: "switch",
+    component: "Switch",
+    displayName: "Switch",
+    category: "Forms & inputs",
+    scope: "shared",
+    description:
+      "The one canonical on/off toggle. Renders role=\"switch\" with aria-checked, keyboard support and a visible focus ring. No page hand-rolls a toggle from a Button plus positioned spans.",
+    status: "stable",
+    source: "src/components/ui/switch.tsx",
+    render: () => (
+      <div className="mnx-catalogue-inline">
+        <Switch label="Notifications" checked onCheckedChange={() => {}}>On</Switch>
+        <Switch label="Auto-sync" checked={false} onCheckedChange={() => {}}>Off</Switch>
+        <Switch label="Query processing" tone="warning" size="sm" checked onCheckedChange={() => {}}>
+          Small · warning tone
+        </Switch>
+        <Switch label="Disabled toggle" checked disabled onCheckedChange={() => {}}>Disabled</Switch>
+      </div>
+    ),
+    themes,
+    states: ["on", "off", "sm", "warning tone", "disabled"],
+    interactive: true,
+    accessibility:
+      "role=switch + aria-checked, toggles on Space/Enter, exposes an accessible name via label, shows a focus ring, and honours prefers-reduced-motion.",
+  },
+  {
+    id: "chip",
+    component: "Chip",
+    displayName: "Chip",
+    category: "Forms & inputs",
+    scope: "shared",
+    description:
+      "Small tappable suggestion / quick-fill pill — response templates, saved phrases, quick filter toggles. A real button; for a static label use Badge instead.",
+    status: "stable",
+    source: "src/components/ui/chip.tsx",
+    render: () => (
+      <div className="mnx-catalogue-inline">
+        <Chip onClick={() => {}}>Documents re-submitted via ICEGATE</Chip>
+        <Chip active onClick={() => {}}>Selected quick filter</Chip>
+        <Chip disabled onClick={() => {}}>Disabled</Chip>
+      </div>
+    ),
+    themes,
+    states: ["default", "active", "disabled"],
+    interactive: true,
+    accessibility: "Rendered as a button with a focus ring; carries its own accessible text.",
   },
   {
     id: "document-dropzone-field",

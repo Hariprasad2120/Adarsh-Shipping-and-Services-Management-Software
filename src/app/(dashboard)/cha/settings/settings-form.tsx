@@ -12,6 +12,7 @@ import {ChevronRight,Edit,Plus,Save,Search,ShieldCheck,Trash2,Truck,Users,Workfl
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChaPageHeader } from "@/modules/cha/components/workspace/cha-operations-shared";
 import {updateSettingsAction,createJobTypeAction,updateJobTypeManifestConfigAction,deleteJobTypeAction,createShipmentTypeAction,deleteShipmentTypeAction,createTeamGroupAction,deleteTeamGroupAction,upsertDocumentCategoryAction,deleteDocumentCategoryAction,upsertDocumentItemAction,deleteDocumentItemAction} from "@/modules/cha/actions";
 import { setPortalFeatureFlagAction } from "@/modules/customer-portal/actions";
 
@@ -654,19 +655,24 @@ export function SettingsForm({
   const getTabButtonClass = (tabKey: SettingsTab) =>
     `group relative flex min-h-[50px] min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all duration-300 ease-out motion-reduce:transition-none ${
       activeTab === tabKey
-        ? "mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel"
-        : "mnx-border-accent mnx-bg-surface mnx-text-muted shadow-sm hover:-translate-y-0.5 mnx-hover-accent mnx-hover-accent mnx-shadow-panel active:scale-[0.99]"
+        ? "mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel"
+        : "mnx-border mnx-bg-surface mnx-text-muted shadow-sm hover:-translate-y-0.5 mnx-hover-accent mnx-shadow-panel active:scale-[0.99]"
     }`;
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-none space-y-5">
-      <section className="w-full space-y-4">
-        <div className="flex justify-end">
+      <ChaPageHeader
+        eyebrow="CHA settings"
+        title="Configuration"
+        description="Control job numbering, access, expense workflows, clearance data, team groups and required-document rules for the CHA module."
+        actions={
           <Button type="submit" disabled={loading} className="w-full sm:w-auto transition-all duration-200 hover:-translate-y-0.5 mnx-shadow-panel active:translate-y-0 motion-reduce:transition-none">
             <Save size={16} />
             {loading ? "Saving..." : "Save Configuration"}
           </Button>
-        </div>
+        }
+      />
+      <section className="w-full space-y-4">
 
         <div className="sticky top-0 z-20 grid w-full grid-cols-2 gap-2 py-1 backdrop-blur sm:grid-cols-3 lg:grid-cols-7">
           {SETTINGS_TABS.map((tab) => (
@@ -682,7 +688,6 @@ export function SettingsForm({
               />
               <span className="min-w-0 flex-1 overflow-hidden">
                 <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.1em] xl:text-xs xl:tracking-[0.12em]">{tab.label}</span>
-                <span className={`hidden truncate text-[10px] transition-colors 2xl:block ${activeTab === tab.key ? "mnx-text-muted" : "mnx-text-muted mnx-text-primary"}`}>{tab.description}</span>
               </span>
             </Button>
           ))}
@@ -690,7 +695,7 @@ export function SettingsForm({
       </section>
 
       {activeTab === "overview" ? (
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <section className="grid grid-cols-1 gap-4">
           <Card>
             <CardHeader>
               <CardTitle>Configuration Health</CardTitle>
@@ -735,36 +740,20 @@ export function SettingsForm({
 
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle>Related</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {SETTINGS_TABS.filter((tab) => tab.key !== "overview").map((tab) => (
-                <Button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className="mnx-plain mnx-bg-surface mnx-border mnx-border-accent mnx-shadow-panel flex w-full items-center justify-between rounded-xl border mnx-border mnx-bg-surface px-4 py-3 text-left shadow-sm transition-all"
-                >
-                  <span>
-                    <span className="block text-sm font-medium mnx-text-primary">{tab.label}</span>
-                    <span className="block text-xs mnx-text-muted">{tab.description}</span>
-                  </span>
-                  <ChevronRight size={16} className="mnx-text-muted" />
-                </Button>
-              ))}
-
+            <CardContent>
               <a
                 href="/customer-portal"
                 target="_blank"
                 rel="noreferrer"
-                className="mnx-plain mnx-bg-surface mnx-border mnx-border-warning mnx-shadow-panel flex w-full items-center justify-between rounded-xl border mnx-border mnx-bg-surface px-4 py-3 text-left shadow-sm transition-all"
-                style={{ borderLeftColor: "var(--mnx-warning)" }}
+                className="mnx-plain mnx-bg-surface mnx-border mnx-shadow-panel flex w-full items-center justify-between rounded-xl border mnx-border mnx-bg-surface px-4 py-3 text-left shadow-sm transition-all"
               >
                 <span>
-                  <span className="block text-sm font-medium mnx-text-warning uppercase">Customer Portal Access ➔</span>
-                  <span className="block text-xs mnx-text-muted">Navigate to customer portal login & tracking dashboard</span>
+                  <span className="block text-sm font-medium mnx-text-primary">Customer Portal</span>
+                  <span className="block text-xs mnx-text-muted">Open the customer portal login &amp; shipment tracking dashboard</span>
                 </span>
-                <ChevronRight size={16} className="mnx-text-warning" />
+                <ChevronRight size={16} className="mnx-text-muted" />
               </a>
             </CardContent>
           </Card>

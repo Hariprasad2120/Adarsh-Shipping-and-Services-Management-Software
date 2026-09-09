@@ -100,6 +100,7 @@ export default async function ChaApprovalsPage() {
         <WorkspacePanel className="overflow-hidden">
           <div className="border-b mnx-border px-5 py-5">
             <WorkspaceSectionHeading
+              className="mnx-cha-outside-heading"
               index="01"
               title="Pending Approvals"
               description="Checklist audits routed to you for review, verification, and approval."
@@ -180,6 +181,7 @@ export default async function ChaApprovalsPage() {
         <WorkspacePanel className="overflow-hidden">
           <div className="border-b mnx-border px-5 py-5">
             <WorkspaceSectionHeading
+              className="mnx-cha-outside-heading"
               index="02"
               title="Job Deletion Requests"
               description="High-risk CHA deletion approvals assigned to you as the controlling manager."

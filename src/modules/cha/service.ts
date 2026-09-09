@@ -290,7 +290,7 @@ export const DEFAULT_DOCUMENT_REQUIREMENTS: DefaultDocumentRequirementCategorySe
     items: [
       { name: "Invoice", sortOrder: 1, isRequiredDefault: true },
       { name: "Packing List", sortOrder: 2, isRequiredDefault: true },
-      { name: "Bill of Landing", sortOrder: 3, isRequiredDefault: true },
+      { name: "Bill of Lading", sortOrder: 3, isRequiredDefault: true },
       { name: "ASEAN Certificate", sortOrder: 4, isRequiredDefault: false },
       { name: "Country of Origin", sortOrder: 5, isRequiredDefault: false },
       { name: "Phytosanitary Certificate", sortOrder: 6, isRequiredDefault: false },
@@ -12186,7 +12186,14 @@ export async function completeFilingNode(
         const dueAt =
           existingResponsesMap.get(item.id)?.dueAt ??
           await calculateSlaDueDate(startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", orgId);
+        // The UI collects a single node-level "Stage Delay Remarks" field
+        // (data.delayRemarks) that covers an SLA breach for the whole stage,
+        // and no longer surfaces a per-checklist-item delay-remarks input.
+        // Only fall back to the per-item requirement when the stage-level
+        // remark is absent.
+        const stageDelayRemarksProvided = !!data.delayRemarks && data.delayRemarks.trim().length > 0;
         if (
+          !stageDelayRemarksProvided &&
           res?.isChecked &&
           item.delayRemarksRequired &&
           dueAt.getTime() < now.getTime() &&
@@ -13787,6 +13794,12 @@ export async function listFilingQueryEscalationWarnings(
   return buildFilingQueryEscalationWarnings({ actorId, orgId, jobIds });
 }
 
+function parseOptionalDate(value: string | null | undefined): Date | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export async function createFilingWorkflowQuery(
   actorId: string,
   orgId: string,
@@ -13796,6 +13809,10 @@ export async function createFilingWorkflowQuery(
     title: string;
     details: string;
     reminderTime?: string;
+    referenceNumber?: string;
+    officerName?: string;
+    receivedAt?: string;
+    responseDueAt?: string;
   },
 ) {
   const instance = await db.filingWorkflowInstance.findUniqueOrThrow({
@@ -13812,6 +13829,10 @@ export async function createFilingWorkflowQuery(
 
   const node = instance.version.nodes.find((entry) => entry.id === nodeRun.nodeId);
   const reminderTime = input.reminderTime?.trim() || DEFAULT_QUERY_REMINDER_TIME;
+  const receivedAt = parseOptionalDate(input.receivedAt);
+  const responseDueAt = parseOptionalDate(input.responseDueAt);
+  const referenceNumber = input.referenceNumber?.trim() || null;
+  const officerName = input.officerName?.trim() || null;
   const query = await db.filingWorkflowQuery.create({
     data: {
       instanceId: instance.id,
@@ -13820,6 +13841,10 @@ export async function createFilingWorkflowQuery(
       title: input.title.trim() || "Customs Query",
       details: input.details.trim(),
       reminderTime,
+      referenceNumber,
+      officerName,
+      receivedAt,
+      responseDueAt,
       createdById: actorId,
     },
   });
@@ -13835,6 +13860,10 @@ export async function createFilingWorkflowQuery(
     metadata: {
       reminderTime,
       details: query.details,
+      referenceNumber,
+      officerName,
+      receivedAt: receivedAt?.toISOString() ?? null,
+      responseDueAt: responseDueAt?.toISOString() ?? null,
     },
   });
 
@@ -13932,6 +13961,8 @@ export async function updateFilingWorkflowQueryStatus(
   input: {
     status: "OPEN" | "REPLIED" | "CLOSED";
     details?: string;
+    responseText?: string;
+    respondedByName?: string;
   },
 ) {
   const now = await getNow();
@@ -13956,11 +13987,18 @@ export async function updateFilingWorkflowQueryStatus(
     },
   });
 
+  const responseText =
+    typeof input.responseText === "string" && input.responseText.trim() ? input.responseText.trim() : null;
+  const capturesResponse = input.status === "REPLIED" && Boolean(responseText);
+
   const updated = await db.filingWorkflowQuery.update({
     where: { id: queryId },
     data: {
       status: input.status,
       details: typeof input.details === "string" && input.details.trim() ? input.details.trim() : undefined,
+      responseText: responseText ?? undefined,
+      respondedAt: capturesResponse ? now : query.respondedAt,
+      respondedById: capturesResponse ? actorId : query.respondedById,
       closedAt: input.status === "CLOSED" ? now : null,
       closedById: input.status === "CLOSED" ? actorId : null,
     },
@@ -13979,6 +14017,8 @@ export async function updateFilingWorkflowQueryStatus(
     metadata: {
       details: typeof input.details === "string" && input.details.trim() ? input.details.trim() : null,
       status: input.status,
+      responseText,
+      respondedByName: input.respondedByName?.trim() || null,
     },
   });
 

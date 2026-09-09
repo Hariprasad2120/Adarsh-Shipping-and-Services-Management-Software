@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { Help, Settings } from "@carbon/icons-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PrimaryNavSection } from "@/lib/navigation";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
@@ -269,13 +270,7 @@ function MonolithSidebarUserMenu({
 }) {
   const { state } = useSidebar();
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState<{
-    bottom: number;
-    left: number;
-    width: number;
-  } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const collapsed = state === "collapsed";
 
   useEffect(() => {
@@ -298,46 +293,9 @@ function MonolithSidebarUserMenu({
     setOpen(false);
   }, [collapsed]);
 
-  // The popover is position: fixed so it escapes the sidebar's overflow
-  // clipping — anchor it to the trigger and keep it in sync on scroll/resize.
-  useEffect(() => {
-    if (!open) return;
-
-    const update = () => {
-      const trigger = triggerRef.current;
-      if (!trigger) return;
-      const rect = trigger.getBoundingClientRect();
-      const viewportPadding = 16;
-      const width = Math.min(320, window.innerWidth - viewportPadding * 2);
-      const preferredLeft = collapsed ? rect.right + 12 : rect.left;
-      const left = Math.max(
-        viewportPadding,
-        Math.min(preferredLeft, window.innerWidth - width - viewportPadding),
-      );
-      const preferredBottom = collapsed
-        ? window.innerHeight - rect.bottom
-        : window.innerHeight - rect.top + 10;
-      const bottom = Math.max(
-        viewportPadding,
-        Math.min(preferredBottom, window.innerHeight - viewportPadding),
-      );
-
-      setPosition({ bottom, left, width });
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [collapsed, open]);
-
   return (
     <div ref={containerRef} className="relative">
       <button
-        ref={triggerRef}
         type="button"
         aria-label="Open profile menu"
         aria-expanded={open}
@@ -372,24 +330,13 @@ function MonolithSidebarUserMenu({
         />
       </button>
 
-      {open && position ? (
+      {open ? (
         <section
-          className="mnx-sidebar-account-menu"
+          className={cn(
+            "mnx-sidebar-account-menu",
+            collapsed ? "mnx-sidebar-account-menu-flyout" : "mnx-sidebar-account-menu-inline",
+          )}
           role="menu"
-          style={{
-            bottom: position.bottom,
-            boxSizing: "border-box",
-            left: position.left,
-            maxHeight: "min(32rem, calc(100dvh - 2rem))",
-            maxWidth: "calc(100vw - 2rem)",
-            minWidth: 0,
-            overflowY: "auto",
-            position: "fixed",
-            right: "auto",
-            top: "auto",
-            width: position.width,
-            zIndex: 70,
-          }}
         >
           <header>
             <span>{initials(userName)}</span>
@@ -471,6 +418,7 @@ export function MonolithAppSidebar({
   userId: string;
   userName: string;
 }) {
+  const pathname = usePathname();
   const { isMobile, setOpen, setOpenMobile, state } = useSidebar();
   const collapsed = state === "collapsed";
   const [pinned, setPinned] = useState(false);
@@ -542,6 +490,24 @@ export function MonolithAppSidebar({
         )}
       >
         <SidebarMenu>
+          <SidebarMenuItem>
+            <MonolithSidebarLink
+              href="/admin/design-system"
+              icon={Help}
+              isActive={matchesPath(pathname, "/admin/design-system")}
+              label="Help & Support"
+              onNavigate={() => setOpenMobile(false)}
+            />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <MonolithSidebarLink
+              href="/admin/settings"
+              icon={Settings}
+              isActive={matchesPath(pathname, "/admin/settings")}
+              label="Settings"
+              onNavigate={() => setOpenMobile(false)}
+            />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <MonolithSidebarUserMenu
               caps={caps}

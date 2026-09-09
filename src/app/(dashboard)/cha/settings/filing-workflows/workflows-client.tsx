@@ -2679,12 +2679,22 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {nodes.map((node) => {
                   const selected = node.id === selectedNodeId;
                   return (
-                    <Button
+                    <div
                       key={node.id}
-                      type="button"
-                      className={`absolute rounded-2xl border mnx-bg-surface p-4 text-left shadow-sm backdrop-blur transition-all ${selected ? "mnx-border-accent mnx-shadow-panel" : "mnx-border mnx-hover-accent mnx-shadow-panel"
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selected}
+                      className={`mnx-plain absolute block overflow-hidden rounded-2xl border mnx-bg-surface p-4 text-left shadow-sm backdrop-blur transition-all outline-none ${selected ? "mnx-border-accent mnx-shadow-panel" : "mnx-border mnx-hover-accent mnx-shadow-panel"
                         } ${node.isActive ? "" : "opacity-55"}`}
                       style={{ left: node.positionX, top: node.positionY, width: NODE_WIDTH, height: NODE_HEIGHT }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedNodeId(node.id);
+                          setSelectedEdgeId(null);
+                          setPropertiesOpen(true);
+                        }
+                      }}
                       onClick={() => { setSelectedNodeId(node.id); setSelectedEdgeId(null); setPropertiesOpen(true); }}
                       onPointerDown={(event) => {
                         event.preventDefault();
@@ -2768,10 +2778,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         {node.description || "No stage description configured."}
                       </p>
                       <div className="mt-4 flex items-center justify-between border-t mnx-border pt-3 text-xs mnx-text-muted">
-                        <span>{describeNodeType(node)}</span>
-                        <span className="mnx-numeric">{node.slaDuration} {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}</span>
+                        <span className="truncate">{describeNodeType(node)}</span>
+                        <span className="mnx-numeric shrink-0">{node.slaDuration} {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}</span>
                       </div>
-                    </Button>
+                    </div>
                   );
                 })}
               </div>

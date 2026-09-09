@@ -1791,6 +1791,10 @@ export async function createFilingWorkflowQueryAction(
     title: string;
     details: string;
     reminderTime?: string;
+    referenceNumber?: string;
+    officerName?: string;
+    receivedAt?: string;
+    responseDueAt?: string;
   },
 ): Promise<ActionResponse> {
   try {
@@ -1809,6 +1813,8 @@ export async function updateFilingWorkflowQueryStatusAction(
   data: {
     status: "OPEN" | "REPLIED" | "CLOSED";
     details?: string;
+    responseText?: string;
+    respondedByName?: string;
   },
 ): Promise<ActionResponse> {
   try {

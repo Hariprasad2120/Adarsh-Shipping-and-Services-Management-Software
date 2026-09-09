@@ -1337,6 +1337,17 @@ function isRequirementUploaded(requirement: WorkflowDocumentRequirement) {
   return Boolean(currentVersion) && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(requirement.status);
 }
 
+// A requirement no longer needs action once it is uploaded OR has been declared
+// N/A / exempt. Group summaries must treat both as resolved so a stage that the
+// workflow gate already considers "Valid" doesn't still read as "8 pending".
+function isRequirementResolved(requirement: WorkflowDocumentRequirement) {
+  return (
+    isRequirementUploaded(requirement) ||
+    requirement.status === "NOT_AVAILABLE" ||
+    Boolean(requirement.exception)
+  );
+}
+
 export function WorkflowDocumentAccordion({
   categoryGroups,
   allRequirements,
@@ -1453,7 +1464,7 @@ export function WorkflowDocumentAccordion({
 
       <div className="space-y-2">
         {categoryGroups.map((group) => {
-          const uploadedInGroup = group.requirements.filter(isRequirementUploaded).length;
+          const resolvedInGroup = group.requirements.filter(isRequirementResolved).length;
           const isCategoryOpen = openCategory === group.categoryName;
 
           return (
@@ -1469,11 +1480,11 @@ export function WorkflowDocumentAccordion({
                   <span className="block truncate text-sm font-semibold mnx-text-primary">{group.categoryName}</span>
                   <span className="mt-0.5 block text-xs mnx-text-muted">
                     {group.requirements.length} document{group.requirements.length === 1 ? "" : "s"} ·{" "}
-                    {group.requirements.length - uploadedInGroup} pending
+                    {group.requirements.length - resolvedInGroup} pending
                   </span>
                 </span>
                 <span className="shrink-0 rounded-full mnx-bg-soft px-2.5 py-1 text-xs font-medium mnx-text-muted">
-                  {uploadedInGroup}/{group.requirements.length}
+                  {resolvedInGroup}/{group.requirements.length}
                 </span>
                 <ChevronDown
                   size={16}

@@ -132,3 +132,6 @@ ngrok.yml
 /graphify-out/
 /Parsec *.mp4
 .playwright-mcp/
+
+# CHA audit debug screenshots (Claude Code Playwright session)
+/cha-*.png

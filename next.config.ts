@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
     // this the entire library ends up in the JS bundle.
     optimizePackageImports: ["lucide-react", "framer-motion", "@carbon/icons-react"],
 
+    // Escape hatch: on a badly contended Windows box `next build`'s per-CPU
+    // worker fan-out (page-data + static generation) can race Defender's
+    // on-write scan and throw EPERM opening a freshly written server chunk.
+    // Not needed by default (see serverExternalPackages: "xlsx" below, which
+    // removed the deterministic trigger), but `NEXT_BUILD_CPUS=<n>` caps the
+    // pool if a machine still hits it.
+    ...(process.env.NEXT_BUILD_CPUS
+      ? { cpus: Number(process.env.NEXT_BUILD_CPUS) }
+      : {}),
+
     // Server Action body size limit (covers file uploads sent via FormData,
     // e.g. CHA document uploads). Next.js default is 1mb.
     serverActions: {
@@ -18,8 +28,18 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Suppress Prisma from being bundled into Edge/client chunks.
-  serverExternalPackages: ["@prisma/client", "bcryptjs"],
+  // Keep heavy Node-only libraries out of the turbopack server bundle and load
+  // them from node_modules at runtime instead.
+  //  - @prisma/client / bcryptjs: native / generated code that must not be
+  //    re-bundled into Edge/client chunks.
+  //  - xlsx (SheetJS): a large parser whose minified source reliably trips
+  //    Windows Defender's heuristic scanner when inlined into a generated
+  //    `.next/server/chunks/*` file — Defender then denies read access to that
+  //    one chunk and `next build` dies with `EPERM … Failed to collect page
+  //    data` for whichever route pulled it in (here /cha/masters/[key]/download
+  //    via the customs-master service). Externalizing it removes the inlined
+  //    copy; the runtime code path and the safe-xlsx wrapper are unchanged.
+  serverExternalPackages: ["@prisma/client", "bcryptjs", "xlsx"],
   turbopack: {},
 
   // The reference and legacy backup trees are intentionally retained for the

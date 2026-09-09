@@ -6,9 +6,16 @@ import { resolveInside } from "@/lib/security";
 import { getPortalSession } from "@/modules/customer-portal/auth";
 import { getPortalDocumentVersion } from "@/modules/customer-portal/service";
 
-const PORTAL_UPLOAD_ROOT = path.resolve(
-  process.env.CUSTOMER_PORTAL_UPLOAD_ROOT || path.join(process.cwd(), "storage", "customer-portal-uploads"),
-);
+// Lazily resolved so the module scope stays free of process.cwd(): a
+// module-scope cwd() call makes Next's NFT tracer pull the whole project into
+// the route's server chunk (build EPERM on the oversized root chunk).
+let cachedPortalUploadRoot: string | undefined;
+function portalUploadRoot() {
+  return (cachedPortalUploadRoot ??= path.resolve(
+    process.env.CUSTOMER_PORTAL_UPLOAD_ROOT ||
+      path.join(process.cwd(), "storage", "customer-portal-uploads"),
+  ));
+}
 
 export async function GET(
   _request: Request,
@@ -26,7 +33,7 @@ export async function GET(
   let absolutePath: string;
   try {
     absolutePath = version.fileKey.startsWith("customer-portal-local:")
-      ? resolveInside(PORTAL_UPLOAD_ROOT, version.fileKey.slice("customer-portal-local:".length))
+      ? resolveInside(portalUploadRoot(), version.fileKey.slice("customer-portal-local:".length))
       : resolveInside(path.join(process.cwd(), "public"), version.fileKey);
   } catch {
     return new Response("Invalid file path", { status: 400 });

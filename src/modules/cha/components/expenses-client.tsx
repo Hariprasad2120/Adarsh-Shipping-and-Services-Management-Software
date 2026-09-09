@@ -1739,9 +1739,11 @@ export function ExpensesClient({
 
             <div className="flex min-w-0 flex-1 items-center gap-2 md:max-w-3xl">
               <div className="relative min-w-0 flex-1">
-                <span className="absolute inset-y-0 left-3 flex items-center mnx-text-muted">
-                  <Search size={16} />
-                </span>
+                <Search
+                  size={16}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 mnx-text-muted"
+                />
                 <Input
                   type="text"
                   placeholder="Search job #, customer, requester..."
@@ -1750,7 +1752,7 @@ export function ExpensesClient({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") applyFilters();
                   }}
-                  className="h-10 w-full pl-10 pr-4 text-sm font-sans"
+                  className="h-10 w-full pr-4 text-sm font-sans"
                 />
               </div>
 

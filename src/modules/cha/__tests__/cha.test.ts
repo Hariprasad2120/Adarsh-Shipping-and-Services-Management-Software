@@ -570,7 +570,7 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
     const reqs = await db.chaJobDocumentRequirement.findMany({ where: { jobId: job.id } });
 
-    const blReq = reqs.find((r) => r.name === "Bill of Landing")!;
+    const blReq = reqs.find((r) => r.name === "Bill of Lading" || r.name === "Bill of Landing")!;
     const invReq = reqs.find((r) => r.name === "Invoice")!;
     const pkReq = reqs.find((r) => r.name === "Packing List")!;
     const iecReq = reqs.find((r) => r.name === "IEC")!;

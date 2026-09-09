@@ -6,9 +6,16 @@ import * as driveClient from "@/lib/google-drive-client";
 import fs from "fs/promises";
 import path from "path";
 
-const PORTAL_UPLOAD_ROOT = path.resolve(
-  process.env.CUSTOMER_PORTAL_UPLOAD_ROOT || path.join(process.cwd(), "storage", "customer-portal-uploads"),
-);
+// Lazily resolved so the module scope stays free of process.cwd(): a
+// module-scope cwd() call makes Next's NFT tracer pull the whole project into
+// the route's server chunk (build EPERM on the oversized root chunk).
+let cachedPortalUploadRoot: string | undefined;
+function portalUploadRoot() {
+  return (cachedPortalUploadRoot ??= path.resolve(
+    process.env.CUSTOMER_PORTAL_UPLOAD_ROOT ||
+      path.join(process.cwd(), "storage", "customer-portal-uploads"),
+  ));
+}
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   ".pdf": "application/pdf",
@@ -68,7 +75,7 @@ export async function GET(
     if (fileKey.startsWith("customer-portal-local:")) {
       let filePath: string;
       try {
-        filePath = resolveInside(PORTAL_UPLOAD_ROOT, fileKey.slice("customer-portal-local:".length));
+        filePath = resolveInside(portalUploadRoot(), fileKey.slice("customer-portal-local:".length));
       } catch {
         return new Response("Invalid file path", { status: 400 });
       }

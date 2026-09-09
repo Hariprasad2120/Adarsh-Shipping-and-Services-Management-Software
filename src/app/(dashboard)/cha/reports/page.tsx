@@ -22,6 +22,12 @@ import {
   ChaPageHeader,
 } from "@/modules/cha/components/workspace/cha-operations-shared";
 
+function formatInr(value: number) {
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? "-" : "";
+  return `${sign}₹${Math.abs(rounded).toLocaleString("en-IN")}`;
+}
+
 export default async function ChaReportsPage({
   searchParams,
 }: {
@@ -142,16 +148,16 @@ export default async function ChaReportsPage({
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="mnx-text-muted font-medium">Expected Billing:</span>
-              <span className="mnx-numeric mnx-text-primary">₹{totalExpectedAdvance.toLocaleString("en-IN")}</span>
+              <span className="mnx-numeric mnx-text-primary">{formatInr(totalExpectedAdvance)}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="mnx-text-muted font-medium">Collected:</span>
-              <span className="mnx-numeric mnx-text-success mnx-text-success">₹{totalReceivedAdvance.toLocaleString("en-IN")}</span>
+              <span className="mnx-numeric mnx-text-success mnx-text-success">{formatInr(totalReceivedAdvance)}</span>
             </div>
             <div className="border-t mnx-border pt-1.5 flex justify-between text-xs mnx-border">
               <span className="mnx-text-muted font-semibold">Outstanding Balance:</span>
               <span className="mnx-numeric mnx-text-warning mnx-text-warning">
-                ₹{Math.max(0, totalExpectedAdvance - totalReceivedAdvance).toLocaleString("en-IN")}
+                {formatInr(Math.max(0, totalExpectedAdvance - totalReceivedAdvance))}
               </span>
             </div>
           </div>
@@ -166,12 +172,12 @@ export default async function ChaReportsPage({
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="mnx-text-muted font-medium">Total Paid Expenses:</span>
-              <span className="mnx-numeric mnx-text-primary">₹{totalDisbursedExpense.toLocaleString("en-IN")}</span>
+              <span className="mnx-numeric mnx-text-primary">{formatInr(totalDisbursedExpense)}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="mnx-text-muted font-medium">Net Financed Balance:</span>
               <span className="mnx-numeric mnx-text-success mnx-text-success">
-                ₹{(totalReceivedAdvance - totalDisbursedExpense).toLocaleString("en-IN")}
+                {formatInr(totalReceivedAdvance - totalDisbursedExpense)}
               </span>
             </div>
             <p className="text-[10px] mnx-text-muted italic border-t mnx-border pt-1.5 leading-relaxed mnx-border">
@@ -224,17 +230,22 @@ export default async function ChaReportsPage({
           </div>
           <form className="flex w-full gap-2 lg:max-w-xl">
             <div className="relative min-w-0 flex-1">
-              <span className="absolute inset-y-0 left-3 flex items-center mnx-text-muted">
-                <Search size={16} />
-              </span>
+              <Search
+                size={16}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 mnx-text-muted"
+              />
               <Input
                 name="q"
                 defaultValue={jobReportQuery}
                 placeholder="Search completed job number..."
-                className="h-11 w-full pl-10 text-sm"
+                className="h-11 w-full text-sm"
               />
             </div>
-            <Button className="rounded-xl mnx-bg-accent-soft px-5 text-xs font-medium uppercase tracking-wide mnx-text-muted transition-all mnx-hover-accent">
+            <Button
+              type="submit"
+              className="rounded-xl px-5 text-xs font-semibold uppercase tracking-wide"
+            >
               Search
             </Button>
           </form>
@@ -281,7 +292,9 @@ export default async function ChaReportsPage({
                           : new Date(job.updatedAt).toLocaleDateString("en-IN")}
                       </td>
                       <td className="mnx-numeric">
-                        Requested INR {requested.toLocaleString("en-IN")} / Paid INR {paid.toLocaleString("en-IN")}
+                        <span className="mnx-text-muted">Requested</span> {formatInr(requested)}
+                        {" · "}
+                        <span className="mnx-text-muted">Paid</span> {formatInr(paid)}
                       </td>
                       <td>
                         <div className="flex flex-wrap gap-2">
@@ -312,7 +325,7 @@ export default async function ChaReportsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Delayed filings reports */}
         <div className="lg:col-span-2 rounded-xl border mnx-border mnx-bg-surface p-6 space-y-6 shadow-sm mnx-border">
-          <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+          <h2 className="mnx-heading-2 mnx-text-primary flex items-center gap-2">
             <AlertTriangle size={18} className="mnx-text-warning" /> Delay-Justified Customs Filings
           </h2>
 
@@ -360,7 +373,7 @@ export default async function ChaReportsPage({
 
         {/* Right: Full organization Audit Logs feed */}
         <div className="rounded-xl border mnx-border mnx-bg-surface p-6 space-y-6 shadow-sm mnx-border">
-          <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+          <h2 className="mnx-heading-2 mnx-text-primary flex items-center gap-2">
             <FileText size={18} className="mnx-text-accent" /> Organization Audit Feed
           </h2>
 

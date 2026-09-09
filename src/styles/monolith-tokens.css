@@ -79,8 +79,11 @@ html[data-theme="dark"] {
   --mn-layout-page-gutter: clamp(1.5rem, 2.2vw, 2.25rem);
   --mn-layout-page-gutter-tablet: 1.5rem;
   --mn-layout-page-gutter-mobile: 1rem;
-  --mn-layout-page-bottom: 3.5rem;
-  --mn-layout-page-bottom-mobile: 2.25rem;
+  /* Bottom clearance also has to keep the persistent floating assistant
+     (.mnx-mona-pet, ~90px tall, pinned bottom-right) from covering the last
+     row / action bar on short pages. */
+  --mn-layout-page-bottom: 6.5rem;
+  --mn-layout-page-bottom-mobile: 5rem;
   --mn-radius-control: var(--frappe-radius-sm);
   --mn-radius-panel: var(--frappe-radius-md);
   --mn-radius-feature: var(--frappe-radius-lg);

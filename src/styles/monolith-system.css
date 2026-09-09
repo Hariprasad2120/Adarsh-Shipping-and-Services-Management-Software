@@ -2730,22 +2730,38 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-sidebar-account-menu {
-  position: fixed !important;
-  top: auto !important;
-  right: auto !important;
+  position: absolute;
   z-index: 70;
   box-sizing: border-box;
-  width: min(320px, calc(100vw - 2rem)) !important;
-  min-width: 0 !important;
-  max-width: calc(100vw - 2rem) !important;
+  min-width: 0;
   max-height: min(32rem, calc(100dvh - 2rem));
   overflow: hidden auto;
-  border: 1px solid var(--sidebar-border);
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 20%, var(--sidebar-border));
   border-radius: var(--mnx-radius-md);
-  background: var(--sidebar);
+  background: color-mix(in srgb, var(--sidebar-foreground) 15%, var(--sidebar));
   color: var(--sidebar-foreground);
-  box-shadow: var(--mnx-floating-shadow);
+  box-shadow:
+    0 16px 40px -12px color-mix(in srgb, black 55%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--sidebar-foreground) 10%, transparent);
   animation: mnx-panel-in 180ms ease both;
+}
+
+/* Expanded rail: opens inline, upward, confined to the sidebar's own width —
+   never floats over the main content area. */
+.mnx-sidebar-account-menu-inline {
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+/* Collapsed (icon) rail: too narrow to host the menu inline, so it flies out
+   to the right of the trigger — still anchored to the sidebar, not the
+   viewport. */
+.mnx-sidebar-account-menu-flyout {
+  bottom: 0;
+  left: calc(100% + 12px);
+  width: min(320px, calc(100vw - var(--mnx-sidebar-width, 4rem) - 3rem));
 }
 
 .mnx-sidebar-account-menu > header {
@@ -2755,7 +2771,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   gap: 13px;
   padding: 18px;
   border-bottom: 1px solid var(--sidebar-border);
-  background: color-mix(in srgb, var(--sidebar-foreground) 6%, var(--sidebar));
+  background: color-mix(in srgb, var(--sidebar-foreground) 22%, var(--sidebar));
 }
 
 .mnx-sidebar-account-menu > header > span {
@@ -3759,6 +3775,22 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.72;
+}
+
+/* Solid variants force their foreground with !important, which otherwise wins
+   over :disabled and leaves white text on the light disabled surface. */
+.mnx-button-primary:disabled,
+.mnx-button-accent:disabled,
+.mnx-button-destructive:disabled {
+  --mnx-button-fg: var(--mnx-text-soft);
+}
+.mnx-button-primary:disabled,
+.mnx-button-primary:disabled:hover,
+.mnx-button-accent:disabled,
+.mnx-button-destructive:disabled {
+  color: var(--mnx-text-soft) !important;
+  background: var(--mnx-bg-subtle, var(--mnx-soft));
+  border-color: var(--mnx-border);
 }
 
 .mnx-button > svg,
@@ -4883,7 +4915,28 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   transition:
     border-color var(--mn-motion-fast) var(--mnx-hover-ease),
     box-shadow var(--mn-motion-fast) var(--mnx-hover-ease),
+    transform var(--mn-motion-fast) var(--mnx-hover-ease),
     background var(--mn-motion-fast) var(--mnx-hover-ease);
+}
+
+/* ------------------------------------------------------------------ *
+ *  THE THREE CARD FAMILIES — canonical <Card variant> (ui/card.tsx). *
+ *  interactive = 3D elevated · flat = 2D restrained (default) ·      *
+ *  plain = quiet container. No page may invent a fourth.            *
+ * ------------------------------------------------------------------ */
+.mnx-panel[data-variant="flat"] {
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-panel[data-variant="plain"] {
+  box-shadow: none;
+}
+
+.mnx-panel[data-variant="interactive"] {
+  box-shadow: var(--mnx-shadow);
+}
+.mnx-panel[data-variant="interactive"][data-interactive="true"] {
+  cursor: pointer;
 }
 
 .mnx-panel[data-interactive="true"]:hover {
@@ -4892,10 +4945,30 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   box-shadow: var(--mnx-shadow);
 }
 
+.mnx-panel[data-variant="interactive"][data-interactive="true"]:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-border));
+  box-shadow: var(--mn-shadow-floating, var(--mnx-shadow));
+  transform: translateY(-2px);
+}
+
 .mnx-panel[data-interactive="true"]:focus-visible {
   outline: none;
   box-shadow: var(--mnx-focus-ring);
   outline-offset: 3px;
+  transform: none;
+}
+
+/* Density steps — geometry stays fixed, padding only. */
+.mnx-panel[data-pad="none"] > .mnx-card-content,
+.mnx-panel[data-pad="none"] > .mnx-card-header { padding: 0; }
+.mnx-panel[data-pad="sm"] > .mnx-card-content,
+.mnx-panel[data-pad="sm"] > .mnx-card-header { padding: var(--mn-space-4); }
+.mnx-panel[data-pad="lg"] > .mnx-card-content,
+.mnx-panel[data-pad="lg"] > .mnx-card-header { padding: var(--mn-space-6); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-panel { transition: border-color var(--mn-motion-fast) var(--mnx-hover-ease); }
+  .mnx-panel[data-variant="interactive"][data-interactive="true"]:hover { transform: none; }
 }
 
 .mnx-metric-card {
@@ -7047,12 +7120,13 @@ svg + .mnx-field-control {
   box-shadow: none;
 }
 
-.mnx-workspace-state h1 {
+.mnx-workspace-state h1,
+.mnx-workspace-state h2 {
   margin: var(--mn-space-2) 0;
   color: var(--mnx-text);
-  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-size: 1.125rem;
   font-weight: 600;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.02em;
 }
 
 .mnx-workspace-state > p:not(.mnx-dashboard-spec-label) {
@@ -7753,6 +7827,23 @@ html[data-theme="dark"] .mnx-notification-record:hover,
   width: 100%;
 }
 
+/* Checklist internal/customer approval cards — keep the heading flush with the
+   card padding (the workspace SectionHeading otherwise indents it 0.85rem so it
+   doesn't line up with the body text) and give the body a steady rhythm. */
+.mnx-approval-card .mnx-section-heading {
+  padding-left: 0;
+  padding-bottom: 0;
+}
+
+.mnx-approval-card .mnx-section-heading h2 {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.mnx-approval-card > * + * {
+  margin-top: 0.75rem;
+}
+
 .mnx-checkbox {
   display: inline-flex;
   align-items: center;
@@ -7772,6 +7863,7 @@ html[data-theme="dark"] .mnx-notification-record:hover,
 }
 
 .mnx-checkbox > span {
+  position: relative;
   width: 18px;
   height: 18px;
   display: grid;
@@ -7781,21 +7873,63 @@ html[data-theme="dark"] .mnx-notification-record:hover,
   border-radius: 6px;
   background: var(--mnx-control-gradient);
   transition:
-    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
-    background var(--mnx-hover-duration) var(--mnx-hover-ease);
+    border-color 120ms var(--mnx-hover-ease),
+    background 120ms var(--mnx-hover-ease),
+    transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 150ms var(--mnx-hover-ease);
+}
+
+/* Press feedback — the box gives under the pointer, then snaps back. */
+.mnx-checkbox:active > span {
+  transform: scale(0.9);
 }
 
 .mnx-checkbox > input:checked + span {
   border-color: var(--mnx-accent);
   color: var(--mnx-accent-contrast);
   background: var(--mnx-accent-gradient);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mnx-accent) 16%, transparent);
+  animation: mnx-checkbox-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.mnx-checkbox > input:checked + span::after {
+.mnx-checkbox:active > input:checked + span {
+  transform: scale(0.9);
+}
+
+.mnx-checkbox > span::after {
   content: "✓";
   font-family: var(--mn-font-mono);
   font-size: 11px;
   font-weight: 900;
+  transform: scale(0) rotate(-12deg);
+  opacity: 0;
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.7, 0.5, 1),
+    opacity 120ms linear;
+}
+
+.mnx-checkbox > input:checked + span::after {
+  transform: scale(1) rotate(0);
+  opacity: 1;
+}
+
+@keyframes mnx-checkbox-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.82); }
+  75% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-checkbox > span,
+  .mnx-checkbox > span::after {
+    transition-duration: 1ms;
+    animation: none;
+  }
+  .mnx-checkbox:active > span,
+  .mnx-checkbox:active > input:checked + span {
+    transform: none;
+  }
 }
 
 .mnx-checkbox > input:focus-visible + span {
@@ -7806,6 +7940,363 @@ html[data-theme="dark"] .mnx-notification-record:hover,
 .mnx-checkbox > em {
   min-width: 0;
   font-style: normal;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Switch — the one canonical on/off toggle (ui/switch.tsx).         *
+ * ------------------------------------------------------------------ */
+.mnx-switch {
+  --mnx-switch-w: 40px;
+  --mnx-switch-h: 22px;
+  --mnx-switch-pad: 2px;
+  --mnx-switch-on: var(--mnx-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mnx-text);
+  font: inherit;
+  cursor: pointer;
+}
+.mnx-switch[data-size="sm"] {
+  --mnx-switch-w: 34px;
+  --mnx-switch-h: 19px;
+}
+.mnx-switch[data-tone="warning"] { --mnx-switch-on: var(--mnx-warning); }
+.mnx-switch[data-tone="success"] { --mnx-switch-on: var(--mnx-success); }
+.mnx-switch[data-tone="danger"] { --mnx-switch-on: var(--mnx-danger); }
+.mnx-switch:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.mnx-switch-text {
+  font-size: var(--mn-type-control-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mnx-switch-track {
+  position: relative;
+  flex: none;
+  width: var(--mnx-switch-w);
+  height: var(--mnx-switch-h);
+  border-radius: 999px;
+  border: 1px solid var(--mnx-border-strong);
+  background: var(--mnx-soft);
+  transition:
+    background var(--mnx-hover-duration, 140ms) var(--mnx-hover-ease, ease),
+    border-color var(--mnx-hover-duration, 140ms) var(--mnx-hover-ease, ease);
+}
+.mnx-switch[data-state="on"] .mnx-switch-track {
+  background: var(--mnx-switch-on);
+  border-color: var(--mnx-switch-on);
+}
+.mnx-switch-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--mnx-switch-pad);
+  width: calc(var(--mnx-switch-h) - var(--mnx-switch-pad) * 2 - 2px);
+  height: calc(var(--mnx-switch-h) - var(--mnx-switch-pad) * 2 - 2px);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transform: translate(0, -50%);
+  transition: transform var(--mnx-hover-duration, 140ms) var(--mnx-hover-ease, ease);
+}
+.mnx-switch[data-state="on"] .mnx-switch-thumb {
+  transform: translate(calc(var(--mnx-switch-w) - var(--mnx-switch-h)), -50%);
+}
+.mnx-switch:focus-visible {
+  outline: none;
+}
+.mnx-switch:focus-visible .mnx-switch-track {
+  box-shadow: var(--mnx-focus-ring);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mnx-switch-track,
+  .mnx-switch-thumb { transition: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Chip — small tappable suggestion pill (quick fills, templates).   *
+ * ------------------------------------------------------------------ */
+.mnx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--mnx-border);
+  border-radius: 999px;
+  background: var(--mnx-soft);
+  color: var(--mnx-muted);
+  font-size: var(--mn-type-helper-size);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--mnx-hover-duration, 140ms) var(--mnx-hover-ease, ease),
+    background var(--mnx-hover-duration, 140ms) var(--mnx-hover-ease, ease),
+    color var(--mnx-hover-duration, 140ms) var(--mnx-hover-ease, ease);
+}
+.mnx-chip:hover {
+  border-color: var(--mnx-border-strong);
+  background: var(--mnx-surface-hover, var(--mnx-soft));
+  color: var(--mnx-text);
+}
+.mnx-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--mnx-focus-ring);
+}
+.mnx-chip[data-active="true"] {
+  border-color: var(--mnx-accent);
+  background: var(--mnx-accent-soft);
+  color: var(--mnx-accent-text);
+}
+.mnx-chip-icon {
+  display: inline-flex;
+  flex: none;
+}
+.mnx-chip-icon svg {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Filing card — the one checklist / requirement card in the CHA     *
+ *  filing workflow. States drive only the left rail + border, never  *
+ *  a full-surface colour wash. Padding + rhythm are fixed here.      *
+ * ------------------------------------------------------------------ */
+.mnx-filing-card {
+  position: relative;
+  display: block;
+  /* Extra left padding so content clears the inset accent bar (::before). */
+  padding: var(--mn-space-4) var(--mn-space-4) var(--mn-space-4) calc(var(--mn-space-4) + 10px);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface);
+  transition:
+    border-color var(--mn-motion-fast) var(--mnx-hover-ease),
+    box-shadow var(--mn-motion-fast) var(--mnx-hover-ease),
+    transform var(--mn-motion-fast) var(--mnx-hover-ease),
+    background var(--mn-motion-fast) var(--mnx-hover-ease);
+}
+.mnx-filing-card > * + * {
+  margin-top: var(--mn-space-3);
+}
+.mnx-filing-card::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--mn-space-4);
+  /* Float the bar inside the card instead of sitting it on the border, so a
+     state-tinted card doesn't look glued to whatever is to its left. */
+  left: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--mnx-border-strong);
+}
+/* The active filing-node card renders content directly (no .mnx-card-content
+   child), so the shared `.mnx-panel { padding-inline: 0 }` rule left its inner
+   cards flush against the border. Restore real horizontal padding here. */
+.mnx-panel.mnx-filing-node-panel {
+  padding: var(--mn-space-5);
+}
+
+@media (max-width: 640px) {
+  .mnx-panel.mnx-filing-node-panel {
+    padding: var(--mn-space-4);
+  }
+}
+
+.mnx-filing-card[data-state="active"] { border-color: var(--mnx-accent); }
+.mnx-filing-card[data-state="active"]::before { background: var(--mnx-accent); }
+.mnx-filing-card[data-state="complete"] {
+  border-color: color-mix(in srgb, var(--mnx-success) 60%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-surface) 92%, var(--mnx-success));
+}
+.mnx-filing-card[data-state="complete"]::before { background: var(--mnx-success); }
+.mnx-filing-card[data-state="incomplete"],
+.mnx-filing-card[data-state="error"] {
+  border-color: color-mix(in srgb, var(--mnx-danger) 55%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-surface) 94%, var(--mnx-danger));
+}
+.mnx-filing-card[data-state="incomplete"]::before,
+.mnx-filing-card[data-state="error"]::before { background: var(--mnx-danger); }
+.mnx-filing-card[data-state="locked"] {
+  background: var(--mnx-soft);
+  opacity: 0.75;
+}
+.mnx-filing-card[data-state="locked"]::before { background: var(--mnx-border); }
+
+/* Whole card is the checklist control. */
+.mnx-filing-card[data-interactive="true"] { cursor: pointer; }
+.mnx-filing-card[data-interactive="true"]:hover {
+  box-shadow: var(--mnx-shadow);
+}
+.mnx-filing-card[data-interactive="true"]:focus-visible {
+  outline: none;
+  box-shadow: var(--mnx-focus-ring);
+}
+.mnx-filing-card[data-interactive="true"]:active {
+  transform: translateY(1px) scale(0.997);
+}
+
+/* Checkbox press / 3D pop feedback inside a filing card — target the visible
+   box (.mnx-checkbox > span); the real <input> is visually hidden. */
+.mnx-filing-card .mnx-checkbox > span {
+  transition:
+    transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background var(--mnx-hover-duration) var(--mnx-hover-ease);
+  will-change: transform;
+}
+.mnx-filing-card[data-interactive="true"]:active .mnx-checkbox > span { transform: scale(0.9); }
+.mnx-filing-card .mnx-checkbox > input:checked + span {
+  animation: mnx-check-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes mnx-check-pop {
+  0% { transform: scale(0.55) rotate(-8deg); }
+  55% { transform: scale(1.22) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mnx-filing-card[data-interactive="true"]:active { transform: none; }
+  .mnx-filing-card[data-interactive="true"]:active .mnx-checkbox > span { transform: none; }
+  .mnx-filing-card .mnx-checkbox > input:checked + span { animation: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Attention card — a mandatory sub-section that must stand out      *
+ *  (e.g. SLA delay remarks). Tinted surface + tone border + a soft  *
+ *  ring; add --pulse while it is still unsatisfied.                  *
+ * ------------------------------------------------------------------ */
+.mnx-attention-card {
+  --_tone: var(--mnx-warning);
+  border: 1px solid color-mix(in srgb, var(--_tone) 60%, var(--mnx-border));
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--_tone) 15%, transparent);
+}
+.mnx-attention-card[data-tone="danger"] { --_tone: var(--mnx-danger); }
+.mnx-attention-card[data-tone="accent"] { --_tone: var(--mnx-accent); }
+
+/* ------------------------------------------------------------------ *
+ *  Milestone card — the collapsible workflow-stage rows in the CHA   *
+ *  job workspace. One surface, a left status rail, and a quiet       *
+ *  divided stat strip instead of three bordered mini-boxes.         *
+ * ------------------------------------------------------------------ */
+.mnx-milestone {
+  position: relative;
+  scroll-margin-top: 8rem;
+}
+.mnx-milestone::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 3px;
+  background: var(--mnx-border-strong);
+}
+.mnx-milestone[data-milestone-state="active"] { border-color: var(--mnx-accent); }
+.mnx-milestone[data-milestone-state="active"]::before { background: var(--mnx-accent); }
+.mnx-milestone[data-milestone-state="complete"]::before { background: var(--mnx-success); }
+.mnx-milestone[data-milestone-state="locked"] { background: var(--mnx-soft); }
+.mnx-milestone[data-milestone-state="locked"] .mnx-milestone-stats,
+.mnx-milestone[data-milestone-state="locked"] > div:first-child { opacity: 0.62; }
+.mnx-milestone--spotlit { box-shadow: var(--mnx-focus-ring); }
+
+.mnx-milestone-stats {
+  display: none;
+  margin: 0;
+}
+@media (min-width: 640px) {
+  .mnx-milestone-stats {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--mnx-border);
+    border-radius: var(--mnx-radius-sm, var(--mn-radius-control));
+    background: var(--mnx-soft);
+    overflow: hidden;
+  }
+}
+.mnx-milestone-stat {
+  padding: 0.35rem 0.75rem;
+  text-align: right;
+  min-width: 5.5rem;
+}
+.mnx-milestone-stat + .mnx-milestone-stat {
+  border-left: 1px solid var(--mnx-border);
+}
+.mnx-milestone-stat dt {
+  margin: 0;
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+  color: var(--mnx-muted);
+}
+.mnx-milestone-stat dd {
+  margin: 0.1rem 0 0;
+  font-size: var(--mn-type-helper-size);
+  font-weight: 600;
+  color: var(--mnx-text);
+}
+.mnx-attention-card--pulse {
+  animation: mnx-attention-pulse 2.4s ease-in-out infinite;
+}
+@keyframes mnx-attention-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--_tone) 14%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--_tone) 22%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mnx-attention-card--pulse { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--_tone) 24%, transparent); }
+}
+
+/* Nested surfaces inside a filing card stay one step quieter. */
+.mnx-filing-card .mnx-filing-subcard {
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-sm, var(--mn-radius-control));
+  background: var(--mnx-soft);
+  padding: var(--mn-space-3);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Query timeline — chronological thread with an accent rail.        *
+ * ------------------------------------------------------------------ */
+.mnx-query-timeline {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  list-style: none;
+}
+.mnx-query-timeline::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 0.3rem;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--mnx-border);
+}
+.mnx-query-timeline-item {
+  position: relative;
+  padding: 0 0 0.85rem;
+}
+.mnx-query-timeline-item:last-child {
+  padding-bottom: 0;
+}
+.mnx-query-timeline-item::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  left: calc(-1.25rem + 0.3rem - 3px);
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--mnx-accent);
+  box-shadow: 0 0 0 3px var(--mnx-surface);
 }
 
 .mnx-checklist-item .is-complete {
@@ -14481,6 +14972,12 @@ button.mnx-accounting-record-card {
   height: var(--mn-icon-size-md);
 }
 
+.mnx-icon-badge-success {
+  border-color: color-mix(in srgb, var(--mnx-success) 45%, transparent);
+  background: var(--mnx-success-bg);
+  color: var(--mnx-success);
+}
+
 .mnx-row-link {
   color: inherit;
   text-decoration: none;
@@ -17160,6 +17657,14 @@ html[data-theme="dark"] .mnx-sidebar .mnx-sidebar-entry.is-active,
   border-top-left-radius: var(--mnx-radius-md);
   border-bottom-left-radius: var(--mnx-radius-md);
   border-left: 1px solid var(--mnx-table-head-border);
+}
+
+/* Checkbox column — every .mnx-operational-table leads with a NeonCheckbox.
+   table-layout:fixed otherwise splits width evenly across all columns,
+   leaving a huge gap around the checkbox before the Job Number text starts. */
+.mnx-operational-table :is(th, td):first-child:has(.mnx-checkbox) {
+  width: 2.75rem;
+  padding-right: 0;
 }
 
 .mnx-workspace-table thead th:last-child,

@@ -874,7 +874,10 @@ export function CreateJobDialog({
     }
     successRedirectTimerRef.current = setTimeout(
       () => {
-        finishCreateFlow(false);
+        // "Create & launch job" — land the user in the new job workspace, not
+        // back on the list. The success overlay's "Create another" button
+        // stays available for the batch-entry case.
+        finishCreateFlow(true);
       },
       reducedMotion ? 1400 : 2600,
     );
@@ -1258,7 +1261,7 @@ export function CreateJobDialog({
                       size="sm"
                       onClick={handleAutoGenerateJobNumber}
                       disabled={!newBranchId || jobNumberPreviewLoading}
-                      className="shrink-0 rounded-2xl mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-hover-accent"
+                      className="shrink-0 whitespace-nowrap rounded-2xl mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-hover-accent"
                     >
                       {jobNumberPreviewLoading ? "Loading..." : "Generate"}
                     </Button>

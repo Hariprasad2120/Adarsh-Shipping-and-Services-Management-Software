@@ -75,7 +75,7 @@
     "test:design-system:parity": "node scripts/verify-monolith-design-system-runtime.mjs",
     "architecture:check": "node scripts/verify-code-organization.mjs",
     "audit:structure": "npm run architecture:check",
-    "design-system:verify": "node scripts/verify-design-system-coverage.mjs && node scripts/verify-catalogue-style-boundary.mjs",
+    "design-system:verify": "node scripts/verify-design-system-coverage.mjs && node scripts/verify-catalogue-style-boundary.mjs && node scripts/verify-ui-primitive-usage.mjs",
     "audit:unused": "npx tsc --noEmit --noUnusedLocals --noUnusedParameters",
     "security:audit-gate": "node scripts/security-audit-gate.mjs",
     "security:coverage": "node scripts/scan-route-auth-coverage.mjs && node scripts/scan-tenant-scope-coverage.mjs && node scripts/scan-authz-matrix.mjs > /dev/null",

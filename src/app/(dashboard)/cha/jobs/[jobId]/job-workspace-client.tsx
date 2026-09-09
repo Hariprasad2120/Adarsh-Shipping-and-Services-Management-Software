@@ -15,6 +15,9 @@ import { toast } from "@/modules/notifications/client";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LockKeyhole, Search, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, X, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Switch } from "@/components/ui/switch";
 import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
 import { Input } from "@/components/ui/input";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
@@ -627,22 +630,15 @@ function MilestoneCard({
   isSpotlit = false,
   onToggle,
 }: MilestoneCardProps) {
-  const cardBorderClass = isActive
-    ? "mnx-border-accent mnx-bg-surface mnx-shadow-panel"
-    : isCompleted
-      ? "mnx-border-accent mnx-bg-surface"
-      : "mnx-border mnx-bg-soft opacity-70";
-
   const badgeVariant = "secondary";
 
   return (
     <div
       id={`workflow-stage-${stageKey.toLowerCase()}`}
       data-stage-key={stageKey}
-      className={`scroll-mt-32 overflow-hidden rounded-xl border mnx-bg-surface ${cardBorderClass} ${isSpotlit
-          ? "ring-2 mnx-border-accent mnx-shadow-panel"
-          : ""
-        }`}
+      className={cn("mnx-panel mnx-milestone scroll-mt-32", isSpotlit && "mnx-milestone--spotlit")}
+      data-variant="flat"
+      data-milestone-state={isActive ? "active" : isCompleted ? "complete" : "locked"}
     >
       <div
         onClick={() => {
@@ -693,20 +689,20 @@ function MilestoneCard({
 
         <div className="flex items-center gap-4 self-end lg:self-center">
           {/* Inline Stats */}
-          <div className="hidden sm:flex items-center gap-3">
-            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-1.5 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider mnx-text-muted">Readiness</p>
-              <p className="text-[11px] font-medium mnx-text-primary">{validationState}</p>
+          <dl className="mnx-milestone-stats">
+            <div className="mnx-milestone-stat">
+              <dt>Readiness</dt>
+              <dd>{validationState}</dd>
             </div>
-            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-1.5 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider mnx-text-muted">Progress</p>
-              <p className="text-[11px] font-bold mnx-text-accent mnx-numeric">{percentage}%</p>
+            <div className="mnx-milestone-stat">
+              <dt>Progress</dt>
+              <dd className="mnx-numeric mnx-text-accent">{percentage}%</dd>
             </div>
-            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-1.5 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider mnx-text-muted">{isCompleted ? "Closed" : "Due"}</p>
-              <p className="text-[11px] font-medium mnx-text-primary">{isCompleted ? (completedAt || "Pending") : (dueDate || "Open")}</p>
+            <div className="mnx-milestone-stat">
+              <dt>{isCompleted ? "Closed" : "Due"}</dt>
+              <dd>{isCompleted ? (completedAt || "Pending") : (dueDate || "Open")}</dd>
             </div>
-          </div>
+          </dl>
           {!isLocked && (
             <ChevronDown
               size={18}
@@ -717,13 +713,13 @@ function MilestoneCard({
       </div>
 
       {isExpanded && !isLocked && (
-        <div className="space-y-4 border-t mnx-border mnx-bg-surface px-5 py-5">
+        <div className="space-y-4 border-t mnx-border px-5 py-5">
           {children}
         </div>
       )}
 
       {!isExpanded && isCompleted && summary && (
-        <div className="rounded-b-xl border-t mnx-border mnx-bg-soft px-5 py-3">
+        <div className="border-t mnx-border mnx-bg-soft px-5 py-3">
           {summary}
         </div>
       )}
@@ -829,6 +825,7 @@ function SlideToComplete({
   const [maxDistance, setMaxDistance] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRejected, setIsRejected] = useState(false);
   const thumbWidth = 80;
   const horizontalInset = 6;
   const contentStart = 96;
@@ -859,11 +856,16 @@ function SlideToComplete({
   const triggerCompletion = async () => {
     if (disabled || isSubmitting) return;
     setIsSubmitting(true);
+    setIsRejected(false);
     setSliderPos(maxDistance);
     const didComplete = await onComplete();
     if (!didComplete) {
+      // The action refused (validation, upload still in flight, server error).
+      // Snap back with a visible shake so the bounce isn't silent.
       setSliderPos(0);
       setIsSubmitting(false);
+      setIsRejected(true);
+      window.setTimeout(() => setIsRejected(false), 450);
     }
   };
 
@@ -929,8 +931,9 @@ function SlideToComplete({
       aria-valuenow={progressPercent}
       aria-valuetext={isSubmitting ? `${actionVerbGerund} ${actionObject}` : `${progressPercent}% complete`}
       aria-busy={isSubmitting}
+      data-rejected={isRejected ? "true" : undefined}
       className={cn(
-        "relative h-[60px] w-full overflow-visible rounded-full border mnx-border-accent mnx-bg-surface mnx-shadow-panel outline-none select-none",
+        "mnx-slide-to-complete relative h-[60px] w-full overflow-visible rounded-full border mnx-border-accent mnx-bg-surface mnx-shadow-panel outline-none select-none",
         disabled || isSubmitting ? "cursor-not-allowed opacity-70" : "cursor-ew-resize touch-none",
         "focus-visible:ring-2 mnx-focus-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
@@ -1063,30 +1066,15 @@ function FilingAttachmentValidityRow({
                 ) : null}
               </div>
             </div>
-            <div className="flex shrink-0 items-start gap-2">
-              <Button
-                type="button"
-                role="switch"
-                aria-checked={validityEnabled}
-                onClick={() => onToggleValidity(!validityEnabled)}
-                className={`mnx-plain inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] transition-all ${validityEnabled
-                    ? "mnx-border-accent mnx-bg-accent-soft mnx-text-accent"
-                    : "mnx-border mnx-bg-surface mnx-text-muted"
-                  }`}
+            <div className="flex shrink-0 items-center gap-2">
+              <Switch
+                label="Track a validity date for this document"
+                size="sm"
+                checked={validityEnabled}
+                onCheckedChange={(next) => onToggleValidity(next)}
               >
-                <span
-                  className={`relative inline-flex h-3.5 w-6 items-center rounded-full border transition-all ${validityEnabled
-                      ? "mnx-border-accent mnx-bg-accent-soft"
-                      : "mnx-border mnx-bg-soft"
-                    }`}
-                >
-                  <span
-                    className={`absolute top-[1px] h-2.5 w-2.5 rounded-full mnx-bg-surface shadow-sm transition-transform ${validityEnabled ? "translate-x-[12px]" : "translate-x-[1px]"
-                      }`}
-                  />
-                </span>
                 Validity
-              </Button>
+              </Switch>
               <Button
                 type="button"
                 aria-label="Remove file"
@@ -1137,6 +1125,95 @@ function FilingAttachmentValidityRow({
       </div>
     </div>
   );
+}
+
+/** One-tap response phrasings for common customs-query outcomes. */
+const FILING_QUERY_RESPONSE_TEMPLATES: readonly string[] = [
+  "Supporting documents re-submitted via ICEGATE.",
+  "Clarification filed with the assessing officer; awaiting acknowledgement.",
+  "Amended declaration lodged and query addressed.",
+  "Additional duty / differential amount paid; challan attached.",
+  "Awaiting inputs from the importer / exporter before responding.",
+];
+
+type FilingWorkflowQueryRow = {
+  id: string;
+  title: string;
+  details: string;
+  status: "OPEN" | "REPLIED" | "CLOSED" | string;
+  nodeRunId?: string | null;
+  referenceNumber?: string | null;
+  officerName?: string | null;
+  receivedAt?: string | Date | null;
+  responseDueAt?: string | Date | null;
+  responseText?: string | null;
+  respondedAt?: string | Date | null;
+  createdAt: string | Date;
+  closedAt?: string | Date | null;
+};
+
+type FilingQueryMeta = {
+  status: "OPEN" | "REPLIED" | "CLOSED";
+  statusLabel: string;
+  statusTone: "warning" | "info" | "success";
+  reference: string | null;
+  officer: string | null;
+  receivedAt: Date | null;
+  responseDueAt: Date | null;
+  daysOpen: number;
+  slaState: "none" | "on-track" | "due-soon" | "overdue" | "closed";
+  slaLabel: string;
+};
+
+/** SLA / aging derivation for a single customs query row. Pure; "now" is the caller's clock. */
+function deriveFilingQueryMeta(query: FilingWorkflowQueryRow, now: Date = new Date()): FilingQueryMeta {
+  const toDate = (v: string | Date | null | undefined): Date | null => {
+    if (!v) return null;
+    const d = v instanceof Date ? v : new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+  const status =
+    query.status === "CLOSED" ? "CLOSED" : query.status === "REPLIED" ? "REPLIED" : "OPEN";
+  const receivedAt = toDate(query.receivedAt) ?? toDate(query.createdAt);
+  const responseDueAt = toDate(query.responseDueAt);
+  const closedAt = toDate(query.closedAt);
+  const endRef = status === "CLOSED" && closedAt ? closedAt : now;
+  const start = receivedAt ?? toDate(query.createdAt) ?? now;
+  const daysOpen = Math.max(0, Math.floor((endRef.getTime() - start.getTime()) / 86_400_000));
+
+  let slaState: FilingQueryMeta["slaState"] = "none";
+  let slaLabel = "";
+  if (status === "CLOSED") {
+    slaState = "closed";
+    slaLabel = closedAt ? `Cleared in ${daysOpen} day${daysOpen === 1 ? "" : "s"}` : "Cleared";
+  } else if (responseDueAt) {
+    const daysToDue = Math.ceil((responseDueAt.getTime() - now.getTime()) / 86_400_000);
+    if (daysToDue < 0) {
+      slaState = "overdue";
+      slaLabel = `Overdue by ${Math.abs(daysToDue)} day${Math.abs(daysToDue) === 1 ? "" : "s"}`;
+    } else if (daysToDue <= 1) {
+      slaState = "due-soon";
+      slaLabel = daysToDue === 0 ? "Response due today" : "Response due tomorrow";
+    } else {
+      slaState = "on-track";
+      slaLabel = `Response due in ${daysToDue} days`;
+    }
+  } else {
+    slaLabel = `${daysOpen} day${daysOpen === 1 ? "" : "s"} open`;
+  }
+
+  return {
+    status,
+    statusLabel: status === "CLOSED" ? "Cleared" : status === "REPLIED" ? "Response submitted" : "Open",
+    statusTone: status === "CLOSED" ? "success" : status === "REPLIED" ? "info" : "warning",
+    reference: query.referenceNumber?.trim() || null,
+    officer: query.officerName?.trim() || null,
+    receivedAt,
+    responseDueAt,
+    daysOpen,
+    slaState,
+    slaLabel,
+  };
 }
 
 export function JobWorkspaceClient({
@@ -1744,6 +1821,7 @@ export function JobWorkspaceClient({
   const [filingQueryDetails, setFilingQueryDetails] = useState("");
   const [filingQueryReferenceNumber, setFilingQueryReferenceNumber] = useState("");
   const [filingQueryOfficerName, setFilingQueryOfficerName] = useState("");
+  const [filingQueryResponseDueAt, setFilingQueryResponseDueAt] = useState("");
   const [attachmentValidityDrafts, setAttachmentValidityDrafts] = useState<Record<string, string>>({});
   const [attachmentValidityEditors, setAttachmentValidityEditors] = useState<Record<string, boolean>>({});
   const [filingQueryReceivedAt, setFilingQueryReceivedAt] = useState("");
@@ -1953,8 +2031,8 @@ export function JobWorkspaceClient({
       if (!resp?.isChecked) return false;
       if (item.requiresRemarks && !resp.remarks?.trim()) return false;
 
-      const overdueMeta = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
-      if (overdueMeta && item.delayRemarksRequired && !resp.delayRemarks?.trim()) return false;
+      // Per-item delay remarks were removed from the UI — SLA delay is captured
+      // once at the stage level ("Stage Delay Remarks").
 
       if (checklistItemAllowsDirectUpload(item) && (item.minUploads || 0) > 0 && getAttachmentCount(item.id) < item.minUploads) {
         return false;
@@ -2158,11 +2236,13 @@ export function JobWorkspaceClient({
   const nextWorkflowTargetNode = outgoingEdges.length > 0 ? targetNodesMap.get(outgoingEdges[0].targetKey) : null;
   const nextWorkflowTargetLabel = nextWorkflowTargetNode?.name || outgoingEdges[0]?.label || "Final submission";
   const filingQueryReferenceLabel =
-    typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
+    latestStageQuery?.referenceNumber?.trim() ||
+    (activeNodeQueries.length > 0 && typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
       ? queryProcessingState.queryReferenceNumber
-      : latestStageQuery?.title || "Not Recorded";
-  const filingQueryReceivedLabel =
-    typeof queryProcessingState?.queryReceivedAt === "string" && queryProcessingState.queryReceivedAt.trim()
+      : latestStageQuery?.title || "Not Recorded");
+  const filingQueryReceivedLabel = latestStageQuery?.receivedAt
+    ? new Date(latestStageQuery.receivedAt).toLocaleDateString("en-IN")
+    : activeNodeQueries.length > 0 && typeof queryProcessingState?.queryReceivedAt === "string" && queryProcessingState.queryReceivedAt.trim()
       ? new Date(queryProcessingState.queryReceivedAt).toLocaleDateString("en-IN")
       : latestStageQuery?.createdAt
         ? new Date(latestStageQuery.createdAt).toLocaleDateString("en-IN")
@@ -4455,12 +4535,8 @@ export function JobWorkspaceClient({
           validationWarning.checklistItemIds.push(item.id);
           validationWarning.checklistRemarkItemIds.push(item.id);
         }
-        const matchingOverdue = overdueChecklistItems.find((entry: any) => entry.checklistItemId === item.id);
-        if (matchingOverdue && resp?.isChecked && item.delayRemarksRequired && !resp.delayRemarks?.trim()) {
-          addValidationDetail(`Delay remarks are required for overdue checklist item "${item.label}".`);
-          validationWarning.checklistItemIds.push(item.id);
-          validationWarning.checklistDelayRemarkItemIds.push(item.id);
-        }
+        // Per-item overdue delay remarks are no longer collected — the single
+        // "Stage Delay Remarks" field covers SLA breach at stage level.
         const checklistItemAttachments = checklistAttachmentsByItem.get(item.id) || [];
         if (
           checklistItemAllowsDirectUpload(item) &&
@@ -4946,6 +5022,10 @@ export function JobWorkspaceClient({
       const res = await actions.createFilingWorkflowQueryAction(job.id, activeNodeRun.id, {
         title: filingQueryTitle.trim() || "Customs Query",
         details: filingQueryDetails.trim(),
+        referenceNumber: filingQueryReferenceNumber.trim() || undefined,
+        officerName: filingQueryOfficerName.trim() || undefined,
+        receivedAt: filingQueryReceivedAt.trim() || undefined,
+        responseDueAt: filingQueryResponseDueAt.trim() || undefined,
       });
       if (res.ok) {
         const nextState = {
@@ -4966,6 +5046,7 @@ export function JobWorkspaceClient({
         setFilingQueryReferenceNumber("");
         setFilingQueryOfficerName("");
         setFilingQueryReceivedAt("");
+        setFilingQueryResponseDueAt("");
         await loadFilingData();
       } else {
         toast.error(res.error || "Failed to save filing query.");
@@ -4987,6 +5068,14 @@ export function JobWorkspaceClient({
       const res = await actions.updateFilingWorkflowQueryStatusAction(job.id, queryId, {
         status,
         details: details?.trim() || undefined,
+        responseText:
+          status === "REPLIED"
+            ? filingQueryStatusUpdates[queryId]?.trim() || details?.trim() || undefined
+            : undefined,
+        respondedByName:
+          status === "REPLIED"
+            ? (filingQueryResponderNames[queryId] || currentUserDisplayName).trim() || undefined
+            : undefined,
       });
       if (res.ok) {
         const nextState = {
@@ -5712,11 +5801,18 @@ export function JobWorkspaceClient({
   const shipmentModeUpper = shipmentModeName.toUpperCase();
   const shipmentModeIcon =
     shipmentModeUpper.includes("AIR") ? <Plane size={18} /> : shipmentModeUpper.includes("SEA") ? <Ship size={18} /> : <Boxes size={18} />;
+  // Once the filing workflow is done the job.stage is "FILED" while job.status
+  // stays "ACTIVE" (the job remains open for expense / advance reconciliation).
+  // Surface the workflow reality in the header so a 100%-complete job doesn't
+  // read as plain "ACTIVE".
+  const isFilingWorkflowFiled = job.stage === "FILED" || job.status === "COMPLETED";
   const topJobBadges = [
     { label: job.jobType?.name || "JOB TYPE", variant: "secondary" as const },
     ...(job.shipmentType?.name ? [{ label: job.shipmentType.name, variant: "secondary" as const }] : []),
     ...(job.branch?.name ? [{ label: job.branch.name, variant: "secondary" as const }] : []),
-    { label: formatChaBadgeLabel(job.status), variant: getChaJobStatusBadgeVariant(job.status) },
+    isFilingWorkflowFiled && job.status !== "COMPLETED"
+      ? { label: "Filed", variant: "success" as const }
+      : { label: formatChaBadgeLabel(job.status), variant: getChaJobStatusBadgeVariant(job.status) },
   ];
   const overviewMetaItems = [
     {
@@ -5724,7 +5820,6 @@ export function JobWorkspaceClient({
       value: job.customer?.name || "Not assigned",
       secondary: job.customer?.branchName || null,
       icon: <Building2 size={16} />,
-      featured: true,
     },
     {
       label: "Owner",
@@ -5919,13 +6014,7 @@ export function JobWorkspaceClient({
               <div className="mnx-cha-job-meta-board">
                 <div className="mnx-cha-job-meta-grid">
                   {overviewMetaItems.map((item) => (
-                    <div
-                      key={item.label}
-                      className={cn(
-                        "mnx-cha-job-meta-card",
-                        item.featured && "mnx-cha-job-meta-card-featured",
-                      )}
-                    >
+                    <div key={item.label} className="mnx-cha-job-meta-card">
                       <span className="mnx-cha-job-meta-icon">
                         {item.icon}
                       </span>
@@ -5943,6 +6032,8 @@ export function JobWorkspaceClient({
                         {item.label === "Manager" && canUpdateJob ? (
                           <Button
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => setIsEditingManager(true)}
                             className="mnx-cha-job-meta-action"
                           >
@@ -6272,7 +6363,7 @@ export function JobWorkspaceClient({
                     }}
                     disabled={isLocked}
                     className={`group relative flex w-full flex-col gap-2 rounded-[18px] p-3 text-left transition-all ${isHighlighted
-                        ? "bg-gradient-to-r mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel"
+                        ? "mnx-bg-accent-soft mnx-text-accent"
                         : isLocked
                           ? "cursor-not-allowed opacity-50"
                           : "mnx-hover-accent"
@@ -6280,7 +6371,7 @@ export function JobWorkspaceClient({
                   >
                     {/* Left border indicator for highlighted step */}
                     {isHighlighted && (
-                      <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md bg-gradient-to-b mnx-bg-accent-soft mnx-bg-accent-soft" />
+                      <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md mnx-bg-accent-soft" />
                     )}
 
                     {/* Header block with circle and stage label */}
@@ -6289,7 +6380,7 @@ export function JobWorkspaceClient({
                         className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all ${isCompleted
                             ? "mnx-bg-success mnx-text-muted mnx-shadow-panel"
                             : isHighlighted
-                              ? "bg-gradient-to-br mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel"
+                              ? "mnx-bg-soft mnx-text-accent"
                               : "border mnx-border mnx-bg-surface mnx-text-muted"
                           }`}
                       >
@@ -6345,7 +6436,7 @@ export function JobWorkspaceClient({
 
                   {/* Connector line */}
                   {index < WORKFLOW_UI_STAGES.length - 1 && (
-                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < workflowUiActiveStageIndex ? "bg-gradient-to-b mnx-bg-success mnx-bg-success" : index === workflowUiActiveStageIndex ? "bg-gradient-to-b mnx-bg-accent-soft mnx-bg-accent-soft" : "bg-outline-variant/40"
+                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < workflowUiActiveStageIndex ? "mnx-bg-success" : index === workflowUiActiveStageIndex ? "mnx-bg-accent-soft" : "bg-outline-variant/40"
                       }`} />
                   )}
                 </div>
@@ -6364,7 +6455,7 @@ export function JobWorkspaceClient({
                 type="button"
                 onClick={() => navigateToWorkspaceTab(item.key)}
                 className={`flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition-all ${activeTab === item.key
-                    ? "bg-gradient-to-r mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-accent"
+                    ? "mnx-bg-accent-soft mnx-text-accent"
                     : "mnx-hover-accent mnx-text-muted"
                   }`}
               >
@@ -6391,7 +6482,7 @@ export function JobWorkspaceClient({
             <p className="mnx-numeric mt-1 text-3xl font-bold mnx-text-accent">{stageProgress}%</p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/25">
               <div
-                className="h-full rounded-full bg-gradient-to-r mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-success transition-all duration-500"
+                className="h-full rounded-full mnx-bg-accent transition-all duration-500"
                 style={{ width: `${stageProgress}%` }}
               />
             </div>
@@ -6430,7 +6521,7 @@ export function JobWorkspaceClient({
               <div className="rounded-[28px] border mnx-border mnx-bg-surface px-6 py-5 mnx-shadow-panel">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <span className="flex size-12 items-center justify-center rounded-[18px] bg-gradient-to-br mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel">
+                    <span className="flex size-12 items-center justify-center rounded-[18px] mnx-bg-soft mnx-text-accent">
                       {stageIcons[activeTab]}
                     </span>
                     <div>
@@ -6472,17 +6563,34 @@ export function JobWorkspaceClient({
                   assignedUser={job.primaryOwner?.name || job.assignedManager?.name || "Operations Team"}
                   dueDate={job.estimatedClosureDate ? new Date(job.estimatedClosureDate).toLocaleDateString("en-IN") : null}
                   completedAt={activeStepIndex > 0 ? (job.updatedAt ? new Date(job.updatedAt).toLocaleString("en-IN") : null) : null}
-                  summary={
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="mnx-text-muted font-medium">Uploaded:</span>
-                      {visibleDocumentRequirements.filter((r: any) => r.status === "UPLOADED").map((r: any) => (
-                        <Badge key={r.id} variant="secondary" className="text-[10px] uppercase font-mono">{r.name}</Badge>
-                      ))}
-                      {visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length > 0 && (
-                        <span className="mnx-text-warning font-medium">({visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length} exceptions)</span>
-                      )}
-                    </div>
-                  }
+                  summary={(() => {
+                    // Only the document-collection requirements belong in this
+                    // stage's summary. Filing-stage node uploads live in the
+                    // "Filing Workflow Documents" category and must not leak here.
+                    const docCollectionReqs = visibleDocumentRequirements.filter((r: any) => {
+                      const categoryName =
+                        r.requirementItem?.category?.name || r.category || "General Documents";
+                      return categoryName !== "Filing Workflow Documents";
+                    });
+                    const exceptionCount = docCollectionReqs.filter(
+                      (r: any) => r.status === "NOT_AVAILABLE" || r.exception,
+                    ).length;
+                    return (
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="mnx-text-muted font-medium">Uploaded:</span>
+                        {docCollectionReqs
+                          .filter((r: any) => r.status === "UPLOADED")
+                          .map((r: any) => (
+                            <Badge key={r.id} variant="secondary" className="text-[10px] uppercase font-mono">
+                              {r.name}
+                            </Badge>
+                          ))}
+                        {exceptionCount > 0 && (
+                          <span className="mnx-text-warning font-medium">({exceptionCount} exceptions)</span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 >
                   <div className="space-y-6">
                     <div className="space-y-5">
@@ -7287,8 +7395,8 @@ export function JobWorkspaceClient({
                   </div>
                   <div className="border-t mnx-border pt-5">
                   <div className="space-y-4">
-                    <div className="mnx-bg-surface mnx-border rounded-xl border mnx-border mnx-bg-surface p-4 space-y-4 shadow-sm">
-                      <div className="space-y-3">
+                    <div className="mnx-approval-card rounded-xl border mnx-border mnx-bg-surface p-4 space-y-3 shadow-sm">
+                      <div className="space-y-2">
                         <SectionHeading
                           index="04"
                           title="Internal Approval"
@@ -7321,38 +7429,36 @@ export function JobWorkspaceClient({
                                 : "Waiting for the current file version."}
                         </p>
 
-                        <div className="rounded-xl border mnx-border mnx-bg-soft p-3 space-y-2">
-                          {approvedInternalDecision ? (
+                        {approvedInternalDecision ? (
+                          <p className="text-xs mnx-text-muted">
+                            {getInternalApproverRole(approvedInternalDecision)} approval recorded on{" "}
+                            <span className="mnx-text-primary mnx-numeric">
+                              {approvedInternalDecision.actedAt
+                                ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN")
+                                : "Pending"}
+                            </span>
+                          </p>
+                        ) : (
+                          <div className="rounded-xl border mnx-border mnx-bg-soft p-3 space-y-1.5">
                             <p className="text-xs mnx-text-muted">
-                              {getInternalApproverRole(approvedInternalDecision)} approval recorded on{" "}
-                              <span className="mnx-text-primary mnx-numeric">
-                                {approvedInternalDecision.actedAt
-                                  ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN")
-                                  : "Pending"}
-                              </span>
+                              Eligible: <span className="mnx-text-primary">{eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}</span>
                             </p>
-                          ) : (
-                            <>
+                            {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
                               <p className="text-xs mnx-text-muted">
-                                Eligible: <span className="mnx-text-primary">{eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}</span>
+                                Pending:{" "}
+                                <span className="mnx-text-primary">
+                                  {Array.from(
+                                    new Set(
+                                      currentInternalApprovals
+                                        .filter((approval: any) => approval.action === "PENDING")
+                                        .map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`),
+                                    ),
+                                  ).join(", ") || "Owner, Manager, or TL"}
+                                </span>
                               </p>
-                              {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
-                                <p className="text-xs mnx-text-muted">
-                                  Pending:{" "}
-                                  <span className="mnx-text-primary">
-                                    {Array.from(
-                                      new Set(
-                                        currentInternalApprovals
-                                          .filter((approval: any) => approval.action === "PENDING")
-                                          .map((approval: any) => `${getUserName(approval.assignedToId)} (${getInternalApproverRole(approval)})`),
-                                      ),
-                                    ).join(", ") || "Owner, Manager, or TL"}
-                                  </span>
-                                </p>
-                              ) : null}
-                            </>
-                          )}
-                        </div>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
                       {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
                         <>
@@ -7384,8 +7490,8 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="mnx-bg-surface mnx-border rounded-xl border mnx-border mnx-bg-surface p-4 space-y-4 shadow-sm">
-                      <div className="space-y-3">
+                    <div className="mnx-approval-card rounded-xl border mnx-border mnx-bg-surface p-4 space-y-3 shadow-sm">
+                      <div className="space-y-2">
                         <SectionHeading
                           index="05"
                           title="Customer Approval"
@@ -7708,7 +7814,7 @@ export function JobWorkspaceClient({
                                   onSubmit={handleCompleteFilingNode}
                                   className="grid gap-5 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start"
                                 >
-                                  <div ref={filingActiveNodeCardRef} className={`mnx-bg-surface mnx-border mnx-border-accent ${filingPrimaryColumnClass} space-y-3 rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm`}>
+                                  <div ref={filingActiveNodeCardRef} className={cn("mnx-panel mnx-filing-node-panel", filingPrimaryColumnClass, "space-y-4")} data-variant="flat">
                                     <SectionHeading
                                       index="07"
                                       title="Stage Checklist Verification"
@@ -8046,27 +8152,23 @@ export function JobWorkspaceClient({
                                             );
 
                                             return (
-                                              <div className="space-y-3 pt-3 border-t mnx-border mt-3">
-                                                <h4 className="mnx-label mnx-text-primary">Stage Checklist Verification</h4>
+                                              <div className="space-y-4 pt-4 border-t mnx-border mt-4">
                                                 <div
-                                                  className={`relative overflow-hidden rounded-xl border px-4 py-4 transition-all duration-200 ${
-                                                    isCompleted
-                                                      ? "mnx-border-success mnx-bg-surface mnx-shadow-panel"
-                                                      : hasMissingStandaloneDocuments
-                                                        ? "animate-pulse-red mnx-border-danger mnx-bg-surface mnx-shadow-panel"
-                                                        : "mnx-border-accent mnx-bg-surface mnx-shadow-panel"
-                                                  }`}
+                                                  className={cn(
+                                                    "mnx-filing-card",
+                                                    hasMissingStandaloneDocuments && "animate-pulse-red",
+                                                  )}
+                                                  data-state={
+                                                    isCompleted ? "complete" : hasMissingStandaloneDocuments ? "error" : "active"
+                                                  }
                                                 >
-                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-r-sm ${isCompleted ? "mnx-bg-success" : hasMissingStandaloneDocuments ? "mnx-bg-danger" : "mnx-bg-accent-soft"}`} />
-
                                                   <div className="flex w-full items-center gap-3 bg-transparent text-left">
                                                     <div className="flex min-w-0 flex-1 items-center gap-3">
                                                       <span
-                                                        className={`flex size-9 shrink-0 items-center justify-center rounded-xl border text-xs font-medium transition-all ${
-                                                          isCompleted
-                                                            ? "mnx-border-success mnx-bg-success mnx-text-accent"
-                                                            : "mnx-border-accent mnx-bg-accent-soft mnx-text-accent"
-                                                        }`}
+                                                        className={cn(
+                                                          "mnx-icon-badge shrink-0",
+                                                          isCompleted && "mnx-icon-badge-success",
+                                                        )}
                                                       >
                                                         {isCompleted ? <Check size={16} /> : <Upload size={16} />}
                                                       </span>
@@ -8151,7 +8253,6 @@ export function JobWorkspaceClient({
                                       ) : null}
                                       {activeNodeRun.node.checklistItems?.length > 0 && (
                                         <div className="space-y-3 pt-1">
-                                          <h4 className="mnx-label mnx-text-primary">Stage Checklist Verification</h4>
                                           <div className="space-y-3.5">
                                             {activeChecklistItems.map((item: any, index: number) => {
                                               const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
@@ -8175,14 +8276,9 @@ export function JobWorkspaceClient({
                                               const isCurrentItem = index === currentChecklistItemIndex;
                                               const isLockedItem = index > currentChecklistItemIndex;
                                               const checklistRemarksReady = !item.requiresRemarks || Boolean(resp.remarks?.trim());
-                                              const checklistDelayRemarksReady =
-                                                !overdueMeta ||
-                                                item.delayRemarksRequired === false ||
-                                                Boolean(resp.delayRemarks?.trim());
                                               const checklistItemComplete =
                                                 resp.isChecked &&
                                                 checklistRemarksReady &&
-                                                checklistDelayRemarksReady &&
                                                 checklistUploadsReady &&
                                                 mandatoryNodeDocumentsReady &&
                                                 mandatoryPhotoRequirementsReady;
@@ -8204,8 +8300,6 @@ export function JobWorkspaceClient({
                                                       uploadedCount < (requirement.minPhotos || 1)
                                                     );
                                                   }));
-                                              const shouldBlinkChecklistItem =
-                                                !isLockedItem && (!checklistItemComplete || Boolean(hasValidationMissingChecklistItem));
                                               const checklistItemDescription =
                                                 typeof item.description === "string" && item.description.trim().length > 0
                                                   ? item.description.trim()
@@ -8214,26 +8308,56 @@ export function JobWorkspaceClient({
                                                 !isLockedItem &&
                                                 (resp.isChecked ||
                                                   (isCurrentItem && mandatoryNodeDocumentsReady && mandatoryPhotoRequirementsReady && checklistUploadsReady));
+                                              const toggleChecklistItem = () => {
+                                                if (!canVerifyChecklistItem) return;
+                                                setChecklistResponses((prev) => ({
+                                                  ...prev,
+                                                  [item.id]: { ...prev[item.id], isChecked: !prev[item.id]?.isChecked },
+                                                }));
+                                              };
                                               return (
                                                 <div
                                                   key={item.id}
-                                                  className={`relative overflow-hidden rounded-xl border p-4 space-y-2.5 transition-all duration-200 ${isLockedItem
-                                                      ? "mnx-border mnx-bg-soft opacity-70"
+                                                  className={cn(
+                                                    "mnx-filing-card",
+                                                    hasValidationMissingChecklistItem && "animate-pulse-red",
+                                                  )}
+                                                  data-state={
+                                                    isLockedItem
+                                                      ? "locked"
                                                       : checklistItemComplete
-                                                        ? "mnx-border-success mnx-bg-success mnx-shadow-panel"
-                                                        : shouldBlinkChecklistItem
-                                                          ? "animate-pulse-red mnx-border-danger mnx-bg-surface mnx-shadow-panel"
-                                                          : "mnx-border mnx-bg-surface"
-                                                      }`}
+                                                        ? "complete"
+                                                        : "incomplete"
+                                                  }
+                                                  data-interactive={canVerifyChecklistItem ? "true" : undefined}
+                                                  role={canVerifyChecklistItem ? "button" : undefined}
+                                                  tabIndex={canVerifyChecklistItem ? 0 : undefined}
+                                                  aria-pressed={canVerifyChecklistItem ? resp.isChecked : undefined}
+                                                  onClick={(event) => {
+                                                    if (
+                                                      (event.target as HTMLElement).closest(
+                                                        'input,textarea,button,a,label,select,[role="switch"],[contenteditable="true"],.mnx-field-textarea',
+                                                      )
+                                                    ) {
+                                                      return;
+                                                    }
+                                                    toggleChecklistItem();
+                                                  }}
+                                                  onKeyDown={(event) => {
+                                                    if (!canVerifyChecklistItem) return;
+                                                    if (event.key === " " || event.key === "Enter") {
+                                                      if (
+                                                        (event.target as HTMLElement).closest(
+                                                          'input,textarea,button,a,select,[role="switch"]',
+                                                        )
+                                                      ) {
+                                                        return;
+                                                      }
+                                                      event.preventDefault();
+                                                      toggleChecklistItem();
+                                                    }
+                                                  }}
                                                 >
-                                                  {!isLockedItem ? (
-                                                    <div
-                                                      className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${checklistItemComplete
-                                                          ? "mnx-bg-success"
-                                                          : "mnx-bg-danger"
-                                                        }`}
-                                                    />
-                                                  ) : null}
                                                   <NeonCheckbox
                                                     disabled={!canVerifyChecklistItem}
                                                     checked={resp.isChecked}
@@ -8250,18 +8374,16 @@ export function JobWorkspaceClient({
                                                         },
                                                       }));
                                                     }}
-                                                    className={`group relative flex w-full items-start bg-transparent text-left transition-all [&>div:first-child]:mt-1 mnx-bg-surface [&_.neon-checkbox__box]:!shadow-none [&_.neon-checkbox__glow]:!opacity-0 ${!canVerifyChecklistItem
-                                                        ? "cursor-not-allowed"
-                                                        : resp.isChecked
-                                                          ? "hover:scale-[1.005]"
-                                                          : "hover:scale-[1.005]"
-                                                      }`}
+                                                    className={cn(
+                                                      "group relative flex w-full items-start bg-transparent text-left [&>div:first-child]:mt-0.5 [&_.neon-checkbox__box]:!shadow-none [&_.neon-checkbox__glow]:!opacity-0",
+                                                      !canVerifyChecklistItem && "cursor-not-allowed",
+                                                    )}
                                                     label={
                                                       <span className="block min-w-0 flex-1 space-y-1">
-                                                        <span className="block font-[family:var(--mn-font-sans)] text-lg uppercase leading-6 tracking-[0.12em] mnx-text-primary">
-                                                          {item.label} {item.isMandatory && <span className="mnx-text-danger font-bold">*</span>}
+                                                        <span className="mnx-label block mnx-text-primary">
+                                                          {item.label} {item.isMandatory && <span className="mnx-text-danger">*</span>}
                                                         </span>
-                                                        <span className="block max-w-3xl font-[family:var(--mn-font-sans)] text-sm font-normal leading-5 mnx-text-muted">
+                                                        <span className="block max-w-3xl text-sm font-normal leading-5 mnx-text-muted">
                                                           {checklistItemDescription}
                                                         </span>
                                                       </span>
@@ -8290,7 +8412,7 @@ export function JobWorkspaceClient({
                                                               key={requirement.key}
                                                               className={cn(
                                                                 "space-y-2 rounded-xl transition-all",
-                                                                isMissingDocument && "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
+                                                                isMissingDocument && "animate-pulse-red border mnx-border-danger p-2",
                                                               )}
                                                             >
                                                               <FileUploadField
@@ -8343,42 +8465,11 @@ export function JobWorkspaceClient({
                                                   )}
 
                                                   {!isLockedItem && overdueMeta && (
-                                                    <div
-                                                      className={cn(
-                                                        "rounded-2xl border mnx-border-warning mnx-bg-surface px-3 py-2 text-xs mnx-text-primary",
-                                                        filingValidationWarning?.checklistDelayRemarkItemIds.includes(item.id) &&
-                                                        !resp.delayRemarks?.trim() &&
-                                                          "animate-pulse-red mnx-border-danger",
-                                                      )}
-                                                    >
-                                                      <div className="flex flex-wrap items-center gap-3">
-                                                        <span className="font-semibold mnx-text-warning uppercase tracking-wide">Overdue</span>
-                                                        <span className="mnx-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
-                                                        <span className="mnx-numeric">{overdueMeta.daysDelayed} day(s) delayed</span>
-                                                      </div>
-                                                      <div className="mt-2 space-y-1">
-                                                        <label className="mnx-label block mnx-text-warning">Delay Remarks *</label>
-                                                        <Textarea
-                                                          rows={2}
-                                                          value={resp.delayRemarks || ""}
-                                                          onChange={(e) => {
-                                                            setChecklistResponses((prev) => ({
-                                                              ...prev,
-                                                              [item.id]: {
-                                                                ...prev[item.id],
-                                                                delayRemarks: e.target.value,
-                                                              },
-                                                            }));
-                                                          }}
-                                                          placeholder="Explain why this checklist item crossed its deadline..."
-                                                          className={cn(
-                                                            "w-full text-xs",
-                                                            filingValidationWarning?.checklistDelayRemarkItemIds.includes(item.id) &&
-                                                            !resp.delayRemarks?.trim() &&
-                                                              "mnx-border-danger",
-                                                          )}
-                                                        />
-                                                      </div>
+                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                                                      <span className="font-semibold uppercase tracking-wide mnx-text-warning">Overdue</span>
+                                                      <span className="mnx-numeric mnx-text-muted">Due {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
+                                                      <span className="mnx-numeric mnx-text-muted">{overdueMeta.daysDelayed} day(s) delayed</span>
+                                                      <span className="mnx-text-muted">— record the reason in Stage Delay Remarks below.</span>
                                                     </div>
                                                   )}
 
@@ -8629,14 +8720,24 @@ export function JobWorkspaceClient({
                                   <div className={filingCompletionColumnClass}>
                                     {queryProcessingEnabled ? (
                                       <>
-                                        <div className="mnx-bg-surface mnx-border mnx-border-warning overflow-hidden rounded-xl border mnx-border mnx-bg-surface shadow-sm">
-                                          <div className="flex items-start justify-between gap-3 px-5 py-4">
+                                        {(() => {
+                                          const primaryMeta = primaryQuerySummary
+                                            ? deriveFilingQueryMeta(primaryQuerySummary as FilingWorkflowQueryRow)
+                                            : null;
+                                          const slaBadgeVariant =
+                                            primaryMeta?.slaState === "overdue"
+                                              ? "destructive"
+                                              : primaryMeta?.slaState === "due-soon"
+                                                ? "warning"
+                                                : primaryMeta?.slaState === "closed"
+                                                  ? "success"
+                                                  : "secondary";
+                                          return (
+                                        <Card variant="flat" pad="none" className="overflow-hidden">
+                                          <div className="flex items-start justify-between gap-3 border-b mnx-border px-5 py-4">
                                             <div className="min-w-0 flex-1 space-y-1">
-                                              <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
-                                                <span className="h-7 w-1 rounded-sm mnx-bg-warning" aria-hidden="true" />
-                                                <h3 className="mnx-heading-3 mnx-text-warning">Query Processing</h3>
-                                              </div>
-                                              <p className="pl-5 text-sm mnx-text-muted">
+                                              <h3 className="mnx-card-title">Query Processing</h3>
+                                              <p className="text-sm mnx-text-muted">
                                                 {activeNodeOpenQueries.length > 0
                                                   ? `${activeNodeOpenQueries.length} active quer${activeNodeOpenQueries.length > 1 ? "ies require" : "y requires"} attention.`
                                                   : queryProcessingStage === "CLEARED"
@@ -8657,111 +8758,67 @@ export function JobWorkspaceClient({
                                                   }
                                                 />
                                               ) : null}
-                                              <Button
-                                                type="button"
-                                                role="switch"
-                                                aria-checked={queryProcessingToggleEnabled}
-                                                aria-label={queryProcessingToggleEnabled ? "Turn query processing off" : "Turn query processing on"}
+                                              <Switch
+                                                label={queryProcessingToggleEnabled ? "Turn query processing off" : "Turn query processing on"}
+                                                tone="warning"
+                                                checked={queryProcessingToggleEnabled}
                                                 disabled={isSavingQueryProcessingDecision}
-                                                onClick={() => void handleQueryProcessingToggleChange()}
-                                                className={`inline-flex items-center gap-2 rounded-xl border mnx-border-warning mnx-bg-warning px-3 py-1.5 text-sm mnx-text-primary transition-all ${isSavingQueryProcessingDecision
-                                                    ? "cursor-not-allowed opacity-60"
-                                                    : "mnx-shadow-panel"
-                                                  }`}
+                                                onCheckedChange={() => void handleQueryProcessingToggleChange()}
                                               >
-                                                <span className="mnx-label mnx-text-warning whitespace-nowrap">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
-                                                <span
-                                                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all ${queryProcessingToggleEnabled
-                                                      ? "mnx-border-warning mnx-bg-warning"
-                                                      : "mnx-border-warning mnx-bg-soft"
-                                                    }`}
-                                                  aria-hidden="true"
-                                                >
-                                                  <span
-                                                    className={`pointer-events-none absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full border mnx-border-warning mnx-bg-surface shadow-sm transition-transform ${queryProcessingToggleEnabled ? "translate-x-[20px]" : "translate-x-0"
-                                                      }`}
-                                                  />
-                                                </span>
-                                              </Button>
+                                                {queryProcessingToggleEnabled ? "Queries on" : "Queries off"}
+                                              </Switch>
                                             </div>
                                           </div>
 
-                                          {/* Query summary cards */}
                                           <div className="grid grid-cols-3 gap-3 px-4 py-3">
                                             {filingSummaryCards
                                               .filter((card) => card.key === "queries" || card.key === "open-cases" || card.key === "received")
-                                              .map((card) => {
-                                                const toneClasses =
-                                                  card.tone === "orange"
-                                                    ? "mnx-border-warning mnx-text-warning"
-                                                    : "mnx-border-accent mnx-text-accent";
-                                                return (
-                                                  <div
-                                                    key={card.key}
-                                                    className={`rounded-[16px] border mnx-bg-surface px-3 py-3 mnx-shadow-panel ${toneClasses}`}
-                                                  >
-                                                    <div className="flex items-start gap-2.5">
-                                                      <span className="mnx-icon-badge shrink-0">{card.icon}</span>
-                                                      <div className="min-w-0 flex-1 space-y-0.5">
-                                                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] mnx-text-muted">
-                                                          {card.title}
-                                                        </p>
-                                                        <p className="text-sm font-semibold leading-5 mnx-text-primary">
-                                                          {card.value}
-                                                        </p>
-                                                        <p className="text-[11px] leading-4 mnx-text-muted">
-                                                          {card.note}
-                                                        </p>
-                                                      </div>
+                                              .map((card) => (
+                                                <Card key={card.key} variant="plain" pad="none">
+                                                  <div className="flex items-start gap-2.5 px-3 py-3">
+                                                    <span className="mnx-icon-badge shrink-0">{card.icon}</span>
+                                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                                      <p className="mnx-label mnx-text-muted">{card.title}</p>
+                                                      <p className="text-sm font-semibold leading-5 mnx-text-primary">{card.value}</p>
+                                                      <p className="text-[11px] leading-4 mnx-text-muted">{card.note}</p>
                                                     </div>
                                                   </div>
-                                                );
-                                              })}
+                                                </Card>
+                                              ))}
                                           </div>
 
                                           {queryProcessingActive ? (
-                                            <div className="space-y-3 px-4 py-3">
-                                              <div className="grid gap-3 text-sm sm:grid-cols-2">
-                                                <div className="space-y-2 mnx-text-muted">
-                                                  <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="mnx-label block mnx-text-muted">Ref</span>
-                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
-                                                      {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
-                                                        ? queryProcessingState.queryReferenceNumber
-                                                        : primaryQuerySummary?.title || "Not Recorded"}
-                                                    </span>
-                                                  </div>
-                                                  <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="mnx-label block mnx-text-muted">Officer</span>
-                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
-                                                      {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
-                                                        ? queryProcessingState.customsOfficerName
-                                                        : "Not Assigned"}
-                                                    </span>
-                                                  </div>
+                                            <div className="space-y-3 px-4 pb-4 pt-1">
+                                              {primaryMeta ? (
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                  <Badge variant={primaryMeta.statusTone === "success" ? "success" : primaryMeta.statusTone === "info" ? "secondary" : "warning"}>
+                                                    {primaryMeta.statusLabel}
+                                                  </Badge>
+                                                  {primaryMeta.slaLabel ? (
+                                                    <Badge variant={slaBadgeVariant}>{primaryMeta.slaLabel}</Badge>
+                                                  ) : null}
                                                 </div>
-                                                <div className="space-y-2 mnx-text-muted">
-                                                  <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="mnx-label block mnx-text-muted">Received</span>
-                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
-                                                      {typeof queryProcessingState?.queryReceivedAt === "string" && queryProcessingState.queryReceivedAt.trim()
-                                                        ? new Date(queryProcessingState.queryReceivedAt).toLocaleDateString("en-IN")
-                                                        : "Pending"}
-                                                    </span>
+                                              ) : null}
+                                              <div className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+                                                {([
+                                                  ["Ref", primaryMeta?.reference ?? "Not recorded"],
+                                                  ["Officer", primaryMeta?.officer ?? "Not assigned"],
+                                                  ["Received", primaryMeta?.receivedAt ? primaryMeta.receivedAt.toLocaleDateString("en-IN") : "Pending"],
+                                                  ["Response due", primaryMeta?.responseDueAt ? primaryMeta.responseDueAt.toLocaleDateString("en-IN") : "Not set"],
+                                                  ["Open cases", String(activeNodeOpenQueries.length)],
+                                                  ["Days open", primaryMeta ? String(primaryMeta.daysOpen) : "0"],
+                                                ] as [string, string][]).map(([label, value]) => (
+                                                  <div key={label} className="flex items-baseline justify-between gap-3">
+                                                    <span className="mnx-label mnx-text-muted">{label}</span>
+                                                    <span className="text-sm font-medium mnx-text-primary">{value}</span>
                                                   </div>
-                                                  <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="mnx-label block mnx-text-muted">Open Cases</span>
-                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
-                                                      {activeNodeOpenQueries.length}
-                                                    </span>
-                                                  </div>
-                                                </div>
+                                                ))}
                                               </div>
-                                              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                              <div className="flex justify-end">
                                                 <Button
                                                   type="button"
                                                   variant="outline"
-                                                  className="w-full justify-center gap-2 mnx-border-warning text-base mnx-text-warning mnx-hover-warning mnx-hover-warning sm:w-auto sm:min-w-[220px]"
+                                                  className="gap-2 sm:min-w-[200px]"
                                                   onClick={() => setQueryProcessingPanelExpanded(true)}
                                                 >
                                                   Manage Queries
@@ -8770,11 +8827,13 @@ export function JobWorkspaceClient({
                                               </div>
                                             </div>
                                           ) : (
-                                            <div className="px-4 py-3 text-sm mnx-text-muted">
-                                              Turn on queries to reveal the customs query card, summary details, and manage actions for this filing step.
+                                            <div className="px-4 pb-4 pt-1 text-sm mnx-text-muted">
+                                              Turn on queries to record customs queries, track response SLAs, and manage replies for this filing step.
                                             </div>
                                           )}
-                                        </div>
+                                        </Card>
+                                          );
+                                        })()}
 
                                         {queryProcessingPanelExpanded && queryProcessingActive ? (
                                           <Modal
@@ -8787,9 +8846,11 @@ export function JobWorkspaceClient({
                                             <div className="space-y-5">
 
                                               {queryProcessingEnabled && queryProcessingStage === "CLEARED" ? (
-                                                <div className="rounded-xl border mnx-border-accent mnx-bg-accent-soft p-4 text-sm mnx-text-primary">
-                                                  All customs queries are cleared for this workflow stage. You can continue to the next stage or record an additional query if customs raises another one.
-                                                  <div className="mt-3">
+                                                <Card variant="plain">
+                                                  <div className="space-y-3 p-4 text-sm mnx-text-primary">
+                                                    <p>
+                                                      All customs queries are cleared for this workflow stage. You can continue to the next stage or record an additional query if customs raises another one.
+                                                    </p>
                                                     <Button
                                                       type="button"
                                                       variant="outline"
@@ -8808,7 +8869,7 @@ export function JobWorkspaceClient({
                                                       Record Additional Query
                                                     </Button>
                                                   </div>
-                                                </div>
+                                                </Card>
                                               ) : null}
 
                                               <div className="space-y-4 mnx-form-section">
@@ -8856,6 +8917,13 @@ export function JobWorkspaceClient({
                                                       onChange={(e) => setFilingQueryReceivedAt(e.target.value)}
                                                     />
                                                   </label>
+                                                  <label className="space-y-1">
+                                                    <span className="mnx-label block mnx-text-muted">Response Due</span>
+                                                    <DateInput
+                                                      value={filingQueryResponseDueAt}
+                                                      onChange={(e) => setFilingQueryResponseDueAt(e.target.value)}
+                                                    />
+                                                  </label>
                                                 </div>
                                                 <label className="space-y-1">
                                                   <span className="mnx-label block mnx-text-muted">Query Details *</span>
@@ -8888,56 +8956,77 @@ export function JobWorkspaceClient({
                                                   <Badge variant="default">{activeNodeQueries.length}</Badge>
                                                 </div>
 
-                                                {activeNodeQueries.map((query: any) => {
+                                                {activeNodeQueries.map((query: FilingWorkflowQueryRow) => {
                                                   const queryMessages = activeNodeQueryMessages.filter((message: any) => message.queryId === query.id);
                                                   const isClosed = query.status === "CLOSED";
-                                                  const statusLabel =
-                                                    query.status === "CLOSED"
-                                                      ? "Cleared"
-                                                      : query.status === "REPLIED"
-                                                        ? "Response Submitted"
-                                                        : "Open";
+                                                  const meta = deriveFilingQueryMeta(query);
+                                                  const slaBadgeVariant =
+                                                    meta.slaState === "overdue"
+                                                      ? "destructive"
+                                                      : meta.slaState === "due-soon"
+                                                        ? "warning"
+                                                        : meta.slaState === "closed"
+                                                          ? "success"
+                                                          : "secondary";
                                                   return (
                                                     <details
                                                       key={query.id}
-                                                      className="group overflow-hidden rounded-xl border mnx-border mnx-bg-surface"
+                                                      className="mnx-panel group overflow-hidden"
+                                                      data-variant="plain"
                                                     >
                                                       <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3">
-                                                        <div className="min-w-0">
+                                                        <div className="min-w-0 space-y-1.5">
                                                           <div className="flex flex-wrap items-center gap-2">
-                                                            <p className="text-sm font-medium mnx-text-primary">{query.title}</p>
-                                                            <span className="rounded-md mnx-bg-accent-soft px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] mnx-text-accent">
-                                                              {statusLabel}
-                                                            </span>
+                                                            <p className="text-sm font-semibold mnx-text-primary">{query.title}</p>
+                                                            <Badge variant={meta.statusTone === "success" ? "success" : meta.statusTone === "info" ? "secondary" : "warning"}>
+                                                              {meta.statusLabel}
+                                                            </Badge>
+                                                            {meta.slaLabel ? <Badge variant={slaBadgeVariant}>{meta.slaLabel}</Badge> : null}
                                                           </div>
-                                                          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] mnx-text-muted">
-                                                            {query.id === queryProcessingState?.latestQueryId &&
-                                                              typeof queryProcessingState?.queryReferenceNumber === "string" &&
-                                                              queryProcessingState.queryReferenceNumber.trim() ? (
-                                                              <span>Ref: {queryProcessingState.queryReferenceNumber}</span>
-                                                            ) : null}
-                                                            {query.id === queryProcessingState?.latestQueryId &&
-                                                              typeof queryProcessingState?.customsOfficerName === "string" &&
-                                                              queryProcessingState.customsOfficerName.trim() ? (
-                                                              <span>Officer: {queryProcessingState.customsOfficerName}</span>
-                                                            ) : null}
-                                                            <span>Created {new Date(query.createdAt).toLocaleString("en-IN")}</span>
+                                                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] mnx-text-muted">
+                                                            {meta.reference ? <span>Ref: {meta.reference}</span> : null}
+                                                            {meta.officer ? <span>Officer: {meta.officer}</span> : null}
+                                                            {meta.receivedAt ? <span>Received {meta.receivedAt.toLocaleDateString("en-IN")}</span> : null}
+                                                            {meta.responseDueAt ? <span>Due {meta.responseDueAt.toLocaleDateString("en-IN")}</span> : null}
+                                                            <span>Created {new Date(query.createdAt).toLocaleDateString("en-IN")}</span>
                                                           </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                           <Badge variant={isClosed ? "success" : "secondary"}>
-                                                            {queryMessages.length} Update{queryMessages.length === 1 ? "" : "s"}
+                                                            {queryMessages.length} update{queryMessages.length === 1 ? "" : "s"}
                                                           </Badge>
                                                           <ChevronRight className="mt-0.5 size-4 shrink-0 mnx-text-muted transition-transform group-open:hidden" />
                                                           <ChevronDown className="mt-0.5 hidden size-4 shrink-0 mnx-text-muted group-open:block" />
                                                         </div>
                                                       </summary>
                                                       <div className="space-y-4 border-t mnx-border px-4 py-4">
-                                                        <div className="rounded-xl border mnx-border mnx-bg-soft p-3 text-sm mnx-text-primary">
-                                                          {query.details}
-                                                        </div>
+                                                        <Card variant="plain" pad="none">
+                                                          <p className="p-3 text-sm mnx-text-primary">{query.details}</p>
+                                                        </Card>
+                                                        {query.responseText ? (
+                                                          <div className="space-y-1">
+                                                            <span className="mnx-label block mnx-text-muted">Last recorded response</span>
+                                                            <Card variant="plain" pad="none">
+                                                              <p className="p-3 text-sm mnx-text-primary">{query.responseText}</p>
+                                                            </Card>
+                                                          </div>
+                                                        ) : null}
+                                                        {!isClosed ? (
+                                                          <div className="flex flex-wrap gap-1.5">
+                                                            {FILING_QUERY_RESPONSE_TEMPLATES.map((template) => (
+                                                              <Chip
+                                                                key={template}
+                                                                onClick={() =>
+                                                                  setFilingQueryStatusUpdates((current) => ({ ...current, [query.id]: template }))
+                                                                }
+                                                              >
+                                                                {template}
+                                                              </Chip>
+                                                            ))}
+                                                          </div>
+                                                        ) : null}
                                                         <div className="space-y-2">
-                                                          <label className="mnx-label block mnx-text-muted">Offline Response / Status Update</label>
+                                                          <label className="mnx-label block mnx-text-muted">Response / status update</label>
                                                           <Textarea
                                                             rows={3}
                                                             value={filingQueryStatusUpdates[query.id] || ""}
@@ -8950,7 +9039,7 @@ export function JobWorkspaceClient({
                                                         </div>
                                                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                                           <label className="space-y-1">
-                                                            <span className="mnx-label block mnx-text-muted">Responder Name</span>
+                                                            <span className="mnx-label block mnx-text-muted">Responder name</span>
                                                             <Input
                                                               value={filingQueryResponderNames[query.id] || ""}
                                                               onChange={(e) =>
@@ -9018,18 +9107,18 @@ export function JobWorkspaceClient({
                                                         </div>
                                                         {queryMessages.length > 0 ? (
                                                           <div className="space-y-2">
-                                                            <span className="mnx-label block mnx-text-muted">History</span>
-                                                            <div className="space-y-2">
+                                                            <span className="mnx-label block mnx-text-muted">Timeline</span>
+                                                            <ol className="mnx-query-timeline">
                                                               {queryMessages.map((message: any) => (
-                                                                <div key={message.id} className="rounded-xl border mnx-border mnx-bg-soft p-3">
+                                                                <li key={message.id} className="mnx-query-timeline-item">
                                                                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] mnx-text-muted">
-                                                                    <span>{message.authorName || "System"}</span>
+                                                                    <span>{message.actorName || message.authorName || "System"}</span>
                                                                     <span>{new Date(message.createdAt).toLocaleString("en-IN")}</span>
                                                                   </div>
-                                                                  <p className="mt-2 text-sm mnx-text-primary">{message.body}</p>
-                                                                </div>
+                                                                  <p className="mt-1 text-sm mnx-text-primary">{message.body || message.remarks}</p>
+                                                                </li>
                                                               ))}
-                                                            </div>
+                                                            </ol>
                                                           </div>
                                                         ) : null}
                                                       </div>
@@ -9049,43 +9138,37 @@ export function JobWorkspaceClient({
                                           className="max-w-lg"
                                         >
                                           <div className="space-y-5">
-                                            <div className="rounded-[24px] border mnx-border-warning bg-[linear-gradient(135deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] px-4 py-3 mnx-shadow-panel">
-                                              <div className="flex items-start gap-3">
-                                                <span className="mt-0.5 h-10 w-1.5 rounded-full mnx-bg-warning" aria-hidden="true" />
-                                                <div className="space-y-1">
-                                                  <p className="text-sm font-medium mnx-text-primary">
-                                                    Query processing can be turned off for this filing stage after adding operational remarks.
-                                                  </p>
-                                                  <p className="text-xs mnx-text-muted">
-                                                    Existing query records remain in the audit trail; this only closes the active query-processing path.
-                                                  </p>
-                                                </div>
+                                            <Card variant="plain" pad="none">
+                                              <div className="p-4">
+                                                <p className="text-sm font-medium mnx-text-primary">
+                                                  Query processing can be turned off for this filing stage after adding operational remarks.
+                                                </p>
+                                                <p className="mt-1 text-xs mnx-text-muted">
+                                                  Existing query records remain in the audit trail; this only closes the active query-processing path.
+                                                </p>
                                               </div>
+                                            </Card>
+
+                                            <div className="space-y-2">
+                                              <label className="mnx-label block mnx-text-muted">
+                                                Remarks for turning off query processing *
+                                              </label>
+                                              <Textarea
+                                                rows={4}
+                                                value={queryToggleOffRemarks}
+                                                onChange={(e) => setQueryToggleOffRemarks(e.target.value)}
+                                                placeholder="Explain why query processing is being turned off..."
+                                                className="mnx-field-textarea w-full px-4 py-3 text-sm"
+                                                disabled={loading === "filing-toggle-query_processing"}
+                                              />
                                             </div>
 
-                                            <div className="rounded-[24px] border mnx-border mnx-bg-soft px-4 py-4 mnx-shadow-panel">
-                                              <div className="space-y-2">
-                                                <label className="mnx-label block mnx-text-muted">
-                                                  Remarks for turning off query processing *
-                                                </label>
-                                                <Textarea
-                                                  rows={4}
-                                                  value={queryToggleOffRemarks}
-                                                  onChange={(e) => setQueryToggleOffRemarks(e.target.value)}
-                                                  placeholder="Explain why query processing is being turned off..."
-                                                  className="w-full rounded-[18px] border mnx-border mnx-bg-surface px-4 py-3 text-sm mnx-shadow-panel"
-                                                  disabled={loading === "filing-toggle-query_processing"}
-                                                />
-                                              </div>
-                                            </div>
-
-                                            <div className="flex justify-end gap-2 border-t mnx-border pt-1">
+                                            <div className="flex justify-end gap-2 border-t mnx-border pt-4">
                                               <Button
                                                 type="button"
                                                 variant="outline"
                                                 onClick={handleCloseQueryToggleOffModal}
                                                 disabled={loading === "filing-toggle-query_processing"}
-                                                className="rounded-2xl px-5"
                                               >
                                                 Cancel
                                               </Button>
@@ -9093,92 +9176,83 @@ export function JobWorkspaceClient({
                                                 type="button"
                                                 onClick={() => void handleConfirmQueryProcessingToggleOff()}
                                                 disabled={loading === "filing-toggle-query_processing"}
-                                                className="rounded-2xl px-5"
                                               >
                                                 {loading === "filing-toggle-query_processing" ? "Saving..." : "Turn Off"}
                                               </Button>
                                             </div>
                                           </div>
                                         </Modal>
-                                        <div className="flex flex-1">
-                                          <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[24px] border mnx-border mnx-bg-surface mnx-shadow-panel">
-                                            <div className="flex flex-1 flex-col space-y-6 px-5 py-5">
-                                              <div className="flex items-start gap-4">
-                                                <span className="mnx-icon-badge size-12 shrink-0">
-                                                  <ClipboardList size={20} />
-                                                </span>
-                                                <div className="space-y-0.5">
-                                              <h3 className="mnx-heading-3 mnx-text-primary">
-                                                    {isFinalFilingNode ? "Final Filing Remarks" : "Completion Comments / Remarks"} {activeNodeRun.node.commentsRequired ? <span className="mnx-text-danger">*</span> : null}
-                                                  </h3>
-                                                  <p className="text-sm mnx-text-muted">
-                                                    {isFinalFilingNode
-                                                      ? "Record the final filing outcome or any closing note for the audit trail."
-                                                      : "Provide checklist execution remarks or record the final outcome."}
-                                                  </p>
-                                                </div>
+                                        <Card variant="plain" pad="none" className="flex flex-1">
+                                          <div className="flex flex-1 flex-col gap-5 p-5">
+                                            <div className="flex items-start gap-3">
+                                              <span className="mnx-icon-badge shrink-0">
+                                                <ClipboardList size={18} />
+                                              </span>
+                                              <div className="space-y-1">
+                                                <h3 className="mnx-card-title">
+                                                  {isFinalFilingNode ? "Final Filing Remarks" : "Completion Comments / Remarks"} {activeNodeRun.node.commentsRequired ? <span className="mnx-text-danger">*</span> : null}
+                                                </h3>
+                                                <p className="text-sm mnx-text-muted">
+                                                  {isFinalFilingNode
+                                                    ? "Record the final filing outcome or any closing note for the audit trail."
+                                                    : "Provide checklist execution remarks or record the final outcome."}
+                                                </p>
                                               </div>
-
-                                              <Textarea
-                                                ref={nodeRemarksTextareaRef}
-                                                rows={4}
-                                                value={nodeRemarks}
-                                                onChange={(e) => setNodeRemarks(e.target.value)}
-                                                placeholder="Enter comments, observations, or checklist outcome..."
-                                                className={cn(
-                                                  "min-h-[112px] flex-1 w-full resize-none overflow-hidden rounded-[16px] border mnx-border mnx-bg-surface px-5 py-4 text-sm font-sans mnx-shadow-panel",
-                                                  filingValidationWarning?.miscKeys.includes("nodeRemarks") &&
-                                                  !nodeRemarks.trim() &&
-                                                    "animate-pulse-red mnx-border-danger",
-                                                )}
-                                                disabled={loading !== null || isActiveStageBlocked}
-                                                required={activeNodeRun.node.commentsRequired}
-                                              />
-
-                                              {activeNodeIsOverdue ? (
-                                                <div
-                                                  className={cn(
-                                                    "mnx-bg-surface mnx-border mnx-border-warning space-y-3 rounded-xl border mnx-border-warning mnx-bg-surface p-4",
-                                                    filingValidationWarning?.miscKeys.includes("nodeDelayRemarks") &&
-                                                    !nodeDelayRemarks.trim() &&
-                                                      "animate-pulse-red mnx-border-danger",
-                                                  )}
-                                                >
-                                                  <div className="flex flex-wrap items-center justify-between gap-2">
-                                                    <label className="mnx-label block mnx-text-warning">
-                                                      Stage Delay Remarks {activeNodeDelayRemarksRequired ? "*" : ""}
-                                                    </label>
-                                                    {activeNodeSlaDueDate ? (
-                                                      <span className="mnx-numeric text-xs mnx-text-muted">
-                                                        Due: {activeNodeSlaDueDate.toLocaleDateString("en-IN")} · {activeNodeDelayDays} day(s) delayed
-                                                      </span>
-                                                    ) : null}
-                                                  </div>
-                                                  <Textarea
-                                                    rows={3}
-                                                    value={nodeDelayRemarks}
-                                                    onChange={(e) => setNodeDelayRemarks(e.target.value)}
-                                                    placeholder="Explain why this filing stage crossed its SLA..."
-                                                    className={cn(
-                                                      "w-full resize-y text-sm",
-                                                      filingValidationWarning?.miscKeys.includes("nodeDelayRemarks") &&
-                                                      !nodeDelayRemarks.trim() &&
-                                                        "mnx-border-danger",
-                                                    )}
-                                                    disabled={loading !== null || isActiveStageBlocked}
-                                                    required={activeNodeDelayRemarksRequired}
-                                                  />
-                                                </div>
-                                              ) : null}
-
-                                              {isFinalFilingNode ? (
-                                                <div className="rounded-[18px] border mnx-border mnx-bg-soft p-4 text-sm mnx-text-muted">
-                                                  Completing this node will finalize the filing workflow and transition the job stage to <strong>FILED</strong>.
-                                                </div>
-                                              ) : null}
                                             </div>
+
+                                            <Textarea
+                                              ref={nodeRemarksTextareaRef}
+                                              rows={4}
+                                              value={nodeRemarks}
+                                              onChange={(e) => setNodeRemarks(e.target.value)}
+                                              placeholder="Enter comments, observations, or checklist outcome..."
+                                              className={cn(
+                                                "w-full resize-y",
+                                                filingValidationWarning?.miscKeys.includes("nodeRemarks") &&
+                                                !nodeRemarks.trim() &&
+                                                  "animate-pulse-red mnx-border-danger",
+                                              )}
+                                              disabled={loading !== null || isActiveStageBlocked}
+                                              required={activeNodeRun.node.commentsRequired}
+                                            />
+
+                                            {activeNodeIsOverdue ? (
+                                              <div
+                                                className={cn(
+                                                  "mnx-attention-card space-y-2 p-4",
+                                                  activeNodeDelayRemarksRequired && !nodeDelayRemarks.trim() && "mnx-attention-card--pulse",
+                                                )}
+                                                data-tone="warning"
+                                              >
+                                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                                  <label className="mnx-label block mnx-text-warning">
+                                                    Stage Delay Remarks {activeNodeDelayRemarksRequired ? "*" : ""}
+                                                  </label>
+                                                  {activeNodeSlaDueDate ? (
+                                                    <span className="text-xs mnx-text-muted">
+                                                      Due {activeNodeSlaDueDate.toLocaleDateString("en-IN")} · {activeNodeDelayDays} day(s) delayed
+                                                    </span>
+                                                  ) : null}
+                                                </div>
+                                                <Textarea
+                                                  rows={4}
+                                                  value={nodeDelayRemarks}
+                                                  onChange={(e) => setNodeDelayRemarks(e.target.value)}
+                                                  placeholder="Explain why this filing stage crossed its SLA..."
+                                                  className="w-full resize-y"
+                                                  disabled={loading !== null || isActiveStageBlocked}
+                                                  required={activeNodeDelayRemarksRequired}
+                                                />
+                                              </div>
+                                            ) : null}
+
+                                            {isFinalFilingNode ? (
+                                              <p className="mnx-filing-subcard text-sm mnx-text-muted">
+                                                Completing this node will finalize the filing workflow and transition the job stage to <strong>FILED</strong>.
+                                              </p>
+                                            ) : null}
                                           </div>
-                                        </div>
+                                        </Card>
                                       </>
                                     ) : null}
                                   </div>

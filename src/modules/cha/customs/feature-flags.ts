@@ -11,7 +11,10 @@ export type ChaCustomsFeatureFlagKey = (typeof CHA_CUSTOMS_FEATURE_FLAG_KEYS)[nu
 export type ChaCustomsFeatureFlags = Record<ChaCustomsFeatureFlagKey, boolean>;
 
 export const DEFAULT_CHA_CUSTOMS_FEATURE_FLAGS: ChaCustomsFeatureFlags = {
-  CHA_CUSTOMS_MASTER_DATA: false,
+  // Customs master registers (tariff / incentive / drawback / scheme lookups)
+  // ship enabled by default. An org can still explicitly disable them by
+  // storing {"CHA_CUSTOMS_MASTER_DATA": false} in the feature-flags setting.
+  CHA_CUSTOMS_MASTER_DATA: true,
 };
 
 export const CHA_CUSTOMS_FEATURE_FLAGS_SETTINGS_SUFFIX = "cha_customs_feature_flags";

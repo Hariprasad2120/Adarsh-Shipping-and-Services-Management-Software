@@ -957,10 +957,10 @@ html.light main:not(.mnx-public-shell) [class*="bg-[var(--color-surface)]"]::pla
 
 @keyframes pulse-ring-red {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.42);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
@@ -968,7 +968,13 @@ html.light main:not(.mnx-public-shell) [class*="bg-[var(--color-surface)]"]::pla
 }
 
 .animate-pulse-red {
-  animation: pulse-ring-red 2.2s cubic-bezier(0.25, 0, 0, 1) infinite;
+  animation: pulse-ring-red 2.6s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-red {
+    animation: none;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.55);
+  }
 }
 
 /* ─── Neon Checkbox Keyframes ─── */
@@ -1161,10 +1167,10 @@ html:not([data-dashboard-shell="true"])
 
 @keyframes pulse-ring-red {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.42);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
@@ -1172,7 +1178,13 @@ html:not([data-dashboard-shell="true"])
 }
 
 .animate-pulse-red {
-  animation: pulse-ring-red 2.2s cubic-bezier(0.25, 0, 0, 1) infinite;
+  animation: pulse-ring-red 2.6s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-red {
+    animation: none;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.55);
+  }
 }
 
 /* ─── Neon Checkbox Keyframes ─── */

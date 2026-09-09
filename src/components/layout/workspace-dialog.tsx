@@ -88,6 +88,16 @@ export function WorkspaceDialogLayer({
   const surfaceRef = React.useRef<HTMLElement>(null);
   const onCloseRef = React.useRef(onClose);
 
+  // Portals cannot be server-rendered, so the first client render must match the
+  // server (nothing) and only mount the portal after hydration. Without this the
+  // dialog subtree hydration-mismatches whenever it is open on initial load
+  // (e.g. the /cha/jobs/new route renders this dialog open).
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   React.useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
@@ -156,7 +166,7 @@ export function WorkspaceDialogLayer({
     };
   }, [open]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open || !mounted || typeof document === "undefined") return null;
 
   return createPortal(
     <div className="mnx-dialog-layer">

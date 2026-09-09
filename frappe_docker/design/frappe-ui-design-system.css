@@ -149,7 +149,8 @@
   --frappe-text-muted: var(--frappe-gray-700);
   --frappe-text-soft: var(--frappe-gray-600);
   --frappe-text-inverse: #ffffff;
-  --frappe-link: var(--frappe-blue-700);
+  /* Links follow the active accent (resolves per light/dark + data-accent). */
+  --frappe-link: var(--frappe-primary);
 
   --frappe-primary: var(--frappe-blue-500);
   --frappe-primary-foreground: #ffffff;
@@ -353,14 +354,15 @@
   --frappe-text-muted: #bdc6d1;
   --frappe-text-soft: #8d99a8;
   --frappe-text-inverse: #06212c;
-  --frappe-link: #0bc1ff;
 
-  --frappe-primary: #0bc1ff;
-  --frappe-primary-foreground: #06212c;
-  --frappe-primary-hover: #32caff;
-  --frappe-primary-active: #5ad5ff;
-  --frappe-primary-soft: #0bc1ff1f;
-  --frappe-primary-soft-border: #0bc1ff4d;
+  /* --frappe-primary* and --frappe-link intentionally NOT set here. This block
+     is unscoped [data-theme="dark"], so it also matches nested wrappers that
+     carry data-theme="dark" without a data-accent (the shadcn sidebar wrapper).
+     Re-pinning the primary/link here would override the per-accent
+     html[data-theme="dark"][data-accent="…"] blocks below for the whole app
+     subtree. The pre-hydration fallback lives in
+     html[data-theme="dark"]:not([data-accent]). --frappe-link derives from the
+     resolved primary in each accent block. */
 
   --frappe-success: var(--frappe-green-300);
   --frappe-success-soft: #0d2a1c;
@@ -422,8 +424,12 @@
  * brighter hue for each accent in dark mode. Default accent (blue) is the
  * Monolith cyan #0BC1FF; the others still theme so the picker keeps working.
  */
-[data-theme="dark"] {
-  /* fallback when no [data-accent] is present */
+/* Scoped to the document root only. A nested element can carry data-theme="dark"
+   (the shadcn sidebar wrapper does) without a data-accent — an unscoped
+   [data-theme="dark"] fallback would then re-pin --frappe-primary to blue for
+   the whole app subtree and defeat the accent picker. */
+html[data-theme="dark"]:not([data-accent]) {
+  /* fallback when no [data-accent] is present (pre-hydration only) */
   --frappe-primary: #0bc1ff;
   --frappe-primary-hover: #32caff;
   --frappe-primary-active: #5ad5ff;
@@ -431,7 +437,7 @@
   --frappe-primary-soft-border: #0bc1ff4d;
 }
 
-[data-theme="dark"][data-accent="blue"] {
+html[data-theme="dark"][data-accent="blue"] {
   --frappe-primary: #0bc1ff;
   --frappe-primary-hover: #32caff;
   --frappe-primary-active: #5ad5ff;
@@ -439,7 +445,7 @@
   --frappe-primary-soft-border: #0bc1ff4d;
 }
 
-[data-theme="dark"][data-accent="green"] {
+html[data-theme="dark"][data-accent="green"] {
   --frappe-primary: #34d399;
   --frappe-primary-hover: #4ade80;
   --frappe-primary-active: #86efac;
@@ -447,7 +453,7 @@
   --frappe-primary-soft-border: #34d3994d;
 }
 
-[data-theme="dark"][data-accent="amber"] {
+html[data-theme="dark"][data-accent="amber"] {
   --frappe-primary: #fbbf24;
   --frappe-primary-hover: #fcd34d;
   --frappe-primary-active: #fde68a;
@@ -455,7 +461,7 @@
   --frappe-primary-soft-border: #fbbf244d;
 }
 
-[data-theme="dark"][data-accent="violet"] {
+html[data-theme="dark"][data-accent="violet"] {
   --frappe-primary: #a78bfa;
   --frappe-primary-hover: #c4b5fd;
   --frappe-primary-active: #ddd6fe;
